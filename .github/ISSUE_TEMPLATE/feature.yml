@@ -1,7 +1,6 @@
 name: Feature Request
 description: 새로운 기능을 제안하고 기록하기 위한 템플릿입니다.
 title: "[Feature]: "
-labels: ["enhancement"]
 body:
   - type: input
     id: feature_name
