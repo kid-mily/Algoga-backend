@@ -4,6 +4,7 @@ body:
     id: name1
     attributes:
       label: 김진도
+      value: "- [ ] "
     validations:
       required: false
 
@@ -11,6 +12,7 @@ body:
     id: name2
     attributes:
       label: 고성민
+      value: "- [ ] "
     validations:
       required: false
 
@@ -18,6 +20,7 @@ body:
     id: name3
     attributes:
       label: 백승재
+      value: "- [ ] "
     validations:
       required: false
 
@@ -25,6 +28,7 @@ body:
     id: name4
     attributes:
       label: 이채연
+      value: "- [ ] "
     validations:
       required: false
 
@@ -32,5 +36,6 @@ body:
     id: name5
     attributes:
       label: 이하연
+      value: "- [ ] "
     validations:
       required: false
