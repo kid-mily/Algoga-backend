@@ -3,34 +3,34 @@ body:
   - type: textarea
     id: name1
     attributes:
-      label: 이름1
+      label: 김진도
     validations:
-      required: true
+      required: false
 
   - type: textarea
     id: name2
     attributes:
-      label: 이름2
+      label: 고성민
     validations:
       required: false
 
   - type: textarea
     id: name3
     attributes:
-      label: 이름3
+      label: 백승재
     validations:
       required: false
 
   - type: textarea
     id: name4
     attributes:
-      label: 이름4
+      label: 이채연
     validations:
       required: false
 
   - type: textarea
     id: name5
     attributes:
-      label: 이름5
+      label: 이하연
     validations:
       required: false
