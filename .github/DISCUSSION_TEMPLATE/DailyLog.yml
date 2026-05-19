@@ -1,4 +1,4 @@
-title: "[당일 업무 회의]"
+title: "[오늘 할 일]"
 labels: ["Daily"]
 body:
   - type: markdown
