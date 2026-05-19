@@ -1,0 +1,38 @@
+name: TODO 템플릿
+description: 새로운 TODO 항목을 작성합니다.
+title: "[TODO] "
+body:
+  - type: textarea
+    id: name1
+    attributes:
+      label: 이름1
+    validations:
+      required: true
+
+  - type: textarea
+    id: name2
+    attributes:
+      label: 이름2
+    validations:
+      required: false
+
+  - type: textarea
+    id: name3
+    attributes:
+      label: 이름3
+    validations:
+      required: false
+
+  - type: textarea
+    id: name4
+    attributes:
+      label: 이름4
+    validations:
+      required: false
+
+  - type: textarea
+    id: name5
+    attributes:
+      label: 이름5
+    validations:
+      required: false
