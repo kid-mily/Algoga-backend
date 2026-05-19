@@ -1,6 +1,6 @@
 name: Bug Report
 description: 프로젝트 내 버그를 제보하고 기록하기 위한 템플릿입니다.
-title: "[BUG]: "
+title: "[BUG] "
 body:
   - type: input
     id: bug_name
