@@ -1,0 +1,31 @@
+name: Bug Report
+description: 프로젝트 내 버그를 제보하고 기록하기 위한 템플릿입니다.
+title: "[Bug]: "
+labels: ["bug"]
+body:
+  - type: input
+    id: bug_name
+    attributes:
+      label: 버그명
+      description: 발생한 버그의 현상을 간결하게 적어주세요.
+      placeholder: 예) 회원가입 시 NullPointerException 발생
+    validations:
+      required: true
+
+  - type: input
+    id: bug_class
+    attributes:
+      label: 버그클래스
+      description: 에러가 발생한 클래스명이나 파일 위치를 적어주세요.
+      placeholder: 예) UserService.java
+    validations:
+      required: true
+
+  - type: textarea
+    id: error_log
+    attributes:
+      label: 에러로그
+      description: 발생한 에러 로그 전문을 복사해서 붙여넣어 주세요.
+      render: shell
+    validations:
+      required: true
