@@ -1,6 +1,6 @@
 name: Deploy Spring Boot to Ubuntu Server
 
-# main 브랜치에 코드가 push 되거나 merge 될 때 동작합니다.
+# develop 브랜치에 코드가 push 되거나 merge 될 때 동작합니다.
 on:
   push:
     branches:
@@ -19,26 +19,25 @@ jobs:
           key: ${{ secrets.SSH_KEY }}
           port: 22
           script: |
-            # 1. 프로젝트 폴더로 이동 (실제 경로로 수정)
+            # 1. 프로젝트 폴더로 이동
             cd /home/ubuntu/kidmily
             
-            # 2. 최신 코드 가져오기
-            git pull origin main
+            # 2. 최신 코드 가져오기 (on.push의 브랜치와 일치시킴)
+            git pull origin develop
             
             # 3. Gradle 빌드 진행
             chmod +x ./gradlew
             ./gradlew clean build -x test
             
-            # 4. 기존 action tmux 세션이 있다면 강제 종료 (서버 프로세스도 함께 종료됨)
-            # 에러가 나도 스크립트가 멈추지 않도록 '|| true' 추가
-            tmux kill-session -t action 2>/dev/null || true
+            # 4. 기존 kidmily tmux 세션이 있다면 강제 종료 (포트 충돌 방지)
+            tmux kill-session -t kidmily 2>/dev/null || true
             
-            # 5. 새롭게 빌드된 jar 파일 경로 찾기
-            JAR_PATH=$(ls $(pwd)/build/libs/*SNAPSHOT.jar | tail -n 1)
+            # 5. 새롭게 빌드된 jar 파일 경로 찾기 (-plain.jar는 제외하는 정규식)
+            JAR_PATH=$(ls build/libs/*.jar | grep -v 'plain' | tail -n 1)
             
-            # 6. action 라는 이름의 새 tmux 세션을 백그라운드(-d)로 생성
+            # 6. kidmily 라는 이름의 새 tmux 세션을 백그라운드(-d)로 생성
             tmux new-session -d -s kidmily
             
             # 7. 생성된 tmux 세션 안으로 java 실행 명령어와 엔터키(C-m)를 전송
-            echo "새 애플리케이션을 action tmux 세션에서 실행합니다: $JAR_PATH"
-            tmux send-keys -t action "java -jar $JAR_PATH" C-m
+            echo "새 애플리케이션을 kidmily tmux 세션에서 실행합니다: $JAR_PATH"
+            tmux send-keys -t kidmily "java -jar $JAR_PATH" C-m
