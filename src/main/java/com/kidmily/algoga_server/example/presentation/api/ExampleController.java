@@ -28,6 +28,7 @@ public class ExampleController {
     @Operation(summary = "예시 데이터 생성", description = "새로운 예시 데이터를 생성합니다.")
 
     // 🌟 중첩(Repeatable) 활용:
+    //
     // 1) @Valid 껍데기 검증 실패 시 (정적 에러 - 예: 공백 입력)
     @ApiErrorCodeExample(domain = GlobalErrorCode.class, value = {"INVALID_REQUEST"})
     // 2) UseCase 비즈니스 로직 검증 실패 시 (동적 에러 - 예: 정책 위반 이름 입력)
