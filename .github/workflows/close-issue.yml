@@ -4,6 +4,11 @@ on:
   pull_request:
     types: [closed]
 
+# 이슈를 수정(닫기)할 수 있는 쓰기 권한 부여
+permissions:
+  issues: write
+  pull-requests: read
+
 jobs:
   close-issue:
     # PR이 '닫힘' 상태이고, '머지'가 성공적으로 완료되었을 때만 실행
