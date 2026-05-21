@@ -37,7 +37,7 @@ jobs:
             JAR_PATH=$(ls $(pwd)/build/libs/*SNAPSHOT.jar | tail -n 1)
             
             # 6. action 라는 이름의 새 tmux 세션을 백그라운드(-d)로 생성
-            tmux new-session -d -s action
+            tmux new-session -d -s kidmily
             
             # 7. 생성된 tmux 세션 안으로 java 실행 명령어와 엔터키(C-m)를 전송
             echo "새 애플리케이션을 action tmux 세션에서 실행합니다: $JAR_PATH"
