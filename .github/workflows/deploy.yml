@@ -20,7 +20,7 @@ jobs:
           port: 22
           script: |
             # 1. 프로젝트 폴더로 이동 (실제 경로로 수정)
-            cd /home/ubuntu/action
+            cd /home/ubuntu/kidmily
             
             # 2. 최신 코드 가져오기
             git pull origin main
