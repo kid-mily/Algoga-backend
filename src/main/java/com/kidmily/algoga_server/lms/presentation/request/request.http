@@ -1,0 +1,27 @@
+### 어드민: 로컬 파일 첨부하여 강의 생성
+POST http://localhost:15000/api/admin/courses
+Content-Type: multipart/form-data; boundary=boundary
+
+--boundary
+Content-Disposition: form-data; name="request"; filename="request.json"
+Content-Type: application/json
+
+{
+  "countryId": 1,
+  "title": "상해 핵심 가이드",
+  "description": "이 강의는 request.http 파일을 통해 생성된 강의입니다."
+}
+
+--boundary
+Content-Disposition: form-data; name="thumbnail"; filename="sample_image.png"
+Content-Type: image/png
+
+< ./sample_image.png
+
+--boundary
+Content-Disposition: form-data; name="file"; filename="sample_doc.pdf"
+Content-Type: application/pdf
+
+< ./sample_doc.pdf
+
+--boundary--
