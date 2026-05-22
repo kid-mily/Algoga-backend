@@ -15,8 +15,9 @@ public record CreateNoticeRequest(
         @Schema(description = "공지사항 본문", example = "새로운 기능이 추가되었습니다...")
         String content,
 
+        // 🔥 필드명을 noticeTagType -> type 으로 변경
         @NotNull(message = "공지사항 태그는 필수입니다.")
         @Schema(description = "공지사항 태그 타입", example = "NOTICE")
-        NoticeTagType noticeTagType
+        NoticeTagType type
 ) {
 }

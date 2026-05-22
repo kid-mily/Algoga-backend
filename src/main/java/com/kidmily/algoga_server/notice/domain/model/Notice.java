@@ -41,14 +41,14 @@ public class Notice {
     }
 
     public Notice update(NoticeTagType newType, String newTitle, String newContent) {
-        validateType(newType);
+        validateType(newType); // 1. 수정할 태그가 null이 아닌지 도메인 검증 실행
         validateTitle(newTitle);
         validateContent(newContent);
 
         return Notice.builder()
                 .noticeId(this.noticeId)
                 .managerId(this.managerId)
-                .type(newType)
+                .type(newType)             // 2. 새로운 태그 타입(type)을 확실하게 반영
                 .title(newTitle)
                 .content(newContent)
                 .createdAt(this.createdAt)

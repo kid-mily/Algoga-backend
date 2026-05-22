@@ -24,7 +24,10 @@ public class NoticeRepositoryAdapter implements NoticeRepository {
 
     @Override
     public Notice save(Notice notice) {
+        // MapStruct가 notice.getType() 값을 NoticeEntity의 type 필드로 자동 매핑합니다.
         NoticeEntity entity = noticeMapper.toEntity(notice);
+
+        // noticeId가 이미 존재하므로 JPA가 기존 레코드를 찾아 변경된 필드(type, title, content)를 수정합니다.
         return noticeMapper.toDomain(jpaNoticeRepository.save(entity));
     }
 

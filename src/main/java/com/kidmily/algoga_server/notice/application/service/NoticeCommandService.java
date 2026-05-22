@@ -40,15 +40,19 @@ public class NoticeCommandService implements NoticeCommandUseCase {
     @Override
     @Transactional
     public void modifyNotice(Long noticeId, UpdateNoticeCommand command) {
+        // 1. 기존 공지사항 조회
         Notice notice = noticeRepository.findById(noticeId).orElseThrow(() ->
                 new IllegalArgumentException(NoticeErrorCode.NOTICE_NOT_FOUND.getMessage())
         );
 
+        // 2. command.noticeTagType()을 통해 태그 변경 요청을 전달하여 새 도메인 객체 생성
         Notice updatedNotice = notice.update(
-                command.noticeTagType(),
+                command.noticeTagType(), // 🔥 여기서 수정할 태그 타입이 전달됩니다.
                 command.title(),
                 command.content()
         );
+
+        // 3. 어댑터를 거쳐 영속성 엔티티로 변환 후 갱신(Update)
         noticeRepository.save(updatedNotice);
     }
 }

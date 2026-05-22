@@ -46,7 +46,6 @@ public class NoticeController {
 
     @PostMapping("/register")
     @Operation(summary = "공지사항 등록", description = "새로운 공지사항을 등록합니다. (권한: CS_MANAGER)")
-    // 🔥 GlobalErrorCode 제거됨
     @ApiErrorCodeExample(domain = NoticeErrorCode.class, value = {
             "NOTICE_TYPE_REQUIRED", "TITLE_REQUIRED", "TITLE_LENGTH_EXCEEDED",
             "CONTENT_REQUIRED", "CONTENT_LENGTH_EXCEEDED"
@@ -54,10 +53,11 @@ public class NoticeController {
     public ResponseEntity<ApiResponse<CreateNoticeResponse>> registerNotice(
             @Valid @RequestBody CreateNoticeRequest request
     ) {
+        // 🔥 request.type() 으로 변경
         Long noticeId = noticeCommandUseCase.registerNotice(new CreateNoticeCommand(
                 request.title(),
                 request.content(),
-                request.noticeTagType()
+                request.type()
         ));
         CreateNoticeResponse responseData = new CreateNoticeResponse(noticeId);
 
@@ -78,7 +78,6 @@ public class NoticeController {
 
     @PutMapping("/modify/{noticeId}")
     @Operation(summary = "공지사항 수정", description = "기존 공지사항을 수정합니다. (권한: CS_MANAGER)")
-    // 🔥 GlobalErrorCode 제거됨
     @ApiErrorCodeExample(domain = NoticeErrorCode.class, value = {
             "NOTICE_NOT_FOUND", "NOTICE_TYPE_REQUIRED", "TITLE_REQUIRED",
             "TITLE_LENGTH_EXCEEDED", "CONTENT_REQUIRED", "CONTENT_LENGTH_EXCEEDED"
@@ -89,10 +88,11 @@ public class NoticeController {
 
             @Valid @RequestBody UpdateNoticeRequest request
     ) {
+        // 🔥 request.type() 으로 변경
         noticeCommandUseCase.modifyNotice(noticeId, new UpdateNoticeCommand(
                 request.title(),
                 request.content(),
-                request.noticeTagType()
+                request.type()
         ));
 
         UpdateNoticeResponse responseData = new UpdateNoticeResponse(noticeId);

@@ -15,8 +15,9 @@ public record UpdateNoticeRequest(
         @Schema(description = "수정할 공지사항 본문", example = "내용이 일부 수정되었습니다.")
         String content,
 
+        // 🔥 필드명을 noticeTagType -> type 으로 변경
         @NotNull(message = "공지사항 태그는 필수입니다.")
         @Schema(description = "수정할 공지사항 태그 타입", example = "NOTICE")
-        NoticeTagType noticeTagType
+        NoticeTagType type
 ) {
 }
