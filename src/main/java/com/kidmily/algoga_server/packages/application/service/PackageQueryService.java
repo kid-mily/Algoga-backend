@@ -8,11 +8,13 @@ import com.kidmily.algoga_server.packages.exception.PackageErrorCode;
 import com.kidmily.algoga_server.packages.presentation.api.response.PackageDetailResponse;
 import com.kidmily.algoga_server.packages.presentation.api.response.PackageListResponse;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
+@Slf4j
 @Service
 @Transactional(readOnly = true)
 @RequiredArgsConstructor
@@ -22,7 +24,7 @@ public class PackageQueryService implements PackageQueryUseCase {
 
     @Override
     public List<PackageListResponse> getPackagesByCountry(Long countryId) {
-        return packageRepository.findByCountryId(countryId)
+        List<PackageListResponse> result = packageRepository.findByCountryId(countryId)
                 .stream()
                 .map(p -> new PackageListResponse(
                         p.getId(),
@@ -43,12 +45,21 @@ public class PackageQueryService implements PackageQueryUseCase {
                         p.getAccommodationPrice()
                 ))
                 .toList();
+
+        if (result.isEmpty()) {
+            log.warn("[PackageQueryService] 해당 국가의 패키지 데이터가 없습니다. - countryId: {}", countryId);
+        }
+
+        return result;
     }
 
     @Override
     public PackageDetailResponse getPackageDetail(Long packageId) {
         Package p = packageRepository.findById(packageId)
-                .orElseThrow(() -> new BusinessException(PackageErrorCode.PACKAGE_NOT_FOUND));
+                .orElseThrow(() -> {
+                    log.warn("[PackageQueryService] 패키지를 찾을 수 없음 - packageId: {}", packageId);
+                    return new BusinessException(PackageErrorCode.PACKAGE_NOT_FOUND);
+                });
 
         return new PackageDetailResponse(
                 p.getId(),

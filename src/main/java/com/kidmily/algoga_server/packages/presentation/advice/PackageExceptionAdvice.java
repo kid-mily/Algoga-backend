@@ -1,4 +1,4 @@
-package com.kidmily.algoga_server.country.presentation.advice;
+package com.kidmily.algoga_server.packages.presentation.advice;
 
 import com.kidmily.algoga_server.global.common.api.response.ErrorResponse;
 import com.kidmily.algoga_server.global.exception.BaseErrorCode;
@@ -11,8 +11,8 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 @Slf4j
-@RestControllerAdvice(basePackages = "com.kidmily.algoga_server.country.presentation.api")
-public class CountryExceptionAdvice implements CommonExceptionAdvice {
+@RestControllerAdvice(basePackages = "com.kidmily.algoga_server.packages.presentation.api")
+public class PackageExceptionAdvice implements CommonExceptionAdvice {
 
     @Override
     public Logger getLogger() {
