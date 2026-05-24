@@ -1,40 +1,21 @@
 spring:
-application:
-name: algoga_server
-
-datasource:
-driver-class-name: com.mysql.cj.jdbc.Driver
-url: jdbc:mysql://localhost:3306/algoga
-username: algoga
-password: algoga
-
-jpa:
-hibernate:
-ddl-auto: update
-  
-  ```
-properties:
-  hibernate:
-    format_sql: true
-  ```
-
-data:
-redis:
-host: localhost
-port: 6379
-
+  application:
+    name: algoga_server
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://localhost:3306/algoga
+    username: algoga
+    password: algoga
+  jpa:
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate:
+        format_sql: true
 server:
-port: 15000
-
+  port: 15000
 logging:
-level:
-org.hibernate.SQL: debug
-
+  level:
+    org.hibernate.SQL: debug
 springdoc:
-default-produces-media-type: application/json
-
-jwt:
-secret-key: this-is-very-secret-key-for-jwt-authentication-algoga
-access-token-expiration: 3600000
-refresh-token-expiration: 1209600000
-# API 응답(Response) 기본 미디어 타입
+  default-produces-media-type: application/json # API 응답(Response) 기본 미디어 타입
