@@ -1,8 +1,8 @@
 package com.kidmily.algoga_server.community.domain.model;
 
 import com.kidmily.algoga_server.community.exception.PostErrorCode;
+import com.kidmily.algoga_server.community.exception.PostException;
 import com.kidmily.algoga_server.community.infrastructure.persistence.entity.PostTagType;
-import com.kidmily.algoga_server.global.exception.BusinessException;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -106,13 +106,13 @@ public class Post {
 
     private void validateOwnerForUpdate(Long requesterId) {
         if (!this.authorId.equals(requesterId)) {
-            throw new BusinessException(PostErrorCode.POST_UPDATE_FORBIDDEN);
+            throw new PostException(PostErrorCode.POST_UPDATE_FORBIDDEN);
         }
     }
 
     private void validateOwnerForDelete(Long requesterId) {
         if (!this.authorId.equals(requesterId)) {
-            throw new BusinessException(PostErrorCode.POST_DELETE_FORBIDDEN);
+            throw new PostException(PostErrorCode.POST_DELETE_FORBIDDEN);
         }
     }
 
@@ -133,38 +133,38 @@ public class Post {
     // 3. 도메인 규칙 검증 메서드 (상단 import에 맞게 BusinessException으로 일관성 유지)
     private void validateCategory(PostTagType category) {
         if (category == null) {
-            throw new BusinessException(PostErrorCode.POST_CATEGORY_INVALID);
+            throw new PostException(PostErrorCode.POST_CATEGORY_INVALID);
         }
     }
 
     private void validateTitle(String title) {
         if (title == null || title.trim().isEmpty()) {
-            throw new BusinessException(PostErrorCode.POST_TITLE_BLANK);
+            throw new PostException(PostErrorCode.POST_TITLE_BLANK);
         }
     }
 
     private void validateContent(String content) {
         if (content == null || content.trim().isEmpty()) {
-            throw new BusinessException(PostErrorCode.POST_CONTENT_BLANK);
+            throw new PostException(PostErrorCode.POST_CONTENT_BLANK);
         }
     }
 
     private void validateFreeTags(List<String> freeTags) {
         if (freeTags != null && freeTags.size() > MAX_FREE_TAG_COUNT) {
-            throw new BusinessException(PostErrorCode.POST_FREE_TAG_LIMIT_EXCEEDED);
+            throw new PostException(PostErrorCode.POST_FREE_TAG_LIMIT_EXCEEDED);
         }
         // 중복 검증
         if (freeTags != null) {
             long distinctCount = freeTags.stream().distinct().count();
             if (distinctCount != freeTags.size()) {
-                throw new BusinessException(PostErrorCode.POST_FREE_TAG_DUPLICATED);
+                throw new PostException(PostErrorCode.POST_FREE_TAG_DUPLICATED);
             }
         }
     }
 
     private void validateImages(List<String> imageUrls) {
         if (imageUrls != null && imageUrls.size() > MAX_IMAGE_COUNT) {
-            throw new BusinessException(PostErrorCode.POST_IMAGE_COUNT_EXCEEDED);
+            throw new PostException(PostErrorCode.POST_IMAGE_COUNT_EXCEEDED);
         }
     }
 }

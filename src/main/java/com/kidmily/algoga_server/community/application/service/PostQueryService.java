@@ -6,13 +6,10 @@ import com.kidmily.algoga_server.community.domain.repository.CommentRepository;
 import com.kidmily.algoga_server.community.domain.repository.LikeDislikeRepository;
 import com.kidmily.algoga_server.community.domain.repository.PostRepository;
 import com.kidmily.algoga_server.community.exception.PostErrorCode;
+import com.kidmily.algoga_server.community.exception.PostException;
+import com.kidmily.algoga_server.community.infrastructure.persistence.entity.PostTagType;
 import com.kidmily.algoga_server.community.infrastructure.persistence.entity.TargetType;
-import com.kidmily.algoga_server.community.infrastructure.persistence.repository.SpringDataCommentRepository;
-import com.kidmily.algoga_server.community.infrastructure.persistence.repository.SpringDataLikeDislikeRepository;
-import com.kidmily.algoga_server.community.presentation.api.response.CommentResponse;
-import com.kidmily.algoga_server.community.presentation.api.response.PostResponse;
-import com.kidmily.algoga_server.community.presentation.api.response.TagResponse;
-import com.kidmily.algoga_server.global.exception.BusinessException;
+import com.kidmily.algoga_server.community.presentation.api.response.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -30,6 +27,7 @@ public class PostQueryService implements PostQueryUseCase {
     private final PostRepository postRepository;
     private final CommentRepository commentRepository;
     private final LikeDislikeRepository likeDislikeRepository;
+    private static final int PAGE_SIZE = 10;
 
     @Override
     @Transactional
@@ -37,10 +35,8 @@ public class PostQueryService implements PostQueryUseCase {
         log.info("[PostQueryService] 게시글 단건 조회 요청 - postId: {}", postId);
 
         Post post = postRepository.findById(postId)
-                .orElseThrow(() -> {
-                    log.warn("[PostQueryService] 게시글을 찾을 수 없음 - postId: {}", postId);
-                    return new BusinessException(PostErrorCode.POST_NOT_FOUND);
-                });
+                .orElseThrow(() -> new PostException(PostErrorCode.POST_NOT_FOUND));
+
 
         // 조회수 증가
         post.increaseViewCount();
@@ -84,5 +80,84 @@ public class PostQueryService implements PostQueryUseCase {
         );
     }
 
+    @Override
+    public List<PostTagType> getCategories() {
+        return List.of(
+                PostTagType.TRAVEL_REVIEW,
+                PostTagType.TIP_INFO,
+                PostTagType.QUESTION,
+                PostTagType.COMPANION,
+                PostTagType.FREE,
+                PostTagType.LECTURE
+        );
+    }
 
+    @Override
+    public PostListResponse getPosts(Long lastPostId, List<PostTagType> categories) {
+        log.info("[PostQueryService] 게시글 목록 조회 요청 - lastPostId: {}, categories: {}",
+                lastPostId, categories);
+
+        List<Post> posts = postRepository.findPostsByCursor(lastPostId, PAGE_SIZE, categories);
+
+        List<PostListItemResponse> items = posts.stream()
+                .map(this::toListItem)
+                .toList();
+
+        boolean hasNext = items.size() == PAGE_SIZE;
+        Long nextLastPostId = items.isEmpty() ? null : items.get(items.size() - 1).postId();
+
+        return new PostListResponse(items, hasNext, nextLastPostId);
+    }
+
+    // 내가 쓴 글 목록 조회
+    @Override
+    public PostListResponse getMyPosts(Long userId, Long lastPostId, List<PostTagType> categories) {
+        log.info("[PostQueryService] 내가 작성한 게시글 목록 조회 요청 - userId: {}, lastPostId: {}, categories: {}",
+                userId, lastPostId, categories);
+
+        // 도메인 포트(PostRepository) 호출
+        List<Post> posts = postRepository.findMyPostsByCursor(userId, lastPostId, PAGE_SIZE, categories);
+
+        List<PostListItemResponse> items = posts.stream()
+                .map(this::toListItem)
+                .toList();
+
+        boolean hasNext = items.size() == PAGE_SIZE;
+        Long nextLastPostId = items.isEmpty() ? null : items.get(items.size() - 1).postId();
+
+        return new PostListResponse(items, hasNext, nextLastPostId);
+    }
+
+    private PostListItemResponse toListItem(Post post) {
+        Long likeCount = likeDislikeRepository.countLikes(TargetType.POST, post.getId());
+        Long dislikeCount = likeDislikeRepository.countDislikes(TargetType.POST, post.getId());
+        Long commentCount = (long) commentRepository.findActiveCommentsByPostId(post.getId()).size();
+
+        Stream<TagResponse> categoryStream = post.getCategory() != null ?
+                Stream.of(TagResponse.fromCategory(post.getCategory())) : Stream.empty();
+        Stream<TagResponse> freeTagStream = post.getFreeTags() != null ?
+                post.getFreeTags().stream().map(TagResponse::fromFreeTag) : Stream.empty();
+        List<TagResponse> tags = Stream.concat(categoryStream, freeTagStream).toList();
+
+        String thumbnailUrl = (post.getImageUrls() != null && !post.getImageUrls().isEmpty())
+                ? post.getImageUrls().get(0)
+                : null;
+
+        return new PostListItemResponse(
+                post.getId(),
+                post.getAuthorId(),
+                "임시닉네임",  // TODO: User 도메인 추가 후 교체
+                null, // TODO: User 도메인 추가 후 교체, 프로필 url
+                post.getCountryId(), // TODO: 나라 도메인 추가 후 교체
+                "임시나라",  // TODO: 나라 도메인 추가 후 교체
+                tags,
+                post.getTitle(),
+                post.getContent(),
+                thumbnailUrl,
+                likeCount,
+                dislikeCount,
+                commentCount,
+                post.getCreatedAt()
+        );
+    }
 }
