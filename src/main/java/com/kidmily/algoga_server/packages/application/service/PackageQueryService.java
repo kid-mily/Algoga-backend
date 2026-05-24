@@ -12,6 +12,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
 import java.util.List;
 
 @Slf4j
@@ -23,8 +24,11 @@ public class PackageQueryService implements PackageQueryUseCase {
     private final PackageRepository packageRepository;
 
     @Override
-    public List<PackageListResponse> getPackagesByCountry(Long countryId) {
-        List<PackageListResponse> result = packageRepository.findByCountryId(countryId)
+    public List<PackageListResponse> getPackagesByCountry(Long countryId, String departureAirport,
+                                                          String arrivalAirport, LocalDate departureDate,
+                                                          LocalDate returnDate) {
+        List<PackageListResponse> result = packageRepository
+                .findByFilters(countryId, departureAirport, arrivalAirport, departureDate, returnDate)
                 .stream()
                 .map(p -> new PackageListResponse(
                         p.getId(),
@@ -47,7 +51,7 @@ public class PackageQueryService implements PackageQueryUseCase {
                 .toList();
 
         if (result.isEmpty()) {
-            log.warn("[PackageQueryService] 해당 국가의 패키지 데이터가 없습니다. - countryId: {}", countryId);
+            log.warn("[PackageQueryService] 해당 조건의 패키지 데이터가 없습니다. - countryId: {}", countryId);
         }
 
         return result;

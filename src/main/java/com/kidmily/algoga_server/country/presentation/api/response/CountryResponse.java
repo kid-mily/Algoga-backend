@@ -5,13 +5,13 @@ import io.swagger.v3.oas.annotations.media.Schema;
 @Schema(description = "국가 응답")
 public record CountryResponse(
 
-        @Schema(description = "국가 ID")
+        @Schema(description = "국가 ID", example = "1")
         Long countryId,
 
-        @Schema(description = "대륙")
+        @Schema(description = "대륙", example = "아시아")
         String contient,
 
-        @Schema(description = "국가명")
+        @Schema(description = "국가명", example = "일본")
         String name
 ) {
 }

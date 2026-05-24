@@ -1,0 +1,48 @@
+package com.kidmily.algoga_server.booking.infrastructure.mapper;
+
+import com.kidmily.algoga_server.booking.domain.model.Booking;
+import com.kidmily.algoga_server.booking.infrastructure.persistence.BookingJpaEntity;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Component;
+
+@Component
+@RequiredArgsConstructor
+public class BookingMapper {
+
+    public BookingJpaEntity toJpaEntity(Booking booking) {
+        return new BookingJpaEntity(
+                booking.getPackageId(),
+                booking.getUserId(),
+                booking.getStatus(),
+                booking.getTotalPrice(),
+                booking.getDepositPrice(),
+                booking.getBalancePrice(),
+                booking.getBookingNumber(),
+                booking.getFlightInfo(),
+                booking.getCheckInDate(),
+                booking.getCheckOutDate(),
+                booking.getNights(),
+                booking.getCreatedAt(),
+                booking.getUpdatedAt()
+        );
+    }
+
+    public Booking toDomain(BookingJpaEntity entity) {
+        return Booking.reconstitute(
+                entity.getId(),
+                entity.getPackageId(),
+                entity.getUserId(),
+                entity.getStatus(),
+                entity.getTotalPrice(),
+                entity.getDepositPrice(),
+                entity.getBalancePrice(),
+                entity.getBookingNumber(),
+                entity.getFlightInfo(),
+                entity.getCheckInDate(),
+                entity.getCheckOutDate(),
+                entity.getNights(),
+                entity.getCreatedAt(),
+                entity.getUpdatedAt()
+        );
+    }
+}
