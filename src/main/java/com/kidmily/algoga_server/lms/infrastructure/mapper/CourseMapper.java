@@ -12,7 +12,6 @@ import java.util.stream.Collectors;
 @Component
 public class CourseMapper {
 
-    // 1. Domain -> DB Entity 변환 (저장할 때)
     public CourseJpaEntity toEntity(Course course) {
         CourseJpaEntity courseEntity = new CourseJpaEntity(
                 course.getCountryId(),
@@ -24,7 +23,6 @@ public class CourseMapper {
                 course.getStatus()
         );
 
-        // 챕터들도 순회하면서 Entity로 변환하여 추가
         if (course.getChapters() != null) {
             course.getChapters().forEach(chapter -> {
                 ChapterJpaEntity chapterEntity = new ChapterJpaEntity(
@@ -36,10 +34,10 @@ public class CourseMapper {
                 courseEntity.getChapters().add(chapterEntity);
             });
         }
+
         return courseEntity;
     }
 
-    // 2. DB Entity -> Domain 변환 (조회할 때)
     public Course toDomain(CourseJpaEntity entity) {
         List<Chapter> chapters = entity.getChapters().stream()
                 .map(chEntity -> Chapter.withId(
@@ -48,7 +46,8 @@ public class CourseMapper {
                         chEntity.getVideoUrl(),
                         chEntity.getDurationSeconds(),
                         chEntity.getOrderNum()
-                )).collect(Collectors.toList());
+                ))
+                .collect(Collectors.toList());
 
         return Course.withId(
                 entity.getId(),
@@ -57,8 +56,9 @@ public class CourseMapper {
                 entity.getTitle(),
                 entity.getDescription(),
                 entity.getThumbnailUrl(),
-                entity.getFileUrl(),   // ✨ 누락되었던 파라미터 매핑
+                entity.getFileUrl(),
                 entity.getStatus(),
+                entity.isDeleted(),
                 chapters
         );
     }

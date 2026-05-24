@@ -9,6 +9,7 @@ spring:
     password: algoga
 
   jpa:
+    open-in-view: false
     hibernate:
       ddl-auto: update
     properties:
@@ -28,7 +29,12 @@ logging:
     org.hibernate.SQL: debug
 
 springdoc:
-  default-produces-media-type: application/json
+  default-produces-media-type: application/json # API 응답(Response) 기본 미디어 타입
+
+jwt:
+  secret-key: algoga-project-secret-key-must-be-long-enough-for-security # 32바이트 이상 임의의 문자열
+  access-token-expiration: 1800000 # 30분 (밀리초)
+  refresh-token-expiration: 604800000 # 7일 (밀리초)
 
 app:
   file:

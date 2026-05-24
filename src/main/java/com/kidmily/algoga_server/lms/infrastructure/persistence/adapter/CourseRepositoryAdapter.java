@@ -5,6 +5,8 @@ import com.kidmily.algoga_server.lms.domain.repository.CourseRepository;
 import com.kidmily.algoga_server.lms.infrastructure.mapper.CourseMapper;
 import com.kidmily.algoga_server.lms.infrastructure.persistence.entity.CourseJpaEntity;
 import com.kidmily.algoga_server.lms.infrastructure.persistence.repository.SpringDataCourseRepository;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Repository;
 
 import java.util.HashMap;
@@ -42,8 +44,46 @@ public class CourseRepositoryAdapter implements CourseRepository {
     }
 
     @Override
+    public Optional<Course> findByIdAndDeletedFalse(Long id) {
+        return springDataCourseRepository.findByIdAndDeletedFalse(id)
+                .map(courseMapper::toDomain);
+    }
+
+    @Override
+    public Page<Course> findAllByDeletedFalse(Pageable pageable) {
+        return springDataCourseRepository.findByDeletedFalseOrderByIdDesc(pageable)
+                .map(courseMapper::toDomain);
+    }
+
+    @Override
+    public Optional<Course> updateBasicInfo(
+            Long courseId,
+            String title,
+            String description,
+            String thumbnailUrl,
+            String fileUrl
+    ) {
+        return springDataCourseRepository.findByIdAndDeletedFalse(courseId)
+                .map(entity -> {
+                    entity.updateBasicInfo(title, description, thumbnailUrl, fileUrl);
+                    return courseMapper.toDomain(entity);
+                });
+    }
+
+    @Override
+    public boolean softDelete(Long courseId) {
+        return springDataCourseRepository.findByIdAndDeletedFalse(courseId)
+                .map(entity -> {
+                    entity.softDelete();
+                    return true;
+                })
+                .orElse(false);
+    }
+
+    @Override
     public List<Course> findPublishedByCountryId(Long countryId) {
-        return springDataCourseRepository.findByCountryIdAndStatusOrderByIdDesc(countryId, PUBLISHED)
+        return springDataCourseRepository
+                .findByCountryIdAndStatusAndDeletedFalseOrderByIdDesc(countryId, PUBLISHED)
                 .stream()
                 .map(courseMapper::toDomain)
                 .toList();
@@ -51,7 +91,8 @@ public class CourseRepositoryAdapter implements CourseRepository {
 
     @Override
     public long countPublishedByCountryId(Long countryId) {
-        return springDataCourseRepository.countByCountryIdAndStatus(countryId, PUBLISHED);
+        return springDataCourseRepository
+                .countByCountryIdAndStatusAndDeletedFalse(countryId, PUBLISHED);
     }
 
     @Override
