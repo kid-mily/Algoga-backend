@@ -8,6 +8,7 @@ import com.kidmily.algoga_server.notice.application.command.UpdateNoticeCommand;
 import com.kidmily.algoga_server.notice.application.usecase.NoticeCommandUseCase;
 import com.kidmily.algoga_server.notice.application.usecase.NoticeQueryUseCase;
 import com.kidmily.algoga_server.notice.exception.NoticeErrorCode;
+import com.kidmily.algoga_server.notice.presentation.NoticeTagType;
 import com.kidmily.algoga_server.notice.presentation.api.request.CreateNoticeRequest;
 import com.kidmily.algoga_server.notice.presentation.api.request.UpdateNoticeRequest;
 import com.kidmily.algoga_server.notice.presentation.api.response.*;
@@ -135,6 +136,18 @@ public class NoticeController {
         return ResponseEntity.ok(ApiResponse.success(
                 "NOTICE_FOUND",
                 "공지사항 상세 조회에 성공했습니다.",
+                responseData
+        ));
+    }
+
+    @GetMapping("/tags")
+    @Operation(summary = "공지사항 태그 목록 조회", description = "프론트엔드에서 선택할 수 있는 공지사항 태그(타입) 목록을 조회합니다.")
+    public ResponseEntity<ApiResponse<List<NoticeTagType>>> getNoticeTags() {
+        List<NoticeTagType> responseData = noticeQueryUseCase.getAllNoticeTags();
+
+        return ResponseEntity.ok(ApiResponse.success(
+                "NOTICE_TAGS_FOUND",
+                "공지사항 태그 목록 조회에 성공했습니다.",
                 responseData
         ));
     }

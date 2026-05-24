@@ -81,6 +81,12 @@ public class NoticeQueryService implements NoticeQueryUseCase {
         return mapToNoticeResponse(notice);
     }
 
+    @Override
+    public List<NoticeTagType> getAllNoticeTags() {
+        // Enum에 정의된 모든 값을 리스트 형태로 반환합니다.
+        return java.util.Arrays.asList(NoticeTagType.values());
+    }
+
     private NoticeResponse mapToNoticeResponse(Notice notice) {
         return new NoticeResponse(
                 notice.getNoticeId(),

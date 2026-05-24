@@ -75,3 +75,7 @@ Content-Type: application/json
   "content": "",
   "type": "NOTICE"
 }
+
+### 8. 공지사항 태그(Enum) 목록 조회 (프론트엔드 UI 구성용)
+GET {{host}}/api/v1/notice/tags
+Accept: application/json
