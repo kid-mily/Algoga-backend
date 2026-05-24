@@ -1,6 +1,7 @@
 package com.kidmily.algoga_server.notice.domain.model;
 
 import com.kidmily.algoga_server.notice.exception.NoticeErrorCode;
+import com.kidmily.algoga_server.notice.exception.NoticeException;
 import com.kidmily.algoga_server.notice.presentation.NoticeTagType;
 import lombok.Builder;
 import lombok.Getter;
@@ -41,28 +42,45 @@ public class Notice {
     }
 
     public Notice update(NoticeTagType newType, String newTitle, String newContent) {
-        validateType(newType); // 1. 수정할 태그가 null이 아닌지 도메인 검증 실행
+        validateType(newType);
         validateTitle(newTitle);
         validateContent(newContent);
 
         return Notice.builder()
                 .noticeId(this.noticeId)
                 .managerId(this.managerId)
-                .type(newType)             // 2. 새로운 태그 타입(type)을 확실하게 반영
+                .type(newType)
                 .title(newTitle)
                 .content(newContent)
                 .createdAt(this.createdAt)
                 .build();
     }
 
+    // 🔥 NoticeException 으로 변경
     private static void validateType(NoticeTagType type) {
-        if (type == null) throw new IllegalArgumentException(NoticeErrorCode.NOTICE_TYPE_REQUIRED.getMessage());
+        if (type == null) {
+            throw new NoticeException(NoticeErrorCode.NOTICE_TYPE_REQUIRED);
+        }
     }
+
+    // 🔥 NoticeException 으로 변경
     private static void validateTitle(String title) {
-        if (title == null || title.trim().isEmpty()) throw new IllegalArgumentException(NoticeErrorCode.TITLE_REQUIRED.getMessage());
-        if (title.length() < 2 || title.length() > 100) throw new IllegalArgumentException(NoticeErrorCode.TITLE_LENGTH_EXCEEDED.getMessage());
+        if (title == null || title.trim().isEmpty()) {
+            throw new NoticeException(NoticeErrorCode.TITLE_REQUIRED);
+        }
+        if (title.length() < 2 || title.length() > 100) {
+            throw new NoticeException(NoticeErrorCode.TITLE_LENGTH_EXCEEDED);
+        }
     }
+
+    // 🔥 NoticeException 으로 변경
     private static void validateContent(String content) {
-        if (content == null || content.trim().isEmpty()) throw new IllegalArgumentException(NoticeErrorCode.CONTENT_REQUIRED.getMessage());
+        if (content == null || content.trim().isEmpty()) {
+            throw new NoticeException(NoticeErrorCode.CONTENT_REQUIRED);
+        }
+        // DB 스키마가 tinytext (최대 255바이트)일 경우 제한 예시
+        if (content.length() > 255) {
+            throw new NoticeException(NoticeErrorCode.CONTENT_LENGTH_EXCEEDED);
+        }
     }
 }

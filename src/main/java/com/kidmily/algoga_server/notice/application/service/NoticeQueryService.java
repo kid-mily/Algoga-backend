@@ -4,11 +4,13 @@ import com.kidmily.algoga_server.notice.application.usecase.NoticeQueryUseCase;
 import com.kidmily.algoga_server.notice.domain.model.Notice;
 import com.kidmily.algoga_server.notice.domain.repository.NoticeRepository;
 import com.kidmily.algoga_server.notice.exception.NoticeErrorCode;
+import com.kidmily.algoga_server.notice.exception.NoticeException;
 import com.kidmily.algoga_server.notice.presentation.NoticeTagType;
 import com.kidmily.algoga_server.notice.presentation.api.response.NoticeListResponse;
 import com.kidmily.algoga_server.notice.presentation.api.response.NoticeMainResponse;
 import com.kidmily.algoga_server.notice.presentation.api.response.NoticeResponse;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -17,6 +19,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.stream.Collectors;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
@@ -43,7 +46,6 @@ public class NoticeQueryService implements NoticeQueryUseCase {
     }
 
     @Override
-    // 🔥 반환 타입 수정
     public List<NoticeListResponse> getNotices(String tag, Integer index) {
         List<Notice> notices;
         int pageIndex = Math.max(0, index - 1);
@@ -56,16 +58,16 @@ public class NoticeQueryService implements NoticeQueryUseCase {
                 notices = noticeRepository.findByType(tagType, pageIndex, PAGE_SIZE);
             }
         } catch (IllegalArgumentException e) {
-            throw new IllegalArgumentException(NoticeErrorCode.INVALID_TAG_OR_INDEX.getMessage());
+            // 태그 파싱 에러 등을 잡아서 NoticeException으로 변환
+            throw new NoticeException(NoticeErrorCode.INVALID_TAG_OR_INDEX);
         }
 
-        // 🔥 NoticeListResponse 에 맞춰 매핑 (날짜 포맷 적용)
         return notices.stream()
                 .map(notice -> new NoticeListResponse(
                         notice.getNoticeId(),
                         notice.getType(),
                         notice.getTitle(),
-                        DATE_FORMATTER.format(notice.getCreatedAt()) // yyyy-MM-dd
+                        DATE_FORMATTER.format(notice.getCreatedAt())
                 ))
                 .collect(Collectors.toList());
     }
@@ -73,7 +75,8 @@ public class NoticeQueryService implements NoticeQueryUseCase {
     @Override
     public NoticeResponse getNotice(Long noticeId) {
         Notice notice = noticeRepository.findById(noticeId).orElseThrow(() ->
-                new IllegalArgumentException(NoticeErrorCode.NOTICE_NOT_FOUND.getMessage())
+                // 🔥 NoticeException 으로 변경
+                new NoticeException(NoticeErrorCode.NOTICE_NOT_FOUND)
         );
         return mapToNoticeResponse(notice);
     }

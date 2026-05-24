@@ -1,20 +1,44 @@
 package com.kidmily.algoga_server.notice.presentation.advice;
 
+import com.kidmily.algoga_server.global.common.api.response.ErrorResponse;
 import com.kidmily.algoga_server.global.exception.CommonExceptionAdvice;
+import com.kidmily.algoga_server.notice.exception.NoticeErrorCode;
+import com.kidmily.algoga_server.notice.exception.NoticeException;
 import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
+import java.time.Instant;
+
 @Slf4j
-// Example 도메인 컨트롤러에서 발생하는 예외만 처리하도록 범위 지정
 @RestControllerAdvice(basePackages = "com.kidmily.algoga_server.notice.presentation.api")
 public class NoticeExceptionAdvice implements CommonExceptionAdvice {
 
     @Override
     public Logger getLogger() {
-        return log; // ExampleExceptionAdvice 클래스의 로거를 인터페이스로 전달
+        return log;
     }
 
-    // Example 도메인에서만 발생하는 아주 특수한 예외가 있다면 이곳에 추가로 @ExceptionHandler를 작성합니다.
-    // (기본적인 BusinessException, Validation 등은 부모 인터페이스의 default 메서드가 모두 처리합니다.)
+    // 🔥 공지사항 도메인 전용 예외 핸들러
+    @ExceptionHandler(NoticeException.class)
+    public ResponseEntity<ErrorResponse> handleNoticeException(NoticeException e) {
+        String traceId = getOrCreateTraceId();
+        NoticeErrorCode errorCode = e.getErrorCode();
+
+        // WARN 로그와 함께 TraceId 기록
+        log.warn("[NoticeDomainException] traceId: {}, code: {}, message: {}",
+                traceId, errorCode.getCode(), errorCode.getMessage());
+
+        ErrorResponse response = new ErrorResponse(
+                Instant.now(),
+                errorCode.getStatus().value(),
+                errorCode.getCode(),
+                errorCode.getMessage(),
+                traceId
+        );
+
+        return ResponseEntity.status(errorCode.getStatus()).body(response);
+    }
 }
