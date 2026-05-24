@@ -1,21 +1,41 @@
 spring:
   application:
     name: algoga_server
+
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
     url: jdbc:mysql://localhost:3306/algoga
     username: algoga
     password: algoga
+
   jpa:
+    open-in-view: false
     hibernate:
       ddl-auto: update
     properties:
       hibernate:
         format_sql: true
+
+  servlet:
+    multipart:
+      max-file-size: 500MB
+      max-request-size: 500MB
+
 server:
   port: 15000
+
 logging:
   level:
     org.hibernate.SQL: debug
+
 springdoc:
   default-produces-media-type: application/json # API 응답(Response) 기본 미디어 타입
+
+jwt:
+  secret-key: algoga-project-secret-key-must-be-long-enough-for-security # 32바이트 이상 임의의 문자열
+  access-token-expiration: 1800000 # 30분 (밀리초)
+  refresh-token-expiration: 604800000 # 7일 (밀리초)
+
+app:
+  file:
+    upload-root: uploads
