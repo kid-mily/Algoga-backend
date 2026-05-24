@@ -29,7 +29,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 @Tag(name = "Admin Course", description = "콘텐츠 매니저 강의 관리 API")
 @RestController
-@RequestMapping("/api/admin/courses")
+@RequestMapping("/api/v1/courses")
 @RequiredArgsConstructor
 public class AdminCourseController {
 

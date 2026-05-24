@@ -1,5 +1,5 @@
 ### 어드민: 로컬 파일 첨부하여 강의 생성
-POST http://localhost:15000/api/admin/courses
+POST http://localhost:15000/api/v1/courses
 Content-Type: multipart/form-data; boundary=boundary
 
 --boundary
@@ -52,15 +52,15 @@ GET http://localhost:15000/api/v1/courses/countries/9999
 
 ### ----------------------------------------------------------
 ### 어드민 - 강의 목록 조회
-GET http://localhost:15000/api/admin/courses?page=0&size=10
+GET http://localhost:15000/api/v1/courses?page=0&size=10
 
 
 ### 어드민 - 강의 상세 조회
-GET http://localhost:15000/api/admin/courses/2
+GET http://localhost:15000/api/v1/courses/2
 
 
 ### 어드민 - 강의 수정
-PUT http://localhost:15000/api/admin/courses/2
+PUT http://localhost:15000/api/v1/courses/2
 Content-Type: multipart/form-data; boundary=boundary
 
 --boundary
@@ -88,10 +88,91 @@ Content-Type: application/pdf
 
 
 ### 어드민 - 강의 삭제
-DELETE http://localhost:15000/api/admin/courses/2
+DELETE http://localhost:15000/api/v1/courses/2
 
 
 ### 어드민 - 존재하지 않는 강의 상세 조회
-GET http://localhost:15000/api/admin/courses/9999
+GET http://localhost:15000/api/v1/courses/9999
 ### ----------------------------------------------------------
 
+### 챕터 관리 - 챕터 목록 조회
+GET http://localhost:15000/api/v1/courses/3/chapters
+
+
+### 챕터 관리 - 챕터 등록
+POST http://localhost:15000/api/v1/courses/3/chapters
+Content-Type: multipart/form-data; boundary=boundary
+
+--boundary
+Content-Disposition: form-data; name="request"; filename="request.json"
+Content-Type: application/json
+
+{
+  "title": "1강. 여행 전 필수 준비",
+  "durationSeconds": 600,
+  "chapterOrder": 1
+}
+
+--boundary
+Content-Disposition: form-data; name="video"; filename="sample_video.mp4"
+Content-Type: video/mp4
+
+< ./sample_video.mp4
+
+--boundary--
+
+
+### 챕터 관리 - 챕터 목록 조회
+GET http://localhost:15000/api/v1/courses/3/chapters
+
+
+### 챕터 관리 - 챕터 수정
+### 아래 1을 실제 챕터 등록 응답의 data.chapterId로 바꿔줘
+PUT http://localhost:15000/api/v1/courses/3/chapters/4
+Content-Type: multipart/form-data; boundary=boundary
+
+--boundary
+Content-Disposition: form-data; name="request"; filename="request.json"
+Content-Type: application/json
+
+{
+  "title": "1강. 여행 전 필수 준비 수정본",
+  "durationSeconds": 720,
+  "chapterOrder": 1
+}
+
+--boundary
+Content-Disposition: form-data; name="video"; filename="sample_video.mp4"
+Content-Type: video/mp4
+
+< ./sample_video.mp4
+
+--boundary--
+
+
+### 챕터 관리 - 챕터 삭제
+### 아래 1을 실제 챕터 ID로 바꿔줘
+DELETE http://localhost:15000/api/v1/courses/3/chapters/4
+
+
+### 예외 케이스 테스트
+GET http://localhost:15000/api/v1/courses/9999/chapters
+
+### 챕터 관리 - 존재하지 않는 챕터 수정
+PUT http://localhost:15000/api/v1/courses/3/chapters/9999
+Content-Type: multipart/form-data; boundary=boundary
+
+--boundary
+Content-Disposition: form-data; name="request"; filename="request.json"
+Content-Type: application/json
+
+{
+  "title": "없는 챕터 수정",
+  "durationSeconds": 720,
+  "chapterOrder": 1
+}
+
+--boundary--
+
+### 삭제 후 목록 조회
+GET http://localhost:15000/api/v1/courses/3/chapters
