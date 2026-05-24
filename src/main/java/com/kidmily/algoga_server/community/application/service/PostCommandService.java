@@ -7,7 +7,7 @@ import com.kidmily.algoga_server.community.application.usecase.PostCommandUseCas
 import com.kidmily.algoga_server.community.domain.model.Post;
 import com.kidmily.algoga_server.community.domain.repository.PostRepository;
 import com.kidmily.algoga_server.community.exception.PostErrorCode;
-import com.kidmily.algoga_server.global.exception.BusinessException;
+import com.kidmily.algoga_server.community.exception.PostException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -60,10 +60,7 @@ public class PostCommandService implements PostCommandUseCase {
                 command.postId(), command.requesterId());
 
         Post post = postRepository.findById(command.postId())
-                .orElseThrow(() -> {
-                    log.warn("[PostCommandService] 게시글을 찾을 수 없음 - postId: {}", command.postId());
-                    return new BusinessException(PostErrorCode.POST_NOT_FOUND);
-                });
+                .orElseThrow(() -> new PostException(PostErrorCode.POST_NOT_FOUND));
 
         post.update(
                 command.requesterId(),
@@ -88,10 +85,7 @@ public class PostCommandService implements PostCommandUseCase {
                 command.postId(), command.requesterId());
 
         Post post = postRepository.findById(command.postId())
-                .orElseThrow(() -> {
-                    log.warn("[PostCommandService] 게시글을 찾을 수 없음 - postId: {}", command.postId());
-                    return new BusinessException(PostErrorCode.POST_NOT_FOUND);
-                });
+                .orElseThrow(() -> new PostException(PostErrorCode.POST_NOT_FOUND));
 
         post.delete(command.requesterId());
         postRepository.delete(post);

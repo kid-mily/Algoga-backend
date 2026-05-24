@@ -76,11 +76,12 @@ public class PostJpaEntity {
     }
 
     public void update(PostTagType category, String title, String content,
-                       Long countryId, Long lectureId) {
+                       Long countryId, Long lectureId, Integer viewCount) {
         this.title = title;
         this.content = content;
         this.countryId = countryId;
         this.lectureId = lectureId;
+        this.viewCount = viewCount;
     }
 
     public void softDelete() {
