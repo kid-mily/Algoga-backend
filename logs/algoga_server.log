@@ -1602,3 +1602,563 @@ Unconditional classes:
 2026-05-24 21:36:44.136 INFO  [SpringApplicationShutdownHook] o.s.o.j.LocalContainerEntityManagerFactoryBean - Closing JPA EntityManagerFactory for persistence unit 'default'
 2026-05-24 21:36:44.140 INFO  [SpringApplicationShutdownHook] com.zaxxer.hikari.HikariDataSource - HikariPool-1 - Shutdown initiated...
 2026-05-24 21:36:44.152 INFO  [SpringApplicationShutdownHook] com.zaxxer.hikari.HikariDataSource - HikariPool-1 - Shutdown completed.
+2026-05-24 21:55:45.365 INFO  [background-preinit] o.h.validator.internal.util.Version - HV000001: Hibernate Validator 8.0.3.Final
+2026-05-24 21:55:45.413 INFO  [restartedMain] c.k.a.AlgogaServerApplication - Starting AlgogaServerApplication using Java 17.0.18 with PID 29996 (C:\Algoga_backend\build\classes\java\main started by user in C:\Algoga_backend)
+2026-05-24 21:55:45.414 INFO  [restartedMain] c.k.a.AlgogaServerApplication - No active profile set, falling back to 1 default profile: "default"
+2026-05-24 21:55:45.463 INFO  [restartedMain] o.s.b.d.e.DevToolsPropertyDefaultsPostProcessor - Devtools property defaults active! Set 'spring.devtools.add-properties' to 'false' to disable
+2026-05-24 21:55:45.464 INFO  [restartedMain] o.s.b.d.e.DevToolsPropertyDefaultsPostProcessor - For additional web related logging consider setting the 'logging.level.web' property to 'DEBUG'
+2026-05-24 21:55:46.411 INFO  [restartedMain] o.s.d.r.c.RepositoryConfigurationDelegate - Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+2026-05-24 21:55:46.498 INFO  [restartedMain] o.s.d.r.c.RepositoryConfigurationDelegate - Finished Spring Data repository scanning in 77 ms. Found 2 JPA repository interfaces.
+2026-05-24 21:55:47.346 INFO  [restartedMain] o.s.b.w.embedded.tomcat.TomcatWebServer - Tomcat initialized with port 15000 (http)
+2026-05-24 21:55:47.357 INFO  [restartedMain] o.a.coyote.http11.Http11NioProtocol - Initializing ProtocolHandler ["http-nio-15000"]
+2026-05-24 21:55:47.359 INFO  [restartedMain] o.apache.catalina.core.StandardService - Starting service [Tomcat]
+2026-05-24 21:55:47.360 INFO  [restartedMain] o.apache.catalina.core.StandardEngine - Starting Servlet engine: [Apache Tomcat/10.1.54]
+2026-05-24 21:55:47.421 INFO  [restartedMain] o.a.c.c.C.[Tomcat].[localhost].[/] - Initializing Spring embedded WebApplicationContext
+2026-05-24 21:55:47.423 INFO  [restartedMain] o.s.b.w.s.c.ServletWebServerApplicationContext - Root WebApplicationContext: initialization completed in 1958 ms
+2026-05-24 21:55:47.594 INFO  [restartedMain] o.hibernate.jpa.internal.util.LogHelper - HHH000204: Processing PersistenceUnitInfo [name: default]
+2026-05-24 21:55:47.643 INFO  [restartedMain] org.hibernate.Version - HHH000412: Hibernate ORM core version 6.6.49.Final
+2026-05-24 21:55:47.679 INFO  [restartedMain] o.h.c.internal.RegionFactoryInitiator - HHH000026: Second-level cache disabled
+2026-05-24 21:55:48.013 INFO  [restartedMain] o.s.o.j.p.SpringPersistenceUnitInfo - No LoadTimeWeaver setup: ignoring JPA class transformer
+2026-05-24 21:55:48.048 INFO  [restartedMain] com.zaxxer.hikari.HikariDataSource - HikariPool-1 - Starting...
+2026-05-24 21:55:48.319 INFO  [restartedMain] com.zaxxer.hikari.pool.HikariPool - HikariPool-1 - Added connection com.mysql.cj.jdbc.ConnectionImpl@7df4fdfe
+2026-05-24 21:55:48.321 INFO  [restartedMain] com.zaxxer.hikari.HikariDataSource - HikariPool-1 - Start completed.
+2026-05-24 21:55:48.393 INFO  [restartedMain] org.hibernate.orm.connections.pooling - HHH10001005: Database info:
+	Database JDBC URL [Connecting through datasource 'HikariDataSource (HikariPool-1)']
+	Database driver: undefined/unknown
+	Database version: 8.4.8
+	Autocommit mode: undefined/unknown
+	Isolation level: undefined/unknown
+	Minimum pool size: undefined/unknown
+	Maximum pool size: undefined/unknown
+2026-05-24 21:55:49.136 INFO  [restartedMain] o.h.e.t.j.p.i.JtaPlatformInitiator - HHH000489: No JTA platform available (set 'hibernate.transaction.jta.platform' to enable JTA platform integration)
+2026-05-24 21:55:49.201 INFO  [restartedMain] o.s.o.j.LocalContainerEntityManagerFactoryBean - Initialized JPA EntityManagerFactory for persistence unit 'default'
+2026-05-24 21:55:50.177 INFO  [restartedMain] o.s.s.c.a.a.c.InitializeUserDetailsBeanManagerConfigurer$InitializeUserDetailsManagerConfigurer - Global AuthenticationManager configured with UserDetailsService bean with name customUserDetailsService
+2026-05-24 21:55:50.696 INFO  [restartedMain] o.s.b.d.a.OptionalLiveReloadServer - LiveReload server is running on port 35729
+2026-05-24 21:55:50.724 INFO  [restartedMain] o.a.coyote.http11.Http11NioProtocol - Starting ProtocolHandler ["http-nio-15000"]
+2026-05-24 21:55:50.749 INFO  [restartedMain] o.s.b.w.embedded.tomcat.TomcatWebServer - Tomcat started on port 15000 (http) with context path '/'
+2026-05-24 21:55:50.759 INFO  [restartedMain] c.k.a.AlgogaServerApplication - Started AlgogaServerApplication in 5.851 seconds (process running for 6.308)
+2026-05-24 21:55:50.763 WARN  [restartedMain] o.s.core.events.SpringDocAppInitializer - SpringDoc /v3/api-docs endpoint is enabled by default. To disable it in production, set the property 'springdoc.api-docs.enabled=false'
+2026-05-24 21:55:50.763 WARN  [restartedMain] o.s.core.events.SpringDocAppInitializer - SpringDoc /swagger-ui.html endpoint is enabled by default. To disable it in production, set the property 'springdoc.swagger-ui.enabled=false'
+2026-05-24 21:55:58.813 INFO  [http-nio-15000-exec-1] o.a.c.c.C.[Tomcat].[localhost].[/] - Initializing Spring DispatcherServlet 'dispatcherServlet'
+2026-05-24 21:55:58.813 INFO  [http-nio-15000-exec-1] o.s.web.servlet.DispatcherServlet - Initializing Servlet 'dispatcherServlet'
+2026-05-24 21:55:58.817 INFO  [http-nio-15000-exec-1] o.s.web.servlet.DispatcherServlet - Completed initialization in 4 ms
+2026-05-24 21:55:59.958 INFO  [http-nio-15000-exec-9] o.springdoc.api.AbstractOpenApiResource - Init duration for springdoc-openapi is: 677 ms
+2026-05-24 22:04:54.875 INFO  [File Watcher] o.s.b.d.a.LocalDevToolsAutoConfiguration$RestartingClassPathChangeChangedEventListener - Restarting due to 1 class path change (0 additions, 1 deletion, 0 modifications)
+2026-05-24 22:04:54.881 INFO  [Thread-5] o.s.b.w.e.tomcat.GracefulShutdown - Commencing graceful shutdown. Waiting for active requests to complete
+2026-05-24 22:04:54.883 INFO  [tomcat-shutdown] o.a.coyote.http11.Http11NioProtocol - Pausing ProtocolHandler ["http-nio-15000"]
+2026-05-24 22:04:55.158 INFO  [tomcat-shutdown] o.s.b.w.e.tomcat.GracefulShutdown - Graceful shutdown complete
+2026-05-24 22:04:55.159 INFO  [Thread-5] o.a.coyote.http11.Http11NioProtocol - Stopping ProtocolHandler ["http-nio-15000"]
+2026-05-24 22:04:55.165 INFO  [Thread-5] o.s.o.j.LocalContainerEntityManagerFactoryBean - Closing JPA EntityManagerFactory for persistence unit 'default'
+2026-05-24 22:04:55.169 INFO  [Thread-5] com.zaxxer.hikari.HikariDataSource - HikariPool-1 - Shutdown initiated...
+2026-05-24 22:04:55.178 INFO  [Thread-5] com.zaxxer.hikari.HikariDataSource - HikariPool-1 - Shutdown completed.
+2026-05-24 22:04:55.280 INFO  [restartedMain] c.k.a.AlgogaServerApplication - Starting AlgogaServerApplication using Java 17.0.18 with PID 29996 (C:\Algoga_backend\build\classes\java\main started by user in C:\Algoga_backend)
+2026-05-24 22:04:55.280 INFO  [restartedMain] c.k.a.AlgogaServerApplication - No active profile set, falling back to 1 default profile: "default"
+2026-05-24 22:04:55.564 INFO  [restartedMain] o.s.d.r.c.RepositoryConfigurationDelegate - Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+2026-05-24 22:04:55.590 INFO  [restartedMain] o.s.d.r.c.RepositoryConfigurationDelegate - Finished Spring Data repository scanning in 24 ms. Found 2 JPA repository interfaces.
+2026-05-24 22:04:55.809 INFO  [restartedMain] o.s.b.w.embedded.tomcat.TomcatWebServer - Tomcat initialized with port 15000 (http)
+2026-05-24 22:04:55.810 INFO  [restartedMain] o.a.coyote.http11.Http11NioProtocol - Initializing ProtocolHandler ["http-nio-15000"]
+2026-05-24 22:04:55.810 INFO  [restartedMain] o.apache.catalina.core.StandardService - Starting service [Tomcat]
+2026-05-24 22:04:55.810 INFO  [restartedMain] o.apache.catalina.core.StandardEngine - Starting Servlet engine: [Apache Tomcat/10.1.54]
+2026-05-24 22:04:55.831 INFO  [restartedMain] o.a.c.c.C.[Tomcat].[localhost].[/] - Initializing Spring embedded WebApplicationContext
+2026-05-24 22:04:55.831 INFO  [restartedMain] o.s.b.w.s.c.ServletWebServerApplicationContext - Root WebApplicationContext: initialization completed in 549 ms
+2026-05-24 22:04:55.896 INFO  [restartedMain] o.hibernate.jpa.internal.util.LogHelper - HHH000204: Processing PersistenceUnitInfo [name: default]
+2026-05-24 22:04:55.901 INFO  [restartedMain] o.h.c.internal.RegionFactoryInitiator - HHH000026: Second-level cache disabled
+2026-05-24 22:04:55.919 INFO  [restartedMain] o.s.o.j.p.SpringPersistenceUnitInfo - No LoadTimeWeaver setup: ignoring JPA class transformer
+2026-05-24 22:04:55.921 INFO  [restartedMain] com.zaxxer.hikari.HikariDataSource - HikariPool-2 - Starting...
+2026-05-24 22:04:55.939 INFO  [restartedMain] com.zaxxer.hikari.pool.HikariPool - HikariPool-2 - Added connection com.mysql.cj.jdbc.ConnectionImpl@7d85d4d9
+2026-05-24 22:04:55.940 INFO  [restartedMain] com.zaxxer.hikari.HikariDataSource - HikariPool-2 - Start completed.
+2026-05-24 22:04:55.941 INFO  [restartedMain] org.hibernate.orm.connections.pooling - HHH10001005: Database info:
+	Database JDBC URL [Connecting through datasource 'HikariDataSource (HikariPool-2)']
+	Database driver: undefined/unknown
+	Database version: 8.4.8
+	Autocommit mode: undefined/unknown
+	Isolation level: undefined/unknown
+	Minimum pool size: undefined/unknown
+	Maximum pool size: undefined/unknown
+2026-05-24 22:04:55.989 INFO  [restartedMain] o.h.e.t.j.p.i.JtaPlatformInitiator - HHH000489: No JTA platform available (set 'hibernate.transaction.jta.platform' to enable JTA platform integration)
+2026-05-24 22:04:55.996 INFO  [restartedMain] o.s.o.j.LocalContainerEntityManagerFactoryBean - Initialized JPA EntityManagerFactory for persistence unit 'default'
+2026-05-24 22:04:56.281 INFO  [restartedMain] o.s.s.c.a.a.c.InitializeUserDetailsBeanManagerConfigurer$InitializeUserDetailsManagerConfigurer - Global AuthenticationManager configured with UserDetailsService bean with name customUserDetailsService
+2026-05-24 22:04:56.467 INFO  [restartedMain] o.s.b.d.a.OptionalLiveReloadServer - LiveReload server is running on port 35729
+2026-05-24 22:04:56.474 INFO  [restartedMain] o.a.coyote.http11.Http11NioProtocol - Starting ProtocolHandler ["http-nio-15000"]
+2026-05-24 22:04:56.477 INFO  [restartedMain] o.s.b.w.embedded.tomcat.TomcatWebServer - Tomcat started on port 15000 (http) with context path '/'
+2026-05-24 22:04:56.481 INFO  [restartedMain] c.k.a.AlgogaServerApplication - Started AlgogaServerApplication in 1.246 seconds (process running for 552.03)
+2026-05-24 22:04:56.481 WARN  [restartedMain] o.s.core.events.SpringDocAppInitializer - SpringDoc /v3/api-docs endpoint is enabled by default. To disable it in production, set the property 'springdoc.api-docs.enabled=false'
+2026-05-24 22:04:56.481 WARN  [restartedMain] o.s.core.events.SpringDocAppInitializer - SpringDoc /swagger-ui.html endpoint is enabled by default. To disable it in production, set the property 'springdoc.swagger-ui.enabled=false'
+2026-05-24 22:04:56.483 INFO  [restartedMain] o.s.b.d.a.ConditionEvaluationDeltaLoggingListener - Condition evaluation unchanged
+2026-05-24 22:04:57.916 INFO  [File Watcher] o.s.b.d.a.LocalDevToolsAutoConfiguration$RestartingClassPathChangeChangedEventListener - Restarting due to 1 class path change (1 addition, 0 deletions, 0 modifications)
+2026-05-24 22:04:57.918 INFO  [Thread-7] o.s.b.w.e.tomcat.GracefulShutdown - Commencing graceful shutdown. Waiting for active requests to complete
+2026-05-24 22:04:57.919 INFO  [tomcat-shutdown] o.a.coyote.http11.Http11NioProtocol - Pausing ProtocolHandler ["http-nio-15000"]
+2026-05-24 22:04:58.096 INFO  [tomcat-shutdown] o.s.b.w.e.tomcat.GracefulShutdown - Graceful shutdown complete
+2026-05-24 22:04:58.097 INFO  [Thread-7] o.a.coyote.http11.Http11NioProtocol - Stopping ProtocolHandler ["http-nio-15000"]
+2026-05-24 22:04:58.100 INFO  [Thread-7] o.s.o.j.LocalContainerEntityManagerFactoryBean - Closing JPA EntityManagerFactory for persistence unit 'default'
+2026-05-24 22:04:58.100 INFO  [Thread-7] com.zaxxer.hikari.HikariDataSource - HikariPool-2 - Shutdown initiated...
+2026-05-24 22:04:58.105 INFO  [Thread-7] com.zaxxer.hikari.HikariDataSource - HikariPool-2 - Shutdown completed.
+2026-05-24 22:04:58.206 INFO  [restartedMain] c.k.a.AlgogaServerApplication - Starting AlgogaServerApplication using Java 17.0.18 with PID 29996 (C:\Algoga_backend\build\classes\java\main started by user in C:\Algoga_backend)
+2026-05-24 22:04:58.206 INFO  [restartedMain] c.k.a.AlgogaServerApplication - No active profile set, falling back to 1 default profile: "default"
+2026-05-24 22:04:58.469 INFO  [restartedMain] o.s.d.r.c.RepositoryConfigurationDelegate - Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+2026-05-24 22:04:58.500 INFO  [restartedMain] o.s.d.r.c.RepositoryConfigurationDelegate - Finished Spring Data repository scanning in 27 ms. Found 2 JPA repository interfaces.
+2026-05-24 22:04:58.696 INFO  [restartedMain] o.s.b.w.embedded.tomcat.TomcatWebServer - Tomcat initialized with port 15000 (http)
+2026-05-24 22:04:58.697 INFO  [restartedMain] o.a.coyote.http11.Http11NioProtocol - Initializing ProtocolHandler ["http-nio-15000"]
+2026-05-24 22:04:58.697 INFO  [restartedMain] o.apache.catalina.core.StandardService - Starting service [Tomcat]
+2026-05-24 22:04:58.697 INFO  [restartedMain] o.apache.catalina.core.StandardEngine - Starting Servlet engine: [Apache Tomcat/10.1.54]
+2026-05-24 22:04:58.713 INFO  [restartedMain] o.a.c.c.C.[Tomcat].[localhost].[/] - Initializing Spring embedded WebApplicationContext
+2026-05-24 22:04:58.713 INFO  [restartedMain] o.s.b.w.s.c.ServletWebServerApplicationContext - Root WebApplicationContext: initialization completed in 505 ms
+2026-05-24 22:04:58.755 INFO  [restartedMain] o.hibernate.jpa.internal.util.LogHelper - HHH000204: Processing PersistenceUnitInfo [name: default]
+2026-05-24 22:04:58.758 INFO  [restartedMain] o.h.c.internal.RegionFactoryInitiator - HHH000026: Second-level cache disabled
+2026-05-24 22:04:58.762 INFO  [restartedMain] o.s.o.j.p.SpringPersistenceUnitInfo - No LoadTimeWeaver setup: ignoring JPA class transformer
+2026-05-24 22:04:58.763 INFO  [restartedMain] com.zaxxer.hikari.HikariDataSource - HikariPool-3 - Starting...
+2026-05-24 22:04:58.778 INFO  [restartedMain] com.zaxxer.hikari.pool.HikariPool - HikariPool-3 - Added connection com.mysql.cj.jdbc.ConnectionImpl@79ed57de
+2026-05-24 22:04:58.778 INFO  [restartedMain] com.zaxxer.hikari.HikariDataSource - HikariPool-3 - Start completed.
+2026-05-24 22:04:58.779 INFO  [restartedMain] org.hibernate.orm.connections.pooling - HHH10001005: Database info:
+	Database JDBC URL [Connecting through datasource 'HikariDataSource (HikariPool-3)']
+	Database driver: undefined/unknown
+	Database version: 8.4.8
+	Autocommit mode: undefined/unknown
+	Isolation level: undefined/unknown
+	Minimum pool size: undefined/unknown
+	Maximum pool size: undefined/unknown
+2026-05-24 22:04:58.835 INFO  [restartedMain] o.h.e.t.j.p.i.JtaPlatformInitiator - HHH000489: No JTA platform available (set 'hibernate.transaction.jta.platform' to enable JTA platform integration)
+2026-05-24 22:04:58.841 INFO  [restartedMain] o.s.o.j.LocalContainerEntityManagerFactoryBean - Initialized JPA EntityManagerFactory for persistence unit 'default'
+2026-05-24 22:04:59.087 INFO  [restartedMain] o.s.s.c.a.a.c.InitializeUserDetailsBeanManagerConfigurer$InitializeUserDetailsManagerConfigurer - Global AuthenticationManager configured with UserDetailsService bean with name customUserDetailsService
+2026-05-24 22:04:59.242 INFO  [restartedMain] o.s.b.d.a.OptionalLiveReloadServer - LiveReload server is running on port 35729
+2026-05-24 22:04:59.248 INFO  [restartedMain] o.a.coyote.http11.Http11NioProtocol - Starting ProtocolHandler ["http-nio-15000"]
+2026-05-24 22:04:59.250 INFO  [restartedMain] o.s.b.w.embedded.tomcat.TomcatWebServer - Tomcat started on port 15000 (http) with context path '/'
+2026-05-24 22:04:59.253 INFO  [restartedMain] c.k.a.AlgogaServerApplication - Started AlgogaServerApplication in 1.084 seconds (process running for 554.803)
+2026-05-24 22:04:59.254 WARN  [restartedMain] o.s.core.events.SpringDocAppInitializer - SpringDoc /v3/api-docs endpoint is enabled by default. To disable it in production, set the property 'springdoc.api-docs.enabled=false'
+2026-05-24 22:04:59.254 WARN  [restartedMain] o.s.core.events.SpringDocAppInitializer - SpringDoc /swagger-ui.html endpoint is enabled by default. To disable it in production, set the property 'springdoc.swagger-ui.enabled=false'
+2026-05-24 22:04:59.255 INFO  [restartedMain] o.s.b.d.a.ConditionEvaluationDeltaLoggingListener - Condition evaluation unchanged
+2026-05-24 22:05:49.161 INFO  [http-nio-15000-exec-1] o.a.c.c.C.[Tomcat].[localhost].[/] - Initializing Spring DispatcherServlet 'dispatcherServlet'
+2026-05-24 22:05:49.162 INFO  [http-nio-15000-exec-1] o.s.web.servlet.DispatcherServlet - Initializing Servlet 'dispatcherServlet'
+2026-05-24 22:05:49.164 INFO  [http-nio-15000-exec-1] o.s.web.servlet.DispatcherServlet - Completed initialization in 2 ms
+2026-05-24 22:05:49.723 INFO  [http-nio-15000-exec-9] o.springdoc.api.AbstractOpenApiResource - Init duration for springdoc-openapi is: 278 ms
+2026-05-24 22:05:55.618 INFO  [File Watcher] o.s.b.d.a.LocalDevToolsAutoConfiguration$RestartingClassPathChangeChangedEventListener - Restarting due to 1 class path change (0 additions, 1 deletion, 0 modifications)
+2026-05-24 22:05:55.625 INFO  [Thread-11] o.s.b.w.e.tomcat.GracefulShutdown - Commencing graceful shutdown. Waiting for active requests to complete
+2026-05-24 22:05:55.625 INFO  [tomcat-shutdown] o.a.coyote.http11.Http11NioProtocol - Pausing ProtocolHandler ["http-nio-15000"]
+2026-05-24 22:05:56.057 INFO  [tomcat-shutdown] o.s.b.w.e.tomcat.GracefulShutdown - Graceful shutdown complete
+2026-05-24 22:05:56.059 INFO  [Thread-11] o.a.coyote.http11.Http11NioProtocol - Stopping ProtocolHandler ["http-nio-15000"]
+2026-05-24 22:05:56.059 INFO  [Thread-11] o.s.o.j.LocalContainerEntityManagerFactoryBean - Closing JPA EntityManagerFactory for persistence unit 'default'
+2026-05-24 22:05:56.065 INFO  [Thread-11] com.zaxxer.hikari.HikariDataSource - HikariPool-3 - Shutdown initiated...
+2026-05-24 22:05:56.071 INFO  [Thread-11] com.zaxxer.hikari.HikariDataSource - HikariPool-3 - Shutdown completed.
+2026-05-24 22:05:56.243 INFO  [restartedMain] c.k.a.AlgogaServerApplication - Starting AlgogaServerApplication using Java 17.0.18 with PID 29996 (C:\Algoga_backend\build\classes\java\main started by user in C:\Algoga_backend)
+2026-05-24 22:05:56.243 INFO  [restartedMain] c.k.a.AlgogaServerApplication - No active profile set, falling back to 1 default profile: "default"
+2026-05-24 22:05:56.788 INFO  [restartedMain] o.s.d.r.c.RepositoryConfigurationDelegate - Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+2026-05-24 22:05:56.858 INFO  [restartedMain] o.s.d.r.c.RepositoryConfigurationDelegate - Finished Spring Data repository scanning in 67 ms. Found 2 JPA repository interfaces.
+2026-05-24 22:05:57.159 INFO  [restartedMain] o.s.b.w.embedded.tomcat.TomcatWebServer - Tomcat initialized with port 15000 (http)
+2026-05-24 22:05:57.159 INFO  [restartedMain] o.a.coyote.http11.Http11NioProtocol - Initializing ProtocolHandler ["http-nio-15000"]
+2026-05-24 22:05:57.159 INFO  [restartedMain] o.apache.catalina.core.StandardService - Starting service [Tomcat]
+2026-05-24 22:05:57.159 INFO  [restartedMain] o.apache.catalina.core.StandardEngine - Starting Servlet engine: [Apache Tomcat/10.1.54]
+2026-05-24 22:05:57.209 INFO  [restartedMain] o.a.c.c.C.[Tomcat].[localhost].[/] - Initializing Spring embedded WebApplicationContext
+2026-05-24 22:05:57.209 INFO  [restartedMain] o.s.b.w.s.c.ServletWebServerApplicationContext - Root WebApplicationContext: initialization completed in 964 ms
+2026-05-24 22:05:57.349 INFO  [restartedMain] o.hibernate.jpa.internal.util.LogHelper - HHH000204: Processing PersistenceUnitInfo [name: default]
+2026-05-24 22:05:57.357 INFO  [restartedMain] o.h.c.internal.RegionFactoryInitiator - HHH000026: Second-level cache disabled
+2026-05-24 22:05:57.374 INFO  [restartedMain] o.s.o.j.p.SpringPersistenceUnitInfo - No LoadTimeWeaver setup: ignoring JPA class transformer
+2026-05-24 22:05:57.374 INFO  [restartedMain] com.zaxxer.hikari.HikariDataSource - HikariPool-4 - Starting...
+2026-05-24 22:05:57.403 INFO  [restartedMain] com.zaxxer.hikari.pool.HikariPool - HikariPool-4 - Added connection com.mysql.cj.jdbc.ConnectionImpl@61ce036
+2026-05-24 22:05:57.404 INFO  [restartedMain] com.zaxxer.hikari.HikariDataSource - HikariPool-4 - Start completed.
+2026-05-24 22:05:57.405 INFO  [restartedMain] org.hibernate.orm.connections.pooling - HHH10001005: Database info:
+	Database JDBC URL [Connecting through datasource 'HikariDataSource (HikariPool-4)']
+	Database driver: undefined/unknown
+	Database version: 8.4.8
+	Autocommit mode: undefined/unknown
+	Isolation level: undefined/unknown
+	Minimum pool size: undefined/unknown
+	Maximum pool size: undefined/unknown
+2026-05-24 22:05:57.542 INFO  [restartedMain] o.h.e.t.j.p.i.JtaPlatformInitiator - HHH000489: No JTA platform available (set 'hibernate.transaction.jta.platform' to enable JTA platform integration)
+2026-05-24 22:05:57.560 INFO  [restartedMain] o.s.o.j.LocalContainerEntityManagerFactoryBean - Initialized JPA EntityManagerFactory for persistence unit 'default'
+2026-05-24 22:05:58.242 INFO  [restartedMain] o.s.s.c.a.a.c.InitializeUserDetailsBeanManagerConfigurer$InitializeUserDetailsManagerConfigurer - Global AuthenticationManager configured with UserDetailsService bean with name customUserDetailsService
+2026-05-24 22:05:58.675 INFO  [restartedMain] o.s.b.d.a.OptionalLiveReloadServer - LiveReload server is running on port 35729
+2026-05-24 22:05:58.698 INFO  [restartedMain] o.a.coyote.http11.Http11NioProtocol - Starting ProtocolHandler ["http-nio-15000"]
+2026-05-24 22:05:58.709 INFO  [restartedMain] o.s.b.w.embedded.tomcat.TomcatWebServer - Tomcat started on port 15000 (http) with context path '/'
+2026-05-24 22:05:58.725 INFO  [restartedMain] c.k.a.AlgogaServerApplication - Started AlgogaServerApplication in 2.561 seconds (process running for 614.274)
+2026-05-24 22:05:58.725 WARN  [restartedMain] o.s.core.events.SpringDocAppInitializer - SpringDoc /v3/api-docs endpoint is enabled by default. To disable it in production, set the property 'springdoc.api-docs.enabled=false'
+2026-05-24 22:05:58.725 WARN  [restartedMain] o.s.core.events.SpringDocAppInitializer - SpringDoc /swagger-ui.html endpoint is enabled by default. To disable it in production, set the property 'springdoc.swagger-ui.enabled=false'
+2026-05-24 22:05:58.728 INFO  [restartedMain] o.s.b.d.a.ConditionEvaluationDeltaLoggingListener - Condition evaluation unchanged
+2026-05-24 22:06:00.163 INFO  [File Watcher] o.s.b.d.a.LocalDevToolsAutoConfiguration$RestartingClassPathChangeChangedEventListener - Restarting due to 1 class path change (1 addition, 0 deletions, 0 modifications)
+2026-05-24 22:06:00.163 INFO  [Thread-15] o.s.b.w.e.tomcat.GracefulShutdown - Commencing graceful shutdown. Waiting for active requests to complete
+2026-05-24 22:06:00.163 INFO  [tomcat-shutdown] o.a.coyote.http11.Http11NioProtocol - Pausing ProtocolHandler ["http-nio-15000"]
+2026-05-24 22:06:00.592 INFO  [tomcat-shutdown] o.s.b.w.e.tomcat.GracefulShutdown - Graceful shutdown complete
+2026-05-24 22:06:00.594 INFO  [Thread-15] o.a.coyote.http11.Http11NioProtocol - Stopping ProtocolHandler ["http-nio-15000"]
+2026-05-24 22:06:00.596 INFO  [Thread-15] o.s.o.j.LocalContainerEntityManagerFactoryBean - Closing JPA EntityManagerFactory for persistence unit 'default'
+2026-05-24 22:06:00.596 INFO  [Thread-15] com.zaxxer.hikari.HikariDataSource - HikariPool-4 - Shutdown initiated...
+2026-05-24 22:06:00.596 INFO  [Thread-15] com.zaxxer.hikari.HikariDataSource - HikariPool-4 - Shutdown completed.
+2026-05-24 22:06:00.793 INFO  [restartedMain] c.k.a.AlgogaServerApplication - Starting AlgogaServerApplication using Java 17.0.18 with PID 29996 (C:\Algoga_backend\build\classes\java\main started by user in C:\Algoga_backend)
+2026-05-24 22:06:00.793 INFO  [restartedMain] c.k.a.AlgogaServerApplication - No active profile set, falling back to 1 default profile: "default"
+2026-05-24 22:06:01.324 INFO  [restartedMain] o.s.d.r.c.RepositoryConfigurationDelegate - Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+2026-05-24 22:06:01.382 INFO  [restartedMain] o.s.d.r.c.RepositoryConfigurationDelegate - Finished Spring Data repository scanning in 57 ms. Found 2 JPA repository interfaces.
+2026-05-24 22:06:01.641 INFO  [restartedMain] o.s.b.w.embedded.tomcat.TomcatWebServer - Tomcat initialized with port 15000 (http)
+2026-05-24 22:06:01.641 INFO  [restartedMain] o.a.coyote.http11.Http11NioProtocol - Initializing ProtocolHandler ["http-nio-15000"]
+2026-05-24 22:06:01.641 INFO  [restartedMain] o.apache.catalina.core.StandardService - Starting service [Tomcat]
+2026-05-24 22:06:01.641 INFO  [restartedMain] o.apache.catalina.core.StandardEngine - Starting Servlet engine: [Apache Tomcat/10.1.54]
+2026-05-24 22:06:01.697 INFO  [restartedMain] o.a.c.c.C.[Tomcat].[localhost].[/] - Initializing Spring embedded WebApplicationContext
+2026-05-24 22:06:01.697 INFO  [restartedMain] o.s.b.w.s.c.ServletWebServerApplicationContext - Root WebApplicationContext: initialization completed in 904 ms
+2026-05-24 22:06:01.815 INFO  [restartedMain] o.hibernate.jpa.internal.util.LogHelper - HHH000204: Processing PersistenceUnitInfo [name: default]
+2026-05-24 22:06:01.825 INFO  [restartedMain] o.h.c.internal.RegionFactoryInitiator - HHH000026: Second-level cache disabled
+2026-05-24 22:06:01.835 INFO  [restartedMain] o.s.o.j.p.SpringPersistenceUnitInfo - No LoadTimeWeaver setup: ignoring JPA class transformer
+2026-05-24 22:06:01.835 INFO  [restartedMain] com.zaxxer.hikari.HikariDataSource - HikariPool-5 - Starting...
+2026-05-24 22:06:01.858 INFO  [restartedMain] com.zaxxer.hikari.pool.HikariPool - HikariPool-5 - Added connection com.mysql.cj.jdbc.ConnectionImpl@33438af2
+2026-05-24 22:06:01.858 INFO  [restartedMain] com.zaxxer.hikari.HikariDataSource - HikariPool-5 - Start completed.
+2026-05-24 22:06:01.858 INFO  [restartedMain] org.hibernate.orm.connections.pooling - HHH10001005: Database info:
+	Database JDBC URL [Connecting through datasource 'HikariDataSource (HikariPool-5)']
+	Database driver: undefined/unknown
+	Database version: 8.4.8
+	Autocommit mode: undefined/unknown
+	Isolation level: undefined/unknown
+	Minimum pool size: undefined/unknown
+	Maximum pool size: undefined/unknown
+2026-05-24 22:06:01.975 INFO  [restartedMain] o.h.e.t.j.p.i.JtaPlatformInitiator - HHH000489: No JTA platform available (set 'hibernate.transaction.jta.platform' to enable JTA platform integration)
+2026-05-24 22:06:01.998 INFO  [restartedMain] o.s.o.j.LocalContainerEntityManagerFactoryBean - Initialized JPA EntityManagerFactory for persistence unit 'default'
+2026-05-24 22:06:02.683 INFO  [restartedMain] o.s.s.c.a.a.c.InitializeUserDetailsBeanManagerConfigurer$InitializeUserDetailsManagerConfigurer - Global AuthenticationManager configured with UserDetailsService bean with name customUserDetailsService
+2026-05-24 22:06:03.175 INFO  [restartedMain] o.s.b.d.a.OptionalLiveReloadServer - LiveReload server is running on port 35729
+2026-05-24 22:06:03.194 INFO  [restartedMain] o.a.coyote.http11.Http11NioProtocol - Starting ProtocolHandler ["http-nio-15000"]
+2026-05-24 22:06:03.219 INFO  [restartedMain] o.s.b.w.embedded.tomcat.TomcatWebServer - Tomcat started on port 15000 (http) with context path '/'
+2026-05-24 22:06:03.227 INFO  [restartedMain] c.k.a.AlgogaServerApplication - Started AlgogaServerApplication in 2.502 seconds (process running for 618.783)
+2026-05-24 22:06:03.227 WARN  [restartedMain] o.s.core.events.SpringDocAppInitializer - SpringDoc /v3/api-docs endpoint is enabled by default. To disable it in production, set the property 'springdoc.api-docs.enabled=false'
+2026-05-24 22:06:03.227 WARN  [restartedMain] o.s.core.events.SpringDocAppInitializer - SpringDoc /swagger-ui.html endpoint is enabled by default. To disable it in production, set the property 'springdoc.swagger-ui.enabled=false'
+2026-05-24 22:06:03.227 INFO  [restartedMain] o.s.b.d.a.ConditionEvaluationDeltaLoggingListener - Condition evaluation unchanged
+2026-05-24 22:08:59.620 INFO  [File Watcher] o.s.b.d.a.LocalDevToolsAutoConfiguration$RestartingClassPathChangeChangedEventListener - Restarting due to 1 class path change (0 additions, 1 deletion, 0 modifications)
+2026-05-24 22:08:59.620 INFO  [Thread-19] o.s.b.w.e.tomcat.GracefulShutdown - Commencing graceful shutdown. Waiting for active requests to complete
+2026-05-24 22:08:59.620 INFO  [tomcat-shutdown] o.a.coyote.http11.Http11NioProtocol - Pausing ProtocolHandler ["http-nio-15000"]
+2026-05-24 22:08:59.775 INFO  [tomcat-shutdown] o.s.b.w.e.tomcat.GracefulShutdown - Graceful shutdown complete
+2026-05-24 22:08:59.775 INFO  [Thread-19] o.a.coyote.http11.Http11NioProtocol - Stopping ProtocolHandler ["http-nio-15000"]
+2026-05-24 22:08:59.775 INFO  [Thread-19] o.s.o.j.LocalContainerEntityManagerFactoryBean - Closing JPA EntityManagerFactory for persistence unit 'default'
+2026-05-24 22:08:59.775 INFO  [Thread-19] com.zaxxer.hikari.HikariDataSource - HikariPool-5 - Shutdown initiated...
+2026-05-24 22:08:59.787 INFO  [Thread-19] com.zaxxer.hikari.HikariDataSource - HikariPool-5 - Shutdown completed.
+2026-05-24 22:08:59.861 INFO  [restartedMain] c.k.a.AlgogaServerApplication - Starting AlgogaServerApplication using Java 17.0.18 with PID 29996 (C:\Algoga_backend\build\classes\java\main started by user in C:\Algoga_backend)
+2026-05-24 22:08:59.861 INFO  [restartedMain] c.k.a.AlgogaServerApplication - No active profile set, falling back to 1 default profile: "default"
+2026-05-24 22:09:00.083 INFO  [restartedMain] o.s.d.r.c.RepositoryConfigurationDelegate - Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+2026-05-24 22:09:00.122 INFO  [restartedMain] o.s.d.r.c.RepositoryConfigurationDelegate - Finished Spring Data repository scanning in 26 ms. Found 2 JPA repository interfaces.
+2026-05-24 22:09:00.242 INFO  [restartedMain] o.s.b.w.embedded.tomcat.TomcatWebServer - Tomcat initialized with port 15000 (http)
+2026-05-24 22:09:00.242 INFO  [restartedMain] o.a.coyote.http11.Http11NioProtocol - Initializing ProtocolHandler ["http-nio-15000"]
+2026-05-24 22:09:00.242 INFO  [restartedMain] o.apache.catalina.core.StandardService - Starting service [Tomcat]
+2026-05-24 22:09:00.242 INFO  [restartedMain] o.apache.catalina.core.StandardEngine - Starting Servlet engine: [Apache Tomcat/10.1.54]
+2026-05-24 22:09:00.276 INFO  [restartedMain] o.a.c.c.C.[Tomcat].[localhost].[/] - Initializing Spring embedded WebApplicationContext
+2026-05-24 22:09:00.276 INFO  [restartedMain] o.s.b.w.s.c.ServletWebServerApplicationContext - Root WebApplicationContext: initialization completed in 415 ms
+2026-05-24 22:09:00.321 INFO  [restartedMain] o.hibernate.jpa.internal.util.LogHelper - HHH000204: Processing PersistenceUnitInfo [name: default]
+2026-05-24 22:09:00.337 INFO  [restartedMain] o.h.c.internal.RegionFactoryInitiator - HHH000026: Second-level cache disabled
+2026-05-24 22:09:00.337 INFO  [restartedMain] o.s.o.j.p.SpringPersistenceUnitInfo - No LoadTimeWeaver setup: ignoring JPA class transformer
+2026-05-24 22:09:00.337 INFO  [restartedMain] com.zaxxer.hikari.HikariDataSource - HikariPool-6 - Starting...
+2026-05-24 22:09:00.353 INFO  [restartedMain] com.zaxxer.hikari.pool.HikariPool - HikariPool-6 - Added connection com.mysql.cj.jdbc.ConnectionImpl@5348719b
+2026-05-24 22:09:00.353 INFO  [restartedMain] com.zaxxer.hikari.HikariDataSource - HikariPool-6 - Start completed.
+2026-05-24 22:09:00.353 INFO  [restartedMain] org.hibernate.orm.connections.pooling - HHH10001005: Database info:
+	Database JDBC URL [Connecting through datasource 'HikariDataSource (HikariPool-6)']
+	Database driver: undefined/unknown
+	Database version: 8.4.8
+	Autocommit mode: undefined/unknown
+	Isolation level: undefined/unknown
+	Minimum pool size: undefined/unknown
+	Maximum pool size: undefined/unknown
+2026-05-24 22:09:00.420 INFO  [restartedMain] o.h.e.t.j.p.i.JtaPlatformInitiator - HHH000489: No JTA platform available (set 'hibernate.transaction.jta.platform' to enable JTA platform integration)
+2026-05-24 22:09:00.420 INFO  [restartedMain] o.s.o.j.LocalContainerEntityManagerFactoryBean - Initialized JPA EntityManagerFactory for persistence unit 'default'
+2026-05-24 22:09:00.730 INFO  [restartedMain] o.s.s.c.a.a.c.InitializeUserDetailsBeanManagerConfigurer$InitializeUserDetailsManagerConfigurer - Global AuthenticationManager configured with UserDetailsService bean with name customUserDetailsService
+2026-05-24 22:09:00.983 INFO  [restartedMain] o.s.b.d.a.OptionalLiveReloadServer - LiveReload server is running on port 35729
+2026-05-24 22:09:00.995 INFO  [restartedMain] o.a.coyote.http11.Http11NioProtocol - Starting ProtocolHandler ["http-nio-15000"]
+2026-05-24 22:09:00.999 INFO  [restartedMain] o.s.b.w.embedded.tomcat.TomcatWebServer - Tomcat started on port 15000 (http) with context path '/'
+2026-05-24 22:09:00.999 INFO  [restartedMain] c.k.a.AlgogaServerApplication - Started AlgogaServerApplication in 1.156 seconds (process running for 796.552)
+2026-05-24 22:09:00.999 WARN  [restartedMain] o.s.core.events.SpringDocAppInitializer - SpringDoc /v3/api-docs endpoint is enabled by default. To disable it in production, set the property 'springdoc.api-docs.enabled=false'
+2026-05-24 22:09:00.999 WARN  [restartedMain] o.s.core.events.SpringDocAppInitializer - SpringDoc /swagger-ui.html endpoint is enabled by default. To disable it in production, set the property 'springdoc.swagger-ui.enabled=false'
+2026-05-24 22:09:00.999 INFO  [restartedMain] o.s.b.d.a.ConditionEvaluationDeltaLoggingListener - Condition evaluation unchanged
+2026-05-24 22:09:02.415 INFO  [File Watcher] o.s.b.d.a.LocalDevToolsAutoConfiguration$RestartingClassPathChangeChangedEventListener - Restarting due to 1 class path change (1 addition, 0 deletions, 0 modifications)
+2026-05-24 22:09:02.415 INFO  [Thread-23] o.s.b.w.e.tomcat.GracefulShutdown - Commencing graceful shutdown. Waiting for active requests to complete
+2026-05-24 22:09:02.415 INFO  [tomcat-shutdown] o.a.coyote.http11.Http11NioProtocol - Pausing ProtocolHandler ["http-nio-15000"]
+2026-05-24 22:09:02.642 INFO  [tomcat-shutdown] o.s.b.w.e.tomcat.GracefulShutdown - Graceful shutdown complete
+2026-05-24 22:09:02.642 INFO  [Thread-23] o.a.coyote.http11.Http11NioProtocol - Stopping ProtocolHandler ["http-nio-15000"]
+2026-05-24 22:09:02.657 INFO  [Thread-23] o.s.o.j.LocalContainerEntityManagerFactoryBean - Closing JPA EntityManagerFactory for persistence unit 'default'
+2026-05-24 22:09:02.657 INFO  [Thread-23] com.zaxxer.hikari.HikariDataSource - HikariPool-6 - Shutdown initiated...
+2026-05-24 22:09:02.657 INFO  [Thread-23] com.zaxxer.hikari.HikariDataSource - HikariPool-6 - Shutdown completed.
+2026-05-24 22:09:02.781 INFO  [restartedMain] c.k.a.AlgogaServerApplication - Starting AlgogaServerApplication using Java 17.0.18 with PID 29996 (C:\Algoga_backend\build\classes\java\main started by user in C:\Algoga_backend)
+2026-05-24 22:09:02.781 INFO  [restartedMain] c.k.a.AlgogaServerApplication - No active profile set, falling back to 1 default profile: "default"
+2026-05-24 22:09:03.023 INFO  [restartedMain] o.s.d.r.c.RepositoryConfigurationDelegate - Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+2026-05-24 22:09:03.056 INFO  [restartedMain] o.s.d.r.c.RepositoryConfigurationDelegate - Finished Spring Data repository scanning in 22 ms. Found 2 JPA repository interfaces.
+2026-05-24 22:09:03.183 INFO  [restartedMain] o.s.b.w.embedded.tomcat.TomcatWebServer - Tomcat initialized with port 15000 (http)
+2026-05-24 22:09:03.183 INFO  [restartedMain] o.a.coyote.http11.Http11NioProtocol - Initializing ProtocolHandler ["http-nio-15000"]
+2026-05-24 22:09:03.183 INFO  [restartedMain] o.apache.catalina.core.StandardService - Starting service [Tomcat]
+2026-05-24 22:09:03.183 INFO  [restartedMain] o.apache.catalina.core.StandardEngine - Starting Servlet engine: [Apache Tomcat/10.1.54]
+2026-05-24 22:09:03.218 INFO  [restartedMain] o.a.c.c.C.[Tomcat].[localhost].[/] - Initializing Spring embedded WebApplicationContext
+2026-05-24 22:09:03.218 INFO  [restartedMain] o.s.b.w.s.c.ServletWebServerApplicationContext - Root WebApplicationContext: initialization completed in 434 ms
+2026-05-24 22:09:03.281 INFO  [restartedMain] o.hibernate.jpa.internal.util.LogHelper - HHH000204: Processing PersistenceUnitInfo [name: default]
+2026-05-24 22:09:03.281 INFO  [restartedMain] o.h.c.internal.RegionFactoryInitiator - HHH000026: Second-level cache disabled
+2026-05-24 22:09:03.294 INFO  [restartedMain] o.s.o.j.p.SpringPersistenceUnitInfo - No LoadTimeWeaver setup: ignoring JPA class transformer
+2026-05-24 22:09:03.294 INFO  [restartedMain] com.zaxxer.hikari.HikariDataSource - HikariPool-7 - Starting...
+2026-05-24 22:09:03.310 INFO  [restartedMain] com.zaxxer.hikari.pool.HikariPool - HikariPool-7 - Added connection com.mysql.cj.jdbc.ConnectionImpl@68d2905
+2026-05-24 22:09:03.310 INFO  [restartedMain] com.zaxxer.hikari.HikariDataSource - HikariPool-7 - Start completed.
+2026-05-24 22:09:03.310 INFO  [restartedMain] org.hibernate.orm.connections.pooling - HHH10001005: Database info:
+	Database JDBC URL [Connecting through datasource 'HikariDataSource (HikariPool-7)']
+	Database driver: undefined/unknown
+	Database version: 8.4.8
+	Autocommit mode: undefined/unknown
+	Isolation level: undefined/unknown
+	Minimum pool size: undefined/unknown
+	Maximum pool size: undefined/unknown
+2026-05-24 22:09:03.422 INFO  [restartedMain] o.h.e.t.j.p.i.JtaPlatformInitiator - HHH000489: No JTA platform available (set 'hibernate.transaction.jta.platform' to enable JTA platform integration)
+2026-05-24 22:09:03.434 INFO  [restartedMain] o.s.o.j.LocalContainerEntityManagerFactoryBean - Initialized JPA EntityManagerFactory for persistence unit 'default'
+2026-05-24 22:09:04.213 INFO  [restartedMain] o.s.s.c.a.a.c.InitializeUserDetailsBeanManagerConfigurer$InitializeUserDetailsManagerConfigurer - Global AuthenticationManager configured with UserDetailsService bean with name customUserDetailsService
+2026-05-24 22:09:04.716 INFO  [restartedMain] o.s.b.d.a.OptionalLiveReloadServer - LiveReload server is running on port 35729
+2026-05-24 22:09:04.741 INFO  [restartedMain] o.a.coyote.http11.Http11NioProtocol - Starting ProtocolHandler ["http-nio-15000"]
+2026-05-24 22:09:04.743 INFO  [restartedMain] o.s.b.w.embedded.tomcat.TomcatWebServer - Tomcat started on port 15000 (http) with context path '/'
+2026-05-24 22:09:04.756 INFO  [restartedMain] c.k.a.AlgogaServerApplication - Started AlgogaServerApplication in 2.019 seconds (process running for 800.305)
+2026-05-24 22:09:04.756 WARN  [restartedMain] o.s.core.events.SpringDocAppInitializer - SpringDoc /v3/api-docs endpoint is enabled by default. To disable it in production, set the property 'springdoc.api-docs.enabled=false'
+2026-05-24 22:09:04.758 WARN  [restartedMain] o.s.core.events.SpringDocAppInitializer - SpringDoc /swagger-ui.html endpoint is enabled by default. To disable it in production, set the property 'springdoc.swagger-ui.enabled=false'
+2026-05-24 22:09:04.759 INFO  [restartedMain] o.s.b.d.a.ConditionEvaluationDeltaLoggingListener - Condition evaluation unchanged
+2026-05-24 22:09:06.187 INFO  [File Watcher] o.s.b.d.a.LocalDevToolsAutoConfiguration$RestartingClassPathChangeChangedEventListener - Restarting due to 1 class path change (0 additions, 1 deletion, 0 modifications)
+2026-05-24 22:09:06.190 INFO  [Thread-27] o.s.b.w.e.tomcat.GracefulShutdown - Commencing graceful shutdown. Waiting for active requests to complete
+2026-05-24 22:09:06.190 INFO  [tomcat-shutdown] o.a.coyote.http11.Http11NioProtocol - Pausing ProtocolHandler ["http-nio-15000"]
+2026-05-24 22:09:06.590 INFO  [tomcat-shutdown] o.s.b.w.e.tomcat.GracefulShutdown - Graceful shutdown complete
+2026-05-24 22:09:06.590 INFO  [Thread-27] o.a.coyote.http11.Http11NioProtocol - Stopping ProtocolHandler ["http-nio-15000"]
+2026-05-24 22:09:06.607 INFO  [Thread-27] o.s.o.j.LocalContainerEntityManagerFactoryBean - Closing JPA EntityManagerFactory for persistence unit 'default'
+2026-05-24 22:09:06.607 INFO  [Thread-27] com.zaxxer.hikari.HikariDataSource - HikariPool-7 - Shutdown initiated...
+2026-05-24 22:09:06.613 INFO  [Thread-27] com.zaxxer.hikari.HikariDataSource - HikariPool-7 - Shutdown completed.
+2026-05-24 22:09:06.854 INFO  [restartedMain] c.k.a.AlgogaServerApplication - Starting AlgogaServerApplication using Java 17.0.18 with PID 29996 (C:\Algoga_backend\build\classes\java\main started by user in C:\Algoga_backend)
+2026-05-24 22:09:06.854 INFO  [restartedMain] c.k.a.AlgogaServerApplication - No active profile set, falling back to 1 default profile: "default"
+2026-05-24 22:09:07.423 INFO  [restartedMain] o.s.d.r.c.RepositoryConfigurationDelegate - Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+2026-05-24 22:09:07.487 INFO  [restartedMain] o.s.d.r.c.RepositoryConfigurationDelegate - Finished Spring Data repository scanning in 60 ms. Found 2 JPA repository interfaces.
+2026-05-24 22:09:07.740 INFO  [restartedMain] o.s.b.w.embedded.tomcat.TomcatWebServer - Tomcat initialized with port 15000 (http)
+2026-05-24 22:09:07.740 INFO  [restartedMain] o.a.coyote.http11.Http11NioProtocol - Initializing ProtocolHandler ["http-nio-15000"]
+2026-05-24 22:09:07.740 INFO  [restartedMain] o.apache.catalina.core.StandardService - Starting service [Tomcat]
+2026-05-24 22:09:07.740 INFO  [restartedMain] o.apache.catalina.core.StandardEngine - Starting Servlet engine: [Apache Tomcat/10.1.54]
+2026-05-24 22:09:07.790 INFO  [restartedMain] o.a.c.c.C.[Tomcat].[localhost].[/] - Initializing Spring embedded WebApplicationContext
+2026-05-24 22:09:07.790 INFO  [restartedMain] o.s.b.w.s.c.ServletWebServerApplicationContext - Root WebApplicationContext: initialization completed in 933 ms
+2026-05-24 22:09:07.929 INFO  [restartedMain] o.hibernate.jpa.internal.util.LogHelper - HHH000204: Processing PersistenceUnitInfo [name: default]
+2026-05-24 22:09:07.933 INFO  [restartedMain] o.h.c.internal.RegionFactoryInitiator - HHH000026: Second-level cache disabled
+2026-05-24 22:09:07.953 INFO  [restartedMain] o.s.o.j.p.SpringPersistenceUnitInfo - No LoadTimeWeaver setup: ignoring JPA class transformer
+2026-05-24 22:09:07.955 INFO  [restartedMain] com.zaxxer.hikari.HikariDataSource - HikariPool-8 - Starting...
+2026-05-24 22:09:07.975 INFO  [restartedMain] com.zaxxer.hikari.pool.HikariPool - HikariPool-8 - Added connection com.mysql.cj.jdbc.ConnectionImpl@64b161eb
+2026-05-24 22:09:07.975 INFO  [restartedMain] com.zaxxer.hikari.HikariDataSource - HikariPool-8 - Start completed.
+2026-05-24 22:09:07.975 INFO  [restartedMain] org.hibernate.orm.connections.pooling - HHH10001005: Database info:
+	Database JDBC URL [Connecting through datasource 'HikariDataSource (HikariPool-8)']
+	Database driver: undefined/unknown
+	Database version: 8.4.8
+	Autocommit mode: undefined/unknown
+	Isolation level: undefined/unknown
+	Minimum pool size: undefined/unknown
+	Maximum pool size: undefined/unknown
+2026-05-24 22:09:08.118 INFO  [restartedMain] o.h.e.t.j.p.i.JtaPlatformInitiator - HHH000489: No JTA platform available (set 'hibernate.transaction.jta.platform' to enable JTA platform integration)
+2026-05-24 22:09:08.124 INFO  [restartedMain] o.s.o.j.LocalContainerEntityManagerFactoryBean - Initialized JPA EntityManagerFactory for persistence unit 'default'
+2026-05-24 22:09:08.814 INFO  [restartedMain] o.s.s.c.a.a.c.InitializeUserDetailsBeanManagerConfigurer$InitializeUserDetailsManagerConfigurer - Global AuthenticationManager configured with UserDetailsService bean with name customUserDetailsService
+2026-05-24 22:09:09.557 INFO  [restartedMain] o.s.b.d.a.OptionalLiveReloadServer - LiveReload server is running on port 35729
+2026-05-24 22:09:09.582 INFO  [restartedMain] o.a.coyote.http11.Http11NioProtocol - Starting ProtocolHandler ["http-nio-15000"]
+2026-05-24 22:09:09.587 INFO  [restartedMain] o.s.b.w.embedded.tomcat.TomcatWebServer - Tomcat started on port 15000 (http) with context path '/'
+2026-05-24 22:09:09.598 INFO  [restartedMain] c.k.a.AlgogaServerApplication - Started AlgogaServerApplication in 2.848 seconds (process running for 805.15)
+2026-05-24 22:09:09.598 WARN  [restartedMain] o.s.core.events.SpringDocAppInitializer - SpringDoc /v3/api-docs endpoint is enabled by default. To disable it in production, set the property 'springdoc.api-docs.enabled=false'
+2026-05-24 22:09:09.602 WARN  [restartedMain] o.s.core.events.SpringDocAppInitializer - SpringDoc /swagger-ui.html endpoint is enabled by default. To disable it in production, set the property 'springdoc.swagger-ui.enabled=false'
+2026-05-24 22:09:09.604 INFO  [restartedMain] o.s.b.d.a.ConditionEvaluationDeltaLoggingListener - Condition evaluation unchanged
+2026-05-24 22:09:11.034 INFO  [File Watcher] o.s.b.d.a.LocalDevToolsAutoConfiguration$RestartingClassPathChangeChangedEventListener - Restarting due to 1 class path change (1 addition, 0 deletions, 0 modifications)
+2026-05-24 22:09:11.038 INFO  [Thread-31] o.s.b.w.e.tomcat.GracefulShutdown - Commencing graceful shutdown. Waiting for active requests to complete
+2026-05-24 22:09:11.038 INFO  [tomcat-shutdown] o.a.coyote.http11.Http11NioProtocol - Pausing ProtocolHandler ["http-nio-15000"]
+2026-05-24 22:09:11.447 INFO  [tomcat-shutdown] o.s.b.w.e.tomcat.GracefulShutdown - Graceful shutdown complete
+2026-05-24 22:09:11.447 INFO  [Thread-31] o.a.coyote.http11.Http11NioProtocol - Stopping ProtocolHandler ["http-nio-15000"]
+2026-05-24 22:09:11.447 INFO  [Thread-31] o.s.o.j.LocalContainerEntityManagerFactoryBean - Closing JPA EntityManagerFactory for persistence unit 'default'
+2026-05-24 22:09:11.454 INFO  [Thread-31] com.zaxxer.hikari.HikariDataSource - HikariPool-8 - Shutdown initiated...
+2026-05-24 22:09:11.457 INFO  [Thread-31] com.zaxxer.hikari.HikariDataSource - HikariPool-8 - Shutdown completed.
+2026-05-24 22:09:11.632 INFO  [restartedMain] c.k.a.AlgogaServerApplication - Starting AlgogaServerApplication using Java 17.0.18 with PID 29996 (C:\Algoga_backend\build\classes\java\main started by user in C:\Algoga_backend)
+2026-05-24 22:09:11.632 INFO  [restartedMain] c.k.a.AlgogaServerApplication - No active profile set, falling back to 1 default profile: "default"
+2026-05-24 22:09:12.138 INFO  [restartedMain] o.s.d.r.c.RepositoryConfigurationDelegate - Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+2026-05-24 22:09:12.188 INFO  [restartedMain] o.s.d.r.c.RepositoryConfigurationDelegate - Finished Spring Data repository scanning in 55 ms. Found 2 JPA repository interfaces.
+2026-05-24 22:09:12.471 INFO  [restartedMain] o.s.b.w.embedded.tomcat.TomcatWebServer - Tomcat initialized with port 15000 (http)
+2026-05-24 22:09:12.471 INFO  [restartedMain] o.a.coyote.http11.Http11NioProtocol - Initializing ProtocolHandler ["http-nio-15000"]
+2026-05-24 22:09:12.471 INFO  [restartedMain] o.apache.catalina.core.StandardService - Starting service [Tomcat]
+2026-05-24 22:09:12.471 INFO  [restartedMain] o.apache.catalina.core.StandardEngine - Starting Servlet engine: [Apache Tomcat/10.1.54]
+2026-05-24 22:09:12.529 INFO  [restartedMain] o.a.c.c.C.[Tomcat].[localhost].[/] - Initializing Spring embedded WebApplicationContext
+2026-05-24 22:09:12.529 INFO  [restartedMain] o.s.b.w.s.c.ServletWebServerApplicationContext - Root WebApplicationContext: initialization completed in 892 ms
+2026-05-24 22:09:12.654 INFO  [restartedMain] o.hibernate.jpa.internal.util.LogHelper - HHH000204: Processing PersistenceUnitInfo [name: default]
+2026-05-24 22:09:12.664 INFO  [restartedMain] o.h.c.internal.RegionFactoryInitiator - HHH000026: Second-level cache disabled
+2026-05-24 22:09:12.681 INFO  [restartedMain] o.s.o.j.p.SpringPersistenceUnitInfo - No LoadTimeWeaver setup: ignoring JPA class transformer
+2026-05-24 22:09:12.685 INFO  [restartedMain] com.zaxxer.hikari.HikariDataSource - HikariPool-9 - Starting...
+2026-05-24 22:09:12.704 INFO  [restartedMain] com.zaxxer.hikari.pool.HikariPool - HikariPool-9 - Added connection com.mysql.cj.jdbc.ConnectionImpl@261aedc9
+2026-05-24 22:09:12.704 INFO  [restartedMain] com.zaxxer.hikari.HikariDataSource - HikariPool-9 - Start completed.
+2026-05-24 22:09:12.704 INFO  [restartedMain] org.hibernate.orm.connections.pooling - HHH10001005: Database info:
+	Database JDBC URL [Connecting through datasource 'HikariDataSource (HikariPool-9)']
+	Database driver: undefined/unknown
+	Database version: 8.4.8
+	Autocommit mode: undefined/unknown
+	Isolation level: undefined/unknown
+	Minimum pool size: undefined/unknown
+	Maximum pool size: undefined/unknown
+2026-05-24 22:09:12.821 INFO  [restartedMain] o.h.e.t.j.p.i.JtaPlatformInitiator - HHH000489: No JTA platform available (set 'hibernate.transaction.jta.platform' to enable JTA platform integration)
+2026-05-24 22:09:12.828 INFO  [restartedMain] o.s.o.j.LocalContainerEntityManagerFactoryBean - Initialized JPA EntityManagerFactory for persistence unit 'default'
+2026-05-24 22:09:13.499 INFO  [restartedMain] o.s.s.c.a.a.c.InitializeUserDetailsBeanManagerConfigurer$InitializeUserDetailsManagerConfigurer - Global AuthenticationManager configured with UserDetailsService bean with name customUserDetailsService
+2026-05-24 22:09:13.940 INFO  [restartedMain] o.s.b.d.a.OptionalLiveReloadServer - LiveReload server is running on port 35729
+2026-05-24 22:09:13.961 INFO  [restartedMain] o.a.coyote.http11.Http11NioProtocol - Starting ProtocolHandler ["http-nio-15000"]
+2026-05-24 22:09:13.973 INFO  [restartedMain] o.s.b.w.embedded.tomcat.TomcatWebServer - Tomcat started on port 15000 (http) with context path '/'
+2026-05-24 22:09:13.983 INFO  [restartedMain] c.k.a.AlgogaServerApplication - Started AlgogaServerApplication in 2.419 seconds (process running for 809.532)
+2026-05-24 22:09:13.983 WARN  [restartedMain] o.s.core.events.SpringDocAppInitializer - SpringDoc /v3/api-docs endpoint is enabled by default. To disable it in production, set the property 'springdoc.api-docs.enabled=false'
+2026-05-24 22:09:13.983 WARN  [restartedMain] o.s.core.events.SpringDocAppInitializer - SpringDoc /swagger-ui.html endpoint is enabled by default. To disable it in production, set the property 'springdoc.swagger-ui.enabled=false'
+2026-05-24 22:09:13.987 INFO  [restartedMain] o.s.b.d.a.ConditionEvaluationDeltaLoggingListener - Condition evaluation unchanged
+2026-05-24 22:12:15.456 INFO  [File Watcher] o.s.b.d.a.LocalDevToolsAutoConfiguration$RestartingClassPathChangeChangedEventListener - Restarting due to 1 class path change (0 additions, 1 deletion, 0 modifications)
+2026-05-24 22:12:15.458 INFO  [Thread-35] o.s.b.w.e.tomcat.GracefulShutdown - Commencing graceful shutdown. Waiting for active requests to complete
+2026-05-24 22:12:15.459 INFO  [tomcat-shutdown] o.a.coyote.http11.Http11NioProtocol - Pausing ProtocolHandler ["http-nio-15000"]
+2026-05-24 22:12:15.719 INFO  [tomcat-shutdown] o.s.b.w.e.tomcat.GracefulShutdown - Graceful shutdown complete
+2026-05-24 22:12:15.720 INFO  [Thread-35] o.a.coyote.http11.Http11NioProtocol - Stopping ProtocolHandler ["http-nio-15000"]
+2026-05-24 22:12:15.722 INFO  [Thread-35] o.s.o.j.LocalContainerEntityManagerFactoryBean - Closing JPA EntityManagerFactory for persistence unit 'default'
+2026-05-24 22:12:15.722 INFO  [Thread-35] com.zaxxer.hikari.HikariDataSource - HikariPool-9 - Shutdown initiated...
+2026-05-24 22:12:15.729 INFO  [Thread-35] com.zaxxer.hikari.HikariDataSource - HikariPool-9 - Shutdown completed.
+2026-05-24 22:12:15.928 INFO  [restartedMain] c.k.a.AlgogaServerApplication - Starting AlgogaServerApplication using Java 17.0.18 with PID 29996 (C:\Algoga_backend\build\classes\java\main started by user in C:\Algoga_backend)
+2026-05-24 22:12:15.928 INFO  [restartedMain] c.k.a.AlgogaServerApplication - No active profile set, falling back to 1 default profile: "default"
+2026-05-24 22:12:16.438 INFO  [restartedMain] o.s.d.r.c.RepositoryConfigurationDelegate - Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+2026-05-24 22:12:16.512 INFO  [restartedMain] o.s.d.r.c.RepositoryConfigurationDelegate - Finished Spring Data repository scanning in 67 ms. Found 2 JPA repository interfaces.
+2026-05-24 22:12:16.819 INFO  [restartedMain] o.s.b.w.embedded.tomcat.TomcatWebServer - Tomcat initialized with port 15000 (http)
+2026-05-24 22:12:16.820 INFO  [restartedMain] o.a.coyote.http11.Http11NioProtocol - Initializing ProtocolHandler ["http-nio-15000"]
+2026-05-24 22:12:16.822 INFO  [restartedMain] o.apache.catalina.core.StandardService - Starting service [Tomcat]
+2026-05-24 22:12:16.822 INFO  [restartedMain] o.apache.catalina.core.StandardEngine - Starting Servlet engine: [Apache Tomcat/10.1.54]
+2026-05-24 22:12:16.874 INFO  [restartedMain] o.a.c.c.C.[Tomcat].[localhost].[/] - Initializing Spring embedded WebApplicationContext
+2026-05-24 22:12:16.874 INFO  [restartedMain] o.s.b.w.s.c.ServletWebServerApplicationContext - Root WebApplicationContext: initialization completed in 944 ms
+2026-05-24 22:12:17.002 INFO  [restartedMain] o.hibernate.jpa.internal.util.LogHelper - HHH000204: Processing PersistenceUnitInfo [name: default]
+2026-05-24 22:12:17.005 INFO  [restartedMain] o.h.c.internal.RegionFactoryInitiator - HHH000026: Second-level cache disabled
+2026-05-24 22:12:17.029 INFO  [restartedMain] o.s.o.j.p.SpringPersistenceUnitInfo - No LoadTimeWeaver setup: ignoring JPA class transformer
+2026-05-24 22:12:17.029 INFO  [restartedMain] com.zaxxer.hikari.HikariDataSource - HikariPool-10 - Starting...
+2026-05-24 22:12:17.057 INFO  [restartedMain] com.zaxxer.hikari.pool.HikariPool - HikariPool-10 - Added connection com.mysql.cj.jdbc.ConnectionImpl@718b3dec
+2026-05-24 22:12:17.057 INFO  [restartedMain] com.zaxxer.hikari.HikariDataSource - HikariPool-10 - Start completed.
+2026-05-24 22:12:17.062 INFO  [restartedMain] org.hibernate.orm.connections.pooling - HHH10001005: Database info:
+	Database JDBC URL [Connecting through datasource 'HikariDataSource (HikariPool-10)']
+	Database driver: undefined/unknown
+	Database version: 8.4.8
+	Autocommit mode: undefined/unknown
+	Isolation level: undefined/unknown
+	Minimum pool size: undefined/unknown
+	Maximum pool size: undefined/unknown
+2026-05-24 22:12:17.175 INFO  [restartedMain] o.h.e.t.j.p.i.JtaPlatformInitiator - HHH000489: No JTA platform available (set 'hibernate.transaction.jta.platform' to enable JTA platform integration)
+2026-05-24 22:12:17.189 INFO  [restartedMain] o.s.o.j.LocalContainerEntityManagerFactoryBean - Initialized JPA EntityManagerFactory for persistence unit 'default'
+2026-05-24 22:12:17.932 INFO  [restartedMain] o.s.s.c.a.a.c.InitializeUserDetailsBeanManagerConfigurer$InitializeUserDetailsManagerConfigurer - Global AuthenticationManager configured with UserDetailsService bean with name customUserDetailsService
+2026-05-24 22:12:18.435 INFO  [restartedMain] o.s.b.d.a.OptionalLiveReloadServer - LiveReload server is running on port 35729
+2026-05-24 22:12:18.458 INFO  [restartedMain] o.a.coyote.http11.Http11NioProtocol - Starting ProtocolHandler ["http-nio-15000"]
+2026-05-24 22:12:18.477 INFO  [restartedMain] o.s.b.w.embedded.tomcat.TomcatWebServer - Tomcat started on port 15000 (http) with context path '/'
+2026-05-24 22:12:18.483 INFO  [restartedMain] c.k.a.AlgogaServerApplication - Started AlgogaServerApplication in 2.628 seconds (process running for 994.033)
+2026-05-24 22:12:18.485 WARN  [restartedMain] o.s.core.events.SpringDocAppInitializer - SpringDoc /v3/api-docs endpoint is enabled by default. To disable it in production, set the property 'springdoc.api-docs.enabled=false'
+2026-05-24 22:12:18.487 WARN  [restartedMain] o.s.core.events.SpringDocAppInitializer - SpringDoc /swagger-ui.html endpoint is enabled by default. To disable it in production, set the property 'springdoc.swagger-ui.enabled=false'
+2026-05-24 22:12:18.487 INFO  [restartedMain] o.s.b.d.a.ConditionEvaluationDeltaLoggingListener - Condition evaluation unchanged
+2026-05-24 22:12:19.905 INFO  [File Watcher] o.s.b.d.a.LocalDevToolsAutoConfiguration$RestartingClassPathChangeChangedEventListener - Restarting due to 1 class path change (1 addition, 0 deletions, 0 modifications)
+2026-05-24 22:12:19.907 INFO  [Thread-39] o.s.b.w.e.tomcat.GracefulShutdown - Commencing graceful shutdown. Waiting for active requests to complete
+2026-05-24 22:12:19.907 INFO  [tomcat-shutdown] o.a.coyote.http11.Http11NioProtocol - Pausing ProtocolHandler ["http-nio-15000"]
+2026-05-24 22:12:20.323 INFO  [tomcat-shutdown] o.s.b.w.e.tomcat.GracefulShutdown - Graceful shutdown complete
+2026-05-24 22:12:20.323 INFO  [Thread-39] o.a.coyote.http11.Http11NioProtocol - Stopping ProtocolHandler ["http-nio-15000"]
+2026-05-24 22:12:20.325 INFO  [Thread-39] o.s.o.j.LocalContainerEntityManagerFactoryBean - Closing JPA EntityManagerFactory for persistence unit 'default'
+2026-05-24 22:12:20.328 INFO  [Thread-39] com.zaxxer.hikari.HikariDataSource - HikariPool-10 - Shutdown initiated...
+2026-05-24 22:12:20.335 INFO  [Thread-39] com.zaxxer.hikari.HikariDataSource - HikariPool-10 - Shutdown completed.
+2026-05-24 22:12:20.547 INFO  [restartedMain] c.k.a.AlgogaServerApplication - Starting AlgogaServerApplication using Java 17.0.18 with PID 29996 (C:\Algoga_backend\build\classes\java\main started by user in C:\Algoga_backend)
+2026-05-24 22:12:20.547 INFO  [restartedMain] c.k.a.AlgogaServerApplication - No active profile set, falling back to 1 default profile: "default"
+2026-05-24 22:12:21.056 INFO  [restartedMain] o.s.d.r.c.RepositoryConfigurationDelegate - Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+2026-05-24 22:12:21.118 INFO  [restartedMain] o.s.d.r.c.RepositoryConfigurationDelegate - Finished Spring Data repository scanning in 62 ms. Found 2 JPA repository interfaces.
+2026-05-24 22:12:21.394 INFO  [restartedMain] o.s.b.w.embedded.tomcat.TomcatWebServer - Tomcat initialized with port 15000 (http)
+2026-05-24 22:12:21.394 INFO  [restartedMain] o.a.coyote.http11.Http11NioProtocol - Initializing ProtocolHandler ["http-nio-15000"]
+2026-05-24 22:12:21.394 INFO  [restartedMain] o.apache.catalina.core.StandardService - Starting service [Tomcat]
+2026-05-24 22:12:21.394 INFO  [restartedMain] o.apache.catalina.core.StandardEngine - Starting Servlet engine: [Apache Tomcat/10.1.54]
+2026-05-24 22:12:21.456 INFO  [restartedMain] o.a.c.c.C.[Tomcat].[localhost].[/] - Initializing Spring embedded WebApplicationContext
+2026-05-24 22:12:21.456 INFO  [restartedMain] o.s.b.w.s.c.ServletWebServerApplicationContext - Root WebApplicationContext: initialization completed in 903 ms
+2026-05-24 22:12:21.593 INFO  [restartedMain] o.hibernate.jpa.internal.util.LogHelper - HHH000204: Processing PersistenceUnitInfo [name: default]
+2026-05-24 22:12:21.605 INFO  [restartedMain] o.h.c.internal.RegionFactoryInitiator - HHH000026: Second-level cache disabled
+2026-05-24 22:12:21.621 INFO  [restartedMain] o.s.o.j.p.SpringPersistenceUnitInfo - No LoadTimeWeaver setup: ignoring JPA class transformer
+2026-05-24 22:12:21.621 INFO  [restartedMain] com.zaxxer.hikari.HikariDataSource - HikariPool-11 - Starting...
+2026-05-24 22:12:21.647 INFO  [restartedMain] com.zaxxer.hikari.pool.HikariPool - HikariPool-11 - Added connection com.mysql.cj.jdbc.ConnectionImpl@16578d1
+2026-05-24 22:12:21.647 INFO  [restartedMain] com.zaxxer.hikari.HikariDataSource - HikariPool-11 - Start completed.
+2026-05-24 22:12:21.647 INFO  [restartedMain] org.hibernate.orm.connections.pooling - HHH10001005: Database info:
+	Database JDBC URL [Connecting through datasource 'HikariDataSource (HikariPool-11)']
+	Database driver: undefined/unknown
+	Database version: 8.4.8
+	Autocommit mode: undefined/unknown
+	Isolation level: undefined/unknown
+	Minimum pool size: undefined/unknown
+	Maximum pool size: undefined/unknown
+2026-05-24 22:12:21.766 INFO  [restartedMain] o.h.e.t.j.p.i.JtaPlatformInitiator - HHH000489: No JTA platform available (set 'hibernate.transaction.jta.platform' to enable JTA platform integration)
+2026-05-24 22:12:21.780 INFO  [restartedMain] o.s.o.j.LocalContainerEntityManagerFactoryBean - Initialized JPA EntityManagerFactory for persistence unit 'default'
+2026-05-24 22:12:22.538 INFO  [restartedMain] o.s.s.c.a.a.c.InitializeUserDetailsBeanManagerConfigurer$InitializeUserDetailsManagerConfigurer - Global AuthenticationManager configured with UserDetailsService bean with name customUserDetailsService
+2026-05-24 22:12:23.021 INFO  [restartedMain] o.s.b.d.a.OptionalLiveReloadServer - LiveReload server is running on port 35729
+2026-05-24 22:12:23.054 INFO  [restartedMain] o.a.coyote.http11.Http11NioProtocol - Starting ProtocolHandler ["http-nio-15000"]
+2026-05-24 22:12:23.071 INFO  [restartedMain] o.s.b.w.embedded.tomcat.TomcatWebServer - Tomcat started on port 15000 (http) with context path '/'
+2026-05-24 22:12:23.077 INFO  [restartedMain] c.k.a.AlgogaServerApplication - Started AlgogaServerApplication in 2.592 seconds (process running for 998.629)
+2026-05-24 22:12:23.077 WARN  [restartedMain] o.s.core.events.SpringDocAppInitializer - SpringDoc /v3/api-docs endpoint is enabled by default. To disable it in production, set the property 'springdoc.api-docs.enabled=false'
+2026-05-24 22:12:23.077 WARN  [restartedMain] o.s.core.events.SpringDocAppInitializer - SpringDoc /swagger-ui.html endpoint is enabled by default. To disable it in production, set the property 'springdoc.swagger-ui.enabled=false'
+2026-05-24 22:12:23.083 INFO  [restartedMain] o.s.b.d.a.ConditionEvaluationDeltaLoggingListener - Condition evaluation unchanged
+2026-05-24 22:13:56.206 INFO  [SpringApplicationShutdownHook] o.s.b.w.e.tomcat.GracefulShutdown - Commencing graceful shutdown. Waiting for active requests to complete
+2026-05-24 22:13:56.408 INFO  [tomcat-shutdown] o.s.b.w.e.tomcat.GracefulShutdown - Graceful shutdown complete
+2026-05-24 22:13:56.413 INFO  [SpringApplicationShutdownHook] o.s.o.j.LocalContainerEntityManagerFactoryBean - Closing JPA EntityManagerFactory for persistence unit 'default'
+2026-05-24 22:13:56.413 INFO  [SpringApplicationShutdownHook] com.zaxxer.hikari.HikariDataSource - HikariPool-11 - Shutdown initiated...
+2026-05-24 22:13:56.417 INFO  [SpringApplicationShutdownHook] com.zaxxer.hikari.HikariDataSource - HikariPool-11 - Shutdown completed.
+2026-05-24 22:13:59.768 INFO  [background-preinit] o.h.validator.internal.util.Version - HV000001: Hibernate Validator 8.0.3.Final
+2026-05-24 22:13:59.817 INFO  [restartedMain] c.k.a.AlgogaServerApplication - Starting AlgogaServerApplication using Java 17.0.18 with PID 33284 (C:\Algoga_backend\build\classes\java\main started by user in C:\Algoga_backend)
+2026-05-24 22:13:59.818 INFO  [restartedMain] c.k.a.AlgogaServerApplication - No active profile set, falling back to 1 default profile: "default"
+2026-05-24 22:13:59.862 INFO  [restartedMain] o.s.b.d.e.DevToolsPropertyDefaultsPostProcessor - Devtools property defaults active! Set 'spring.devtools.add-properties' to 'false' to disable
+2026-05-24 22:13:59.862 INFO  [restartedMain] o.s.b.d.e.DevToolsPropertyDefaultsPostProcessor - For additional web related logging consider setting the 'logging.level.web' property to 'DEBUG'
+2026-05-24 22:14:00.790 INFO  [restartedMain] o.s.d.r.c.RepositoryConfigurationDelegate - Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+2026-05-24 22:14:00.877 INFO  [restartedMain] o.s.d.r.c.RepositoryConfigurationDelegate - Finished Spring Data repository scanning in 78 ms. Found 2 JPA repository interfaces.
+2026-05-24 22:14:01.708 INFO  [restartedMain] o.s.b.w.embedded.tomcat.TomcatWebServer - Tomcat initialized with port 15000 (http)
+2026-05-24 22:14:01.718 INFO  [restartedMain] o.a.coyote.http11.Http11NioProtocol - Initializing ProtocolHandler ["http-nio-15000"]
+2026-05-24 22:14:01.720 INFO  [restartedMain] o.apache.catalina.core.StandardService - Starting service [Tomcat]
+2026-05-24 22:14:01.720 INFO  [restartedMain] o.apache.catalina.core.StandardEngine - Starting Servlet engine: [Apache Tomcat/10.1.54]
+2026-05-24 22:14:01.812 INFO  [restartedMain] o.a.c.c.C.[Tomcat].[localhost].[/] - Initializing Spring embedded WebApplicationContext
+2026-05-24 22:14:01.813 INFO  [restartedMain] o.s.b.w.s.c.ServletWebServerApplicationContext - Root WebApplicationContext: initialization completed in 1950 ms
+2026-05-24 22:14:02.008 INFO  [restartedMain] o.hibernate.jpa.internal.util.LogHelper - HHH000204: Processing PersistenceUnitInfo [name: default]
+2026-05-24 22:14:02.071 INFO  [restartedMain] org.hibernate.Version - HHH000412: Hibernate ORM core version 6.6.49.Final
+2026-05-24 22:14:02.113 INFO  [restartedMain] o.h.c.internal.RegionFactoryInitiator - HHH000026: Second-level cache disabled
+2026-05-24 22:14:02.453 INFO  [restartedMain] o.s.o.j.p.SpringPersistenceUnitInfo - No LoadTimeWeaver setup: ignoring JPA class transformer
+2026-05-24 22:14:02.476 INFO  [restartedMain] com.zaxxer.hikari.HikariDataSource - HikariPool-1 - Starting...
+2026-05-24 22:14:02.730 INFO  [restartedMain] com.zaxxer.hikari.pool.HikariPool - HikariPool-1 - Added connection com.mysql.cj.jdbc.ConnectionImpl@dae9362
+2026-05-24 22:14:02.732 INFO  [restartedMain] com.zaxxer.hikari.HikariDataSource - HikariPool-1 - Start completed.
+2026-05-24 22:14:02.803 INFO  [restartedMain] org.hibernate.orm.connections.pooling - HHH10001005: Database info:
+	Database JDBC URL [Connecting through datasource 'HikariDataSource (HikariPool-1)']
+	Database driver: undefined/unknown
+	Database version: 8.4.8
+	Autocommit mode: undefined/unknown
+	Isolation level: undefined/unknown
+	Minimum pool size: undefined/unknown
+	Maximum pool size: undefined/unknown
+2026-05-24 22:14:03.559 INFO  [restartedMain] o.h.e.t.j.p.i.JtaPlatformInitiator - HHH000489: No JTA platform available (set 'hibernate.transaction.jta.platform' to enable JTA platform integration)
+2026-05-24 22:14:03.638 INFO  [restartedMain] o.s.o.j.LocalContainerEntityManagerFactoryBean - Initialized JPA EntityManagerFactory for persistence unit 'default'
+2026-05-24 22:14:04.517 INFO  [restartedMain] o.s.s.c.a.a.c.InitializeUserDetailsBeanManagerConfigurer$InitializeUserDetailsManagerConfigurer - Global AuthenticationManager configured with UserDetailsService bean with name customUserDetailsService
+2026-05-24 22:14:05.000 INFO  [restartedMain] o.s.b.d.a.OptionalLiveReloadServer - LiveReload server is running on port 35729
+2026-05-24 22:14:05.019 INFO  [restartedMain] o.a.coyote.http11.Http11NioProtocol - Starting ProtocolHandler ["http-nio-15000"]
+2026-05-24 22:14:05.032 INFO  [restartedMain] o.s.b.w.embedded.tomcat.TomcatWebServer - Tomcat started on port 15000 (http) with context path '/'
+2026-05-24 22:14:05.040 INFO  [restartedMain] c.k.a.AlgogaServerApplication - Started AlgogaServerApplication in 5.819 seconds (process running for 6.36)
+2026-05-24 22:14:05.042 WARN  [restartedMain] o.s.core.events.SpringDocAppInitializer - SpringDoc /v3/api-docs endpoint is enabled by default. To disable it in production, set the property 'springdoc.api-docs.enabled=false'
+2026-05-24 22:14:05.042 WARN  [restartedMain] o.s.core.events.SpringDocAppInitializer - SpringDoc /swagger-ui.html endpoint is enabled by default. To disable it in production, set the property 'springdoc.swagger-ui.enabled=false'
+2026-05-24 22:14:18.137 INFO  [http-nio-15000-exec-1] o.a.c.c.C.[Tomcat].[localhost].[/] - Initializing Spring DispatcherServlet 'dispatcherServlet'
+2026-05-24 22:14:18.137 INFO  [http-nio-15000-exec-1] o.s.web.servlet.DispatcherServlet - Initializing Servlet 'dispatcherServlet'
+2026-05-24 22:14:18.139 INFO  [http-nio-15000-exec-1] o.s.web.servlet.DispatcherServlet - Completed initialization in 1 ms
+2026-05-24 22:14:18.355 INFO  [http-nio-15000-exec-1] c.k.a.global.aop.ApiLoggingAop - [API Request] POST /api/v1/auth/signup | Controller: AuthController.signup()
+2026-05-24 22:14:18.502 DEBUG [http-nio-15000-exec-1] org.hibernate.SQL - 
+    select
+        u1_0.user_id 
+    from
+        users u1_0 
+    where
+        u1_0.email=? 
+    limit
+        ?
+2026-05-24 22:14:18.528 WARN  [http-nio-15000-exec-1] c.k.a.global.aop.ApiLoggingAop - [API Error] POST /api/v1/auth/signup | Time: 173ms | Exception: UserException
+2026-05-24 22:14:18.531 WARN  [http-nio-15000-exec-1] c.k.a.g.e.GlobalExceptionHandler - [BusinessException] traceId: dd549a67, code: USER_001, message: 이미 사용 중인 이메일입니다.
+2026-05-24 22:14:18.570 WARN  [http-nio-15000-exec-1] o.s.w.s.m.m.a.ExceptionHandlerExceptionResolver - Resolved [com.kidmily.algoga_server.user.exception.UserException: 이미 사용 중인 이메일입니다.]
+2026-05-24 22:14:26.306 INFO  [http-nio-15000-exec-2] c.k.a.global.aop.ApiLoggingAop - [API Request] POST /api/v1/auth/signup | Controller: AuthController.signup()
+2026-05-24 22:14:26.310 DEBUG [http-nio-15000-exec-2] org.hibernate.SQL - 
+    select
+        u1_0.user_id 
+    from
+        users u1_0 
+    where
+        u1_0.email=? 
+    limit
+        ?
+2026-05-24 22:14:26.315 WARN  [http-nio-15000-exec-2] c.k.a.global.aop.ApiLoggingAop - [API Error] POST /api/v1/auth/signup | Time: 8ms | Exception: UserException
+2026-05-24 22:14:26.316 WARN  [http-nio-15000-exec-2] c.k.a.g.e.GlobalExceptionHandler - [BusinessException] traceId: df57b1ad, code: USER_001, message: 이미 사용 중인 이메일입니다.
+2026-05-24 22:14:26.319 WARN  [http-nio-15000-exec-2] o.s.w.s.m.m.a.ExceptionHandlerExceptionResolver - Resolved [com.kidmily.algoga_server.user.exception.UserException: 이미 사용 중인 이메일입니다.]
+2026-05-24 22:14:29.268 INFO  [http-nio-15000-exec-4] c.k.a.global.aop.ApiLoggingAop - [API Request] POST /api/v1/auth/login | Controller: AuthController.login()
+2026-05-24 22:14:29.280 DEBUG [http-nio-15000-exec-4] org.hibernate.SQL - 
+    select
+        u1_0.user_id,
+        u1_0.birth_date,
+        u1_0.created_at,
+        u1_0.email,
+        u1_0.gender,
+        u1_0.is_deleted,
+        u1_0.locked_until,
+        u1_0.login_fail_count,
+        u1_0.name,
+        u1_0.nickname,
+        u1_0.password,
+        u1_0.personal_code,
+        u1_0.phone,
+        u1_0.referral_code,
+        u1_0.signup_path,
+        u1_0.social_type 
+    from
+        users u1_0 
+    where
+        u1_0.email=?
+2026-05-24 22:14:29.549 INFO  [http-nio-15000-exec-4] c.k.a.global.aop.ApiLoggingAop - [API Response] POST /api/v1/auth/login | Time: 280ms
