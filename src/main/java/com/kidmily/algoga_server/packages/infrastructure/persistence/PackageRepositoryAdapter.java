@@ -6,6 +6,7 @@ import com.kidmily.algoga_server.packages.infrastructure.mapper.PackageMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 
@@ -13,12 +14,15 @@ import java.util.Optional;
 @RequiredArgsConstructor
 public class PackageRepositoryAdapter implements PackageRepository {
 
-    private final SpringDataPackageRepository springDataRepository;
+    private final SpringDataPackageRepository springDataPackageRepository;
     private final PackageMapper packageMapper;
 
     @Override
-    public List<Package> findByCountryId(Long countryId) {
-        return springDataRepository.findByCountryIdAndIsDeletedFalse(countryId)
+    public List<Package> findByFilters(Long countryId, String departureAirport,
+                                       String arrivalAirport, LocalDate departureDate,
+                                       LocalDate returnDate) {
+        return springDataPackageRepository
+                .findByFilters(countryId, departureAirport, arrivalAirport, departureDate, returnDate)
                 .stream()
                 .map(packageMapper::toDomain)
                 .toList();
@@ -26,7 +30,8 @@ public class PackageRepositoryAdapter implements PackageRepository {
 
     @Override
     public Optional<Package> findById(Long packageId) {
-        return springDataRepository.findByIdAndIsDeletedFalse(packageId)
+        return springDataPackageRepository
+                .findByIdAndIsDeletedFalse(packageId)
                 .map(packageMapper::toDomain);
     }
 }
