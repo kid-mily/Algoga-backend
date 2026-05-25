@@ -6,10 +6,7 @@ import com.kidmily.algoga_server.user.domain.User;
 import com.kidmily.algoga_server.user.domain.UserRepository;
 import com.kidmily.algoga_server.user.exception.UserErrorCode;
 import com.kidmily.algoga_server.user.exception.UserException;
-import com.kidmily.algoga_server.user.presentation.request.FindIdRequest;
-import com.kidmily.algoga_server.user.presentation.request.AuthLoginRequest;
-import com.kidmily.algoga_server.user.presentation.request.AuthSignupRequest;
-import com.kidmily.algoga_server.user.presentation.request.FindPasswordRequest;
+import com.kidmily.algoga_server.user.presentation.request.*;
 import com.kidmily.algoga_server.user.presentation.response.AuthTokenResponse;
 import com.kidmily.algoga_server.user.presentation.response.FindIdResponse;
 import com.kidmily.algoga_server.user.settings.JwtProvider;
@@ -107,5 +104,34 @@ public class AuthService {
         if (id == null || id.length() < 3) return id;
         return id.substring(0, 3) + "*".repeat(id.length() - 3);
     }
+
+    // 5. 비밀번호 강제 변경 (임시 비밀번호로 로그인한 유저 대상)
+    public void resetPassword(String email, ResetPasswordRequest request) {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new UserException(UserErrorCode.NOT_FOUND_USER));
+
+        // 만약 임시 비밀번호로 로그인한 상태가 아니라면 에러 발생! (보안 방어)
+        if (!user.getRequiresPasswordChange()) {
+            throw new UserException(UserErrorCode.INVALID_PASSWORD); // "정상적인 변경 요청이 아닙니다" 등으로 에러코드 추가해도 좋음!
+        }
+        // 1. 새 비밀번호 암호화
+        String encodedNewPassword = passwordEncoder.encode(request.newPassword());
+
+        // 2. User 엔티티의 changePassword 메서드 호출 (비번 변경 + 플래그 false 처리)
+        user.changePassword(encodedNewPassword);
+
+        userRepository.save(user); // 3. 저장
+
+        log.info("비밀번호 강제 변경 완료 [이메일: {}]", email);
+    }
+
+    // 6. 로그아웃
+    public void logout(String email) {
+        // 현재 Redis를 사용하지 않으므로, 백엔드에서는 로그만 남깁니다.
+        // (실제 토큰 무효화는 클라이언트가 localStorage에서 토큰을 지우는 것으로 완료됩니다.)
+        log.info("로그아웃 처리 완료 [접속 종료 이메일: {}]", email);
+    }
+
+
+
 }
-//
