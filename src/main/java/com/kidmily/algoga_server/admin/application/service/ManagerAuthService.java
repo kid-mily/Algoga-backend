@@ -6,8 +6,8 @@ import com.kidmily.algoga_server.admin.domain.model.Manager;
 import com.kidmily.algoga_server.admin.domain.repository.ManagerRepository;
 import com.kidmily.algoga_server.admin.exception.ManagerErrorCode;
 import com.kidmily.algoga_server.admin.exception.ManagerException;
+import com.kidmily.algoga_server.admin.presentation.api.response.AdminAuthTokenResponse;
 import com.kidmily.algoga_server.admin.settings.AdminJwtProvider;
-import com.kidmily.algoga_server.user.presentation.response.AuthTokenResponse;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -24,7 +24,7 @@ public class ManagerAuthService implements ManagerAuthUseCase {
     private final AdminJwtProvider adminJwtProvider; // 앞서 만든 어드민 전용 JWT 프로바이더
 
     @Override
-    public AuthTokenResponse login(LoginManagerCommand command) {
+    public AdminAuthTokenResponse login(LoginManagerCommand command) {
 
         // 1. 아이디로 매니저 조회
         Manager manager = managerRepository.findByLoginId(command.loginId())
@@ -47,7 +47,7 @@ public class ManagerAuthService implements ManagerAuthUseCase {
         String accessToken = adminJwtProvider.createAccessToken(manager.getId(), manager.getLoginId(), roleName);
         String refreshToken = adminJwtProvider.createRefreshToken(manager.getLoginId());
 
-        return new AuthTokenResponse(accessToken, refreshToken);
+        return new AdminAuthTokenResponse(accessToken, refreshToken);
     }
 
     @PostConstruct
