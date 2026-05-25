@@ -1,6 +1,6 @@
 package com.kidmily.algoga_server.community.presentation.api.response;
 
-import com.kidmily.algoga_server.community.infrastructure.persistence.entity.PostTagType;
+import com.kidmily.algoga_server.community.domain.model.PostTagType;
 import io.swagger.v3.oas.annotations.media.Schema;
 
 @Schema(description = "태그 응답")

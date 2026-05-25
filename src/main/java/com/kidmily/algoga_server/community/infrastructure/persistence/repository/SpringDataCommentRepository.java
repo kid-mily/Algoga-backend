@@ -6,7 +6,6 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import java.util.List;
 
 public interface SpringDataCommentRepository extends JpaRepository<CommentJpaEntity, Long> {
-    Long countByPostIdAndIsDeletedFalse(Long postId);
-
     List<CommentJpaEntity> findByPostIdAndIsDeletedFalseOrderByCreatedAtAsc(Long postId);
+    List<CommentJpaEntity> findByParentIdAndIsDeletedFalse(Long parentId);
 }

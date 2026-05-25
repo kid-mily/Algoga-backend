@@ -1,4 +1,4 @@
-package com.kidmily.algoga_server.community.infrastructure.persistence.entity;
+package com.kidmily.algoga_server.community.domain.model;
 
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;

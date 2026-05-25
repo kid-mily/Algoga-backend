@@ -1,19 +1,17 @@
 package com.kidmily.algoga_server.community.presentation.api;
 
-import com.kidmily.algoga_server.community.application.command.CreatePostCommand;
-import com.kidmily.algoga_server.community.application.command.DeletePostCommand;
-import com.kidmily.algoga_server.community.application.command.UpdatePostCommand;
+import com.kidmily.algoga_server.community.application.command.*;
+import com.kidmily.algoga_server.community.application.usecase.CommentCommandUseCase;
 import com.kidmily.algoga_server.community.application.usecase.PostCommandUseCase;
 import com.kidmily.algoga_server.community.application.usecase.PostQueryUseCase;
+import com.kidmily.algoga_server.community.application.usecase.ReactionCommandUseCase;
+import com.kidmily.algoga_server.community.domain.model.Comment;
 import com.kidmily.algoga_server.community.exception.PostErrorCode;
-import com.kidmily.algoga_server.community.infrastructure.persistence.entity.PostTagType;
-import com.kidmily.algoga_server.community.presentation.api.request.CreatePostRequest;
-import com.kidmily.algoga_server.community.presentation.api.request.UpdatePostRequest;
+import com.kidmily.algoga_server.community.domain.model.PostTagType;
+import com.kidmily.algoga_server.community.presentation.api.request.*;
 import com.kidmily.algoga_server.community.presentation.api.response.*;
 import com.kidmily.algoga_server.global.annotation.swagger.ApiErrorCodeExample;
-import com.kidmily.algoga_server.global.annotation.swagger.ApiErrorCodeExamples;
 import com.kidmily.algoga_server.global.common.api.response.ApiResponse;
-import com.kidmily.algoga_server.global.exception.GlobalErrorCode;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -34,6 +32,9 @@ public class CommunityController {
 
     private final PostCommandUseCase postCommandUseCase;
     private final PostQueryUseCase postQueryUseCase;
+    private final CommentCommandUseCase commentCommandUseCase;
+    private final ReactionCommandUseCase reactionCommandUseCase;
+
 
     @PostMapping
     @Operation(summary = "게시글 작성", description = "나라, 자유, 수강강의 태그 및 최대 10장의 사진을 포함해 게시글을 등록합니다.")
@@ -158,24 +159,40 @@ public class CommunityController {
         return ResponseEntity.ok(ApiResponse.success("POST_FOUND", "게시글 조회에 성공했습니다.", responseData));
     }
 
-    // 마이페이지 - 내가 쓸 글 목록 조회
-    @GetMapping("/me/posts")
-    @Operation(summary = "내가 작성한 게시글 목록 조회", description = "마이페이지에서 본인이 작성한 글 목록을 무한 스크롤 방식으로 최신순 조회합니다.")
+
+    @PostMapping("/{postId}/comments")
+    @Operation(summary = "댓글/대댓글 작성", description = "게시글에 댓글 또는 대댓글을 작성합니다.")
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "201", description = "댓글 작성에 성공했습니다.")
     @ApiErrorCodeExample(domain = PostErrorCode.class, value = {
-            "POST_UNAUTHORIZED",      // 401 Unauthorized
-            "POST_ACCESS_FORBIDDEN",   // 403 권한 부족
-            "POST_NOT_FOUND"          // 404 Not Found
+            "POST_NOT_FOUND",       // 400 존재하지 않는 게시글
+            "COMMENT_UNAUTHORIZED"     // 401 비로그인
     })
-    public ResponseEntity<ApiResponse<PostListResponse>> getMyPosts(
-            @Parameter(description = "마지막 게시글 ID (첫 페이지는 생략)", example = "420")
-            @RequestParam(required = false) Long lastPostId,
-
-            @Parameter(description = "필터링할 카테고리 (다중 선택 가능, 생략 시 전체)", example = "QUESTION,TRAVEL_REVIEW")
-            @RequestParam(required = false) List<PostTagType> categories
+    public ResponseEntity<ApiResponse<CreateCommentResponse>> createComment(
+            @Parameter(description = "게시글 ID", example = "1")
+            @PathVariable Long postId,
+            @RequestBody @Valid CreateCommentRequest request
     ) {
-        long currentUserId = 1L; // TODO: Spring Security 적용 후 토큰에서 추출하도록 교체
+        Long currentUserId = 1L;
 
-        PostListResponse responseData = postQueryUseCase.getMyPosts(currentUserId, lastPostId, categories);
-        return ResponseEntity.ok(ApiResponse.success("MY_POSTS_FOUND", "내가 작성한 게시글 목록 조회에 성공했습니다.", responseData));
+        CreateCommentCommand command = new CreateCommentCommand(
+                postId,
+                currentUserId,
+                request.parentId(),
+                request.content()
+        );
+
+        Comment savedComment = commentCommandUseCase.handle(command);
+
+        CreateCommentResponse responseData = new CreateCommentResponse(
+                savedComment.getCommentId(),
+                savedComment.getUserId(),
+                savedComment.getContent(),
+                savedComment.getParentId(),
+                savedComment.getCreatedAt()
+        );
+
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(ApiResponse.created("COMMENT_CREATED", "댓글 작성에 성공했습니다.", responseData));
     }
+
 }

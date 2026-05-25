@@ -3,7 +3,7 @@ import com.kidmily.algoga_server.community.domain.model.Post;
 import com.kidmily.algoga_server.community.infrastructure.persistence.entity.PostImage;
 import com.kidmily.algoga_server.community.infrastructure.persistence.entity.PostJpaEntity;
 import com.kidmily.algoga_server.community.infrastructure.persistence.entity.PostTag;
-import com.kidmily.algoga_server.community.infrastructure.persistence.entity.PostTagType;
+import com.kidmily.algoga_server.community.domain.model.PostTagType;
 import org.mapstruct.Mapper;
 import org.mapstruct.MappingConstants;
 
