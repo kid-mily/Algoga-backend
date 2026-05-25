@@ -23,6 +23,7 @@ spring:
 
 server:
   port: 15000
+  forward-headers-strategy: native
 
 logging:
   level:
