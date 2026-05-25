@@ -5,15 +5,15 @@ Content-Type: application/json
 Accept: application/json
 
 {
-  "username": "gkdus",
-  "email": "testuser88@algoga.com",
-  "password": "password12345",
+  "username": "lhy1234lhy",
+  "email": "lhy2004lhy@gmail.com",
+  "password": "password8888",
   "name": "이하연",
-  "phone": "010-8888-9999",
-  "birthDate": "1995-05-15",
-  "gender": "MALE",
+  "phone": "010-1111-2222",
+  "birthDate": "2004-03-02",
+  "gender": "FEMALE",
   "nickname": "하연하연",
-  "referralCode": "REF002",
+  "referralCode": "REF008",
   "signupPath": "인스타그램"
 }
 
@@ -34,13 +34,13 @@ Content-Type: application/json
 Accept: application/json
 
 {
-  "username": "gkdus",
-  "email": "testuser88@algoga.com",
-  "password": "password12345",
+  "username": "lhy1234lhy",
+  "email": "lhy2004lhy@gmail.com",
+  "password": "password8888",
   "name": "이하연",
-  "phone": "010-8888-9999",
-  "birthDate": "1995-05-15",
-  "gender": "MALE",
+  "phone": "010-1111-2222",
+  "birthDate": "2004-03-02",
+  "gender": "FEMALE",
   "nickname": "하연하연"
 }
 
@@ -54,8 +54,8 @@ Content-Type: application/json
 Accept: application/json
 
 {
-  "username": "gkdus",
-  "password": "password12345"
+  "username": "lhy1234lhy",
+  "password": "password8888"
 }
 
 > {%
@@ -82,7 +82,7 @@ Content-Type: application/json
 
 {
   "name": "이하연",
-  "email": "testuser88@algoga.com"
+  "email": "lhy2004lhy@gmail.com"
 }
 
 ### ------------------------------------------------------------------------
@@ -94,8 +94,8 @@ POST http://localhost:15000/api/v1/auth/find-password
 Content-Type: application/json
 
 {
-  "username": "gkdus",
-  "email": "testuser88@algoga.com"
+  "username": "lhy1234lhy",
+  "email": "lhy2004lhy@gmail.com"
 }
 
 ### ------------------------------------------------------------------------
@@ -106,6 +106,58 @@ POST http://localhost:15000/api/v1/auth/login
 Content-Type: application/json
 
 {
-  "username": "gkdus",
-  "password": "ce4da01a"
+  "username": "lhy1234lhy",
+  "password": "4185931a"
 }
+
+> {%
+    // ⭐️ 중요: 임시 비밀번호로 로그인해서 받은 토큰을 다시 저장합니다. (비밀번호 변경 API 호출 시 필요함)
+    if(response.status === 200) {
+        client.global.set("accessToken", response.body.data.accessToken);
+        client.log("임시 로그인 Access Token: " + client.global.get("accessToken"));
+        client.log("비밀번호 변경 필요 여부: " + response.body.data.requiresPasswordChange);
+    }
+%}
+
+### ------------------------------------------------------------------------
+
+### 8. 비밀번호 강제 변경 (임시 비밀번호 로그인 직후)
+# 7번에서 저장된 accessToken을 사용하여 새 비밀번호로 변경합니다.
+PATCH http://localhost:15000/api/v1/auth/reset-password
+Content-Type: application/json
+Authorization: Bearer {{accessToken}}
+
+{
+  "newPassword": "newpassword8888"
+}
+
+### ------------------------------------------------------------------------
+
+### 9. 변경된 '새 비밀번호'로 최종 로그인 확인
+# 8번에서 변경한 비밀번호가 잘 작동하는지 확인합니다.
+POST http://localhost:15000/api/v1/auth/login
+Content-Type: application/json
+
+{
+  "username": "lhy1234lhy",
+  "password": "newpassword8888"
+}
+
+### ------------------------------------------------------------------------
+
+### 10. 로그아웃 테스트
+POST http://localhost:15000/api/v1/auth/logout
+Authorization: Bearer {{accessToken}}
+
+> {%
+    // ⭐️ 프론트엔드가 로그아웃 시 브라우저에서 토큰을 지우는 동작을 흉내 냅니다!
+    // client.global.clear("accessToken");
+    // client.global.clear("refreshToken");
+    // client.log("로컬 메모리에서 토큰이 완전히 삭제되었습니다.");
+%}
+
+### ------------------------------------------------------------------------
+
+### 11. 회원 탈퇴 테스트
+DELETE http://localhost:15000/api/v1/users/me
+Authorization: Bearer {{accessToken}}

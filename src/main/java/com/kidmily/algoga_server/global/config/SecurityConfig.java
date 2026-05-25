@@ -35,16 +35,11 @@ public class SecurityConfig {
                 .httpBasic(AbstractHttpConfigurer::disable)
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers(
-                                "/api/v1/auth/**",
-                                "/swagger-ui/**",
-                                "/v3/api-docs/**",
-                                "/api/v1/countries/**",
-                                "/api/v1/packages/**",
-                                "/api/v1/bookings/**",
-                                "/api/v1/payments/**"
-                        ).permitAll()
-                        .anyRequest().authenticated()
+                                // ⭐️ 주소 상관없이 모든 요청(anyRequest)을 무조건 허용(permitAll)하겠다는 설정입니다!
+                                .anyRequest().permitAll()
+//                        .requestMatchers("/api/v1/auth/**", "/swagger-ui/**", "/v3/api-docs/**").permitAll()
+//                        .anyRequest().authenticated()
+                            
                 )
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
