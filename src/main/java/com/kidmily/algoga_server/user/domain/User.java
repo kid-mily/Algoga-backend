@@ -81,7 +81,18 @@ public class User {
         this.requiresPasswordChange = false; // 비밀번호를 정상 변경했으므로 플래그 해제
     }
 
+    // 회원 탈퇴 (Soft Delete + 데이터 충돌 방지)
+    public void withdraw() {
+        this.isDeleted = true;
 
+        // 고유 식별자를 생성하여 기존 데이터 뒤에 붙여줍니다. (이메일/아이디 재가입 허용을 위함)
+        String deleteStr = "_deleted_" + java.util.UUID.randomUUID().toString().substring(0, 8);
+
+        this.email = this.email + deleteStr;
+        this.username = this.username + deleteStr;
+        // 전화번호도 중복 검사
+        this.phone = this.phone + deleteStr;
+    }
 
 
     // 실패 횟수 증가 및 잠금 처리
