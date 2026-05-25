@@ -1,0 +1,73 @@
+package com.kidmily.algoga_server.payment.domain.model;
+
+import lombok.AccessLevel;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+
+import java.time.LocalDateTime;
+
+@Getter
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
+public class Payment {
+
+    private Long id;
+    private Long bookingId;
+    private Long userId;
+    private PaymentType paymentType;
+    private int amount;
+    private int usedMileage;
+    private Long usedCouponId;
+    private PaymentStatus status;
+    private String idempotencyKey;
+    private String portonePaymentId;
+    private LocalDateTime createdAt;
+
+    public static Payment create(Long bookingId, Long userId, PaymentType paymentType,
+                                 int amount, int usedMileage, Long usedCouponId,
+                                 String idempotencyKey) {
+        Payment payment = new Payment();
+        payment.bookingId = bookingId;
+        payment.userId = userId;
+        payment.paymentType = paymentType;
+        payment.amount = amount;
+        payment.usedMileage = usedMileage;
+        payment.usedCouponId = usedCouponId;
+        payment.status = PaymentStatus.FAILED;
+        payment.idempotencyKey = idempotencyKey;
+        payment.createdAt = LocalDateTime.now();
+        return payment;
+    }
+
+    public static Payment reconstitute(Long id, Long bookingId, Long userId,
+                                       PaymentType paymentType, int amount,
+                                       int usedMileage, Long usedCouponId,
+                                       PaymentStatus status, String idempotencyKey,
+                                       String portonePaymentId, LocalDateTime createdAt) {
+        Payment payment = new Payment();
+        payment.id = id;
+        payment.bookingId = bookingId;
+        payment.userId = userId;
+        payment.paymentType = paymentType;
+        payment.amount = amount;
+        payment.usedMileage = usedMileage;
+        payment.usedCouponId = usedCouponId;
+        payment.status = status;
+        payment.idempotencyKey = idempotencyKey;
+        payment.portonePaymentId = portonePaymentId;
+        payment.createdAt = createdAt;
+        return payment;
+    }
+
+    public void markSuccess(String portonePaymentId) {
+        this.status = PaymentStatus.SUCCESS;
+        this.portonePaymentId = portonePaymentId;
+    }
+
+    public void markFailed() {
+        this.status = PaymentStatus.FAILED;
+    }
+
+    public void markRefunded() {
+        this.status = PaymentStatus.REFUNDED;
+    }
+}

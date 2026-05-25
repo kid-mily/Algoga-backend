@@ -36,4 +36,11 @@ public class BookingRepositoryAdapter implements BookingRepository {
         entity.updateStatus(BookingStatus.CANCEL_REQUESTED, LocalDateTime.now());
         return bookingMapper.toDomain(springDataBookingRepository.save(entity));
     }
+    @Override
+    public Booking updateStatus(Long bookingId, BookingStatus status) {
+        BookingJpaEntity entity = springDataBookingRepository.findById(bookingId)
+                .orElseThrow();
+        entity.updateStatus(status, LocalDateTime.now());
+        return bookingMapper.toDomain(springDataBookingRepository.save(entity));
+    }
 }
