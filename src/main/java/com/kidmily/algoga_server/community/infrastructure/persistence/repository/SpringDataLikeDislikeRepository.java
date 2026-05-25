@@ -1,7 +1,7 @@
 package com.kidmily.algoga_server.community.infrastructure.persistence.repository;
 
 import com.kidmily.algoga_server.community.infrastructure.persistence.entity.LikeDislikeJpaEntity;
-import com.kidmily.algoga_server.community.infrastructure.persistence.entity.TargetType;
+import com.kidmily.algoga_server.community.domain.model.TargetType;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;

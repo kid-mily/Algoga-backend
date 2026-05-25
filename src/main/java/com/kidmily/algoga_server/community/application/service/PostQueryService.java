@@ -1,6 +1,7 @@
 package com.kidmily.algoga_server.community.application.service;
 
 import com.kidmily.algoga_server.community.application.usecase.PostQueryUseCase;
+import com.kidmily.algoga_server.community.domain.model.Comment;
 import com.kidmily.algoga_server.community.domain.model.Post;
 import com.kidmily.algoga_server.community.domain.repository.CommentRepository;
 import com.kidmily.algoga_server.community.domain.repository.LikeDislikeRepository;
@@ -8,7 +9,7 @@ import com.kidmily.algoga_server.community.domain.repository.PostRepository;
 import com.kidmily.algoga_server.community.exception.PostErrorCode;
 import com.kidmily.algoga_server.community.exception.PostException;
 import com.kidmily.algoga_server.community.infrastructure.persistence.entity.PostTagType;
-import com.kidmily.algoga_server.community.infrastructure.persistence.entity.TargetType;
+import com.kidmily.algoga_server.community.domain.model.TargetType;
 import com.kidmily.algoga_server.community.presentation.api.response.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -47,11 +48,16 @@ public class PostQueryService implements PostQueryUseCase {
         Long dislikeCount = likeDislikeRepository.countDislikes(TargetType.POST, postId);
 
 
-        List<CommentResponse> comments = commentRepository
-                .findActiveCommentsByPostId(postId)
-                .stream()
-                .map(c -> new CommentResponse(c.getCommentId(), c.getUserId(), c.getContent(), c.getCreatedAt()))
-                .toList();
+//        List<CreateCommentResponse> comments = commentRepository
+//                .findActiveCommentsByPostId(postId)
+//                .stream()
+//                .map(c -> new CreateCommentResponse(c.getCommentId(), c.getUserId(), c.getContent(),  c.getParentId(), c.getCreatedAt()))
+//                .toList();
+
+
+        List<CommentResponse> comments = toCommentTree(
+                commentRepository.findActiveCommentsByPostId(postId)
+        );
 
         // 💡 [수정] 태그 변환 로직을 메서드 안쪽으로 이동시켰습니다.
         Stream<TagResponse> categoryStream = post.getCategory() != null ?
@@ -160,4 +166,31 @@ public class PostQueryService implements PostQueryUseCase {
                 post.getCreatedAt()
         );
     }
+
+    private List<CommentResponse> toCommentTree(List<Comment> comments) {
+        // 일반 댓글만 추출
+        List<CommentResponse> roots = comments.stream()
+                .filter(c -> c.getParentId() == null)
+                .map(c -> new CommentResponse(
+                        c.getCommentId(),
+                        c.getUserId(),
+                        c.getContent(),
+                        c.getCreatedAt(),
+                        // 해당 댓글의 대댓글 붙이기
+                        comments.stream()
+                                .filter(r -> c.getCommentId().equals(r.getParentId()))
+                                .map(r -> new CommentResponse(
+                                        r.getCommentId(),
+                                        r.getUserId(),
+                                        r.getContent(),
+                                        r.getCreatedAt(),
+                                        List.of()
+                                ))
+                                .toList()
+                ))
+                .toList();
+        return roots;
+    }
+
+
 }

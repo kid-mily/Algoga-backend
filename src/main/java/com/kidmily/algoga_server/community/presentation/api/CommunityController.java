@@ -1,19 +1,19 @@
 package com.kidmily.algoga_server.community.presentation.api;
 
-import com.kidmily.algoga_server.community.application.command.CreatePostCommand;
-import com.kidmily.algoga_server.community.application.command.DeletePostCommand;
-import com.kidmily.algoga_server.community.application.command.UpdatePostCommand;
+import com.kidmily.algoga_server.community.application.command.*;
+import com.kidmily.algoga_server.community.application.usecase.CommentCommandUseCase;
 import com.kidmily.algoga_server.community.application.usecase.PostCommandUseCase;
 import com.kidmily.algoga_server.community.application.usecase.PostQueryUseCase;
+import com.kidmily.algoga_server.community.domain.model.Comment;
 import com.kidmily.algoga_server.community.exception.PostErrorCode;
 import com.kidmily.algoga_server.community.infrastructure.persistence.entity.PostTagType;
+import com.kidmily.algoga_server.community.presentation.api.request.CreateCommentRequest;
 import com.kidmily.algoga_server.community.presentation.api.request.CreatePostRequest;
+import com.kidmily.algoga_server.community.presentation.api.request.UpdateCommentRequest;
 import com.kidmily.algoga_server.community.presentation.api.request.UpdatePostRequest;
 import com.kidmily.algoga_server.community.presentation.api.response.*;
 import com.kidmily.algoga_server.global.annotation.swagger.ApiErrorCodeExample;
-import com.kidmily.algoga_server.global.annotation.swagger.ApiErrorCodeExamples;
 import com.kidmily.algoga_server.global.common.api.response.ApiResponse;
-import com.kidmily.algoga_server.global.exception.GlobalErrorCode;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -34,6 +34,7 @@ public class CommunityController {
 
     private final PostCommandUseCase postCommandUseCase;
     private final PostQueryUseCase postQueryUseCase;
+    private final CommentCommandUseCase commentCommandUseCase;
 
     @PostMapping
     @Operation(summary = "게시글 작성", description = "나라, 자유, 수강강의 태그 및 최대 10장의 사진을 포함해 게시글을 등록합니다.")
@@ -177,5 +178,80 @@ public class CommunityController {
 
         PostListResponse responseData = postQueryUseCase.getMyPosts(currentUserId, lastPostId, categories);
         return ResponseEntity.ok(ApiResponse.success("MY_POSTS_FOUND", "내가 작성한 게시글 목록 조회에 성공했습니다.", responseData));
+    }
+
+    @PostMapping("/{postId}/comments")
+    @Operation(summary = "댓글/대댓글 작성", description = "게시글에 댓글 또는 대댓글을 작성합니다.")
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "201", description = "댓글 작성에 성공했습니다.")
+    @ApiErrorCodeExample(domain = PostErrorCode.class, value = {
+            "POST_NOT_FOUND",       // 400 존재하지 않는 게시글
+            "COMMENT_UNAUTHORIZED"     // 401 비로그인
+    })
+    public ResponseEntity<ApiResponse<CreateCommentResponse>> createComment(
+            @Parameter(description = "게시글 ID", example = "1")
+            @PathVariable Long postId,
+            @RequestBody @Valid CreateCommentRequest request
+    ) {
+        Long currentUserId = 1L;
+
+        CreateCommentCommand command = new CreateCommentCommand(
+                postId,
+                currentUserId,
+                request.parentId(),
+                request.content()
+        );
+
+        Comment savedComment = commentCommandUseCase.handle(command);
+
+        CreateCommentResponse responseData = new CreateCommentResponse(
+                savedComment.getCommentId(),
+                savedComment.getUserId(),
+                savedComment.getContent(),
+                savedComment.getParentId(),
+                savedComment.getCreatedAt()
+        );
+
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(ApiResponse.created("COMMENT_CREATED", "댓글 작성에 성공했습니다.", responseData));
+    }
+
+    @PatchMapping("/api/v1/comments/{commentId}")
+    @Operation(summary = "댓글 수정", description = "본인 댓글의 내용을 수정합니다.")
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "댓글 수정에 성공했습니다.")
+    @ApiErrorCodeExample(domain = PostErrorCode.class, value = {
+            "COMMENT_NOT_FOUND",
+            "COMMENT_UNAUTHORIZED",
+            "COMMENT_UPDATE_FORBIDDEN"
+    })
+    public ResponseEntity<ApiResponse<UpdateCommentResponse>> updateComment(
+            @Parameter(description = "댓글 ID", example = "1") @PathVariable Long commentId,
+            @Valid @RequestBody UpdateCommentRequest request
+    ) {
+        Long currentUserId = 1L;
+
+        UpdateCommentCommand command = new UpdateCommentCommand(commentId, currentUserId, request.content());
+        Comment updatedComment = commentCommandUseCase.handle(command);
+
+        return ResponseEntity.ok(ApiResponse.success("COMMENT_UPDATED", "댓글 수정에 성공했습니다.",
+                new UpdateCommentResponse(updatedComment.getCommentId())));
+    }
+
+    @DeleteMapping("/api/v1/comments/{commentId}")
+    @Operation(summary = "댓글 삭제", description = "본인 댓글을 Soft Delete 처리합니다.")
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "204", description = "댓글이 성공적으로 삭제되었습니다.")
+    @ApiErrorCodeExample(domain = PostErrorCode.class, value = {
+            "COMMENT_NOT_FOUND",
+            "COMMENT_UNAUTHORIZED",
+            "COMMENT_DELETE_FORBIDDEN"
+    })
+    public ResponseEntity<Void> deleteComment(
+            @Parameter(description = "댓글 ID", example = "1") @PathVariable Long commentId
+    ) {
+        Long currentUserId = 1L;
+
+        DeleteCommentCommand command = new DeleteCommentCommand(commentId, currentUserId);
+        commentCommandUseCase.handle(command);
+
+        return ResponseEntity.noContent().build();
     }
 }
