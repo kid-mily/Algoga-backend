@@ -5,7 +5,7 @@ import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
-@Entity
+@Entity(name = "LmsCountryJpaEntity")
 @Table(name = "countries")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
