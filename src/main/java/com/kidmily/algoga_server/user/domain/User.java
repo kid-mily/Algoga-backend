@@ -19,6 +19,9 @@ public class User {
     private Long id;
 
     @Column(nullable = false, unique = true)
+    private String username; // 아이디
+
+    @Column(nullable = false, unique = true)
     private String email;
 
     @Column(nullable = false)
@@ -59,6 +62,27 @@ public class User {
 
     @Column(name = "created_at")
     private LocalDateTime createdAt;
+
+
+    // 비밀번호 찾기해서 임시비번으로 로그인 하면 강제 비번 변경
+    @Column(name = "requires_password_change")
+    private Boolean requiresPasswordChange = false;
+
+    // 기존 코드 아래에 이 메서드들을 추가하세요.
+    public void setTemporaryPassword(String encodedPassword) {
+        this.password = encodedPassword;
+        this.requiresPasswordChange = true;
+        this.loginFailCount = 0; // 비밀번호가 초기화되었으니 실패 카운트도 리셋
+        this.lockedUntil = null;
+    }
+
+    public void changePassword(String encodedPassword) {
+        this.password = encodedPassword;
+        this.requiresPasswordChange = false; // 비밀번호를 정상 변경했으므로 플래그 해제
+    }
+
+
+
 
     // 실패 횟수 증가 및 잠금 처리
     public void increaseLoginFailure() {

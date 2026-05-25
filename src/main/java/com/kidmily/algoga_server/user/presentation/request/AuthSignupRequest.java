@@ -6,7 +6,13 @@ import java.time.LocalDate;
 
 @Schema(description = "일반 회원가입 요청")
 public record AuthSignupRequest(
-        @Schema(description = "이메일(아이디)", example = "test@algoga.com")
+
+        @Schema(description = "아이디", example = "algoga123")
+        @NotBlank(message = "아이디는 필수입니다.")
+        @Size(min = 4, max = 20, message = "아이디는 4자 이상 20자 이하로 입력해주세요.")
+        String username,
+
+        @Schema(description = "이메일", example = "test@algoga.com")
         @Email(message = "올바른 이메일 형식을 입력해주세요.")
         @NotBlank(message = "이메일은 필수입니다.")
         String email,
