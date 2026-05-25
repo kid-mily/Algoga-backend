@@ -33,6 +33,10 @@ public class NoticeController {
     private final NoticeCommandUseCase noticeCommandUseCase;
     private final NoticeQueryUseCase noticeQueryUseCase;
 
+    /* ========================================================
+       1. 고정 문자열 주소 구역 (스프링이 변수보다 먼저 검사하도록 상단 배치)
+       ======================================================== */
+
     @GetMapping("/main")
     @Operation(summary = "공지사항 메인 조회", description = "메인 페이지에 노출되는 최신 공지사항 3개를 조회합니다.")
     public ResponseEntity<ApiResponse<List<NoticeMainResponse>>> getNoticeMain() {
@@ -41,6 +45,18 @@ public class NoticeController {
         return ResponseEntity.ok(ApiResponse.success(
                 "NOTICE_MAIN_FOUND",
                 "메인 공지사항 조회에 성공했습니다.",
+                responseData
+        ));
+    }
+
+    @GetMapping("/tags")
+    @Operation(summary = "공지사항 태그 목록 조회", description = "프론트엔드에서 선택할 수 있는 공지사항 태그(타입) 목록을 조회합니다.")
+    public ResponseEntity<ApiResponse<List<NoticeTagType>>> getNoticeTags() {
+        List<NoticeTagType> responseData = noticeQueryUseCase.getAllNoticeTags();
+
+        return ResponseEntity.ok(ApiResponse.success(
+                "NOTICE_TAGS_FOUND",
+                "공지사항 태그 목록 조회에 성공했습니다.",
                 responseData
         ));
     }
@@ -54,7 +70,6 @@ public class NoticeController {
     public ResponseEntity<ApiResponse<CreateNoticeResponse>> registerNotice(
             @Valid @RequestBody CreateNoticeRequest request
     ) {
-        // 🔥 request.type() 으로 변경
         Long noticeId = noticeCommandUseCase.registerNotice(new CreateNoticeCommand(
                 request.title(),
                 request.content(),
@@ -64,17 +79,6 @@ public class NoticeController {
 
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(ApiResponse.created("NOTICE_CREATED", "공지사항 등록에 성공했습니다.", responseData));
-    }
-
-    @DeleteMapping("/{noticeId}")
-    @Operation(summary = "공지사항 삭제", description = "기존 공지사항을 삭제합니다. (권한: CS_MANAGER)")
-    @ApiErrorCodeExample(domain = NoticeErrorCode.class, value = {"NOTICE_NOT_FOUND"})
-    public ResponseEntity<Void> deleteNotice(
-            @Parameter(description = "삭제할 공지사항 ID", example = "1")
-            @PathVariable Long noticeId
-    ) {
-        noticeCommandUseCase.deleteNotice(noticeId);
-        return ResponseEntity.noContent().build();
     }
 
     @PutMapping("/modify/{noticeId}")
@@ -89,7 +93,6 @@ public class NoticeController {
 
             @Valid @RequestBody UpdateNoticeRequest request
     ) {
-        // 🔥 request.type() 으로 변경
         noticeCommandUseCase.modifyNotice(noticeId, new UpdateNoticeCommand(
                 request.title(),
                 request.content(),
@@ -104,6 +107,10 @@ public class NoticeController {
                 responseData
         ));
     }
+
+    /* ========================================================
+       2. 동적 변수(Path Variable) 구역 (가장 넓은 범위를 커버하므로 맨 아래 배치)
+       ======================================================== */
 
     @GetMapping("/{tag}/{index}")
     @Operation(summary = "공지사항 전체 조회", description = "태그와 인덱스(페이지 번호)를 기반으로 공지사항 목록을 페이지네이션 조회합니다. 전체 조회를 원할 경우 tag에 'ALL'을 입력합니다.")
@@ -124,6 +131,18 @@ public class NoticeController {
         ));
     }
 
+    @DeleteMapping("/{noticeId}")
+    @Operation(summary = "공지사항 삭제", description = "기존 공지사항을 삭제합니다. (권한: CS_MANAGER)")
+    @ApiErrorCodeExample(domain = NoticeErrorCode.class, value = {"NOTICE_NOT_FOUND"})
+    public ResponseEntity<Void> deleteNotice(
+            @Parameter(description = "삭제할 공지사항 ID", example = "1")
+            @PathVariable Long noticeId
+    ) {
+        noticeCommandUseCase.deleteNotice(noticeId);
+        return ResponseEntity.noContent().build();
+    }
+
+    // 🔥 가장 포괄적인 형태의 GET 요청이므로 무조건 맨 마지막에 위치해야 합니다!
     @GetMapping("/{noticeId}")
     @Operation(summary = "공지사항 상세 조회", description = "공지사항 ID를 통해 특정 공지사항의 상세 정보를 조회합니다.")
     @ApiErrorCodeExample(domain = NoticeErrorCode.class, value = {"NOTICE_NOT_FOUND"})
@@ -136,18 +155,6 @@ public class NoticeController {
         return ResponseEntity.ok(ApiResponse.success(
                 "NOTICE_FOUND",
                 "공지사항 상세 조회에 성공했습니다.",
-                responseData
-        ));
-    }
-
-    @GetMapping("/tags")
-    @Operation(summary = "공지사항 태그 목록 조회", description = "프론트엔드에서 선택할 수 있는 공지사항 태그(타입) 목록을 조회합니다.")
-    public ResponseEntity<ApiResponse<List<NoticeTagType>>> getNoticeTags() {
-        List<NoticeTagType> responseData = noticeQueryUseCase.getAllNoticeTags();
-
-        return ResponseEntity.ok(ApiResponse.success(
-                "NOTICE_TAGS_FOUND",
-                "공지사항 태그 목록 조회에 성공했습니다.",
                 responseData
         ));
     }
