@@ -2,7 +2,6 @@ package com.kidmily.algoga_server.community.domain.model;
 
 import com.kidmily.algoga_server.community.exception.PostErrorCode;
 import com.kidmily.algoga_server.community.exception.PostException;
-import com.kidmily.algoga_server.community.infrastructure.persistence.entity.PostTagType;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;

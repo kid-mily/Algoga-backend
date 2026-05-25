@@ -5,7 +5,7 @@ import com.kidmily.algoga_server.community.domain.repository.PostRepository;
 import com.kidmily.algoga_server.community.infrastructure.mapper.PostMapper;
 import com.kidmily.algoga_server.community.infrastructure.persistence.entity.PostJpaEntity;
 import com.kidmily.algoga_server.community.infrastructure.persistence.entity.PostTag;
-import com.kidmily.algoga_server.community.infrastructure.persistence.entity.PostTagType;
+import com.kidmily.algoga_server.community.domain.model.PostTagType;
 import com.kidmily.algoga_server.community.infrastructure.persistence.repository.SpringDataPostRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
@@ -43,7 +43,7 @@ public class PostRepositoryAdapter implements PostRepository {
     @Override
     public Post update(Post post) {
         // 기존 엔티티 조회
-        PostJpaEntity jpaEntity = springDataRepository.findById(post.getId()).get();
+        PostJpaEntity jpaEntity = springDataRepository.findById(post.getId()).orElseThrow();
 
 
         // 기존 태그/이미지 전부 삭제 (orphanRemoval이 처리)
@@ -83,7 +83,7 @@ public class PostRepositoryAdapter implements PostRepository {
 
     @Override
     public void delete(Post post) {
-        PostJpaEntity jpaEntity = springDataRepository.findById(post.getId()).get();
+        PostJpaEntity jpaEntity = springDataRepository.findById(post.getId()).orElseThrow();
 
         jpaEntity.softDelete();  // PostJpaEntity에 이미 있음
         springDataRepository.save(jpaEntity);

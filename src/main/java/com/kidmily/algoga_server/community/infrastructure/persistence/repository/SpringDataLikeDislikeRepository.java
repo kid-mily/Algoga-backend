@@ -6,6 +6,8 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.util.Optional;
+
 public interface SpringDataLikeDislikeRepository extends JpaRepository<LikeDislikeJpaEntity, Long> {
     @Query("SELECT COUNT(l) FROM LikeDislikeJpaEntity l " +
             "WHERE l.targetType = :targetType AND l.targetId = :targetId AND l.isLike = :isLike")
@@ -13,5 +15,9 @@ public interface SpringDataLikeDislikeRepository extends JpaRepository<LikeDisli
             @Param("targetType") TargetType targetType,
             @Param("targetId") Long targetId,
             @Param("isLike") Boolean isLike
+    );
+
+    Optional<LikeDislikeJpaEntity> findByUserIdAndTargetTypeAndTargetId(
+            Long userId, TargetType targetType, Long targetId
     );
 }

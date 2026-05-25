@@ -1,7 +1,7 @@
 package com.kidmily.algoga_server.community.domain.repository;
 
 import com.kidmily.algoga_server.community.domain.model.Post;
-import com.kidmily.algoga_server.community.infrastructure.persistence.entity.PostTagType;
+import com.kidmily.algoga_server.community.domain.model.PostTagType;
 
 import java.util.List;
 import java.util.Optional;

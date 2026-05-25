@@ -1,4 +1,5 @@
 package com.kidmily.algoga_server.community.infrastructure.persistence.entity;
+import com.kidmily.algoga_server.community.domain.model.PostTagType;
 import jakarta.persistence.*;
 import lombok.*;
 

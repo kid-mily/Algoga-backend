@@ -8,7 +8,7 @@ import com.kidmily.algoga_server.community.domain.repository.LikeDislikeReposito
 import com.kidmily.algoga_server.community.domain.repository.PostRepository;
 import com.kidmily.algoga_server.community.exception.PostErrorCode;
 import com.kidmily.algoga_server.community.exception.PostException;
-import com.kidmily.algoga_server.community.infrastructure.persistence.entity.PostTagType;
+import com.kidmily.algoga_server.community.domain.model.PostTagType;
 import com.kidmily.algoga_server.community.domain.model.TargetType;
 import com.kidmily.algoga_server.community.presentation.api.response.*;
 import lombok.RequiredArgsConstructor;

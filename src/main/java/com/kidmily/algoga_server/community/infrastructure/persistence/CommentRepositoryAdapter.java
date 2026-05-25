@@ -45,7 +45,7 @@ public class CommentRepositoryAdapter implements CommentRepository {
     @Override
     public Comment update(Comment comment) {
         CommentJpaEntity entity = springDataRepository.findById(comment.getCommentId())
-                .orElseThrow(() -> new CommentException(PostErrorCode.COMMENT_NOT_FOUND));
+                .orElseThrow();
         entity.updateContent(comment.getContent());
         return commentMapper.toDomain(entity);
     }
@@ -53,7 +53,7 @@ public class CommentRepositoryAdapter implements CommentRepository {
     @Override
     public void delete(Comment comment) {
         CommentJpaEntity entity = springDataRepository.findById(comment.getCommentId())
-                .orElseThrow(() -> new CommentException(PostErrorCode.COMMENT_NOT_FOUND));
+                .orElseThrow();
         entity.softDelete();
     }
 

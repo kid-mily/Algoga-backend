@@ -4,13 +4,11 @@ import com.kidmily.algoga_server.community.application.command.*;
 import com.kidmily.algoga_server.community.application.usecase.CommentCommandUseCase;
 import com.kidmily.algoga_server.community.application.usecase.PostCommandUseCase;
 import com.kidmily.algoga_server.community.application.usecase.PostQueryUseCase;
+import com.kidmily.algoga_server.community.application.usecase.ReactionCommandUseCase;
 import com.kidmily.algoga_server.community.domain.model.Comment;
 import com.kidmily.algoga_server.community.exception.PostErrorCode;
-import com.kidmily.algoga_server.community.infrastructure.persistence.entity.PostTagType;
-import com.kidmily.algoga_server.community.presentation.api.request.CreateCommentRequest;
-import com.kidmily.algoga_server.community.presentation.api.request.CreatePostRequest;
-import com.kidmily.algoga_server.community.presentation.api.request.UpdateCommentRequest;
-import com.kidmily.algoga_server.community.presentation.api.request.UpdatePostRequest;
+import com.kidmily.algoga_server.community.domain.model.PostTagType;
+import com.kidmily.algoga_server.community.presentation.api.request.*;
 import com.kidmily.algoga_server.community.presentation.api.response.*;
 import com.kidmily.algoga_server.global.annotation.swagger.ApiErrorCodeExample;
 import com.kidmily.algoga_server.global.common.api.response.ApiResponse;
@@ -35,6 +33,8 @@ public class CommunityController {
     private final PostCommandUseCase postCommandUseCase;
     private final PostQueryUseCase postQueryUseCase;
     private final CommentCommandUseCase commentCommandUseCase;
+    private final ReactionCommandUseCase reactionCommandUseCase;
+
 
     @PostMapping
     @Operation(summary = "게시글 작성", description = "나라, 자유, 수강강의 태그 및 최대 10장의 사진을 포함해 게시글을 등록합니다.")
@@ -159,26 +159,6 @@ public class CommunityController {
         return ResponseEntity.ok(ApiResponse.success("POST_FOUND", "게시글 조회에 성공했습니다.", responseData));
     }
 
-    // 마이페이지 - 내가 쓸 글 목록 조회
-    @GetMapping("/me/posts")
-    @Operation(summary = "내가 작성한 게시글 목록 조회", description = "마이페이지에서 본인이 작성한 글 목록을 무한 스크롤 방식으로 최신순 조회합니다.")
-    @ApiErrorCodeExample(domain = PostErrorCode.class, value = {
-            "POST_UNAUTHORIZED",      // 401 Unauthorized
-            "POST_ACCESS_FORBIDDEN",   // 403 권한 부족
-            "POST_NOT_FOUND"          // 404 Not Found
-    })
-    public ResponseEntity<ApiResponse<PostListResponse>> getMyPosts(
-            @Parameter(description = "마지막 게시글 ID (첫 페이지는 생략)", example = "420")
-            @RequestParam(required = false) Long lastPostId,
-
-            @Parameter(description = "필터링할 카테고리 (다중 선택 가능, 생략 시 전체)", example = "QUESTION,TRAVEL_REVIEW")
-            @RequestParam(required = false) List<PostTagType> categories
-    ) {
-        long currentUserId = 1L; // TODO: Spring Security 적용 후 토큰에서 추출하도록 교체
-
-        PostListResponse responseData = postQueryUseCase.getMyPosts(currentUserId, lastPostId, categories);
-        return ResponseEntity.ok(ApiResponse.success("MY_POSTS_FOUND", "내가 작성한 게시글 목록 조회에 성공했습니다.", responseData));
-    }
 
     @PostMapping("/{postId}/comments")
     @Operation(summary = "댓글/대댓글 작성", description = "게시글에 댓글 또는 대댓글을 작성합니다.")
@@ -215,43 +195,4 @@ public class CommunityController {
                 .body(ApiResponse.created("COMMENT_CREATED", "댓글 작성에 성공했습니다.", responseData));
     }
 
-    @PatchMapping("/api/v1/comments/{commentId}")
-    @Operation(summary = "댓글 수정", description = "본인 댓글의 내용을 수정합니다.")
-    @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "댓글 수정에 성공했습니다.")
-    @ApiErrorCodeExample(domain = PostErrorCode.class, value = {
-            "COMMENT_NOT_FOUND",
-            "COMMENT_UNAUTHORIZED",
-            "COMMENT_UPDATE_FORBIDDEN"
-    })
-    public ResponseEntity<ApiResponse<UpdateCommentResponse>> updateComment(
-            @Parameter(description = "댓글 ID", example = "1") @PathVariable Long commentId,
-            @Valid @RequestBody UpdateCommentRequest request
-    ) {
-        Long currentUserId = 1L;
-
-        UpdateCommentCommand command = new UpdateCommentCommand(commentId, currentUserId, request.content());
-        Comment updatedComment = commentCommandUseCase.handle(command);
-
-        return ResponseEntity.ok(ApiResponse.success("COMMENT_UPDATED", "댓글 수정에 성공했습니다.",
-                new UpdateCommentResponse(updatedComment.getCommentId())));
-    }
-
-    @DeleteMapping("/api/v1/comments/{commentId}")
-    @Operation(summary = "댓글 삭제", description = "본인 댓글을 Soft Delete 처리합니다.")
-    @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "204", description = "댓글이 성공적으로 삭제되었습니다.")
-    @ApiErrorCodeExample(domain = PostErrorCode.class, value = {
-            "COMMENT_NOT_FOUND",
-            "COMMENT_UNAUTHORIZED",
-            "COMMENT_DELETE_FORBIDDEN"
-    })
-    public ResponseEntity<Void> deleteComment(
-            @Parameter(description = "댓글 ID", example = "1") @PathVariable Long commentId
-    ) {
-        Long currentUserId = 1L;
-
-        DeleteCommentCommand command = new DeleteCommentCommand(commentId, currentUserId);
-        commentCommandUseCase.handle(command);
-
-        return ResponseEntity.noContent().build();
-    }
 }

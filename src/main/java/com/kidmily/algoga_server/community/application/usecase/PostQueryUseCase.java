@@ -1,6 +1,6 @@
 package com.kidmily.algoga_server.community.application.usecase;
 
-import com.kidmily.algoga_server.community.infrastructure.persistence.entity.PostTagType;
+import com.kidmily.algoga_server.community.domain.model.PostTagType;
 import com.kidmily.algoga_server.community.presentation.api.response.PostListResponse;
 import com.kidmily.algoga_server.community.presentation.api.response.PostResponse;
 

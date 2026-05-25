@@ -1,6 +1,6 @@
 package com.kidmily.algoga_server.community.application.command;
 
-import com.kidmily.algoga_server.community.infrastructure.persistence.entity.PostTagType;
+import com.kidmily.algoga_server.community.domain.model.PostTagType;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;

@@ -1,7 +1,7 @@
 package com.kidmily.algoga_server.community.infrastructure.persistence.repository;
 
 import com.kidmily.algoga_server.community.infrastructure.persistence.entity.PostJpaEntity;
-import com.kidmily.algoga_server.community.infrastructure.persistence.entity.PostTagType;
+import com.kidmily.algoga_server.community.domain.model.PostTagType;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;

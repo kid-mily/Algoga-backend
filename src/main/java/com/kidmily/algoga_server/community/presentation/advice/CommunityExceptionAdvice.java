@@ -3,6 +3,7 @@ package com.kidmily.algoga_server.community.presentation.advice;
 import com.kidmily.algoga_server.community.exception.CommentException;
 import com.kidmily.algoga_server.community.exception.PostErrorCode;
 import com.kidmily.algoga_server.community.exception.PostException;
+import com.kidmily.algoga_server.community.exception.ReportException;
 import com.kidmily.algoga_server.global.common.api.response.ErrorResponse;
 import com.kidmily.algoga_server.global.exception.CommonExceptionAdvice;
 import lombok.extern.slf4j.Slf4j;
@@ -77,5 +78,23 @@ public class CommunityExceptionAdvice implements CommonExceptionAdvice {
         );
 
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+    }
+
+    @ExceptionHandler(ReportException.class)
+    public ResponseEntity<ErrorResponse> handleReportException(ReportException e) {
+        String traceId = getOrCreateTraceId();
+        PostErrorCode errorCode = e.getErrorCode();
+
+        log.warn("[ReportDomainException] traceId: {}, code: {}, message: {}",
+                traceId, errorCode.getCode(), errorCode.getMessage());
+
+        ErrorResponse response = new ErrorResponse(
+                Instant.now(),
+                errorCode.getStatus().value(),
+                errorCode.getCode(),
+                errorCode.getMessage(),
+                traceId
+        );
+        return ResponseEntity.status(errorCode.getStatus()).body(response);
     }
 }
