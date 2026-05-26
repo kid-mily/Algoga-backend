@@ -7,17 +7,18 @@ import com.kidmily.algoga_server.banner.domain.model.Banner;
 import com.kidmily.algoga_server.banner.domain.repository.BannerRepository;
 import com.kidmily.algoga_server.banner.exception.BannerErrorCode;
 import com.kidmily.algoga_server.banner.exception.BannerException;
-import com.kidmily.algoga_server.banner.settings.BannerStorageSettings; // 🔥 설정 클래스 가져오기
-import com.kidmily.algoga_server.global.port.out.FileStoragePort;    // 🔥 공통 S3 인터페이스 가져오기
+import com.kidmily.algoga_server.banner.settings.BannerStorageSettings;
+import com.kidmily.algoga_server.global.port.out.FileStoragePort;
+import com.kidmily.algoga_server.global.type.FileType;
+import com.kidmily.algoga_server.global.util.FileTypeDetector;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.time.Instant;
-import java.time.LocalTime;
-import java.time.ZoneId;
 
 @Slf4j
 @Service
@@ -25,36 +26,39 @@ import java.time.ZoneId;
 public class BannerCommandService implements BannerCommandUseCase {
 
     private final BannerRepository bannerRepository;
-    private final FileStoragePort fileStoragePort;           // S3 기능 (Global)
-    private final BannerStorageSettings storageSettings;     // 배너 설정 (Domain)
-
-    private static final ZoneId SEOUL_ZONE = ZoneId.of("Asia/Seoul");
+    private final FileStoragePort fileStoragePort;
+    private final BannerStorageSettings storageSettings;
 
     @Override
     @Transactional
     public Long registerBanner(CreateBannerCommand command) {
-        // 🌟 1. Settings에서 버킷명과 디렉토리명을 꺼내어 공통 Port에 전달
+        MultipartFile file = command.image();
+
+        FileType fileType = FileTypeDetector.determineFileType(file);
+
         String imageUrl = fileStoragePort.uploadFile(
-                command.image(),
+                file,
                 storageSettings.getBucketName(),
                 storageSettings.getDirectory()
         );
 
-        Instant startInstant = command.startDate().atStartOfDay(SEOUL_ZONE).toInstant();
-        Instant endInstant = command.endDate().atTime(LocalTime.MAX).atZone(SEOUL_ZONE).toInstant();
+        // 🌟 서비스 계층에서 현재 시간 할당
+        Instant currentInstant = Instant.now();
 
-        // 2. 도메인 생성 및 저장
         Banner newBanner = Banner.create(
                 command.managerId(),
                 imageUrl,
+                fileType,
                 command.linkUrl(),
                 command.text(),
-                startInstant,
-                endInstant,
-                command.isVisible()
+                command.isVisible(),
+                currentInstant
         );
 
-        return bannerRepository.save(newBanner).getBannerId();
+        Long savedId = bannerRepository.save(newBanner).getBannerId();
+        log.info("[Banner Created] bannerId: {}, managerId: {}, fileType: {}, imageUrl: {}", savedId, command.managerId(), fileType, imageUrl);
+
+        return savedId;
     }
 
     @Override
@@ -64,35 +68,35 @@ public class BannerCommandService implements BannerCommandUseCase {
                 .orElseThrow(() -> new BannerException(BannerErrorCode.BANNER_NOT_FOUND));
 
         String targetImageUrl = banner.getImageUrl();
+        FileType targetFileType = banner.getFileType();
 
         if (command.image() != null && !command.image().isEmpty()) {
-            // 🌟 1. 기존 이미지 삭제 (Settings 버킷명 사용)
+            MultipartFile file = command.image();
+
             fileStoragePort.deleteFile(
                     storageSettings.getBucketName(),
                     banner.getImageUrl()
             );
 
-            // 🌟 2. 새 이미지 업로드 (Settings 버킷명, 디렉토리명 사용)
+            targetFileType = FileTypeDetector.determineFileType(file);
+
             targetImageUrl = fileStoragePort.uploadFile(
-                    command.image(),
+                    file,
                     storageSettings.getBucketName(),
                     storageSettings.getDirectory()
             );
         }
 
-        Instant startInstant = command.startDate().atStartOfDay(SEOUL_ZONE).toInstant();
-        Instant endInstant = command.endDate().atTime(LocalTime.MAX).atZone(SEOUL_ZONE).toInstant();
-
         Banner updatedBanner = banner.update(
                 targetImageUrl,
+                targetFileType,
                 command.linkUrl(),
                 command.text(),
-                startInstant,
-                endInstant,
                 command.isVisible()
         );
 
         bannerRepository.save(updatedBanner);
+        log.info("[Banner Modified] bannerId: {}, managerId: {}, fileType: {}", bannerId, command.managerId(), targetFileType);
     }
 
     @Override
@@ -101,12 +105,12 @@ public class BannerCommandService implements BannerCommandUseCase {
         Banner banner = bannerRepository.findById(bannerId)
                 .orElseThrow(() -> new BannerException(BannerErrorCode.BANNER_NOT_FOUND));
 
-        // 🌟 Settings에서 버킷명 가져와서 삭제
         fileStoragePort.deleteFile(
                 storageSettings.getBucketName(),
                 banner.getImageUrl()
         );
 
         bannerRepository.deleteById(bannerId);
+        log.info("[Banner Deleted] bannerId: {}", bannerId);
     }
 }

@@ -1,12 +1,11 @@
 package com.kidmily.algoga_server.banner.infrastructure.persistence.entity;
 
+import com.kidmily.algoga_server.global.type.FileType;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import org.springframework.data.annotation.CreatedDate;
-import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import java.time.Instant;
 
@@ -14,7 +13,6 @@ import java.time.Instant;
 @Table(name = "banner")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-@EntityListeners(AuditingEntityListener.class)
 public class BannerEntity {
 
     @Id
@@ -27,6 +25,10 @@ public class BannerEntity {
     @Column(nullable = false, length = 500)
     private String imageUrl;
 
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 20)
+    private FileType fileType;
+
     @Column(length = 500)
     private String linkUrl;
 
@@ -34,27 +36,20 @@ public class BannerEntity {
     private String text;
 
     @Column(nullable = false)
-    private Instant startDate;
+    private Boolean isVisible = true;
 
-    @Column(nullable = false)
-    private Instant endDate;
-
-    @Column(nullable = false)
-    private Boolean isVisible = true; //
-
-    @CreatedDate
     @Column(nullable = false, updatable = false)
     private Instant createdAt;
 
     @Builder
-    public BannerEntity(Long bannerId, Long managerId, String imageUrl, String linkUrl, String text, Instant startDate, Instant endDate, Instant createdAt) {
+    public BannerEntity(Long bannerId, Long managerId, String imageUrl, FileType fileType, String linkUrl, String text, Boolean isVisible, Instant createdAt) {
         this.bannerId = bannerId;
         this.managerId = managerId;
         this.imageUrl = imageUrl;
+        this.fileType = fileType;
         this.linkUrl = linkUrl;
         this.text = text;
-        this.startDate = startDate;
-        this.endDate = endDate;
+        if(isVisible != null) this.isVisible = isVisible;
         this.createdAt = createdAt;
     }
 }

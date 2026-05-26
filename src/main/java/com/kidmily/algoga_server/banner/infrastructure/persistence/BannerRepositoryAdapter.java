@@ -21,7 +21,7 @@ public class BannerRepositoryAdapter implements BannerRepository {
 
     @Override
     public Banner save(Banner banner) {
-        // Domain -> Entity 변환
+        // Domain -> Entity 변환 (fileType 포함되어 자동 변환됨)
         BannerEntity entity = bannerMapper.toEntity(banner);
 
         // DB 저장 후 반환된 Entity -> Domain 재변환

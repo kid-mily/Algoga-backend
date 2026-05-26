@@ -1,80 +1,65 @@
 package com.kidmily.algoga_server.banner.domain.model;
 
-import com.kidmily.algoga_server.banner.exception.BannerErrorCode;
-import com.kidmily.algoga_server.banner.exception.BannerException;
+import com.kidmily.algoga_server.global.type.FileType;
+import jakarta.persistence.*;
+import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
+
 import java.time.Instant;
 
+@Entity
 @Getter
+@Table(name = "banners")
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Banner {
-    private final Long bannerId;
-    private final Long managerId;
-    private final String imageUrl;
-    private final String linkUrl;
-    private final String text;
-    private final Instant startDate;
-    private final Instant endDate;
-    private final Boolean isVisible;
-    private final Instant createdAt;
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long bannerId;
+
+    private Long managerId;
+
+    private String imageUrl;
+
+    @Enumerated(EnumType.STRING)
+    private FileType fileType;
+
+    private String linkUrl;
+
+    private String text;
+
+    private boolean isVisible;
+
+    private Instant createdAt;
 
     @Builder
-    public Banner(Long bannerId, Long managerId, String imageUrl, String linkUrl, String text, Instant startDate, Instant endDate, Boolean isVisible, Instant createdAt) {
+    private Banner(Long bannerId, Long managerId, String imageUrl, FileType fileType, String linkUrl, String text, boolean isVisible, Instant createdAt) {
         this.bannerId = bannerId;
         this.managerId = managerId;
         this.imageUrl = imageUrl;
+        this.fileType = fileType;
         this.linkUrl = linkUrl;
         this.text = text;
-        this.startDate = startDate;
-        this.endDate = endDate;
         this.isVisible = isVisible;
         this.createdAt = createdAt;
     }
 
-    public static Banner create(Long managerId, String imageUrl, String linkUrl, String text, Instant startDate, Instant endDate, Boolean isVisible) {
-        validateDates(startDate, endDate);
-        validateText(text);
-
-        return Banner.builder()
-                .managerId(managerId)
-                .imageUrl(imageUrl)
-                .linkUrl(linkUrl)
-                .text(text)
-                .startDate(startDate)
-                .endDate(endDate)
-                .isVisible(isVisible != null ? isVisible : true)
-                .createdAt(Instant.now())
-                .build();
+    public static Banner create(Long managerId, String imageUrl, FileType fileType, String linkUrl, String text, boolean isVisible, Instant createdAt) {
+        return new Banner(null, managerId, imageUrl, fileType, linkUrl, text, isVisible, createdAt);
     }
 
-    public Banner update(String newImageUrl, String linkUrl, String text, Instant startDate, Instant endDate, Boolean isVisible) {
-        validateDates(startDate, endDate);
-        validateText(text);
-
-        return Banner.builder()
-                .bannerId(this.bannerId)
-                .managerId(this.managerId)
-                .imageUrl(newImageUrl)
-                .linkUrl(linkUrl)
-                .text(text)
-                .startDate(startDate)
-                .endDate(endDate)
-                .isVisible(isVisible)
-                .createdAt(this.createdAt)
-                .build();
-    }
-
-    // 🔥 도메인 검증 로직 추가
-    private static void validateDates(Instant startDate, Instant endDate) {
-        if (startDate != null && endDate != null && startDate.isAfter(endDate)) {
-            throw new BannerException(BannerErrorCode.DATE_INVALID);
-        }
-    }
-
-    private static void validateText(String text) {
-        // DB 컬럼 길이가 255이므로 초과 방지
-        if (text != null && text.length() > 255) {
-            throw new BannerException(BannerErrorCode.TEXT_LENGTH_EXCEEDED);
-        }
+    public Banner update(String imageUrl, FileType fileType, String linkUrl, String text, boolean isVisible) {
+        return new Banner(
+                this.bannerId,
+                this.managerId,
+                imageUrl,
+                fileType,
+                linkUrl,
+                text,
+                isVisible,
+                this.createdAt // 🌟 업데이트 시 기존 생성 시간 유지
+        );
     }
 }

@@ -22,6 +22,7 @@ public class BannerQueryService implements BannerQueryUseCase {
                 .map(banner -> new BannerResponse(
                         banner.getBannerId(),
                         banner.getImageUrl(),
+                        banner.getFileType().name(), // 🌟 Enum의 문자열("IMAGE" 또는 "VIDEO") 매핑
                         banner.getLinkUrl(),
                         banner.getText()
                 ))
