@@ -32,11 +32,17 @@ public class JwtProvider {
 
     public String createAccessToken(String email) {
         return Jwts.builder()
-                .subject(email) // 0.12.x 문법 (setSubject -> subject)
-                .issuedAt(new Date()) // setIssuedAt -> issuedAt
-                .expiration(new Date(System.currentTimeMillis() + accessTokenExpiration)) // setExpiration -> expiration
-                .signWith(key) // signWith(key, 알고리즘) -> signWith(key) 로 자동 인식
+                .subject(email)
+                .claim("type", "USER") // 🌟 토큰 타입 명시
+                .issuedAt(new Date())
+                .expiration(new Date(System.currentTimeMillis() + accessTokenExpiration))
+                .signWith(key)
                 .compact();
+    }
+
+    public String getType(String token) {
+        return Jwts.parser().verifyWith(key).build()
+                .parseSignedClaims(token).getPayload().get("type", String.class);
     }
 
     public String createRefreshToken(String email) {
