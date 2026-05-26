@@ -3,6 +3,8 @@ package com.kidmily.algoga_server.booking.application.service;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.kidmily.algoga_server.booking.application.command.CreateBookingCommand;
 import com.kidmily.algoga_server.booking.application.usecase.BookingCommandUseCase;
+import com.kidmily.algoga_server.booking.domain.event.BookingCanceledEvent;
+import com.kidmily.algoga_server.booking.domain.event.BookingCreatedEvent;
 import com.kidmily.algoga_server.booking.domain.model.Booking;
 import com.kidmily.algoga_server.booking.domain.repository.BookingRepository;
 import com.kidmily.algoga_server.booking.exception.BookingErrorCode;
@@ -11,6 +13,7 @@ import com.kidmily.algoga_server.packages.domain.model.Package;
 import com.kidmily.algoga_server.packages.domain.repository.PackageRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -28,6 +31,7 @@ public class BookingCommandService implements BookingCommandUseCase {
     private final BookingRepository bookingRepository;
     private final PackageRepository packageRepository;
     private final ObjectMapper objectMapper;
+    private final ApplicationEventPublisher eventPublisher; // 승재 추가
 
     @Override
     public Long handle(CreateBookingCommand command) {
@@ -68,6 +72,13 @@ public class BookingCommandService implements BookingCommandUseCase {
 
         Booking savedBooking = bookingRepository.save(booking);
 
+        // 이벤트 발행
+        eventPublisher.publishEvent(new BookingCreatedEvent(
+                command.userId(),
+                command.packageId(),
+                pkg.getDepartureDate()
+        ));
+
         log.info("[BookingCommandService] 예약 생성 완료 - bookingId: {}, bookingNumber: {}",
                 savedBooking.getId(), savedBooking.getBookingNumber());
 
@@ -78,13 +89,16 @@ public class BookingCommandService implements BookingCommandUseCase {
     public void cancel(Long bookingId) {
         log.info("[BookingCommandService] 예약 취소 요청 - bookingId: {}", bookingId);
 
-        bookingRepository.findById(bookingId)
+        Booking booking = bookingRepository.findById(bookingId)
                 .orElseThrow(() -> {
                     log.warn("[BookingCommandService] 예약을 찾을 수 없음 - bookingId: {}", bookingId);
                     return new BusinessException(BookingErrorCode.BOOKING_NOT_FOUND);
                 });
 
         bookingRepository.cancel(bookingId);
+
+        // 이벤트 발행
+        eventPublisher.publishEvent(new BookingCanceledEvent(booking.getPackageId()));
 
         log.info("[BookingCommandService] 예약 취소 완료 - bookingId: {}", bookingId);
     }
