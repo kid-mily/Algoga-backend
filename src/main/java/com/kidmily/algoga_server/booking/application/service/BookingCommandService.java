@@ -28,8 +28,6 @@ public class BookingCommandService implements BookingCommandUseCase {
     private static final double DEPOSIT_RATE = 0.3;
 
     private final BookingRepository bookingRepository;
-    private final PackageRepository packageRepository;
-    private final ObjectMapper objectMapper;
     private final ApplicationEventPublisher eventPublisher; // 승재 추가
     private final AccommodationRepository accommodationRepository;
 
@@ -73,8 +71,8 @@ public class BookingCommandService implements BookingCommandUseCase {
         // 이벤트 발행
         eventPublisher.publishEvent(new BookingCreatedEvent(
                 command.userId(),
-                command.packageId(),
-                pkg.getDepartureDate()
+                command.accommodationId(),
+                command.checkInDate()
         ));
 
         log.info("[BookingCommandService] 예약 생성 완료 - bookingId: {}, bookingNumber: {}",
@@ -96,7 +94,7 @@ public void cancel(Long bookingId) {
     bookingRepository.cancel(bookingId);
 
     // 이벤트 발행
-    eventPublisher.publishEvent(new BookingCanceledEvent(booking.getPackageId()));
+       eventPublisher.publishEvent(new BookingCanceledEvent(booking.getAccommodationId()));
 
     log.info("[BookingCommandService] 예약 취소 완료 - bookingId: {}", bookingId);
 }

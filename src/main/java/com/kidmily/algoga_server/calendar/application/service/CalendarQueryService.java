@@ -1,7 +1,7 @@
 package com.kidmily.algoga_server.calendar.application.service;
 
 import com.kidmily.algoga_server.calendar.application.port.LecturePort;
-import com.kidmily.algoga_server.calendar.application.port.PackagePort;
+import com.kidmily.algoga_server.calendar.application.port.AccommodationPort;
 import com.kidmily.algoga_server.calendar.application.usecase.CalendarQueryUseCase;
 import com.kidmily.algoga_server.calendar.domain.model.Calendar;
 import com.kidmily.algoga_server.calendar.domain.model.CalendarType;
@@ -24,7 +24,7 @@ import java.util.List;
 public class CalendarQueryService implements CalendarQueryUseCase {
 
     private final CalendarRepository calendarRepository;
-    private final PackagePort packagePort;
+    private final AccommodationPort accommodationPort;
     private final LecturePort lecturePort;
 
     @Override
@@ -60,7 +60,7 @@ public class CalendarQueryService implements CalendarQueryUseCase {
 
     private String resolveTitle(Calendar calendar) {
         if (calendar.getType() == CalendarType.TRIP) {
-            return packagePort.getPackageName(calendar.getReferenceId());
+            return accommodationPort.getAccommodationName(calendar.getReferenceId());
         } else if (calendar.getType() == CalendarType.LECTURE) {
             return lecturePort.getLectureName(calendar.getReferenceId());
         }
