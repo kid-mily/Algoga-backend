@@ -65,9 +65,9 @@ public class AdminJwtAuthenticationFilter extends OncePerRequestFilter {
     }
 
     // 🌟 추가: 어드민 API가 아닌 요청(유저 요청 등)은 이 필터를 무시하고 패스하도록 설정
-    @Override
-    protected boolean shouldNotFilter(HttpServletRequest request) {
-        String path = request.getRequestURI();
-        return !path.startsWith("/api/v1/admin");
-    }
+//    @Override
+//    protected boolean shouldNotFilter(HttpServletRequest request) {
+//        String path = request.getRequestURI();
+//        return !path.startsWith("/api/v1/admin");
+//    }
 }
