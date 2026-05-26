@@ -27,12 +27,19 @@ public class BookingController {
     private final BookingQueryUseCase bookingQueryUseCase;
 
     @PostMapping
-    @Operation(summary = "예약 생성", description = "패키지를 예약합니다. PENDING 상태로 생성됩니다.")
+    @Operation(summary = "예약 생성", description = "항공편과 숙소를 선택해 예약합니다.")
     @ApiErrorCodeExample(domain = BookingErrorCode.class, value = {"PACKAGE_NOT_AVAILABLE"})
     public ResponseEntity<ApiResponse<Long>> createBooking(
             @Valid @RequestBody CreateBookingRequest request
     ) {
-        CreateBookingCommand command = new CreateBookingCommand(request.packageId(), request.userId());
+        CreateBookingCommand command = new CreateBookingCommand(
+                request.accommodationId(),
+                request.userId(),
+                request.flightInfo(),
+                request.flightPrice(),
+                request.checkInDate(),
+                request.checkOutDate()
+        );
         Long bookingId = bookingCommandUseCase.handle(command);
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(ApiResponse.created("BOOKING_CREATED", "예약이 생성됐습니다.", bookingId));

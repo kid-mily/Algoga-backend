@@ -20,8 +20,8 @@ public class BookingJpaEntity {
     @Column(name = "booking_id")
     private Long id;
 
-    @Column(name = "package_id", nullable = false)
-    private Long packageId;
+    @Column(name = "accommodation_id", nullable = false)
+    private Long accommodationId;
 
     @Column(name = "user_id", nullable = false)
     private Long userId;
@@ -60,12 +60,12 @@ public class BookingJpaEntity {
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
 
-    public BookingJpaEntity(Long packageId, Long userId, BookingStatus status,
+    public BookingJpaEntity(Long accommodationId, Long userId, BookingStatus status,
                             int totalPrice, int depositPrice, int balancePrice,
                             String bookingNumber, String flightInfo,
                             LocalDate checkInDate, LocalDate checkOutDate,
                             int nights, LocalDateTime createdAt, LocalDateTime updatedAt) {
-        this.packageId = packageId;
+        this.accommodationId = accommodationId;
         this.userId = userId;
         this.status = status;
         this.totalPrice = totalPrice;
