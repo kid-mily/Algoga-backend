@@ -51,6 +51,9 @@ public class AuthService {
                 .signupPath(request.signupPath())
                 .createdAt(LocalDateTime.now())
                 .requiresPasswordChange(false)
+                .termsServiceAgreed(request.termsServiceAgreed())
+                .termsPrivacyAgreed(request.termsPrivacyAgreed())
+                .termsMarketingAgreed(request.termsMarketingAgreed())
                 .build();
         userRepository.save(user);
     }
@@ -73,7 +76,6 @@ public class AuthService {
         String accessToken = jwtProvider.createAccessToken(user.getEmail());
         String refreshToken = jwtProvider.createRefreshToken(user.getEmail());
 
-        // ⭐️ 여기서 user.getRequiresPasswordChange()를 넘겨줍니다.
         return new AuthTokenResponse(accessToken, refreshToken, user.getRequiresPasswordChange());
     }
 

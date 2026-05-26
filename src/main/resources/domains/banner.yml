@@ -1,0 +1,4 @@
+banner:
+  storage:
+    bucket: algoga-banner  # 🌟 S3 버킷 이름
+    directory: banners               # 🌟 S3 폴더 이름

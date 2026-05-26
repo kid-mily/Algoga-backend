@@ -19,16 +19,15 @@ public class AdminSecurityConfig {
     private final AdminJwtAuthenticationFilter adminJwtAuthenticationFilter;
 
     @Bean
-    @Order(1)
+    @Order(1) // 우선순위 1 유지
     public SecurityFilterChain adminSecurityFilterChain(HttpSecurity http) throws Exception {
         http
-                .securityMatcher("/api/v1/admin/**")
+                // 🔥 특정 도메인이 아닌, /api/v1/ 으로 시작하는 '모든' 도메인이 이 체인을 타도록 변경!
+                .securityMatcher("/api/v1/**")
                 .csrf(AbstractHttpConfigurer::disable)
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
-                        // 🌟 싹 다 지우고 이 한 줄만 남깁니다!
-                        // /api/v1/admin/** 으로 들어오는 모든 요청을 토큰/권한 상관없이 무조건 통과시킴
-                        .anyRequest().permitAll()
+                        .anyRequest().permitAll() // 세부 권한 체크는 컨트롤러의 @PreAuthorize에 위임
                 )
                 .addFilterBefore(adminJwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 

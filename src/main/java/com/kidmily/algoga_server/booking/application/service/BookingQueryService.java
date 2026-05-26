@@ -29,7 +29,7 @@ public class BookingQueryService implements BookingQueryUseCase {
 
         return new BookingResponse(
                 booking.getId(),
-                booking.getPackageId(),
+                booking.getAccommodationId(),
                 booking.getUserId(),
                 booking.getStatus(),
                 booking.getTotalPrice(),
