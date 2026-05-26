@@ -22,12 +22,12 @@ public class CalendarEventListener {
     @Transactional
     public void handleBookingCreated(BookingCreatedEvent event) {
         log.info("[CalendarEventListener] 예약 생성 이벤트 수신 - userId: {}, packageId: {}",
-                event.userId(), event.packageId());
+                event.userId(), event.accommodationId());
 
         Calendar calendar = Calendar.create(
                 event.userId(),
-                event.packageId(),
-                event.departureDate(),
+                event.accommodationId(),  // packageId → accommodationId
+                event.checkInDate(),      // departureDate → checkInDate
                 CalendarType.TRIP
         );
         calendarRepository.save(calendar);
@@ -38,9 +38,9 @@ public class CalendarEventListener {
     @EventListener
     @Transactional
     public void handleBookingCanceled(BookingCanceledEvent event) {
-        log.info("[CalendarEventListener] 예약 취소 이벤트 수신 - packageId: {}", event.packageId());
+        log.info("[CalendarEventListener] 예약 취소 이벤트 수신 - accommodationId: {}", event.accommodationId());
 
-        calendarRepository.deleteByReferenceId(event.packageId());
+        calendarRepository.deleteByReferenceId(event.accommodationId());
 
         log.info("[CalendarEventListener] 캘린더 일정 삭제 완료");
     }
