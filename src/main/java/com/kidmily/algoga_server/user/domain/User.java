@@ -68,7 +68,16 @@ public class User {
     @Column(name = "requires_password_change")
     private Boolean requiresPasswordChange = false;
 
-    // 기존 코드 아래에 이 메서드들을 추가하세요.
+    // 개별 약관 동의 컬럼
+    @Column(name = "terms_service_agreed", nullable = false)
+    private boolean termsServiceAgreed;
+
+    @Column(name = "terms_privacy_agreed", nullable = false)
+    private boolean termsPrivacyAgreed;
+
+    @Column(name = "terms_marketing_agreed", nullable = false)
+    private boolean termsMarketingAgreed;
+
     public void setTemporaryPassword(String encodedPassword) {
         this.password = encodedPassword;
         this.requiresPasswordChange = true;
