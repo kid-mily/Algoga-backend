@@ -11,6 +11,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
+
 @Slf4j
 @Service
 @Transactional(readOnly = true)
@@ -26,7 +28,19 @@ public class BookingQueryService implements BookingQueryUseCase {
                     log.warn("[BookingQueryService] 예약을 찾을 수 없음 - bookingId: {}", bookingId);
                     return new BusinessException(BookingErrorCode.BOOKING_NOT_FOUND);
                 });
+        return toResponse(booking);
+    }
 
+    @Override
+    public List<BookingResponse> getMyBookings(Long userId) {
+        log.info("[BookingQueryService] 내 예약 목록 조회 - userId: {}", userId);
+        return bookingRepository.findByUserId(userId)
+                .stream()
+                .map(this::toResponse)
+                .toList();
+    }
+
+    private BookingResponse toResponse(Booking booking) {
         return new BookingResponse(
                 booking.getId(),
                 booking.getAccommodationId(),

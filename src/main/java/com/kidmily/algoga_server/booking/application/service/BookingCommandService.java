@@ -28,33 +28,27 @@ public class BookingCommandService implements BookingCommandUseCase {
     private static final double DEPOSIT_RATE = 0.3;
 
     private final BookingRepository bookingRepository;
-    private final PackageRepository packageRepository;
-    private final ObjectMapper objectMapper;
-    private final ApplicationEventPublisher eventPublisher; // 승재 추가
     private final AccommodationRepository accommodationRepository;
+    private final ApplicationEventPublisher eventPublisher;
 
     @Override
     public Long handle(CreateBookingCommand command) {
         log.info("[BookingCommandService] 예약 생성 요청 - accommodationId: {}, userId: {}",
                 command.accommodationId(), command.userId());
 
-        // 숙소 조회
         Accommodation accommodation = accommodationRepository.findById(command.accommodationId())
                 .orElseThrow(() -> {
                     log.warn("[BookingCommandService] 숙소를 찾을 수 없음 - accommodationId: {}", command.accommodationId());
                     return new BusinessException(BookingErrorCode.PACKAGE_NOT_AVAILABLE);
                 });
 
-        // 가격 계산
         int accommodationPrice = accommodation.getPricePerNight() * accommodation.getNights();
         int totalPrice = command.flightPrice() + accommodationPrice;
         int depositPrice = (int) (totalPrice * DEPOSIT_RATE);
         int balancePrice = totalPrice - depositPrice;
 
-        // 예약 번호 생성
         String bookingNumber = generateBookingNumber();
 
-        // 예약 생성
         Booking booking = Booking.create(
                 command.accommodationId(),
                 command.userId(),
@@ -70,11 +64,10 @@ public class BookingCommandService implements BookingCommandUseCase {
 
         Booking savedBooking = bookingRepository.save(booking);
 
-        // 이벤트 발행
         eventPublisher.publishEvent(new BookingCreatedEvent(
                 command.userId(),
-                command.packageId(),
-                pkg.getDepartureDate()
+                command.accommodationId(),
+                command.checkInDate()
         ));
 
         log.info("[BookingCommandService] 예약 생성 완료 - bookingId: {}, bookingNumber: {}",
@@ -83,23 +76,22 @@ public class BookingCommandService implements BookingCommandUseCase {
         return savedBooking.getId();
     }
 
-   @Override
-public void cancel(Long bookingId) {
-    log.info("[BookingCommandService] 예약 취소 요청 - bookingId: {}", bookingId);
+    @Override
+    public void cancel(Long bookingId) {
+        log.info("[BookingCommandService] 예약 취소 요청 - bookingId: {}", bookingId);
 
-    Booking booking = bookingRepository.findById(bookingId)
-            .orElseThrow(() -> {
-                log.warn("[BookingCommandService] 예약을 찾을 수 없음 - bookingId: {}", bookingId);
-                return new BusinessException(BookingErrorCode.BOOKING_NOT_FOUND);
-            });
+        Booking booking = bookingRepository.findById(bookingId)
+                .orElseThrow(() -> {
+                    log.warn("[BookingCommandService] 예약을 찾을 수 없음 - bookingId: {}", bookingId);
+                    return new BusinessException(BookingErrorCode.BOOKING_NOT_FOUND);
+                });
 
-    bookingRepository.cancel(bookingId);
+        bookingRepository.cancel(bookingId);
 
-    // 이벤트 발행
-    eventPublisher.publishEvent(new BookingCanceledEvent(booking.getPackageId()));
+        eventPublisher.publishEvent(new BookingCanceledEvent(booking.getAccommodationId()));
 
-    log.info("[BookingCommandService] 예약 취소 완료 - bookingId: {}", bookingId);
-}
+        log.info("[BookingCommandService] 예약 취소 완료 - bookingId: {}", bookingId);
+    }
 
     private String generateBookingNumber() {
         String date = LocalDate.now().format(DateTimeFormatter.ofPattern("yyyyMMdd"));

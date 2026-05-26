@@ -4,6 +4,6 @@ import java.time.LocalDate;
 
 public record BookingCreatedEvent(
         Long userId,
-        Long packageId,
-        LocalDate departureDate
+        Long accommodationId,
+        LocalDate checkInDate
 ) {}

@@ -17,8 +17,9 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 @RestController
-@RequestMapping("/api/v1/bookings")
 @RequiredArgsConstructor
 @Tag(name = "Booking", description = "예약 API")
 public class BookingController {
@@ -26,8 +27,8 @@ public class BookingController {
     private final BookingCommandUseCase bookingCommandUseCase;
     private final BookingQueryUseCase bookingQueryUseCase;
 
-    @PostMapping
-    @Operation(summary = "예약 생성", description = "항공편과 숙소를 선택해 예약합니다.")
+    @PostMapping("/api/v1/bookings")
+    @Operation(summary = "예약 생성", description = "숙소와 항공편을 선택하여 예약을 생성합니다.")
     @ApiErrorCodeExample(domain = BookingErrorCode.class, value = {"PACKAGE_NOT_AVAILABLE"})
     public ResponseEntity<ApiResponse<Long>> createBooking(
             @Valid @RequestBody CreateBookingRequest request
@@ -42,10 +43,10 @@ public class BookingController {
         );
         Long bookingId = bookingCommandUseCase.handle(command);
         return ResponseEntity.status(HttpStatus.CREATED)
-                .body(ApiResponse.created("BOOKING_CREATED", "예약이 생성됐습니다.", bookingId));
+                .body(ApiResponse.created("BOOKING_CREATED", "예약이 생성되었습니다.", bookingId));
     }
 
-    @GetMapping("/{bookingId}")
+    @GetMapping("/api/v1/bookings/{bookingId}")
     @Operation(summary = "예약 상세 조회", description = "예약 상세 정보를 조회합니다.")
     @ApiErrorCodeExample(domain = BookingErrorCode.class, value = {"BOOKING_NOT_FOUND"})
     public ResponseEntity<ApiResponse<BookingResponse>> getBooking(
@@ -56,7 +57,17 @@ public class BookingController {
         return ResponseEntity.ok(ApiResponse.success("BOOKING_FOUND", "예약 조회에 성공했습니다.", response));
     }
 
-    @DeleteMapping("/{bookingId}/cancel")
+    @GetMapping("/api/v1/users/{userId}/bookings")
+    @Operation(summary = "내 예약 목록 조회", description = "유저의 전체 예약 목록을 조회합니다.")
+    public ResponseEntity<ApiResponse<List<BookingResponse>>> getMyBookings(
+            @Parameter(description = "유저 ID", example = "1")
+            @PathVariable Long userId
+    ) {
+        List<BookingResponse> response = bookingQueryUseCase.getMyBookings(userId);
+        return ResponseEntity.ok(ApiResponse.success("MY_BOOKINGS_FOUND", "내 예약 목록 조회에 성공했습니다.", response));
+    }
+
+    @DeleteMapping("/api/v1/bookings/{bookingId}/cancel")
     @Operation(summary = "예약 취소", description = "예약 취소를 요청합니다. CANCEL_REQUESTED 상태로 변경됩니다.")
     @ApiErrorCodeExample(domain = BookingErrorCode.class, value = {"BOOKING_NOT_FOUND"})
     public ResponseEntity<ApiResponse<Void>> cancelBooking(
@@ -64,6 +75,6 @@ public class BookingController {
             @PathVariable Long bookingId
     ) {
         bookingCommandUseCase.cancel(bookingId);
-        return ResponseEntity.ok(ApiResponse.success("BOOKING_CANCELLED", "예약 취소 요청이 완료됐습니다."));
+        return ResponseEntity.ok(ApiResponse.success("BOOKING_CANCELLED", "예약 취소 요청이 완료되었습니다."));
     }
 }

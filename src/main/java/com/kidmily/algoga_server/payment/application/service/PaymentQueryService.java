@@ -14,6 +14,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
+
 @Slf4j
 @Service
 @Transactional(readOnly = true)
@@ -31,7 +33,6 @@ public class PaymentQueryService implements PaymentQueryUseCase {
                     log.warn("[PaymentQueryService] 결제 정보를 찾을 수 없음 - paymentId: {}", paymentId);
                     return new BusinessException(PaymentErrorCode.PAYMENT_NOT_FOUND);
                 });
-
         return PaymentResponse.from(payment);
     }
 
@@ -49,9 +50,18 @@ public class PaymentQueryService implements PaymentQueryUseCase {
                     return new BusinessException(PaymentErrorCode.BOOKING_NOT_FOUND);
                 });
 
-        log.warn("[PaymentQueryService] 확인서 PDF 생성 - paymentId: {}, bookingId: {}",
+        log.info("[PaymentQueryService] 확인서 PDF 생성 - paymentId: {}, bookingId: {}",
                 paymentId, payment.getBookingId());
 
         return confirmationPdfGenerator.generate(payment, booking);
+    }
+
+    @Override
+    public List<PaymentResponse> getMyPayments(Long userId) {
+        log.info("[PaymentQueryService] 내 결제 내역 조회 - userId: {}", userId);
+        return paymentRepository.findByUserId(userId)
+                .stream()
+                .map(PaymentResponse::from)
+                .toList();
     }
 }
