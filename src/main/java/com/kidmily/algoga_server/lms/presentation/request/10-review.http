@@ -1,0 +1,25 @@
+### ==========================================================
+### 10. 강의 리뷰
+### 먼저 01-auth-map.http에서 로그인 실행 후 사용
+###
+### 조건:
+### - 강의 이수 완료한 사용자만 리뷰 작성 가능
+### - 한 사용자당 한 강의에 리뷰 1개만 작성 가능
+### - 리뷰 수정/삭제 없음
+### ==========================================================
+
+
+### 강의 리뷰 - 리뷰 등록
+POST http://localhost:15000/api/v1/courses/3/reviews
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "rating": 5,
+  "content": "여행 전에 필요한 정보를 쉽게 배울 수 있어서 좋았습니다."
+}
+
+
+### 강의 리뷰 - 리뷰 목록 조회
+GET http://localhost:15000/api/v1/courses/3/reviews
+Authorization: Bearer {{accessToken}}

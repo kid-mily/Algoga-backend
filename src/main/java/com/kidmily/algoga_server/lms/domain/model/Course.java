@@ -10,6 +10,7 @@ public class Course {
     private Long managerId;
     private String title;
     private String description;
+    private Integer price;
     private String thumbnailUrl;
     private String fileUrl;
     private String status;
@@ -22,6 +23,7 @@ public class Course {
             Long managerId,
             String title,
             String description,
+            Integer price,
             String thumbnailUrl,
             String fileUrl,
             String status,
@@ -33,6 +35,7 @@ public class Course {
         this.managerId = managerId;
         this.title = title;
         this.description = description;
+        this.price = price;
         this.thumbnailUrl = thumbnailUrl;
         this.fileUrl = fileUrl;
         this.status = status;
@@ -45,6 +48,7 @@ public class Course {
             Long managerId,
             String title,
             String description,
+            Integer price,
             String thumbnailUrl,
             String fileUrl
     ) {
@@ -54,6 +58,7 @@ public class Course {
                 managerId,
                 title,
                 description,
+                price,
                 thumbnailUrl,
                 fileUrl,
                 "DRAFT",
@@ -68,6 +73,7 @@ public class Course {
             Long managerId,
             String title,
             String description,
+            Integer price,
             String thumbnailUrl,
             String fileUrl,
             String status,
@@ -79,6 +85,7 @@ public class Course {
                 managerId,
                 title,
                 description,
+                price,
                 thumbnailUrl,
                 fileUrl,
                 status,
@@ -93,6 +100,7 @@ public class Course {
             Long managerId,
             String title,
             String description,
+            Integer price,
             String thumbnailUrl,
             String fileUrl,
             String status,
@@ -105,6 +113,7 @@ public class Course {
                 managerId,
                 title,
                 description,
+                price,
                 thumbnailUrl,
                 fileUrl,
                 status,
@@ -143,6 +152,10 @@ public class Course {
 
     public String getDescription() {
         return description;
+    }
+
+    public Integer getPrice() {
+        return price;
     }
 
     public String getThumbnailUrl() {

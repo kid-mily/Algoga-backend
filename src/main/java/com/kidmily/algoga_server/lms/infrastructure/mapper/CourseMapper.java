@@ -18,6 +18,7 @@ public class CourseMapper {
                 course.getManagerId(),
                 course.getTitle(),
                 course.getDescription(),
+                course.getPrice(),
                 course.getThumbnailUrl(),
                 course.getFileUrl(),
                 course.getStatus()
@@ -55,6 +56,7 @@ public class CourseMapper {
                 entity.getManagerId(),
                 entity.getTitle(),
                 entity.getDescription(),
+                entity.getPrice(),
                 entity.getThumbnailUrl(),
                 entity.getFileUrl(),
                 entity.getStatus(),
