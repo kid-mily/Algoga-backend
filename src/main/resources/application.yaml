@@ -23,6 +23,17 @@ spring:
   config:
     import:
       - optional:classpath:/domains/banner.yml
+  mail:
+    host: smtp.gmail.com
+    port: 587
+    username: algoga.official@gmail.com
+    password: xxxx xxxx xxxx xxxx
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
 
 server:
   port: 15000
