@@ -24,8 +24,12 @@ public class AuthController {
     private final AuthService authService;
 
     // 일반 회원가입
-    @Operation(summary = "일반 회원가입")
+    @Operation(summary = "일반 회원가입", description = "모든 필수 항목 입력 및 유효성 검사를 거쳐 계정을 생성합니다.")
     @ApiErrorCodeExample(domain = UserErrorCode.class, value = {"ALREADY_EXISTS_EMAIL"})
+    @io.swagger.v3.oas.annotations.responses.ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "201", description = "회원가입 성공"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "약관 미동의 또는 입력값 유효성 검사 실패")
+    })
     @PostMapping("/signup")
     public ApiResponse<Void> signup(@RequestBody @Valid AuthSignupRequest request) {
         authService.signup(request);
@@ -92,4 +96,6 @@ public class AuthController {
         }
         return ApiResponse.success("AUTH_LOGOUT_SUCCESS", "로그아웃이 완료되었습니다.");
     }
+
+
 }

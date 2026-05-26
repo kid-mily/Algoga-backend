@@ -1,20 +1,25 @@
 ### 1. 일반 회원가입 (POST /api/v1/auth/signup)
 # - 정상적인 데이터를 넣어서 가입이 잘 되는지 확인합니다.
+# "termsServiceAgreed" 랑 "termsPrivacyAgreed" 둘 다 필수 동의 약관이기 때문에
+# 둘 중 하나만 false여도 회원가입 안됨
 POST http://localhost:15000/api/v1/auth/signup
 Content-Type: application/json
 Accept: application/json
 
 {
-  "username": "lhy1234lhy",
-  "email": "lhy2004lhy@gmail.com",
+  "username": "test0606",
+  "email": "test0606@naver.com",
   "password": "password8888",
   "name": "이하연",
-  "phone": "010-1111-2222",
+  "phone": "010-9090-9090",
   "birthDate": "2004-03-02",
   "gender": "FEMALE",
-  "nickname": "하연하연",
+  "nickname": "하연dl하연",
   "referralCode": "REF008",
-  "signupPath": "인스타그램"
+  "signupPath": "인스타그램",
+  "termsServiceAgreed": true,
+  "termsPrivacyAgreed": true,
+  "termsMarketingAgreed": false
 }
 
 > {%
@@ -34,14 +39,17 @@ Content-Type: application/json
 Accept: application/json
 
 {
-  "username": "lhy1234lhy",
-  "email": "lhy2004lhy@gmail.com",
+  "username": "test0404",
+  "email": "test0404@naver.com",
   "password": "password8888",
   "name": "이하연",
-  "phone": "010-1111-2222",
+  "phone": "010-1212-1234",
   "birthDate": "2004-03-02",
   "gender": "FEMALE",
-  "nickname": "하연하연"
+  "nickname": "하연dl하연",
+  "termsServiceAgreed": true,
+  "termsPrivacyAgreed": true,
+  "termsMarketingAgreed": false
 }
 
 ### ------------------------------------------------------------------------
@@ -54,7 +62,7 @@ Content-Type: application/json
 Accept: application/json
 
 {
-  "username": "lhy1234lhy",
+  "username": "test0404",
   "password": "password8888"
 }
 
@@ -82,7 +90,7 @@ Content-Type: application/json
 
 {
   "name": "이하연",
-  "email": "lhy2004lhy@gmail.com"
+  "email": "test0404@naver.com"
 }
 
 ### ------------------------------------------------------------------------
@@ -94,8 +102,8 @@ POST http://localhost:15000/api/v1/auth/find-password
 Content-Type: application/json
 
 {
-  "username": "lhy1234lhy",
-  "email": "lhy2004lhy@gmail.com"
+  "username": "test0404",
+  "email": "test0404@naver.com"
 }
 
 ### ------------------------------------------------------------------------
@@ -106,8 +114,8 @@ POST http://localhost:15000/api/v1/auth/login
 Content-Type: application/json
 
 {
-  "username": "lhy1234lhy",
-  "password": "4185931a"
+  "username": "test0404",
+  "password": "c455711a"
 }
 
 > {%
@@ -139,9 +147,18 @@ POST http://localhost:15000/api/v1/auth/login
 Content-Type: application/json
 
 {
-  "username": "lhy1234lhy",
+  "username": "test0101",
   "password": "newpassword8888"
 }
+
+> {%
+    // 로그인 응답으로 온 토큰을 인텔리제이 메모리에 임시로 저장합니다.
+    if(response.status === 200) {
+        client.global.set("accessToken", response.body.data.accessToken);
+        client.global.set("refreshToken", response.body.data.refreshToken);
+        client.log("Access Token: " + client.global.get("accessToken"));
+    }
+%}
 
 ### ------------------------------------------------------------------------
 

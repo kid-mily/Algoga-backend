@@ -49,5 +49,20 @@ public record AuthSignupRequest(
         String referralCode,
 
         @Schema(description = "유입 경로 (선택)", example = "인스타그램")
-        String signupPath
+        String signupPath,
+
+        // ️ 필수/선택 약관을 개별 필드로 분리
+        @Schema(description = "이용약관 동의 (필수)", example = "true")
+        @NotNull(message = "이용약관 동의는 필수입니다.")
+        @AssertTrue(message = "이용약관에 동의하셔야 합니다.")
+        Boolean termsServiceAgreed,
+
+        @Schema(description = "개인정보 처리방침 동의 (필수)", example = "true")
+        @NotNull(message = "개인정보 처리방침 동의는 필수입니다.")
+        @AssertTrue(message = "개인정보 처리방침에 동의하셔야 합니다.")
+        Boolean termsPrivacyAgreed,
+
+        @Schema(description = "마케팅 수신 동의 (선택)", example = "false")
+        @NotNull(message = "마케팅 수신 동의 여부는 필수입니다.")
+        Boolean termsMarketingAgreed
 ) {}
