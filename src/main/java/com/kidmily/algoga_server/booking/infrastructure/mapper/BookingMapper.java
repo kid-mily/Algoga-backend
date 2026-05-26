@@ -11,7 +11,7 @@ public class BookingMapper {
 
     public BookingJpaEntity toJpaEntity(Booking booking) {
         return new BookingJpaEntity(
-                booking.getPackageId(),
+                booking.getAccommodationId(),
                 booking.getUserId(),
                 booking.getStatus(),
                 booking.getTotalPrice(),
@@ -30,7 +30,7 @@ public class BookingMapper {
     public Booking toDomain(BookingJpaEntity entity) {
         return Booking.reconstitute(
                 entity.getId(),
-                entity.getPackageId(),
+                entity.getAccommodationId(),
                 entity.getUserId(),
                 entity.getStatus(),
                 entity.getTotalPrice(),

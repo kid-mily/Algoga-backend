@@ -12,7 +12,7 @@ import java.time.LocalDateTime;
 public class Booking {
 
     private Long id;
-    private Long packageId;
+    private Long accommodationId;
     private Long userId;
     private BookingStatus status;
     private int totalPrice;
@@ -26,12 +26,12 @@ public class Booking {
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 
-    public static Booking create(Long packageId, Long userId, int totalPrice,
+    public static Booking create(Long accommodationId, Long userId, int totalPrice,
                                  int depositPrice, int balancePrice, String bookingNumber,
                                  String flightInfo, LocalDate checkInDate,
                                  LocalDate checkOutDate, int nights) {
         Booking booking = new Booking();
-        booking.packageId = packageId;
+        booking.accommodationId = accommodationId;
         booking.userId = userId;
         booking.status = BookingStatus.PENDING;
         booking.totalPrice = totalPrice;
@@ -47,7 +47,7 @@ public class Booking {
         return booking;
     }
 
-    public static Booking reconstitute(Long id, Long packageId, Long userId,
+    public static Booking reconstitute(Long id, Long accommodationId, Long userId,
                                        BookingStatus status, int totalPrice,
                                        int depositPrice, int balancePrice,
                                        String bookingNumber, String flightInfo,
@@ -56,7 +56,7 @@ public class Booking {
                                        LocalDateTime updatedAt) {
         Booking booking = new Booking();
         booking.id = id;
-        booking.packageId = packageId;
+        booking.accommodationId = accommodationId;
         booking.userId = userId;
         booking.status = status;
         booking.totalPrice = totalPrice;

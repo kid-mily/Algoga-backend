@@ -12,8 +12,8 @@ public record BookingResponse(
         @Schema(description = "예약 ID", example = "1")
         Long bookingId,
 
-        @Schema(description = "패키지 ID", example = "1")
-        Long packageId,
+        @Schema(description = "숙소 ID", example = "1")
+        Long accommodationId,
 
         @Schema(description = "유저 ID", example = "1")
         Long userId,
