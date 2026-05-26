@@ -35,19 +35,19 @@ public class SecurityConfig {
                 .httpBasic(AbstractHttpConfigurer::disable)
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers(
-                                "/api/v1/auth/**",
-                                "/swagger-ui/**",
-                                "/v3/api-docs/**",
-                                "/api/v1/countries/**",
-                                "/api/v1/packages/**",
-                                "/api/v1/bookings/**",
-                                "/api/v1/payments/**",
-                                "/api/v1/refund-requests/**",       // 추가
-                                "/api/v1/admin/refund-requests/**"  //테스트용 추가
-                        ).permitAll()
-                        .anyRequest().authenticated()
-                            
+//                        .requestMatchers(
+//                                "/api/v1/auth/**",
+//                                "/swagger-ui/**",
+//                                "/v3/api-docs/**",
+//                                "/api/v1/countries/**",
+//                                "/api/v1/packages/**",
+//                                "/api/v1/bookings/**",
+//                                "/api/v1/payments/**",
+//                                "/api/v1/refund-requests/**",       // 추가
+//                                "/api/v1/admin/refund-requests/**"  //테스트용 추가
+//                        ).permitAll()
+                        .anyRequest().permitAll()
+
                 )
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
