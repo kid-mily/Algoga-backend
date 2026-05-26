@@ -22,7 +22,15 @@ public enum LmsErrorCode implements BaseErrorCode {
     INVALID_CHAPTER_ORDER(HttpStatus.BAD_REQUEST, "LMS_011", "유효하지 않은 챕터 순서입니다."),
     INVALID_QUIZ_OPTION(HttpStatus.BAD_REQUEST, "LMS_012", "퀴즈 보기는 4개 모두 입력해야 합니다."),
     INVALID_QUIZ_ANSWER(HttpStatus.BAD_REQUEST, "LMS_013", "퀴즈 정답 번호는 1부터 4 사이여야 합니다."),
-    CHAPTER_LOCKED(HttpStatus.BAD_REQUEST, "LMS_014", "이전 강의를 먼저 완료해주세요.");
+    CHAPTER_LOCKED(HttpStatus.BAD_REQUEST, "LMS_014", "이전 강의를 먼저 완료해주세요."),
+    QUIZ_LOCKED(HttpStatus.BAD_REQUEST, "LMS_015", "모든 챕터를 완료한 후 퀴즈를 풀 수 있습니다."),
+    INVALID_QUIZ_SUBMISSION(HttpStatus.BAD_REQUEST, "LMS_016", "퀴즈 제출 답안이 올바르지 않습니다."),
+    COURSE_ALREADY_COMPLETED(HttpStatus.CONFLICT, "LMS_017", "이미 이수 완료한 강의입니다."),
+    QUIZ_NOT_SUBMITTED(HttpStatus.BAD_REQUEST, "LMS_018", "퀴즈 제출 후 강의를 이수 완료할 수 있습니다."),
+    COURSE_COMPLETION_NOT_FOUND(HttpStatus.NOT_FOUND, "LMS_019", "강의 이수 내역을 찾을 수 없습니다."),
+    COURSE_REWARD_ALREADY_GRANTED(HttpStatus.CONFLICT, "LMS_020", "이미 보상이 지급된 강의입니다."),
+    COUPON_POLICY_NOT_FOUND(HttpStatus.NOT_FOUND, "LMS_021", "쿠폰 정책을 찾을 수 없습니다."),
+    INVALID_COUPON_POLICY(HttpStatus.BAD_REQUEST, "LMS_022", "유효하지 않은 쿠폰 정책입니다.");
 
 
     private final HttpStatus status;

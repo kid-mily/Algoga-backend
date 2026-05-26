@@ -36,6 +36,7 @@ public class AdminContentService implements AdminContentUseCase {
                 command.managerId(),
                 command.title(),
                 command.description(),
+                command.price(),
                 command.thumbnailUrl(),
                 command.fileUrl()
         );
@@ -86,6 +87,7 @@ public class AdminContentService implements AdminContentUseCase {
                 courseId,
                 command.title(),
                 command.description(),
+                command.price(),
                 command.thumbnailUrl(),
                 command.fileUrl()
         ).orElseThrow(() -> {

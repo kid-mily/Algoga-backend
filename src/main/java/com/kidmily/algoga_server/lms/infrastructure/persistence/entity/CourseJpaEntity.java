@@ -35,6 +35,9 @@ public class CourseJpaEntity {
     @Column(name = "description", nullable = false)
     private String description;
 
+    @Column(name = "price", nullable = false)
+    private Integer price;
+
     @Column(name = "thumbnail_url", nullable = false, length = 500)
     private String thumbnailUrl;
 
@@ -64,6 +67,7 @@ public class CourseJpaEntity {
             Long managerId,
             String title,
             String description,
+            Integer price,
             String thumbnailUrl,
             String fileUrl,
             String status
@@ -72,6 +76,7 @@ public class CourseJpaEntity {
         this.managerId = managerId;
         this.title = title;
         this.description = description;
+        this.price = price;
         this.thumbnailUrl = thumbnailUrl;
         this.fileUrl = fileUrl;
         this.status = status;
@@ -81,11 +86,13 @@ public class CourseJpaEntity {
     public void updateBasicInfo(
             String title,
             String description,
+            Integer price,
             String thumbnailUrl,
             String fileUrl
     ) {
         this.title = title;
         this.description = description;
+        this.price = price;
 
         if (thumbnailUrl != null) {
             this.thumbnailUrl = thumbnailUrl;

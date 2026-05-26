@@ -63,6 +63,7 @@ public class AdminCourseController {
                 currentManagerId,
                 request.title(),
                 request.description(),
+                request.price(),
                 thumbnailUrl,
                 fileUrl
         );
@@ -165,6 +166,7 @@ public class AdminCourseController {
         UpdateCourseCommand command = new UpdateCourseCommand(
                 request.title(),
                 request.description(),
+                request.price(),
                 thumbnailUrl,
                 fileUrl
         );

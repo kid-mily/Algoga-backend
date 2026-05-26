@@ -22,6 +22,7 @@ public interface CourseRepository {
             Long courseId,
             String title,
             String description,
+            Integer price,
             String thumbnailUrl,
             String fileUrl
     );

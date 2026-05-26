@@ -60,12 +60,13 @@ public class CourseRepositoryAdapter implements CourseRepository {
             Long courseId,
             String title,
             String description,
+            Integer price,
             String thumbnailUrl,
             String fileUrl
     ) {
         return springDataCourseRepository.findByIdAndDeletedFalse(courseId)
                 .map(entity -> {
-                    entity.updateBasicInfo(title, description, thumbnailUrl, fileUrl);
+                    entity.updateBasicInfo(title, description, price, thumbnailUrl, fileUrl);
                     return courseMapper.toDomain(entity);
                 });
     }

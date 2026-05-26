@@ -21,7 +21,10 @@ public record AdminCourseResponse(
         @Schema(description = "강의 설명", example = "환전부터 교통패스까지 오사카 여행 준비에 필요한 내용을 학습합니다.")
         String description,
 
-        @Schema(description = "썸네일 파일 경로", example = "thumbnails/550e8400-e29b-41d4-a716-446655440000.png")
+        @Schema(description = "강의 가격", example = "100000")
+        Integer price,
+
+        @Schema(description = "썸네일 URL", example = "thumbnails/550e8400-e29b-41d4-a716-446655440000.png")
         String thumbnailUrl,
 
         @Schema(description = "첨부파일 경로", example = "documents/550e8400-e29b-41d4-a716-446655440000.pdf")
@@ -38,6 +41,7 @@ public record AdminCourseResponse(
                 course.getManagerId(),
                 course.getTitle(),
                 course.getDescription(),
+                course.getPrice(),
                 course.getThumbnailUrl(),
                 course.getFileUrl(),
                 course.getStatus()

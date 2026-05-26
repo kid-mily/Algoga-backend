@@ -9,12 +9,14 @@ import com.kidmily.algoga_server.lms.domain.model.LearningProgress;
 import com.kidmily.algoga_server.lms.exception.LmsErrorCode;
 import com.kidmily.algoga_server.lms.presentation.request.UpdateLearningProgressRequest;
 import com.kidmily.algoga_server.lms.presentation.response.LearningProgressResponse;
+import com.kidmily.algoga_server.user.settings.CustomUserDetails;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 @Tag(name = "강의 수강", description = "사용자 강의 수강 및 진도율 관리 API")
@@ -45,13 +47,14 @@ public class LearningProgressController {
             @Parameter(description = "강의 ID", example = "3")
             @PathVariable Long courseId,
 
-            @Parameter(description = "챕터 ID", example = "4")
+            @Parameter(description = "챕터 ID", example = "6")
             @PathVariable Long chapterId,
 
-            @Valid @RequestBody UpdateLearningProgressRequest request
+            @Valid @RequestBody UpdateLearningProgressRequest request,
+
+            @AuthenticationPrincipal CustomUserDetails userDetails
     ) {
-        // TODO: Auth 연동 후 로그인한 사용자 ID로 교체
-        Long currentUserId = 1L;
+        Long currentUserId = userDetails.getUser().getId();
 
         UpdateLearningProgressCommand command = new UpdateLearningProgressCommand(
                 currentUserId,

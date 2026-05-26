@@ -5,6 +5,7 @@ public record CreateCourseCommand(
         Long managerId,
         String title,
         String description,
+        Integer price,
         String thumbnailUrl,
         String fileUrl
 ) {

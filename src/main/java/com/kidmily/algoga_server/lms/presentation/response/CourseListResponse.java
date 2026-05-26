@@ -7,6 +7,7 @@ public record CourseListResponse(
         Long countryId,
         String title,
         String description,
+        Integer price,
         String thumbnailUrl,
         String fileUrl,
         String status
@@ -18,6 +19,7 @@ public record CourseListResponse(
                 course.getCountryId(),
                 course.getTitle(),
                 course.getDescription(),
+                course.getPrice(),
                 course.getThumbnailUrl(),
                 course.getFileUrl(),
                 course.getStatus()
