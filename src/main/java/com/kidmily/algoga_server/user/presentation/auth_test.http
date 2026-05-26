@@ -17,7 +17,7 @@ Accept: application/json
   "nickname": "하연dl하연",
   "referralCode": "REF008",
   "signupPath": "인스타그램",
-  "termsServiceAgreed": true,
+  "termsServiceAgreed": false,
   "termsPrivacyAgreed": true,
   "termsMarketingAgreed": false
 }
