@@ -7,11 +7,11 @@ Content-Type: application/json
 Accept: application/json
 
 {
-  "username": "test0505",
-  "email": "test0505@naver.com",
+  "username": "test0606",
+  "email": "test0606@naver.com",
   "password": "password8888",
   "name": "이하연",
-  "phone": "010-9090-1234",
+  "phone": "010-9090-9090",
   "birthDate": "2004-03-02",
   "gender": "FEMALE",
   "nickname": "하연dl하연",
