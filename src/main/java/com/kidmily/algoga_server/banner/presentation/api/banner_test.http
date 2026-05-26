@@ -1,0 +1,114 @@
+### 환경 변수 세팅
+@host = http://localhost:15000
+
+# ====================================================================
+# 1. 관리자 인증 (권한 획득)
+# ====================================================================
+
+### 1-1. 매니저 로그인 (토큰 발급)
+POST {{host}}/api/v1/admin/auth/login
+Content-Type: application/json
+
+{
+  "loginId": "super_admin",
+  "password": "password123!"
+}
+
+> {%
+    // 응답받은 accessToken을 전역 변수로 저장 (이후 테스트에서 자동 사용됨)
+    client.global.set("adminToken", response.body.data.accessToken);
+%}
+
+
+
+
+### 2-1. 메인 화면 배너 조회 (누구나 접근 가능 - 토큰 불필요)
+GET {{host}}/api/v1/banner
+Accept: application/json
+
+### 2-2. 배너 등록 (권한 필요 - CS_MANAGER 이상)
+# ⚠️ 주의: HTTP 클라이언트(IntelliJ 등)에서는 파일 첨부 테스트가 까다롭습니다.
+# 이 API와 2-3(수정) API는 포스트맨의 [form-data] 기능을 사용하시는 것을 적극 권장합니다. (하단 설명 참고)
+POST {{host}}/api/v1/banner/register
+Authorization: Bearer {{adminToken}}
+Content-Type: multipart/form-data; boundary=boundary
+
+--boundary
+Content-Disposition: form-data; name="linkUrl"
+
+https://algoga.com/event/summer
+--boundary
+Content-Disposition: form-data; name="text"
+
+여름방학 특가 배너
+--boundary
+Content-Disposition: form-data; name="startDate"
+
+2026-06-01
+--boundary
+Content-Disposition: form-data; name="endDate"
+
+2026-06-30
+--boundary
+Content-Disposition: form-data; name="isVisible"
+
+true
+--boundary
+Content-Disposition: form-data; name="image"; filename="test.jpg"
+Content-Type: image/jpeg
+
+< ./test.jpg
+--boundary--
+
+### 2-4. 배너 삭제 (권한 필요)
+# (bannerId 1번을 지운다고 가정)
+DELETE {{host}}/api/v1/banner/delete/1
+Authorization: Bearer {{adminToken}}
+
+
+# ====================================================================
+# 3. 공지사항(Notice) API 테스트
+# ====================================================================
+
+### 3-1. 공지사항 태그 목록 조회 (누구나 접근 가능)
+GET {{host}}/api/v1/notice/tags
+Accept: application/json
+
+### 3-2. 공지사항 등록 (권한 필요)
+POST {{host}}/api/v1/notice/register
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "title": "[공지] V2.0 업데이트 및 서비스 점검 안내",
+  "content": "안정적인 서비스 제공을 위해 새벽 2시부터 서버 점검이 진행됩니다.",
+  "type": "MAINTENANCE"
+}
+
+### 3-3. 공지사항 수정 (권한 필요)
+# (noticeId 1번을 수정한다고 가정)
+PUT {{host}}/api/v1/notice/modify/1
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "title": "(수정) [공지] V2.0 업데이트 안내 및 이벤트",
+  "content": "점검이 무사히 완료되었습니다. 접속 시 특별한 혜택이 주어집니다.",
+  "type": "EVENT"
+}
+
+### 3-4. 메인 페이지 최신 공지사항 3개 조회 (누구나 접근 가능)
+GET {{host}}/api/v1/notice/main
+Accept: application/json
+
+### 3-5. 공지사항 전체 리스트 페이지네이션 조회 (ALL 1페이지)
+GET {{host}}/api/v1/notice/ALL/1
+Accept: application/json
+
+### 3-6. 공지사항 상세 조회 (noticeId 1번)
+GET {{host}}/api/v1/notice/1
+Accept: application/json
+
+### 3-7. 공지사항 삭제 (권한 필요)
+DELETE {{host}}/api/v1/notice/1
+Authorization: Bearer {{adminToken}}
