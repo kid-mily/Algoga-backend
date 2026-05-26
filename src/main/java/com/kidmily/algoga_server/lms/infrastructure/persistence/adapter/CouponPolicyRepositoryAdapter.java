@@ -34,6 +34,14 @@ public class CouponPolicyRepositoryAdapter implements CouponPolicyRepository {
     }
 
     @Override
+    public List<CouponPolicy> findAll() {
+        return springDataCouponPolicyRepository.findAll()
+                .stream()
+                .map(this::toDomain)
+                .toList();
+    }
+
+    @Override
     public List<CouponPolicy> findByCourseId(Long courseId) {
         return springDataCouponPolicyRepository.findByCourseId(courseId)
                 .stream()

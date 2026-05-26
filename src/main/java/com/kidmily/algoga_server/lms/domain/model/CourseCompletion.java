@@ -1,7 +1,8 @@
 package com.kidmily.algoga_server.lms.domain.model;
 
 import java.time.LocalDateTime;
-import java.util.UUID;
+import java.time.Year;
+import java.util.concurrent.ThreadLocalRandom;
 
 public class CourseCompletion {
 
@@ -55,7 +56,10 @@ public class CourseCompletion {
     }
 
     private static String generateCertificateCode() {
-        return "CERT-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase();
+        int year = Year.now().getValue();
+        int randomNumber = ThreadLocalRandom.current().nextInt(0, 1_000_000);
+
+        return String.format("ALG-%d-CERT-%06d", year, randomNumber);
     }
 
     public Long getId() {

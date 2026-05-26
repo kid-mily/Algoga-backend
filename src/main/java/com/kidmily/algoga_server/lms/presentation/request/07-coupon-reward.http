@@ -1,0 +1,40 @@
+### ==========================================================
+### 07. 쿠폰 정책 + 보상 지급
+### 먼저 01-auth-map.http에서 로그인 실행 후 사용
+###
+### 보상 지급 조건:
+### 1) 챕터 전체 완료
+### 2) 퀴즈 제출 완료
+### 3) 강의 이수 완료
+### 4) 쿠폰 정책 등록 완료
+### ==========================================================
+
+
+### 쿠폰 정책 등록
+### 이미 같은 강의에 같은 couponName으로 등록했다면 중복 에러가 날 수 있음
+POST http://localhost:15000/api/v1/courses/3/coupon-policies
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "couponName": "오사카 강의 수료 할인 쿠폰",
+  "discountType": "RATE",
+  "discountValue": 10,
+  "validDays": 30
+}
+
+
+### 쿠폰 정책 목록 조회
+GET http://localhost:15000/api/v1/courses/3/coupon-policies
+Authorization: Bearer {{accessToken}}
+
+
+### 보상 지급 - 쿠폰 및 마일리지 지급
+POST http://localhost:15000/api/v1/courses/3/rewards
+Authorization: Bearer {{accessToken}}
+
+
+### 보상 지급 - 중복 지급 예외
+### 위 보상 지급 요청을 한 번 더 실행하면 COURSE_REWARD_ALREADY_GRANTED가 나와야 함
+POST http://localhost:15000/api/v1/courses/3/rewards
+Authorization: Bearer {{accessToken}}

@@ -36,6 +36,14 @@ public class UserCouponRepositoryAdapter implements UserCouponRepository {
     }
 
     @Override
+    public List<UserCoupon> findAll() {
+        return springDataUserCouponRepository.findAll()
+                .stream()
+                .map(this::toDomain)
+                .toList();
+    }
+
+    @Override
     public List<UserCoupon> findByUserId(Long userId) {
         return springDataUserCouponRepository.findByUserId(userId)
                 .stream()

@@ -9,6 +9,8 @@ public interface CouponPolicyRepository {
 
     CouponPolicy save(CouponPolicy couponPolicy);
 
+    List<CouponPolicy> findAll();
+
     List<CouponPolicy> findByCourseId(Long courseId);
 
     List<CouponPolicy> findActiveByCourseId(Long courseId);

@@ -8,6 +8,8 @@ public interface UserCouponRepository {
 
     UserCoupon save(UserCoupon userCoupon);
 
+    List<UserCoupon> findAll();
+
     List<UserCoupon> findByUserId(Long userId);
 
     List<UserCoupon> findByUserIdAndCourseId(Long userId, Long courseId);
