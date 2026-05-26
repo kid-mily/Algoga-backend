@@ -30,16 +30,22 @@ public class AdminJwtProvider {
         this.key = Keys.hmacShaKeyFor(secretKey.getBytes(StandardCharsets.UTF_8));
     }
 
-    // 🌟 1. 변경: 파라미터로 managerId(PK)를 추가로 받습니다.
     public String createAccessToken(Long managerId, String loginId, String role) {
         return Jwts.builder()
                 .subject(loginId)
-                .claim("id", managerId) // 🌟 토큰 내부에 PK 저장
+                .claim("type", "ADMIN") // 🌟 토큰 타입 명시
+                .claim("id", managerId)
                 .claim("role", role)
                 .issuedAt(new Date())
                 .expiration(new Date(System.currentTimeMillis() + accessTokenExpiration))
                 .signWith(key)
                 .compact();
+    }
+
+    // 🌟 토큰 타입 조회 메서드 추가
+    public String getType(String token) {
+        return Jwts.parser().verifyWith(key).build()
+                .parseSignedClaims(token).getPayload().get("type", String.class);
     }
 
     // (refreshToken은 로그인 연장용이므로 굳이 PK나 Role을 안 넣어도 됩니다)

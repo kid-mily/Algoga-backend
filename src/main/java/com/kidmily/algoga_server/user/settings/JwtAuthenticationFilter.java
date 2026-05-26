@@ -22,12 +22,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private final JwtProvider jwtProvider;
     private final CustomUserDetailsService customUserDetailsService;
 
-    // 어드민 API 요청은 유저 필터에서 검사하지 않고 패스
-    @Override
-    protected boolean shouldNotFilter(HttpServletRequest request) {
-        String path = request.getRequestURI();
-        return path.startsWith("/api/v1/admin");
-    }
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
@@ -35,10 +29,10 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
         String token = resolveToken(request);
 
+        // 🌟 토큰이 있고, 타입이 "USER"일 때만 유저 인증 로직 수행
         if (token != null && jwtProvider.validateToken(token)) {
-            String email = jwtProvider.getSubject(token);
-
-            try {
+            if ("USER".equals(jwtProvider.getType(token))) {
+                String email = jwtProvider.getSubject(token);
                 CustomUserDetails userDetails = (CustomUserDetails) customUserDetailsService.loadUserByUsername(email);
 
                 UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
@@ -46,16 +40,16 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 );
                 authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
                 SecurityContextHolder.getContext().setAuthentication(authentication);
-
-            } catch (Exception e) {
-                // 일반 유저 DB에 계정이 없는 경우 (예: 관리자 토큰인 경우)
-                // 서버를 터뜨리지 않고 로그만 가볍게 남긴 뒤 다음 필터로 조용히 넘깁니다.
-                log.debug("일반 유저 계정이 아닙니다. (관리자 요청으로 간주하고 패스합니다) - {}", e.getMessage());
             }
         }
-
-        // 에러가 나더라도 무조건 다음 필터 체인으로 넘어가게 됨
         filterChain.doFilter(request, response);
+    }
+
+    // 🌟 어드민 API 경로는 유저 필터를 아예 패스하도록 설정
+    @Override
+    protected boolean shouldNotFilter(HttpServletRequest request) {
+        String path = request.getRequestURI();
+        return path.startsWith("/api/v1/admin");
     }
 
     private String resolveToken(HttpServletRequest request) {

@@ -22,8 +22,7 @@ public class AdminSecurityConfig {
     @Order(1) // 우선순위 1 유지
     public SecurityFilterChain adminSecurityFilterChain(HttpSecurity http) throws Exception {
         http
-                // 🔥 특정 도메인이 아닌, /api/v1/ 으로 시작하는 '모든' 도메인이 이 체인을 타도록 변경!
-                .securityMatcher("/api/v1/**")
+                .securityMatcher("/api/v1/admin/**")
                 .csrf(AbstractHttpConfigurer::disable)
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
