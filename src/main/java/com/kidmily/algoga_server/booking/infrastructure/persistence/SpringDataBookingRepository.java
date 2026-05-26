@@ -2,5 +2,9 @@ package com.kidmily.algoga_server.booking.infrastructure.persistence;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 
-public interface SpringDataBookingRepository extends JpaRepository<com.kidmily.algoga_server.booking.infrastructure.persistence.BookingJpaEntity, Long> {
+import java.util.List;
+
+public interface SpringDataBookingRepository extends JpaRepository<BookingJpaEntity, Long> {
+
+    List<BookingJpaEntity> findByUserId(Long userId);
 }

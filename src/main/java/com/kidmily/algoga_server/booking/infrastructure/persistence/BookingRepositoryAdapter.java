@@ -8,6 +8,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Optional;
 
 @Repository
@@ -30,12 +31,21 @@ public class BookingRepositoryAdapter implements BookingRepository {
     }
 
     @Override
+    public List<Booking> findByUserId(Long userId) {
+        return springDataBookingRepository.findByUserId(userId)
+                .stream()
+                .map(bookingMapper::toDomain)
+                .toList();
+    }
+
+    @Override
     public Booking cancel(Long bookingId) {
         BookingJpaEntity entity = springDataBookingRepository.findById(bookingId)
                 .orElseThrow();
         entity.updateStatus(BookingStatus.CANCEL_REQUESTED, LocalDateTime.now());
         return bookingMapper.toDomain(springDataBookingRepository.save(entity));
     }
+
     @Override
     public Booking updateStatus(Long bookingId, BookingStatus status) {
         BookingJpaEntity entity = springDataBookingRepository.findById(bookingId)
