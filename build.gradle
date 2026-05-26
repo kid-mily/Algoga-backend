@@ -26,6 +26,7 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-web'
     implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.16'
     implementation 'org.springframework.boot:spring-boot-starter-aop'
+    implementation 'org.apache.pdfbox:pdfbox:3.0.3'  // pdf 생성
 
     // JWT를 생성, 파싱, 검증하는 데 필요한 인터페이스, 추상 클래스, 예외 클래스, 데이터 모델(예: Claims, JwsHeader 등)이 포함
     implementation 'io.jsonwebtoken:jjwt-api:0.12.6'
