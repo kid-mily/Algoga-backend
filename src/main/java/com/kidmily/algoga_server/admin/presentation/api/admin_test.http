@@ -2,7 +2,7 @@
 @baseUrl = http://localhost:15000
 
 ### 1. 매니저 로그인
-POST {{baseUrl}}/api/v1/auth/admin/login
+POST {{baseUrl}}/api/v1/admin/auth/login
 Content-Type: application/json
 
 {
@@ -30,7 +30,7 @@ Authorization: Bearer {{adminToken}}
 }
 
 ### 1. CS 매니저 로그인
-POST {{baseUrl}}/api/v1/auth/admin/login
+POST {{baseUrl}}/api/v1/admin/auth/login
 Content-Type: application/json
 
 {

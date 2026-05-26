@@ -11,30 +11,39 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import lombok.extern.slf4j.Slf4j; // 🌟 추가
 import org.springframework.web.bind.annotation.*;
 
-@Slf4j
+@Slf4j // 🌟 추가
 @Tag(name = "Admin Auth", description = "관리자 인증 (로그인) API")
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/api/v1/auth/admin") // 🌟 어드민 로그인 주소 변경! (유저 로그인과 같은 Public 구역으로 이동)
+@RequestMapping("/api/v1/admin/auth")
 public class ManagerAuthController {
 
     private final ManagerAuthUseCase managerAuthUseCase;
 
-    @Operation(summary = "매니저 로그인", description = "어드민 계정으로 로그인하여 토큰을 발급받습니다.")
+    @Operation(summary = "매니저 로그인")
     @ApiErrorCodeExample(domain = ManagerErrorCode.class, value = {"MANAGER_NOT_FOUND", "DELETED_MANAGER", "INVALID_PASSWORD"})
-    @PostMapping("/login") // 🌟 최종 엔드포인트: POST /api/v1/auth/admin/login
+    @PostMapping("/login")
     public ApiResponse<AdminAuthTokenResponse> login(@RequestBody @Valid ManagerLoginRequest request) {
 
-        log.info("[Manager Login] 관리자 로그인 시도 - ID: {}", request.loginId());
+        log.info("[Manager Login] 관리자 로그인 시도 - ID: {}", request.loginId()); // 🌟 추가
 
-        LoginManagerCommand command = new LoginManagerCommand(request.loginId(), request.password());
+        // DTO -> Command 변환 (프레젠테이션 계층의 책임)
+        LoginManagerCommand command = new LoginManagerCommand(
+                request.loginId(), request.password()
+        );
+
+        // 서비스(UseCase) 호출
         AdminAuthTokenResponse response = managerAuthUseCase.login(command);
 
-        log.info("[Manager Login] 관리자 로그인 성공 - ID: {}", request.loginId());
+        log.info("[Manager Login] 관리자 로그인 성공 - ID: {}", request.loginId()); // 🌟 추가
 
-        return ApiResponse.success("MANAGER_LOGIN_SUCCESS", "관리자 로그인에 성공했습니다.", response);
+        return ApiResponse.success(
+                "MANAGER_LOGIN_SUCCESS",
+                "관리자 로그인에 성공했습니다.",
+                response
+        );
     }
 }
