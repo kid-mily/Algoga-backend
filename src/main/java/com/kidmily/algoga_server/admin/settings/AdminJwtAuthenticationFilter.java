@@ -20,6 +20,13 @@ public class AdminJwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final AdminJwtProvider adminJwtProvider; // 어드민 전용 프로바이더 사용
 
+    // 어드민 API가 아닌 요청(유저 요청 등)은 이 필터를 무시하고 패스하도록 설정
+    @Override
+    protected boolean shouldNotFilter(HttpServletRequest request) {
+        String path = request.getRequestURI();
+        return !path.startsWith("/api/v1/admin");
+    }
+
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
             throws ServletException, IOException {
@@ -39,7 +46,7 @@ public class AdminJwtAuthenticationFilter extends OncePerRequestFilter {
             SecurityContextHolder.getContext().setAuthentication(authentication);
 
         } else {
-            // 🚨 [테스트용 임시 코드 시작] 토큰이 없거나 틀려도 무조건 강제 통과!
+            // 🚨 [테스트용 임시 코드] 토큰이 없거나 틀려도 어드민 API에서는 무조건 강제 통과!
             System.out.println("⚠️ [TEST MODE] 인증 없이 무적 권한(SUPER_ADMIN)으로 강제 통과시킵니다.");
 
             // PK 1번, 아이디 test_admin, 권한 SUPER_ADMIN을 가진 가짜 매니저 객체 생성
@@ -50,7 +57,6 @@ public class AdminJwtAuthenticationFilter extends OncePerRequestFilter {
             );
             // 시큐리티에 가짜 신분증 제출
             SecurityContextHolder.getContext().setAuthentication(dummyAuth);
-            // 🚨 [테스트용 임시 코드 끝]
         }
 
         filterChain.doFilter(request, response);
@@ -63,11 +69,4 @@ public class AdminJwtAuthenticationFilter extends OncePerRequestFilter {
         }
         return null;
     }
-
-    // 🌟 추가: 어드민 API가 아닌 요청(유저 요청 등)은 이 필터를 무시하고 패스하도록 설정
-//    @Override
-//    protected boolean shouldNotFilter(HttpServletRequest request) {
-//        String path = request.getRequestURI();
-//        return !path.startsWith("/api/v1/admin");
-//    }
 }

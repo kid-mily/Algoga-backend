@@ -1,5 +1,6 @@
 package com.kidmily.algoga_server.global.config;
 
+import com.kidmily.algoga_server.admin.settings.AdminJwtAuthenticationFilter;
 import com.kidmily.algoga_server.user.settings.JwtAuthenticationFilter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
@@ -19,6 +20,7 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 public class SecurityConfig {
 
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
+    private final AdminJwtAuthenticationFilter adminJwtAuthenticationFilter; // 어드민 필터 주입
 
     // PasswordEncoder를 한 곳에서 관리하기 위해 여기에 빈 등록
     @Bean
@@ -46,10 +48,11 @@ public class SecurityConfig {
 //                                "/api/v1/refund-requests/**",       // 추가
 //                                "/api/v1/admin/refund-requests/**"  //테스트용 추가
 //                        ).permitAll()
-                        .anyRequest().permitAll()
+                                .anyRequest().permitAll()
 
                 )
-                .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
+                .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
+                .addFilterAfter(adminJwtAuthenticationFilter, JwtAuthenticationFilter.class); // 어드민 필터 추가
 
         return http.build();
     }
