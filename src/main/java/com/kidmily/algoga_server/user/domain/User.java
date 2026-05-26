@@ -78,6 +78,10 @@ public class User {
     @Column(name = "terms_marketing_agreed", nullable = false)
     private boolean termsMarketingAgreed;
 
+    // 마이페이지 사용자 프로필
+    @Column(name = "profile_image_url")
+    private String profileImageUrl;
+
     public void setTemporaryPassword(String encodedPassword) {
         this.password = encodedPassword;
         this.requiresPasswordChange = true;
@@ -120,5 +124,16 @@ public class User {
     public boolean isAccountLocked() {
         if (this.lockedUntil == null) return false;
         return this.lockedUntil.isAfter(LocalDateTime.now());
+    }
+
+    public void updateProfile(String nickname, String phone, String profileImageUrl, String email) {
+        if (nickname != null) this.nickname = nickname;
+        if (phone != null) this.phone = phone;
+        if (profileImageUrl != null) this.profileImageUrl = profileImageUrl;
+        if (email != null) this.email = email;
+    }
+
+    public void updatePassword(String newPassword) {
+        this.password = newPassword;
     }
 }
