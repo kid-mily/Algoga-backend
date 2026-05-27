@@ -1,6 +1,7 @@
 package com.kidmily.algoga_server.refund.infrastructure.persistence;
 
 import com.kidmily.algoga_server.refund.domain.model.RefundRequest;
+import com.kidmily.algoga_server.refund.domain.model.RefundStatus;
 import com.kidmily.algoga_server.refund.domain.repository.RefundRepository;
 import com.kidmily.algoga_server.refund.infrastructure.mapper.RefundMapper;
 import lombok.RequiredArgsConstructor;
@@ -15,7 +16,6 @@ public class RefundRepositoryAdapter implements RefundRepository {
 
     private final SpringDataRefundRepository springDataRefundRepository;
     private final RefundMapper refundMapper;
-
 
     @Override
     public RefundRequest save(RefundRequest refundRequest) {
@@ -40,6 +40,14 @@ public class RefundRepositoryAdapter implements RefundRepository {
     @Override
     public List<RefundRequest> findAll() {
         return springDataRefundRepository.findAll()
+                .stream()
+                .map(refundMapper::toDomain)
+                .toList();
+    }
+
+    @Override
+    public List<RefundRequest> findAllByStatus(RefundStatus status) {
+        return springDataRefundRepository.findAllByStatus(status)
                 .stream()
                 .map(refundMapper::toDomain)
                 .toList();

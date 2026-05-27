@@ -5,6 +5,7 @@ import com.kidmily.algoga_server.booking.domain.model.BookingStatus;
 import com.kidmily.algoga_server.booking.domain.repository.BookingRepository;
 import com.kidmily.algoga_server.global.exception.BusinessException;
 import com.kidmily.algoga_server.payment.domain.model.Payment;
+import com.kidmily.algoga_server.payment.domain.model.PaymentStatus;
 import com.kidmily.algoga_server.payment.domain.repository.PaymentRepository;
 import com.kidmily.algoga_server.refund.application.command.CreateRefundCommand;
 import com.kidmily.algoga_server.refund.application.usecase.RefundCommandUseCase;
@@ -16,6 +17,10 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.time.LocalDate;
+import java.time.temporal.ChronoUnit;
+import java.util.List;
 
 @Slf4j
 @Service
@@ -32,7 +37,6 @@ public class RefundCommandService implements RefundCommandUseCase {
         log.info("[RefundCommandService] 환불 요청 - bookingId: {}, userId: {}",
                 command.bookingId(), command.userId());
 
-        // 예약 조회 및 취소 상태 확인
         Booking booking = bookingRepository.findById(command.bookingId())
                 .orElseThrow(() -> {
                     log.warn("[RefundCommandService] 예약을 찾을 수 없음 - bookingId: {}", command.bookingId());
@@ -44,20 +48,17 @@ public class RefundCommandService implements RefundCommandUseCase {
             throw new BusinessException(RefundErrorCode.BOOKING_NOT_CANCELLED);
         }
 
-        // 중복 환불 요청 방지
         if (refundRepository.existsByBookingId(command.bookingId())) {
             log.warn("[RefundCommandService] 이미 환불 요청됨 - bookingId: {}", command.bookingId());
             throw new BusinessException(RefundErrorCode.ALREADY_REFUND_REQUESTED);
         }
 
-        // 결제 조회 (환불 금액 산정)
         Payment payment = paymentRepository.findById(command.paymentId())
                 .orElseThrow(() -> {
                     log.warn("[RefundCommandService] 결제를 찾을 수 없음 - paymentId: {}", command.paymentId());
                     return new BusinessException(RefundErrorCode.PAYMENT_NOT_FOUND);
                 });
 
-        // 환불 금액 계산 (출발일 기준)
         int refundAmount = calculateRefundAmount(booking, payment.getAmount());
 
         RefundRequest refundRequest = RefundRequest.create(
@@ -70,6 +71,55 @@ public class RefundCommandService implements RefundCommandUseCase {
 
         RefundRequest saved = refundRepository.save(refundRequest);
         log.info("[RefundCommandService] 환불 요청 완료 - refundId: {}, amount: {}",
+                saved.getId(), saved.getAmount());
+
+        return saved.getId();
+    }
+
+    @Override
+    public Long convertToRefund(Long bookingId) {
+        log.info("[RefundCommandService] CS 환불 전환 - bookingId: {}", bookingId);
+
+        Booking booking = bookingRepository.findById(bookingId)
+                .orElseThrow(() -> {
+                    log.warn("[RefundCommandService] 예약을 찾을 수 없음 - bookingId: {}", bookingId);
+                    return new BusinessException(RefundErrorCode.BOOKING_NOT_FOUND);
+                });
+
+        if (booking.getStatus() != BookingStatus.CANCEL_REQUESTED) {
+            log.warn("[RefundCommandService] 취소 요청 상태가 아닌 예약 - status: {}", booking.getStatus());
+            throw new BusinessException(RefundErrorCode.BOOKING_NOT_CANCELLED);
+        }
+
+        if (refundRepository.existsByBookingId(bookingId)) {
+            log.warn("[RefundCommandService] 이미 환불 요청됨 - bookingId: {}", bookingId);
+            throw new BusinessException(RefundErrorCode.ALREADY_REFUND_REQUESTED);
+        }
+
+        List<Payment> payments = paymentRepository.findByBookingId(bookingId)
+                .stream()
+                .filter(p -> p.getStatus() == PaymentStatus.SUCCESS)
+                .toList();
+
+        if (payments.isEmpty()) {
+            log.warn("[RefundCommandService] 성공한 결제 내역 없음 - bookingId: {}", bookingId);
+            throw new BusinessException(RefundErrorCode.PAYMENT_NOT_FOUND);
+        }
+
+        int totalPaid = payments.stream().mapToInt(Payment::getAmount).sum();
+        int refundAmount = calculateRefundAmount(booking, totalPaid);
+        Long paymentId = payments.get(payments.size() - 1).getId();
+
+        RefundRequest refundRequest = RefundRequest.create(
+                bookingId,
+                paymentId,
+                booking.getUserId(),
+                "CS 환불 전환 처리",
+                refundAmount
+        );
+
+        RefundRequest saved = refundRepository.save(refundRequest);
+        log.info("[RefundCommandService] CS 환불 전환 완료 - refundId: {}, amount: {}",
                 saved.getId(), saved.getAmount());
 
         return saved.getId();
@@ -131,17 +181,15 @@ public class RefundCommandService implements RefundCommandUseCase {
                 });
     }
 
-    // 환불 정책: 출발일 2주 전 100%, 1주 전 50%, 이후 0%
     private int calculateRefundAmount(Booking booking, int paidAmount) {
-        long daysUntilDeparture = java.time.temporal.ChronoUnit.DAYS.between(
-                java.time.LocalDate.now(), booking.getCheckInDate());
+        long daysUntilDeparture = ChronoUnit.DAYS.between(LocalDate.now(), booking.getCheckInDate());
 
         if (daysUntilDeparture >= 14) {
-            return paidAmount;          // 100%
+            return paidAmount;
         } else if (daysUntilDeparture >= 7) {
-            return paidAmount / 2;      // 50%
+            return paidAmount / 2;
         } else {
-            return 0;                   // 0%
+            return 0;
         }
     }
 }
