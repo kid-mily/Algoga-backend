@@ -4,6 +4,7 @@ import com.kidmily.algoga_server.global.annotation.swagger.ApiErrorCodeExample;
 import com.kidmily.algoga_server.global.common.api.response.ApiResponse;
 import com.kidmily.algoga_server.payment.application.command.CreateLecturePaymentCommand;
 import com.kidmily.algoga_server.payment.application.command.CreatePaymentCommand;
+import com.kidmily.algoga_server.payment.application.usecase.PaymentCommandUseCase;
 import com.kidmily.algoga_server.payment.application.usecase.PaymentQueryUseCase;
 import com.kidmily.algoga_server.payment.exception.PaymentErrorCode;
 import com.kidmily.algoga_server.payment.presentation.api.request.CreateLecturePaymentRequest;
