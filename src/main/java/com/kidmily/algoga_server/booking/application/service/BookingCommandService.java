@@ -86,7 +86,8 @@ public class BookingCommandService implements BookingCommandUseCase {
                     return new BusinessException(BookingErrorCode.BOOKING_NOT_FOUND);
                 });
 
-        bookingRepository.cancel(bookingId);
+        booking.cancel();
+        bookingRepository.save(booking);
 
         eventPublisher.publishEvent(new BookingCanceledEvent(booking.getAccommodationId()));
 
