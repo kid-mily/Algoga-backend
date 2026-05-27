@@ -72,3 +72,12 @@ cloud:
       secret-key: algoga1234!
     region:
       static: ap-northeast-2 # MinIO는 리전 제약이 없으나 S3 SDK 초기화를 위해 필요함
+
+flight:
+  api:
+    base-url: https://apis.data.go.kr/B551177/StatusOfPassengerFlightsOdp
+    service-key: ucqYTJOWM%2BU5JsI%2BopbemqXnDNbBjjNFTwewJjOJGOduZacV%2F0D2KHIUsb%2BMm37vkizLa%2FRVc%2BvSa1sxFW3gkA%3D%3D
+user:
+  storage:
+    bucket: algoga-banner
+    directory: profiles
