@@ -1,7 +1,7 @@
 package com.kidmily.algoga_server.user.application;
 
-import com.kidmily.algoga_server.global.common.api.response.ApiResponse;
 import com.kidmily.algoga_server.global.port.out.FileStoragePort;
+import com.kidmily.algoga_server.global.security.GlobalJwtProvider;
 import com.kidmily.algoga_server.user.domain.User;
 import com.kidmily.algoga_server.user.domain.UserRepository;
 import com.kidmily.algoga_server.user.exception.UserErrorCode;
@@ -11,21 +11,12 @@ import com.kidmily.algoga_server.user.presentation.request.UpdateProfileRequest;
 import com.kidmily.algoga_server.user.presentation.request.VerifyPasswordRequest;
 import com.kidmily.algoga_server.user.presentation.response.AuthTokenResponse;
 import com.kidmily.algoga_server.user.presentation.response.UserProfileResponse;
-import com.kidmily.algoga_server.user.settings.JwtProvider;
 import com.kidmily.algoga_server.user.settings.UserStorageSettings;
-import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.Parameter;
-import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PatchMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.multipart.MultipartFile;
 
 @Slf4j
@@ -36,7 +27,7 @@ public class UserService {
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
-    private final JwtProvider jwtProvider;
+    private final GlobalJwtProvider globalJwtProvider;
 
     // 🌟 S3 스토리지 공통 포트 및 유저 세팅 인프라 빈 주입
     private final FileStoragePort fileStoragePort;
@@ -97,7 +88,7 @@ public class UserService {
         user.updateProfile(request.nickname(), request.phone(), targetImageUrl, newEmail);
 
         // 새로운 식별정보를 기반으로 신규 세션 토큰 재발급
-        String newToken = jwtProvider.createAccessToken(newEmail);
+        String newToken = globalJwtProvider.createUserAccessToken(newEmail);
 
         return new AuthTokenResponse(
                 newToken,
