@@ -5,6 +5,9 @@ import com.kidmily.algoga_server.booking.domain.model.Booking;
 import com.kidmily.algoga_server.booking.domain.model.BookingStatus;
 import com.kidmily.algoga_server.booking.domain.repository.BookingRepository;
 import com.kidmily.algoga_server.global.exception.BusinessException;
+import com.kidmily.algoga_server.lms.domain.model.Course;
+import com.kidmily.algoga_server.lms.domain.repository.CourseRepository;
+import com.kidmily.algoga_server.payment.application.command.CreateLecturePaymentCommand;
 import com.kidmily.algoga_server.payment.application.command.CreatePaymentCommand;
 import com.kidmily.algoga_server.payment.application.usecase.PaymentCommandUseCase;
 import com.kidmily.algoga_server.payment.domain.event.PaymentCompletedEvent;
@@ -24,7 +27,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
-import java.util.UUID;
 
 @Slf4j
 @Service
@@ -37,6 +39,7 @@ public class PaymentCommandService implements PaymentCommandUseCase {
     private final PortOneClient portOneClient;
     private final UserRepository userRepository;
     private final ApplicationEventPublisher eventPublisher;
+    private final CourseRepository courseRepository;
 
     @Override
     public Long handle(CreatePaymentCommand command) {
@@ -62,7 +65,6 @@ public class PaymentCommandService implements PaymentCommandUseCase {
         JsonNode portoneResult = portOneClient.getPayment(command.portonePaymentId());
         String portoneStatus = portoneResult.path("status").asText();
         int paidAmount = portoneResult.path("amount").path("total").asInt();
-
         log.info("[PaymentCommandService] PortOne 검증 결과 - status: {}, amount: {}", portoneStatus, paidAmount);
 
         if (paidAmount != command.amount()) {
@@ -72,6 +74,7 @@ public class PaymentCommandService implements PaymentCommandUseCase {
 
         Payment payment = Payment.create(
                 command.bookingId(),
+                null,
                 command.userId(),
                 command.paymentType(),
                 command.amount(),
@@ -86,7 +89,6 @@ public class PaymentCommandService implements PaymentCommandUseCase {
             bookingRepository.updateStatus(command.bookingId(), newBookingStatus);
             log.info("[PaymentCommandService] 결제 성공 - bookingId: {}, newStatus: {}", command.bookingId(), newBookingStatus);
 
-            // 메일 발송 이벤트
             User user = userRepository.findById(command.userId())
                     .orElseThrow(() -> {
                         log.warn("[PaymentCommandService] 유저를 찾을 수 없음 - userId: {}", command.userId());
@@ -98,6 +100,7 @@ public class PaymentCommandService implements PaymentCommandUseCase {
                     user.getEmail(),
                     user.getName(),
                     booking.getBookingNumber(),
+                    null,
                     command.paymentType(),
                     command.amount(),
                     LocalDateTime.now()
@@ -109,7 +112,76 @@ public class PaymentCommandService implements PaymentCommandUseCase {
 
         Payment saved = paymentRepository.save(payment);
         log.info("[PaymentCommandService] 결제 저장 완료 - paymentId: {}", saved.getId());
+        return saved.getId();
+    }
 
+    @Override
+    public Long handleLecturePayment(CreateLecturePaymentCommand command) {
+        log.info("[PaymentCommandService] 강의 단독 결제 요청 - courseId: {}, userId: {}, amount: {}",
+                command.courseId(), command.userId(), command.amount());
+
+        Course course = courseRepository.findByIdAndDeletedFalse(command.courseId())
+                .orElseThrow(() -> {
+                    log.warn("[PaymentCommandService] 강의를 찾을 수 없음 - courseId: {}", command.courseId());
+                    return new BusinessException(PaymentErrorCode.COURSE_NOT_FOUND);
+                });
+
+        String idempotencyKey = "LECTURE_" + command.courseId() + "_" + command.userId();
+        paymentRepository.findByIdempotencyKey(idempotencyKey).ifPresent(p -> {
+            if (p.getStatus() == PaymentStatus.SUCCESS) {
+                log.warn("[PaymentCommandService] 이미 완료된 강의 결제 - courseId: {}", command.courseId());
+                throw new BusinessException(PaymentErrorCode.DUPLICATE_PAYMENT);
+            }
+        });
+
+        JsonNode portoneResult = portOneClient.getPayment(command.portonePaymentId());
+        String portoneStatus = portoneResult.path("status").asText();
+        int paidAmount = portoneResult.path("amount").path("total").asInt();
+        log.info("[PaymentCommandService] PortOne 검증 결과 - status: {}, amount: {}", portoneStatus, paidAmount);
+
+        if (paidAmount != command.amount()) {
+            log.warn("[PaymentCommandService] 강의 결제 금액 불일치 - 요청: {}, PortOne: {}", command.amount(), paidAmount);
+            throw new BusinessException(PaymentErrorCode.INVALID_PAYMENT_AMOUNT);
+        }
+
+        Payment payment = Payment.create(
+                null,
+                command.courseId(),
+                command.userId(),
+                PaymentType.LECTURE_ONLY,
+                command.amount(),
+                command.usedMileage(),
+                command.usedCouponId(),
+                idempotencyKey
+        );
+
+        if ("PAID".equals(portoneStatus)) {
+            payment.markSuccess(command.portonePaymentId());
+            log.info("[PaymentCommandService] 강의 결제 성공 - courseId: {}", command.courseId());
+
+            User user = userRepository.findById(command.userId())
+                    .orElseThrow(() -> {
+                        log.warn("[PaymentCommandService] 유저를 찾을 수 없음 - userId: {}", command.userId());
+                        return new BusinessException(UserErrorCode.NOT_FOUND_USER);
+                    });
+
+            eventPublisher.publishEvent(new PaymentCompletedEvent(
+                    user.getId(),
+                    user.getEmail(),
+                    user.getName(),
+                    "LECTURE-" + command.courseId(),
+                    command.courseId(),
+                    PaymentType.LECTURE_ONLY,
+                    command.amount(),
+                    LocalDateTime.now()
+            ));
+        } else {
+            payment.markFailed();
+            log.warn("[PaymentCommandService] 강의 결제 실패 - portoneStatus: {}", portoneStatus);
+        }
+
+        Payment saved = paymentRepository.save(payment);
+        log.info("[PaymentCommandService] 강의 결제 저장 완료 - paymentId: {}", saved.getId());
         return saved.getId();
     }
 
@@ -129,9 +201,12 @@ public class PaymentCommandService implements PaymentCommandUseCase {
             if ("PAID".equals(portoneStatus)) {
                 payment.markSuccess(portonePaymentId);
                 paymentRepository.save(payment);
-                BookingStatus newBookingStatus = resolveBookingStatus(payment.getPaymentType());
-                bookingRepository.updateStatus(payment.getBookingId(), newBookingStatus);
-                log.info("[PaymentCommandService] 웹훅 - 결제 SUCCESS 처리 완료 - bookingId: {}", payment.getBookingId());
+
+                if (payment.getBookingId() != null) {
+                    BookingStatus newBookingStatus = resolveBookingStatus(payment.getPaymentType());
+                    bookingRepository.updateStatus(payment.getBookingId(), newBookingStatus);
+                    log.info("[PaymentCommandService] 웹훅 - 결제 SUCCESS 처리 완료 - bookingId: {}", payment.getBookingId());
+                }
             } else {
                 log.warn("[PaymentCommandService] 웹훅 - 결제 미완료 상태 - portoneStatus: {}", portoneStatus);
             }
@@ -155,8 +230,7 @@ public class PaymentCommandService implements PaymentCommandUseCase {
     private BookingStatus resolveBookingStatus(PaymentType type) {
         return switch (type) {
             case DEPOSIT -> BookingStatus.DEPOSIT_PAID;
-            case BALANCE, FULL -> BookingStatus.FULL_PAID;
-            case LECTURE_ONLY -> BookingStatus.FULL_PAID;
+            case BALANCE, FULL, LECTURE_ONLY -> BookingStatus.FULL_PAID;
         };
     }
 

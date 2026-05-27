@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(Get-ChildItem -Path \"C:\\\\Lecture\\\\3-project-algoga\\\\src\\\\main\\\\java\\\\com\\\\kidmily\\\\algoga_server\" -Directory)",
+      "Bash(Select-Object Name)"
+    ]
+  }
+}

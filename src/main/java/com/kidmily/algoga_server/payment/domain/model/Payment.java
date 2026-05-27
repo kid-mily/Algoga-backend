@@ -12,6 +12,7 @@ public class Payment {
 
     private Long id;
     private Long bookingId;
+    private Long courseId;
     private Long userId;
     private PaymentType paymentType;
     private int amount;
@@ -22,11 +23,12 @@ public class Payment {
     private String portonePaymentId;
     private LocalDateTime createdAt;
 
-    public static Payment create(Long bookingId, Long userId, PaymentType paymentType,
+    public static Payment create(Long bookingId, Long courseId, Long userId, PaymentType paymentType,
                                  int amount, int usedMileage, Long usedCouponId,
                                  String idempotencyKey) {
         Payment payment = new Payment();
         payment.bookingId = bookingId;
+        payment.courseId = courseId;
         payment.userId = userId;
         payment.paymentType = paymentType;
         payment.amount = amount;
@@ -38,7 +40,7 @@ public class Payment {
         return payment;
     }
 
-    public static Payment reconstitute(Long id, Long bookingId, Long userId,
+    public static Payment reconstitute(Long id, Long bookingId, Long courseId, Long userId,
                                        PaymentType paymentType, int amount,
                                        int usedMileage, Long usedCouponId,
                                        PaymentStatus status, String idempotencyKey,
@@ -46,6 +48,7 @@ public class Payment {
         Payment payment = new Payment();
         payment.id = id;
         payment.bookingId = bookingId;
+        payment.courseId = courseId;
         payment.userId = userId;
         payment.paymentType = paymentType;
         payment.amount = amount;

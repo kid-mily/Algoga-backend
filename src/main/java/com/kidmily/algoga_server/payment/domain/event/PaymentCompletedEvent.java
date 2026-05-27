@@ -8,6 +8,7 @@ public record PaymentCompletedEvent(
         String userEmail,
         String userName,
         String bookingNumber,
+        Long courseId,
         PaymentType paymentType,
         int amount,
         LocalDateTime paidAt

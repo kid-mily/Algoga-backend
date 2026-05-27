@@ -9,6 +9,7 @@ import java.time.LocalDateTime;
 public record PaymentResponse(
         Long paymentId,
         Long bookingId,
+        Long courseId,
         Long userId,
         PaymentType paymentType,
         int amount,
@@ -22,6 +23,7 @@ public record PaymentResponse(
         return new PaymentResponse(
                 payment.getId(),
                 payment.getBookingId(),
+                payment.getCourseId(),
                 payment.getUserId(),
                 payment.getPaymentType(),
                 payment.getAmount(),
