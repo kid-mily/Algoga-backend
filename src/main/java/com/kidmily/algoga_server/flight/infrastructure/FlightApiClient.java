@@ -11,6 +11,7 @@ import org.springframework.web.client.RestClient;
 import java.net.URI;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -23,6 +24,9 @@ public class FlightApiClient {
     private final String serviceKey;
     private final ObjectMapper objectMapper;
 
+    private static final DateTimeFormatter DATE_FMT = DateTimeFormatter.ofPattern("yyyyMMdd");
+    private static final String[] DAY_FIELDS = {"ynMon", "ynTue", "ynWed", "ynThu", "ynFri", "ynSat", "ynSun"};
+
     public FlightApiClient(
             @Value("${flight.api.base-url}") String baseUrl,
             @Value("${flight.api.service-key}") String serviceKey) {
@@ -33,18 +37,14 @@ public class FlightApiClient {
     }
 
     public List<FlightInfo> getDepartureFlights(String destinationCode, LocalDate departureDate) {
-        log.info("[FlightApiClient] 출발 항공편 조회 - destination: {}, date: {}", destinationCode, departureDate);
+        log.info("[FlightApiClient] 정기운항편 조회 - destination: {}, date: {}", destinationCode, departureDate);
 
-        String depPlandTime = departureDate.format(java.time.format.DateTimeFormatter.ofPattern("yyyyMMdd"));
-
-        String url = baseUrl + "/getPassengerDeparturesOdp" +
+        String url = baseUrl + "/getSPaxFlt4DutyFreeDepartures" +
                 "?serviceKey=" + serviceKey +
+                "&airportCode=" + destinationCode +
                 "&type=json" +
-                "&depAirportCode=ICN" +
-                "&depPlandTime=" + depPlandTime +
-                "&from_time=0000" +
-                "&to_time=2400" +
-                "&lang=K";
+                "&numOfRows=100" +
+                "&pageNo=1";
 
         String response = restClient.get()
                 .uri(URI.create(url))
@@ -57,7 +57,7 @@ public class FlightApiClient {
     private List<FlightInfo> parseFlights(String json, String destinationCode, LocalDate departureDate) {
         List<FlightInfo> result = new ArrayList<>();
         try {
-            log.info("[FlightApiClient] RAW 응답: {}", json);
+            log.debug("[FlightApiClient] RAW 응답: {}", json);
             JsonNode root = objectMapper.readTree(json);
             JsonNode items = root.path("response").path("body").path("items");
 
@@ -66,32 +66,50 @@ public class FlightApiClient {
                 return result;
             }
 
+            // items가 배열이거나 item 하위 배열일 수 있음
+            JsonNode itemArray = items.isArray() ? items : items.path("item");
             List<JsonNode> itemList = new ArrayList<>();
-            if (items.isArray()) {
-                items.forEach(itemList::add);
-            } else {
-                itemList.add(items);
+            if (itemArray.isArray()) {
+                itemArray.forEach(itemList::add);
+            } else if (!itemArray.isMissingNode()) {
+                itemList.add(itemArray);
             }
+
+            String dateStr = departureDate.format(DATE_FMT);
+            int dayOfWeekIndex = departureDate.getDayOfWeek().getValue() - 1; // 0=Mon ~ 6=Sun
 
             List<String> seenFlightIds = new ArrayList<>();
 
             for (JsonNode item : itemList) {
                 String flightId = item.path("flightId").asText();
+
+                // 코드쉐어 Slave 제외
+                if ("Slave".equalsIgnoreCase(item.path("codeshare").asText())) continue;
+
+                // 중복 제외
                 if (seenFlightIds.contains(flightId)) continue;
                 seenFlightIds.add(flightId);
 
-                String airline = item.path("airline").asText("알 수 없음");
-                String scheduleTime = item.path("scheduleDateTime").asText("0000");
-                String elapseTimeRaw = item.path("elapsetime").asText("");
-                String elapseTime = (elapseTimeRaw == null || elapseTimeRaw.length() < 4) ? "0200" : elapseTimeRaw;
-                String airportCode = item.path("airportCode").asText("");
-                if (!airportCode.equalsIgnoreCase(destinationCode)) continue;
+                // 운항 기간 체크
+                String firstdate = item.path("firstdate").asText("");
+                String lastdate = item.path("lastdate").asText("");
+                if (!firstdate.isEmpty() && !lastdate.isEmpty()) {
+                    if (dateStr.compareTo(firstdate) < 0 || dateStr.compareTo(lastdate) > 0) continue;
+                }
 
-                LocalDateTime departureTime = parseDateTime(departureDate, scheduleTime);
-                LocalDateTime arrivalTime = departureTime.plusHours(parseHours(elapseTime))
-                        .plusMinutes(parseMinutes(elapseTime));
-                String duration = formatDuration(elapseTime);
-                int price = estimatePrice(elapseTime);
+                // 요일 체크
+                String ynField = DAY_FIELDS[dayOfWeekIndex];
+                if (!"Y".equalsIgnoreCase(item.path(ynField).asText())) continue;
+
+                String airline = item.path("airline").asText("알 수 없음");
+                String airportCode = item.path("airportCode").asText("");
+                String st = item.path("st").asText("0000");
+
+                LocalDateTime departureTime = parseDateTime(departureDate, st);
+                int estimatedHours = estimateFlightHours(destinationCode);
+                LocalDateTime arrivalTime = departureTime.plusHours(estimatedHours);
+                String duration = estimatedHours + "h 0m";
+                int price = estimatePrice(estimatedHours);
 
                 result.add(FlightInfo.of(
                         flightId,
@@ -123,29 +141,22 @@ public class FlightApiClient {
         }
     }
 
-    private long parseHours(String hhmm) {
-        try { return Long.parseLong(hhmm.substring(0, 2)); } catch (Exception e) { return 2L; }
+    private int estimateFlightHours(String airportCode) {
+        return switch (airportCode.toUpperCase()) {
+            case "NRT", "HND", "KIX", "FUK", "CTS", "NGO", "OKA" -> 2;
+            case "PEK", "PVG", "SHA", "CAN", "HKG", "TPE" -> 2;
+            case "BKK", "SGN", "HAN", "MNL", "KUL", "SIN" -> 5;
+            case "SYD", "MEL" -> 10;
+            case "JFK", "LAX", "ORD" -> 13;
+            case "LHR", "CDG", "FRA" -> 12;
+            default -> 3;
+        };
     }
 
-    private long parseMinutes(String hhmm) {
-        try { return Long.parseLong(hhmm.substring(2, 4)); } catch (Exception e) { return 0L; }
-    }
-
-    private String formatDuration(String hhmm) {
-        try {
-            int h = Integer.parseInt(hhmm.substring(0, 2));
-            int m = Integer.parseInt(hhmm.substring(2, 4));
-            return h + "h " + m + "m";
-        } catch (Exception e) { return "2h 0m"; }
-    }
-
-    private int estimatePrice(String hhmm) {
-        try {
-            int hours = Integer.parseInt(hhmm.substring(0, 2));
-            if (hours < 3) return 300000;
-            if (hours < 6) return 550000;
-            if (hours < 10) return 850000;
-            return 1200000;
-        } catch (Exception e) { return 400000; }
+    private int estimatePrice(int hours) {
+        if (hours <= 2) return 300000;
+        if (hours <= 5) return 550000;
+        if (hours <= 10) return 850000;
+        return 1200000;
     }
 }
