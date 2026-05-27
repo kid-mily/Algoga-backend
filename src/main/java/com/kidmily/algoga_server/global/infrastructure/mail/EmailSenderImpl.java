@@ -1,23 +1,30 @@
 package com.kidmily.algoga_server.global.infrastructure.mail;
 
-import com.kidmily.algoga_server.user.application.EmailSender;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.scheduling.annotation.Async;
-import org.springframework.stereotype.Component;
+import org.springframework.stereotype.Service;
 
+@Service // @Component와 @Service 중 하나만 있어도 됩니다. @Service를 주로 써요!
 @Slf4j
-@Component
 @RequiredArgsConstructor
 public class EmailSenderImpl implements EmailSender {
 
     private final JavaMailSender javaMailSender;
 
-    @Async // 사용자가 메일이 갈 때까지 기다리지 않도록 비동기 처리
+    // 비밀번호가 제대로 들어오는지 확인하고 싶다면 이렇게 클래스 필드로 받으세요
+    @Value("${spring.mail.password}")
+    private String password;
+
+    @Async
     @Override
     public void sendEmail(String toAddress, String subject, String body) {
+        // 여기서 비밀번호 로그 확인 (테스트용)
+        log.info("현재 사용 중인 비밀번호 앞자리: {}", password.substring(0, 3) + "****");
+
         try {
             SimpleMailMessage message = new SimpleMailMessage();
             message.setTo(toAddress);
@@ -29,6 +36,7 @@ public class EmailSenderImpl implements EmailSender {
 
         } catch (Exception e) {
             log.error("이메일 전송 실패: {}", toAddress, e);
+            throw e; // 에러가 나면 컨트롤러에서 알 수 있게 던져주는 게 좋습니다.
         }
     }
 }

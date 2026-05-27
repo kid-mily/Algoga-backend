@@ -22,19 +22,10 @@ spring:
       max-request-size: 500MB
   config:
     import:
+      - classpath:application-secret.yml
       - optional:classpath:/domains/banner.yml
       - optional:classpath:/domains/userProfile.yml
-  mail:
-    host: smtp.gmail.com
-    port: 587
-    username: wndmsld12@gmail.com
-    password: hgeoqjybwpyttasv
-    properties:
-      mail:
-        smtp:
-          auth: true
-          starttls:
-            enable: true
+
 
 server:
   port: 15000

@@ -1,5 +1,6 @@
 package com.kidmily.algoga_server.user.application;
 
+import com.kidmily.algoga_server.global.infrastructure.mail.EmailSender;
 import com.kidmily.algoga_server.global.security.GlobalJwtProvider;
 import com.kidmily.algoga_server.user.domain.Gender;
 import com.kidmily.algoga_server.user.domain.SocialType;
