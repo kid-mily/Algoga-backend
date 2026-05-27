@@ -12,6 +12,7 @@ public interface ReportMapper {
         if (report == null) return null;
         return ReportJpaEntity.builder()
                 .userId(report.getUserId())
+                .reportedUserId(report.getReportedUserId())
                 .targetId(report.getTargetId())
                 .targetType(report.getTargetType())
                 .reasonType(report.getReasonType())
@@ -24,6 +25,7 @@ public interface ReportMapper {
         return Report.reconstitute(
                 entity.getReportId(),
                 entity.getUserId(),
+                entity.getReportedUserId(),
                 entity.getTargetId(),
                 entity.getTargetType(),
                 entity.getReasonType(),

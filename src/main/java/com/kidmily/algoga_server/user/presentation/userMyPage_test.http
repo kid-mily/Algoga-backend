@@ -1,0 +1,89 @@
+### 1. 일반 회원가입 (POST /api/v1/auth/signup)
+# - 정상적인 데이터를 넣어서 가입이 잘 되는지 확인합니다.
+# "termsServiceAgreed" 랑 "termsPrivacyAgreed" 둘 다 필수 동의 약관이기 때문에
+# 둘 중 하나만 false여도 회원가입 안됨
+POST http://localhost:15000/api/v1/auth/signup
+Content-Type: application/json
+Accept: application/json
+
+{
+  "username": "test0302",
+  "email": "test0302@naver.com",
+  "password": "password8888",
+  "name": "이하연",
+  "phone": "010-0403-0218",
+  "birthDate": "2004-03-02",
+  "gender": "FEMALE",
+  "nickname": "하연dl하연",
+  "referralCode": "REF008",
+  "signupPath": "인스타그램",
+  "termsServiceAgreed": true,
+  "termsPrivacyAgreed": true,
+  "termsMarketingAgreed": false
+}
+
+> {%
+    // 응답이 오면 상태 코드와 결과를 콘솔에 출력합니다.
+    client.test("회원가입 성공 여부 확인", function() {
+        client.assert(response.status === 201, "상태 코드가 201이 아닙니다.");
+        client.log("응답 메시지: " + response.body.message);
+    });
+%}
+
+### 0. 로그인 (토큰 추출용)
+POST http://localhost:15000/api/v1/auth/login
+Content-Type: application/json
+
+{
+  "username": "test0302",
+  "password": "newpassword8888"
+}
+
+> {%
+    // 로그인 성공 시 응답에서 토큰을 자동으로 저장합니다.
+    if (response.status === 200) {
+        client.global.set("authToken", response.body.data.accessToken);
+    }
+%}
+
+### 1. 내 프로필 상세 조회
+GET http://localhost:15000/api/v1/users/me
+Authorization: Bearer {{authToken}}
+Accept: application/json
+
+### 2. 정보 수정 진입 전 비밀번호 확인
+POST http://localhost:15000/api/v1/users/me/verify-password
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "password": "newpassword8888"
+}
+
+### 3. 내 프로필 정보 업데이트 (닉네임, 전화번호, 이메일 변경)
+PATCH http://localhost:15000/api/v1/users/me
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "nickname": "채연바보",
+  "phone": "010-0204-2818",
+  "email": "test0428@gmail.com"
+}
+
+> {%
+    // ⭐️ 중요: 프로필 수정 응답에서 새로운 토큰을 받아 다시 저장합니다!
+    if (response.status === 200) {
+        client.global.set("authToken", response.body.data.accessToken);
+    }
+%}
+
+### 4. 비밀번호 변경
+PATCH http://localhost:15000/api/v1/users/me/password
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "currentPassword": "newpassword8888",
+  "newPassword": "newspassword8888"
+}

@@ -26,6 +26,20 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-web'
     implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.16'
     implementation 'org.springframework.boot:spring-boot-starter-aop'
+    implementation 'org.apache.pdfbox:pdfbox:3.0.3'  // pdf 생성
+
+    // JWT를 생성, 파싱, 검증하는 데 필요한 인터페이스, 추상 클래스, 예외 클래스, 데이터 모델(예: Claims, JwsHeader 등)이 포함
+    implementation 'io.jsonwebtoken:jjwt-api:0.12.6'
+    // jjwt-api에서 정의된 인터페이스들의 구체적인 구현체를 제공하는 모듈
+    runtimeOnly 'io.jsonwebtoken:jjwt-impl:0.12.6'
+    // JWT의 페이로드(payload)와 헤더(header)를 JSON 형식으로 직렬화(serialization)하거나 역직렬화(deserialization)하는 데 필요한 Jackson 라이브러리 연동을 제공하는 모듈
+    runtimeOnly 'io.jsonwebtoken:jjwt-jackson:0.12.6'
+    // PDF 생성
+    implementation 'com.itextpdf:itext-core:8.0.5'
+    implementation 'software.amazon.awssdk:s3:2.25.11'
+// 이메일
+    implementation 'org.springframework.boot:spring-boot-starter-mail'
+
     compileOnly 'org.projectlombok:lombok'
     developmentOnly 'org.springframework.boot:spring-boot-devtools'
     runtimeOnly 'com.mysql:mysql-connector-j'
