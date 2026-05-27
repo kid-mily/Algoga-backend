@@ -91,7 +91,8 @@ public void cancel(Long bookingId) {
                 return new BusinessException(BookingErrorCode.BOOKING_NOT_FOUND);
             });
 
-    bookingRepository.cancel(bookingId);
+       booking.cancel();
+       bookingRepository.save(booking);
 
     // 이벤트 발행
        eventPublisher.publishEvent(new BookingCanceledEvent(booking.getAccommodationId()));

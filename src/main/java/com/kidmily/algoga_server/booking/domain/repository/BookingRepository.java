@@ -11,7 +11,5 @@ public interface BookingRepository {
 
     Optional<Booking> findById(Long bookingId);
 
-    Booking cancel(Long bookingId);
-
     Booking updateStatus(Long bookingId, BookingStatus status);  // 추가
 }
