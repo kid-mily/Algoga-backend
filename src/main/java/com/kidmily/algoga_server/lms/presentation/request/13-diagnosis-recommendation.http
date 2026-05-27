@@ -1,0 +1,71 @@
+### ==========================================================
+### 13. 진단평가 선택 나라 + level별 추천 강의 조회
+### 먼저 01-auth-map.http에서 일반 사용자 로그인 실행 후 사용
+### ==========================================================
+
+
+### 진단평가 - 일본 + 초급 추천 강의 조회
+GET http://localhost:15000/api/v1/diagnosis/recommendations?countryId=1&level=BEGINNER
+Authorization: Bearer {{userAccessToken}}
+
+
+### 진단평가 - 일본 + 중급 추천 강의 조회
+GET http://localhost:15000/api/v1/diagnosis/recommendations?countryId=1&level=INTERMEDIATE
+Authorization: Bearer {{userAccessToken}}
+
+
+### 진단평가 - 일본 + 고급 추천 강의 조회
+GET http://localhost:15000/api/v1/diagnosis/recommendations?countryId=1&level=ADVANCED
+Authorization: Bearer {{userAccessToken}}
+
+
+### 진단평가 - 없는 나라 테스트
+GET http://localhost:15000/api/v1/diagnosis/recommendations?countryId=999&level=BEGINNER
+Authorization: Bearer {{userAccessToken}}
+
+
+### 진단평가 - 잘못된 level 테스트
+GET http://localhost:15000/api/v1/diagnosis/recommendations?countryId=1&level=SUPER
+Authorization: Bearer {{userAccessToken}}
+
+
+### ==========================================================
+### 14. 진단평가 결과 계산 + 추천 강의 조회
+### 먼저 01-auth-map.http에서 일반 사용자 로그인 실행 후 사용
+### ==========================================================
+
+
+### 진단평가 결과 - 초급
+POST http://localhost:15000/api/v1/diagnosis/result
+Authorization: Bearer {{userAccessToken}}
+Content-Type: application/json
+
+{
+  "countryId": 1,
+  "correctCount": 2,
+  "totalCount": 5
+}
+
+
+### 진단평가 결과 - 중급
+POST http://localhost:15000/api/v1/diagnosis/result
+Authorization: Bearer {{userAccessToken}}
+Content-Type: application/json
+
+{
+  "countryId": 1,
+  "correctCount": 3,
+  "totalCount": 5
+}
+
+
+### 진단평가 결과 - 고급
+POST http://localhost:15000/api/v1/diagnosis/result
+Authorization: Bearer {{userAccessToken}}
+Content-Type: application/json
+
+{
+  "countryId": 1,
+  "correctCount": 5,
+  "totalCount": 5
+}

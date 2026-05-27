@@ -1,13 +1,16 @@
 package com.kidmily.algoga_server.payment.presentation;
 
+import com.kidmily.algoga_server.global.annotation.swagger.ApiErrorCodeExample;
 import com.kidmily.algoga_server.global.common.api.response.ApiResponse;
+import com.kidmily.algoga_server.payment.application.command.CreateLecturePaymentCommand;
 import com.kidmily.algoga_server.payment.application.command.CreatePaymentCommand;
 import com.kidmily.algoga_server.payment.application.usecase.PaymentQueryUseCase;
 import com.kidmily.algoga_server.payment.exception.PaymentErrorCode;
+import com.kidmily.algoga_server.payment.presentation.api.request.CreateLecturePaymentRequest;
 import com.kidmily.algoga_server.payment.presentation.api.request.CreatePaymentRequest;
 import com.kidmily.algoga_server.payment.presentation.api.request.WebhookRequest;
 import com.kidmily.algoga_server.payment.presentation.api.response.PaymentResponse;
-import com.kidmily.algoga_server.global.annotation.swagger.ApiErrorCodeExample;
+import com.kidmily.algoga_server.user.settings.CustomUserDetails;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -17,7 +20,10 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/v1/payments")
@@ -29,7 +35,7 @@ public class PaymentController {
     private final PaymentQueryUseCase paymentQueryUseCase;
 
     @PostMapping
-    @Operation(summary = "결제 처리", description = "PortOne v2 결제 검증 후 저장합니다.")
+    @Operation(summary = "결제 처리", description = "PortOne v2 결제를 처리합니다.")
     @ApiErrorCodeExample(domain = PaymentErrorCode.class,
             value = {"BOOKING_NOT_FOUND", "DUPLICATE_PAYMENT", "INVALID_PAYMENT_AMOUNT", "PORTONE_API_ERROR"})
     public ResponseEntity<ApiResponse<Long>> createPayment(
@@ -46,7 +52,27 @@ public class PaymentController {
         );
         Long paymentId = paymentCommandUseCase.handle(command);
         return ResponseEntity.status(HttpStatus.CREATED)
-                .body(ApiResponse.created("PAYMENT_CREATED", "결제가 완료됐습니다.", paymentId));
+                .body(ApiResponse.created("PAYMENT_CREATED", "결제가 완료되었습니다.", paymentId));
+    }
+
+    @PostMapping("/lecture")
+    @Operation(summary = "강의 단독 결제", description = "패키지 없이 강의만 단독으로 결제합니다. 쿠폰 및 마일리지 적용 가능합니다.")
+    @ApiErrorCodeExample(domain = PaymentErrorCode.class,
+            value = {"COURSE_NOT_FOUND", "DUPLICATE_PAYMENT", "INVALID_PAYMENT_AMOUNT", "PORTONE_API_ERROR"})
+    public ResponseEntity<ApiResponse<Long>> createLecturePayment(
+            @Valid @RequestBody CreateLecturePaymentRequest request
+    ) {
+        CreateLecturePaymentCommand command = new CreateLecturePaymentCommand(
+                request.courseId(),
+                request.userId(),
+                request.amount(),
+                request.usedMileage(),
+                request.usedCouponId(),
+                request.portonePaymentId()
+        );
+        Long paymentId = paymentCommandUseCase.handleLecturePayment(command);
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(ApiResponse.created("LECTURE_PAYMENT_CREATED", "강의 결제가 완료되었습니다.", paymentId));
     }
 
     @GetMapping("/{paymentId}")
@@ -59,6 +85,7 @@ public class PaymentController {
         PaymentResponse response = paymentQueryUseCase.getPayment(paymentId);
         return ResponseEntity.ok(ApiResponse.success("PAYMENT_FOUND", "결제 조회에 성공했습니다.", response));
     }
+
     @GetMapping("/{paymentId}/confirmation")
     @Operation(summary = "예약 확인서 PDF", description = "예약 확인서를 PDF로 다운로드합니다.")
     @ApiErrorCodeExample(domain = PaymentErrorCode.class, value = {"PAYMENT_NOT_FOUND", "BOOKING_NOT_FOUND"})
@@ -73,8 +100,9 @@ public class PaymentController {
                 .contentType(MediaType.APPLICATION_PDF)
                 .body(pdf);
     }
+
     @PostMapping("/webhook")
-    @Operation(summary = "PortOne 웹훅", description = "PortOne 결제 이벤트를 수신합니다.")
+    @Operation(summary = "PortOne 웹훅", description = "PortOne 결제 이벤트를 처리합니다.")
     public ResponseEntity<Void> handleWebhook(
             @RequestBody WebhookRequest request
     ) {
@@ -82,5 +110,15 @@ public class PaymentController {
             paymentCommandUseCase.handleWebhook(request.data().paymentId());
         }
         return ResponseEntity.ok().build();
+    }
+
+    @GetMapping("/me")
+    @Operation(summary = "내 결제 내역 조회", description = "로그인한 유저의 전체 결제 내역을 조회합니다.")
+    public ResponseEntity<ApiResponse<List<PaymentResponse>>> getMyPayments(
+            @AuthenticationPrincipal CustomUserDetails userDetails
+    ) {
+        Long userId = userDetails.getUser().getId();
+        List<PaymentResponse> response = paymentQueryUseCase.getMyPayments(userId);
+        return ResponseEntity.ok(ApiResponse.success("MY_PAYMENTS_FOUND", "내 결제 내역 조회에 성공했습니다.", response));
     }
 }

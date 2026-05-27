@@ -5,6 +5,8 @@ build/
 !**/src/main/**/build/
 !**/src/test/**/build/
 
+uploads/
+
 ### STS ###
 .apt_generated
 .classpath
@@ -39,3 +41,6 @@ out/
 ### Logs ###
 logs/
 *.log
+
+# 비밀번호가 포함된 설정 파일은 깃허브에 업로드 금지
+application-secret.yml

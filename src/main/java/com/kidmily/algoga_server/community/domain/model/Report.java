@@ -16,17 +16,19 @@ public class Report {
 
     private Long reportId;
     private Long userId;
+    private Long reportedUserId;
     private Long targetId;
     private TargetType targetType;
     private ReasonType reasonType;
     private String detail;
     private LocalDateTime createdAt;
 
-    private Report(Long userId, Long targetId, TargetType targetType,
+    private Report(Long userId, Long reportedUserId, Long targetId, TargetType targetType,
                    ReasonType reasonType, String detail) {
         validateDetail(detail);
 
         this.userId = userId;
+        this.reportedUserId = reportedUserId;
         this.targetId = targetId;
         this.targetType = targetType;
         this.reasonType = reasonType;
@@ -34,10 +36,11 @@ public class Report {
         this.createdAt = LocalDateTime.now();
     }
 
-    private Report(Long reportId, Long userId, Long targetId, TargetType targetType,
+    private Report(Long reportId, Long userId, Long reportedUserId, Long targetId, TargetType targetType,
                    ReasonType reasonType, String detail, LocalDateTime createdAt) {
         this.reportId = reportId;
         this.userId = userId;
+        this.reportedUserId = reportedUserId;
         this.targetId = targetId;
         this.targetType = targetType;
         this.reasonType = reasonType;
@@ -45,15 +48,15 @@ public class Report {
         this.createdAt = createdAt;
     }
 
-    public static Report create(Long userId, Long targetId, TargetType targetType,
+    public static Report create(Long userId, Long reportedUserId, Long targetId, TargetType targetType,
                                 ReasonType reasonType, String detail) {
-        return new Report(userId, targetId, targetType, reasonType, detail);
+        return new Report(userId, reportedUserId, targetId, targetType, reasonType, detail);
     }
 
-    public static Report reconstitute(Long reportId, Long userId, Long targetId,
+    public static Report reconstitute(Long reportId, Long userId, Long reportedUserId, Long targetId,
                                       TargetType targetType, ReasonType reasonType,
                                       String detail, LocalDateTime createdAt) {
-        return new Report(reportId, userId, targetId, targetType, reasonType, detail, createdAt);
+        return new Report(reportId, userId, reportedUserId, targetId, targetType, reasonType, detail, createdAt);
     }
 
     private void validateDetail(String detail) {

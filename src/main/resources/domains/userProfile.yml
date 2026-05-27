@@ -1,0 +1,4 @@
+user: # 🌟 banner가 아니라 user로 변경!
+  storage:
+    bucket: algoga-userprofile  # S3 버킷 이름 (대문자보다는 소문자/하이픈 권장)
+    directory: profiles         # S3 폴더 이름

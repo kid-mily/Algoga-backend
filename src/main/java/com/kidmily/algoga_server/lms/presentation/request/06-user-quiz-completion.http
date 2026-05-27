@@ -1,0 +1,103 @@
+### ==========================================================
+### 06. 사용자 퀴즈 풀이 + 강의 이수 완료 핵심 플로우
+### 먼저 01-auth-map.http에서 로그인 실행 후 사용
+###
+### 실행 순서:
+### 1) 챕터 목록 조회
+### 2) 3번 강의의 모든 챕터를 100% 완료
+### 3) 사용자 퀴즈 조회
+### 4) quizId를 확인해서 퀴즈 제출
+### 5) 강의 이수 완료
+### ==========================================================
+
+
+### 1. 챕터 목록 조회
+GET http://localhost:15000/api/v1/courses/3/chapters
+Authorization: Bearer {{accessToken}}
+
+
+### 2-1. 챕터 5 완료 처리
+POST http://localhost:15000/api/v1/courses/3/chapters/5/progress
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "watchedSeconds": 9999
+}
+
+
+### 2-2. 챕터 6 완료 처리
+POST http://localhost:15000/api/v1/courses/3/chapters/6/progress
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "watchedSeconds": 9999
+}
+
+
+### 2-3. 챕터 7 완료 처리
+POST http://localhost:15000/api/v1/courses/3/chapters/7/progress
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "watchedSeconds": 9999
+}
+
+
+### 2-4. 챕터 8 완료 처리
+POST http://localhost:15000/api/v1/courses/3/chapters/8/progress
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "watchedSeconds": 9999
+}
+
+
+### 3. 사용자 퀴즈 조회
+### 모든 챕터 완료 후 실행해야 함
+GET http://localhost:15000/api/v1/courses/3/quiz
+Authorization: Bearer {{accessToken}}
+
+
+### 4. 사용자 퀴즈 제출 및 채점
+### quizId는 위 퀴즈 조회 응답의 data[].quizId 값으로 변경
+POST http://localhost:15000/api/v1/courses/3/quiz/submit
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "answers": [
+    {
+      "quizId": 3,
+      "selectedOption": 1
+    }
+  ]
+}
+
+
+### 5. 강의 이수 완료 처리
+### 조건:
+### - 해당 강의의 모든 챕터 completed=true
+### - 해당 강의 퀴즈 제출 내역이 quiz_submissions에 존재
+POST http://localhost:15000/api/v1/courses/3/complete
+Authorization: Bearer {{accessToken}}
+
+
+### ----------------------------------------------------------
+### 6. 마이페이지 - 내 수강 강의 목록 조회
+GET http://localhost:15000/api/v1/my/courses
+Authorization: Bearer {{accessToken}}
+
+
+### ----------------------------------------------------------
+### 7. 마이페이지 - 내 쿠폰함 조회
+GET http://localhost:15000/api/v1/my/coupons
+Authorization: Bearer {{accessToken}}
+
+
+### 8. 마이페이지 - 내 마일리지 내역 조회
+GET http://localhost:15000/api/v1/my/mileages
+Authorization: Bearer {{accessToken}}

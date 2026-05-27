@@ -8,6 +8,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Optional;
 
 @Repository
@@ -27,6 +28,14 @@ public class BookingRepositoryAdapter implements BookingRepository {
     public Optional<Booking> findById(Long bookingId) {
         return springDataBookingRepository.findById(bookingId)
                 .map(bookingMapper::toDomain);
+    }
+
+    @Override
+    public List<Booking> findByUserId(Long userId) {
+        return springDataBookingRepository.findByUserId(userId)
+                .stream()
+                .map(bookingMapper::toDomain)
+                .toList();
     }
 
     @Override

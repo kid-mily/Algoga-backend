@@ -10,6 +10,7 @@ public class PaymentMapper {
     public PaymentJpaEntity toJpaEntity(Payment payment){
         return new PaymentJpaEntity(
                 payment.getBookingId(),
+                payment.getCourseId(),
                 payment.getUserId(),
                 payment.getPaymentType(),
                 payment.getAmount(),
@@ -25,6 +26,7 @@ public class PaymentMapper {
         return  Payment.reconstitute(
                 entity.getId(),
                 entity.getBookingId(),
+                entity.getCourseId(),
                 entity.getUserId(),
                 entity.getPaymentType(),
                 entity.getAmount(),

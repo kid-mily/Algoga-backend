@@ -1,0 +1,88 @@
+### ==========================================================
+### 04. 어드민 퀴즈 관리
+### 관리자 API라서 매니저 토큰 필요
+### 자동 변수 안 될 때 쓰는 수동 토큰 버전
+### ==========================================================
+
+@managerAccessToken = 여기에_매니저_accessToken_붙여넣기
+@courseId = 3
+@quizId = 여기에_등록_응답의_quizId_붙여넣기
+
+
+### 콘텐츠 매니저 로그인
+### 실행 후 응답의 data.accessToken을 복사해서 위 managerAccessToken에 붙여넣기
+POST http://localhost:15000/api/v1/admin/auth/login
+Content-Type: application/json
+Accept: application/json
+
+{
+  "loginId": "content_manager_01",
+  "password": "password123!"
+}
+
+
+### 퀴즈 관리 - 퀴즈 목록 조회
+GET http://localhost:15000/api/v1/admin/courses/{{courseId}}/quizzes
+Authorization: Bearer {{managerAccessToken}}
+Accept: application/json
+
+
+### 퀴즈 관리 - 퀴즈 등록
+### 성공하면 응답의 data.quizId 값을 맨 위 @quizId 에 붙여넣기
+POST http://localhost:15000/api/v1/admin/courses/{{courseId}}/quizzes
+Authorization: Bearer {{managerAccessToken}}
+Content-Type: application/json
+Accept: application/json
+
+{
+  "question": "일본 오사카 여행 전 준비물로 가장 적절한 것은?",
+  "option1": "여권",
+  "option2": "항공권",
+  "option3": "숙소 예약 확인서",
+  "option4": "국내 주민등록증",
+  "correctOption": 1,
+  "explanation": "해외여행 시 여권은 필수 준비물입니다."
+}
+
+
+### 퀴즈 관리 - 등록 후 목록 조회
+GET http://localhost:15000/api/v1/admin/courses/{{courseId}}/quizzes
+Authorization: Bearer {{managerAccessToken}}
+Accept: application/json
+
+
+### 퀴즈 관리 - 퀴즈 수정
+### @quizId 값을 실제 등록된 quizId로 바꾼 뒤 실행
+PUT http://localhost:15000/api/v1/admin/courses/{{courseId}}/quizzes/{{quizId}}
+Authorization: Bearer {{managerAccessToken}}
+Content-Type: application/json
+Accept: application/json
+
+{
+  "question": "오사카 여행 전 반드시 확인해야 하는 서류는?",
+  "option1": "여권",
+  "option2": "호텔 키",
+  "option3": "국내 학생증",
+  "option4": "주민센터 서류",
+  "correctOption": 1,
+  "explanation": "해외 입국을 위해 여권은 필수입니다."
+}
+
+
+### 퀴즈 관리 - 수정 후 목록 조회
+GET http://localhost:15000/api/v1/admin/courses/{{courseId}}/quizzes
+Authorization: Bearer {{managerAccessToken}}
+Accept: application/json
+
+
+### 퀴즈 관리 - 퀴즈 삭제
+### 삭제 테스트가 필요할 때만 실행
+DELETE http://localhost:15000/api/v1/admin/courses/{{courseId}}/quizzes/{{quizId}}
+Authorization: Bearer {{managerAccessToken}}
+Accept: application/json
+
+
+### 퀴즈 관리 - 삭제 후 목록 조회
+GET http://localhost:15000/api/v1/admin/courses/{{courseId}}/quizzes
+Authorization: Bearer {{managerAccessToken}}
+Accept: application/json
