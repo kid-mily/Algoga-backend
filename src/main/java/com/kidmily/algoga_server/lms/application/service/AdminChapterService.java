@@ -1,5 +1,6 @@
 package com.kidmily.algoga_server.lms.application.service;
 
+import com.kidmily.algoga_server.global.port.out.FileStoragePort;
 import com.kidmily.algoga_server.lms.application.command.CreateChapterCommand;
 import com.kidmily.algoga_server.lms.application.command.UpdateChapterCommand;
 import com.kidmily.algoga_server.lms.application.usecase.AdminChapterUseCase;
@@ -8,6 +9,7 @@ import com.kidmily.algoga_server.lms.domain.repository.ChapterRepository;
 import com.kidmily.algoga_server.lms.domain.repository.CourseRepository;
 import com.kidmily.algoga_server.lms.exception.LmsErrorCode;
 import com.kidmily.algoga_server.lms.exception.LmsException;
+import com.kidmily.algoga_server.lms.settings.LmsStorageSettings;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -21,9 +23,12 @@ import java.util.List;
 @Transactional
 public class AdminChapterService implements AdminChapterUseCase {
 
+    private static final int MAX_CHAPTER_COUNT = 5;
+
     private final ChapterRepository chapterRepository;
     private final CourseRepository courseRepository;
-    private static final int MAX_CHAPTER_COUNT = 5;
+    private final FileStoragePort fileStoragePort;
+    private final LmsStorageSettings storageSettings;
 
     @Override
     @Transactional(readOnly = true)
@@ -50,24 +55,30 @@ public class AdminChapterService implements AdminChapterUseCase {
         validateChapterLimit(command.courseId());
         validateDuplicatedChapterOrder(command.courseId(), command.chapterOrder());
 
-        if (command.videoUrl() == null) {
+        if (command.videoFile() == null || command.videoFile().isEmpty()) {
             log.warn("[Chapter Command] 챕터 등록 실패. 영상 파일이 없습니다. courseId={}",
                     command.courseId());
             throw new LmsException(LmsErrorCode.CHAPTER_VIDEO_REQUIRED);
         }
 
+        String videoUrl = fileStoragePort.uploadFile(
+                command.videoFile(),
+                storageSettings.getBucketName(),
+                storageSettings.getChapterVideoDirectory()
+        );
+
         Chapter chapter = Chapter.create(
                 command.courseId(),
                 command.title(),
-                command.videoUrl(),
+                videoUrl,
                 command.durationSeconds(),
                 command.chapterOrder()
         );
 
         Chapter savedChapter = chapterRepository.save(chapter);
 
-        log.info("[Chapter Command] 챕터 등록 완료. courseId={}, chapterId={}",
-                savedChapter.getCourseId(), savedChapter.getId());
+        log.info("[Chapter Command] 챕터 등록 완료. courseId={}, chapterId={}, videoUrl={}",
+                savedChapter.getCourseId(), savedChapter.getId(), savedChapter.getVideoUrl());
 
         return savedChapter;
     }
@@ -85,11 +96,35 @@ public class AdminChapterService implements AdminChapterUseCase {
         validateChapterOrder(command.chapterOrder());
         validateDuplicatedChapterOrderForUpdate(courseId, command.chapterOrder(), chapterId);
 
+        Chapter chapter = chapterRepository.findByIdAndCourseId(chapterId, courseId)
+                .orElseThrow(() -> {
+                    log.warn("[Chapter Command] 챕터 수정 실패. 존재하지 않거나 삭제된 챕터입니다. courseId={}, chapterId={}",
+                            courseId, chapterId);
+                    return new LmsException(LmsErrorCode.CHAPTER_NOT_FOUND);
+                });
+
+        String targetVideoUrl = chapter.getVideoUrl();
+
+        if (command.videoFile() != null && !command.videoFile().isEmpty()) {
+            if (targetVideoUrl != null && !targetVideoUrl.isBlank()) {
+                fileStoragePort.deleteFile(
+                        storageSettings.getBucketName(),
+                        targetVideoUrl
+                );
+            }
+
+            targetVideoUrl = fileStoragePort.uploadFile(
+                    command.videoFile(),
+                    storageSettings.getBucketName(),
+                    storageSettings.getChapterVideoDirectory()
+            );
+        }
+
         Chapter updatedChapter = chapterRepository.updateBasicInfo(
                 chapterId,
                 courseId,
                 command.title(),
-                command.videoUrl(),
+                targetVideoUrl,
                 command.durationSeconds(),
                 command.chapterOrder()
         ).orElseThrow(() -> {

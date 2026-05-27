@@ -16,9 +16,9 @@ Content-Type: application/json
 
 {
   "countryId": 1,
-  "title": "몽골 핵심 가이드",
-  "description": "이 강의는 request.http 파일을 통해 생성된 강의입니다.",
-  "price": 97000,
+  "title": "s3 테스트 강의",
+  "description": "s3 업로드 확인용 강의.",
+  "price": 50000,
   "level": "BEGINNER"
 }
 

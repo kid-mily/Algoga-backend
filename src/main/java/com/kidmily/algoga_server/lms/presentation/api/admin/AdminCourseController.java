@@ -10,7 +10,6 @@ import com.kidmily.algoga_server.lms.application.command.UpdateCourseCommand;
 import com.kidmily.algoga_server.lms.application.usecase.AdminContentUseCase;
 import com.kidmily.algoga_server.lms.domain.model.Course;
 import com.kidmily.algoga_server.lms.exception.LmsErrorCode;
-import com.kidmily.algoga_server.lms.infrastructure.document.LocalFileStorageManager;
 import com.kidmily.algoga_server.lms.presentation.request.admin.CreateCourseRequest;
 import com.kidmily.algoga_server.lms.presentation.request.admin.UpdateCourseRequest;
 import com.kidmily.algoga_server.lms.presentation.response.AdminCourseResponse;
@@ -36,7 +35,6 @@ import org.springframework.web.multipart.MultipartFile;
 public class AdminCourseController {
 
     private final AdminContentUseCase adminContentUseCase;
-    private final LocalFileStorageManager fileStorageManager;
 
     @Operation(
             summary = "어드민 강의 생성",
@@ -58,18 +56,15 @@ public class AdminCourseController {
 
             @CurrentManager Long managerId
     ) {
-        String thumbnailUrl = fileStorageManager.uploadFile(thumbnailFile, "thumbnails");
-        String fileUrl = fileStorageManager.uploadFile(attachedFile, "documents");
-
         CreateCourseCommand command = new CreateCourseCommand(
                 request.countryId(),
                 managerId,
                 request.title(),
                 request.description(),
                 request.price(),
-                thumbnailUrl,
-                fileUrl,
-                request.level()
+                request.level(),
+                thumbnailFile,
+                attachedFile
         );
 
         Long savedCourseId = adminContentUseCase.createCourse(command);
@@ -127,7 +122,7 @@ public class AdminCourseController {
 
     @Operation(
             summary = "어드민 강의 수정",
-            description = "강의 제목, 설명, 가격, 썸네일, 첨부파일을 수정합니다. 파일을 보내지 않으면 기존 파일 경로를 유지합니다."
+            description = "강의 제목, 설명, 가격, 난이도, 썸네일, 첨부파일을 수정합니다. 파일을 보내지 않으면 기존 파일 경로를 유지합니다."
     )
     @ApiErrorCodeExample(domain = GlobalErrorCode.class, value = {"INVALID_REQUEST"})
     @ApiErrorCodeExample(domain = LmsErrorCode.class, value = {"COURSE_NOT_FOUND", "FILE_UPLOAD_FAILED"})
@@ -146,16 +141,13 @@ public class AdminCourseController {
             @Parameter(description = "변경할 첨부파일. 선택값입니다.", example = "osaka-guide-new.pdf")
             @RequestPart(value = "file", required = false) MultipartFile attachedFile
     ) {
-        String thumbnailUrl = fileStorageManager.uploadFile(thumbnailFile, "thumbnails");
-        String fileUrl = fileStorageManager.uploadFile(attachedFile, "documents");
-
         UpdateCourseCommand command = new UpdateCourseCommand(
                 request.title(),
                 request.description(),
                 request.price(),
-                thumbnailUrl,
-                fileUrl,
-                request.level()
+                request.level(),
+                thumbnailFile,
+                attachedFile
         );
 
         Course updatedCourse = adminContentUseCase.updateCourse(courseId, command);

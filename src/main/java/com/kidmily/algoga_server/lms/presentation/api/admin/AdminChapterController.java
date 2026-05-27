@@ -34,7 +34,6 @@ public class AdminChapterController {
 
     private final AdminChapterUseCase adminChapterUseCase;
     private final LocalFileStorageManager fileStorageManager;
-
     @Operation(
             summary = "챕터 목록 조회",
             description = "특정 강의에 등록된 챕터 목록을 조회합니다."
@@ -83,12 +82,11 @@ public class AdminChapterController {
             @Parameter(description = "챕터 영상 파일", example = "chapter-video.mp4")
             @RequestPart(value = "video") MultipartFile videoFile
     ) {
-        String videoUrl = fileStorageManager.uploadFile(videoFile, "videos");
 
         CreateChapterCommand command = new CreateChapterCommand(
                 courseId,
                 request.title(),
-                videoUrl,
+                videoFile,
                 request.durationSeconds(),
                 request.chapterOrder()
         );
@@ -129,11 +127,10 @@ public class AdminChapterController {
             @Parameter(description = "변경할 챕터 영상 파일. 선택값입니다.", example = "chapter-video-new.mp4")
             @RequestPart(value = "video", required = false) MultipartFile videoFile
     ) {
-        String videoUrl = fileStorageManager.uploadFile(videoFile, "videos");
 
         UpdateChapterCommand command = new UpdateChapterCommand(
                 request.title(),
-                videoUrl,
+                videoFile,
                 request.durationSeconds(),
                 request.chapterOrder()
         );
