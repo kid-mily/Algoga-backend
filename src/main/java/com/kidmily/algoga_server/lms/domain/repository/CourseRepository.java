@@ -24,12 +24,15 @@ public interface CourseRepository {
             String description,
             Integer price,
             String thumbnailUrl,
-            String fileUrl
+            String fileUrl,
+            String level
     );
 
     boolean softDelete(Long courseId);
 
     List<Course> findPublishedByCountryId(Long countryId);
+
+    List<Course> findPublishedByCountryIdAndLevel(Long countryId, String level);
 
     long countPublishedByCountryId(Long countryId);
 

@@ -20,25 +20,26 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
-@Tag(name = "챕터 관리", description = "콘텐츠 매니저 챕터 관리 API")
+@Tag(name = "Admin Chapter", description = "콘텐츠 매니저 챕터 관리 API")
 @RestController
-@RequestMapping("/api/v1/courses/{courseId}/chapters")
+@RequestMapping("/api/v1/admin/courses/{courseId}/chapters")
 @RequiredArgsConstructor
 public class AdminChapterController {
 
     private final AdminChapterUseCase adminChapterUseCase;
     private final LocalFileStorageManager fileStorageManager;
-
     @Operation(
             summary = "챕터 목록 조회",
-            description = "특정 강의에 등록된 챕터 목록을 노출 순서대로 조회합니다."
+            description = "특정 강의에 등록된 챕터 목록을 조회합니다."
     )
     @ApiErrorCodeExample(domain = LmsErrorCode.class, value = {"COURSE_NOT_FOUND"})
+    @PreAuthorize("hasAnyAuthority('CONTENT_MANAGER', 'ROLE_CONTENT_MANAGER', 'SUPER_ADMIN', 'ROLE_SUPER_ADMIN')")
     @GetMapping
     public ResponseEntity<ApiResponse<List<AdminChapterResponse>>> getChapters(
             @Parameter(description = "강의 ID", example = "1")
@@ -60,10 +61,16 @@ public class AdminChapterController {
 
     @Operation(
             summary = "챕터 등록",
-            description = "특정 강의에 챕터 영상과 기본 정보를 등록합니다. 영상 파일은 필수입니다."
+            description = "콘텐츠 매니저가 특정 강의에 챕터를 등록합니다."
     )
     @ApiErrorCodeExample(domain = GlobalErrorCode.class, value = {"INVALID_REQUEST"})
-    @ApiErrorCodeExample(domain = LmsErrorCode.class, value = {"COURSE_NOT_FOUND", "FILE_UPLOAD_FAILED", "CHAPTER_VIDEO_REQUIRED", "INVALID_CHAPTER_ORDER"})
+    @ApiErrorCodeExample(domain = LmsErrorCode.class, value = {
+            "COURSE_NOT_FOUND",
+            "FILE_UPLOAD_FAILED",
+            "CHAPTER_VIDEO_REQUIRED",
+            "INVALID_CHAPTER_ORDER"
+    })
+    @PreAuthorize("hasAnyAuthority('CONTENT_MANAGER', 'ROLE_CONTENT_MANAGER', 'SUPER_ADMIN', 'ROLE_SUPER_ADMIN')")
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<ApiResponse<AdminChapterResponse>> createChapter(
             @Parameter(description = "강의 ID", example = "1")
@@ -75,12 +82,11 @@ public class AdminChapterController {
             @Parameter(description = "챕터 영상 파일", example = "chapter-video.mp4")
             @RequestPart(value = "video") MultipartFile videoFile
     ) {
-        String videoUrl = fileStorageManager.uploadFile(videoFile, "videos");
 
         CreateChapterCommand command = new CreateChapterCommand(
                 courseId,
                 request.title(),
-                videoUrl,
+                videoFile,
                 request.durationSeconds(),
                 request.chapterOrder()
         );
@@ -100,7 +106,13 @@ public class AdminChapterController {
             description = "특정 강의의 챕터 제목, 영상, 재생 시간, 노출 순서를 수정합니다. 영상 파일을 보내지 않으면 기존 영상 경로를 유지합니다."
     )
     @ApiErrorCodeExample(domain = GlobalErrorCode.class, value = {"INVALID_REQUEST"})
-    @ApiErrorCodeExample(domain = LmsErrorCode.class, value = {"COURSE_NOT_FOUND", "CHAPTER_NOT_FOUND", "FILE_UPLOAD_FAILED", "INVALID_CHAPTER_ORDER"})
+    @ApiErrorCodeExample(domain = LmsErrorCode.class, value = {
+            "COURSE_NOT_FOUND",
+            "CHAPTER_NOT_FOUND",
+            "FILE_UPLOAD_FAILED",
+            "INVALID_CHAPTER_ORDER"
+    })
+    @PreAuthorize("hasAnyAuthority('CONTENT_MANAGER', 'ROLE_CONTENT_MANAGER', 'SUPER_ADMIN', 'ROLE_SUPER_ADMIN')")
     @PutMapping(value = "/{chapterId}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<ApiResponse<AdminChapterResponse>> updateChapter(
             @Parameter(description = "강의 ID", example = "1")
@@ -115,20 +127,15 @@ public class AdminChapterController {
             @Parameter(description = "변경할 챕터 영상 파일. 선택값입니다.", example = "chapter-video-new.mp4")
             @RequestPart(value = "video", required = false) MultipartFile videoFile
     ) {
-        String videoUrl = fileStorageManager.uploadFile(videoFile, "videos");
 
         UpdateChapterCommand command = new UpdateChapterCommand(
                 request.title(),
-                videoUrl,
+                videoFile,
                 request.durationSeconds(),
                 request.chapterOrder()
         );
 
-        Chapter updatedChapter = adminChapterUseCase.updateChapter(
-                courseId,
-                chapterId,
-                command
-        );
+        Chapter updatedChapter = adminChapterUseCase.updateChapter(courseId, chapterId, command);
 
         return ResponseEntity.ok(
                 ApiResponse.success(
@@ -144,6 +151,7 @@ public class AdminChapterController {
             description = "특정 강의의 챕터를 실제 삭제하지 않고 Soft Delete 처리합니다."
     )
     @ApiErrorCodeExample(domain = LmsErrorCode.class, value = {"COURSE_NOT_FOUND", "CHAPTER_NOT_FOUND"})
+    @PreAuthorize("hasAnyAuthority('CONTENT_MANAGER', 'ROLE_CONTENT_MANAGER', 'SUPER_ADMIN', 'ROLE_SUPER_ADMIN')")
     @DeleteMapping("/{chapterId}")
     public ResponseEntity<ApiResponse<Void>> deleteChapter(
             @Parameter(description = "강의 ID", example = "1")

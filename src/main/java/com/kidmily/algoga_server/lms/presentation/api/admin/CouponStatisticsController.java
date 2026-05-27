@@ -11,11 +11,12 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 @Tag(name = "Admin Coupon Statistics", description = "쿠폰 발급/사용/만료 통계 API")
 @RestController
-@RequestMapping("/api/v1/coupon-statistics")
+@RequestMapping("/api/v1/admin/coupon-statistics")
 @RequiredArgsConstructor
 public class CouponStatisticsController {
 
@@ -33,6 +34,7 @@ public class CouponStatisticsController {
             "COURSE_NOT_FOUND",
             "COUNTRY_NOT_FOUND"
     })
+    @PreAuthorize("hasAnyAuthority('CONTENT_MANAGER', 'ROLE_CONTENT_MANAGER', 'SUPER_ADMIN', 'ROLE_SUPER_ADMIN')")
     @GetMapping
     public ResponseEntity<ApiResponse<CouponStatisticsResponse>> getCouponStatistics(
             @Parameter(description = "강의 ID 필터", example = "3")

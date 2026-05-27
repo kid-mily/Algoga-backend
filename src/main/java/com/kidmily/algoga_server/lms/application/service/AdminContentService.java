@@ -1,5 +1,6 @@
 package com.kidmily.algoga_server.lms.application.service;
 
+import com.kidmily.algoga_server.global.port.out.FileStoragePort;
 import com.kidmily.algoga_server.lms.application.command.CreateCourseCommand;
 import com.kidmily.algoga_server.lms.application.command.UpdateCourseCommand;
 import com.kidmily.algoga_server.lms.application.usecase.AdminContentUseCase;
@@ -8,6 +9,7 @@ import com.kidmily.algoga_server.lms.domain.repository.CourseRepository;
 import com.kidmily.algoga_server.lms.domain.repository.MapRepository;
 import com.kidmily.algoga_server.lms.exception.LmsErrorCode;
 import com.kidmily.algoga_server.lms.exception.LmsException;
+import com.kidmily.algoga_server.lms.settings.LmsStorageSettings;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -23,6 +25,8 @@ public class AdminContentService implements AdminContentUseCase {
 
     private final CourseRepository courseRepository;
     private final MapRepository mapRepository;
+    private final FileStoragePort fileStoragePort;
+    private final LmsStorageSettings storageSettings;
 
     @Override
     public Long createCourse(CreateCourseCommand command) {
@@ -31,19 +35,40 @@ public class AdminContentService implements AdminContentUseCase {
 
         validateCountry(command.countryId(), "강의 생성");
 
+        String thumbnailUrl = null;
+        String fileUrl = null;
+
+        if (command.thumbnailFile() != null && !command.thumbnailFile().isEmpty()) {
+            thumbnailUrl = fileStoragePort.uploadFile(
+                    command.thumbnailFile(),
+                    storageSettings.getBucketName(),
+                    storageSettings.getCourseThumbnailDirectory()
+            );
+        }
+
+        if (command.attachedFile() != null && !command.attachedFile().isEmpty()) {
+            fileUrl = fileStoragePort.uploadFile(
+                    command.attachedFile(),
+                    storageSettings.getBucketName(),
+                    storageSettings.getCourseFileDirectory()
+            );
+        }
+
         Course newCourse = Course.create(
                 command.countryId(),
                 command.managerId(),
                 command.title(),
                 command.description(),
                 command.price(),
-                command.thumbnailUrl(),
-                command.fileUrl()
+                thumbnailUrl,
+                fileUrl,
+                command.level()
         );
 
         Course savedCourse = courseRepository.save(newCourse);
 
-        log.info("[Course Command] 강의 생성 완료. courseId={}", savedCourse.getId());
+        log.info("[Course Command] 강의 생성 완료. courseId={}, thumbnailUrl={}, fileUrl={}, level={}",
+                savedCourse.getId(), thumbnailUrl, fileUrl, command.level());
 
         return savedCourse.getId();
     }
@@ -80,16 +105,56 @@ public class AdminContentService implements AdminContentUseCase {
 
     @Override
     public Course updateCourse(Long courseId, UpdateCourseCommand command) {
-        log.info("[Course Command] 강의 수정 요청. courseId={}, title={}",
-                courseId, command.title());
+        log.info("[Course Command] 강의 수정 요청. courseId={}, title={}, level={}",
+                courseId, command.title(), command.level());
+
+        Course course = courseRepository.findByIdAndDeletedFalse(courseId)
+                .orElseThrow(() -> {
+                    log.warn("[Course Command] 강의 수정 실패. 존재하지 않거나 삭제된 강의입니다. courseId={}", courseId);
+                    return new LmsException(LmsErrorCode.COURSE_NOT_FOUND);
+                });
+
+        String targetThumbnailUrl = course.getThumbnailUrl();
+        String targetFileUrl = course.getFileUrl();
+
+        if (command.thumbnailFile() != null && !command.thumbnailFile().isEmpty()) {
+            if (targetThumbnailUrl != null && !targetThumbnailUrl.isBlank()) {
+                fileStoragePort.deleteFile(
+                        storageSettings.getBucketName(),
+                        targetThumbnailUrl
+                );
+            }
+
+            targetThumbnailUrl = fileStoragePort.uploadFile(
+                    command.thumbnailFile(),
+                    storageSettings.getBucketName(),
+                    storageSettings.getCourseThumbnailDirectory()
+            );
+        }
+
+        if (command.attachedFile() != null && !command.attachedFile().isEmpty()) {
+            if (targetFileUrl != null && !targetFileUrl.isBlank()) {
+                fileStoragePort.deleteFile(
+                        storageSettings.getBucketName(),
+                        targetFileUrl
+                );
+            }
+
+            targetFileUrl = fileStoragePort.uploadFile(
+                    command.attachedFile(),
+                    storageSettings.getBucketName(),
+                    storageSettings.getCourseFileDirectory()
+            );
+        }
 
         Course updatedCourse = courseRepository.updateBasicInfo(
                 courseId,
                 command.title(),
                 command.description(),
                 command.price(),
-                command.thumbnailUrl(),
-                command.fileUrl()
+                targetThumbnailUrl,
+                targetFileUrl,
+                command.level()
         ).orElseThrow(() -> {
             log.warn("[Course Command] 강의 수정 실패. 존재하지 않거나 삭제된 강의입니다. courseId={}", courseId);
             return new LmsException(LmsErrorCode.COURSE_NOT_FOUND);

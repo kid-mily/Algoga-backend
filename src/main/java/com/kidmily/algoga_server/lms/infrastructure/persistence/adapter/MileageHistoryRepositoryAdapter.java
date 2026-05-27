@@ -8,7 +8,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
-import java.util.Optional;
 
 @Repository
 @RequiredArgsConstructor
@@ -21,6 +20,7 @@ public class MileageHistoryRepositoryAdapter implements MileageHistoryRepository
         MileageHistoryJpaEntity entity = new MileageHistoryJpaEntity(
                 mileageHistory.getUserId(),
                 mileageHistory.getCourseId(),
+                mileageHistory.getManagerId(),
                 mileageHistory.getAmount(),
                 mileageHistory.getType(),
                 mileageHistory.getReason(),
@@ -33,25 +33,16 @@ public class MileageHistoryRepositoryAdapter implements MileageHistoryRepository
     }
 
     @Override
-    public Optional<MileageHistory> findById(Long mileageHistoryId) {
-        return springDataMileageHistoryRepository.findById(mileageHistoryId)
-                .map(this::toDomain);
-    }
-
-    @Override
-    public List<MileageHistory> findByUserId(Long userId) {
-        return springDataMileageHistoryRepository.findByUserId(userId)
+    public List<MileageHistory> findAll() {
+        return springDataMileageHistoryRepository.findAllByOrderByCreatedAtDesc()
                 .stream()
                 .map(this::toDomain)
                 .toList();
     }
 
     @Override
-    public List<MileageHistory> findByUserIdAndCourseId(
-            Long userId,
-            Long courseId
-    ) {
-        return springDataMileageHistoryRepository.findByUserIdAndCourseId(userId, courseId)
+    public List<MileageHistory> findByUserId(Long userId) {
+        return springDataMileageHistoryRepository.findByUserIdOrderByCreatedAtDesc(userId)
                 .stream()
                 .map(this::toDomain)
                 .toList();
@@ -62,6 +53,7 @@ public class MileageHistoryRepositoryAdapter implements MileageHistoryRepository
                 entity.getId(),
                 entity.getUserId(),
                 entity.getCourseId(),
+                entity.getManagerId(),
                 entity.getAmount(),
                 entity.getType(),
                 entity.getReason(),

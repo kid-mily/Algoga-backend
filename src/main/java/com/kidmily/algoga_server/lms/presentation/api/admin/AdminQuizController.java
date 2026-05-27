@@ -18,13 +18,14 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
-@Tag(name = "퀴즈 관리", description = "콘텐츠 매니저 퀴즈 관리 API")
+@Tag(name = "Admin Quiz", description = "콘텐츠 매니저 퀴즈 관리 API")
 @RestController
-@RequestMapping("/api/v1/courses/{courseId}/quizzes")
+@RequestMapping("/api/v1/admin/courses/{courseId}/quizzes")
 @RequiredArgsConstructor
 public class AdminQuizController {
 
@@ -35,6 +36,7 @@ public class AdminQuizController {
             description = "특정 강의에 등록된 퀴즈 목록을 조회합니다. 콘텐츠 매니저용 API이므로 정답과 해설도 함께 반환합니다."
     )
     @ApiErrorCodeExample(domain = LmsErrorCode.class, value = {"COURSE_NOT_FOUND"})
+    @PreAuthorize("hasAnyAuthority('CONTENT_MANAGER', 'ROLE_CONTENT_MANAGER', 'SUPER_ADMIN', 'ROLE_SUPER_ADMIN')")
     @GetMapping
     public ResponseEntity<ApiResponse<List<AdminQuizResponse>>> getQuizzes(
             @Parameter(description = "강의 ID", example = "3")
@@ -60,6 +62,7 @@ public class AdminQuizController {
     )
     @ApiErrorCodeExample(domain = GlobalErrorCode.class, value = {"INVALID_REQUEST"})
     @ApiErrorCodeExample(domain = LmsErrorCode.class, value = {"COURSE_NOT_FOUND", "INVALID_QUIZ_OPTION", "INVALID_QUIZ_ANSWER"})
+    @PreAuthorize("hasAnyAuthority('CONTENT_MANAGER', 'ROLE_CONTENT_MANAGER', 'SUPER_ADMIN', 'ROLE_SUPER_ADMIN')")
     @PostMapping
     public ResponseEntity<ApiResponse<AdminQuizResponse>> createQuiz(
             @Parameter(description = "강의 ID", example = "3")
@@ -94,6 +97,7 @@ public class AdminQuizController {
     )
     @ApiErrorCodeExample(domain = GlobalErrorCode.class, value = {"INVALID_REQUEST"})
     @ApiErrorCodeExample(domain = LmsErrorCode.class, value = {"COURSE_NOT_FOUND", "QUIZ_NOT_FOUND", "INVALID_QUIZ_OPTION", "INVALID_QUIZ_ANSWER"})
+    @PreAuthorize("hasAnyAuthority('CONTENT_MANAGER', 'ROLE_CONTENT_MANAGER', 'SUPER_ADMIN', 'ROLE_SUPER_ADMIN')")
     @PutMapping("/{quizId}")
     public ResponseEntity<ApiResponse<AdminQuizResponse>> updateQuiz(
             @Parameter(description = "강의 ID", example = "3")
@@ -130,6 +134,7 @@ public class AdminQuizController {
             description = "특정 강의의 퀴즈를 실제 삭제하지 않고 Soft Delete 처리합니다."
     )
     @ApiErrorCodeExample(domain = LmsErrorCode.class, value = {"COURSE_NOT_FOUND", "QUIZ_NOT_FOUND"})
+    @PreAuthorize("hasAnyAuthority('CONTENT_MANAGER', 'ROLE_CONTENT_MANAGER', 'SUPER_ADMIN', 'ROLE_SUPER_ADMIN')")
     @DeleteMapping("/{quizId}")
     public ResponseEntity<ApiResponse<Void>> deleteQuiz(
             @Parameter(description = "강의 ID", example = "3")

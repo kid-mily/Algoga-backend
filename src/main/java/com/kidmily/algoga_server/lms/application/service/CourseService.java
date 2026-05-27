@@ -28,6 +28,14 @@ public class CourseService implements CourseUseCase {
     }
 
     @Override
+    public List<Course> getRecommendedCoursesByCountryAndLevel(Long countryId, String level) {
+        validateCountry(countryId);
+        validateCourseLevel(level);
+
+        return courseRepository.findPublishedByCountryIdAndLevel(countryId, level);
+    }
+
+    @Override
     public long countPublishedCoursesByCountry(Long countryId) {
         validateCountry(countryId);
         return courseRepository.countPublishedByCountryId(countryId);
@@ -41,5 +49,13 @@ public class CourseService implements CourseUseCase {
     private void validateCountry(Long countryId) {
         mapRepository.findActiveCountryById(countryId)
                 .orElseThrow(() -> new LmsException(LmsErrorCode.COUNTRY_NOT_FOUND));
+    }
+
+    private void validateCourseLevel(String level) {
+        if (!"BEGINNER".equals(level)
+                && !"INTERMEDIATE".equals(level)
+                && !"ADVANCED".equals(level)) {
+            throw new LmsException(LmsErrorCode.INVALID_COURSE_LEVEL);
+        }
     }
 }

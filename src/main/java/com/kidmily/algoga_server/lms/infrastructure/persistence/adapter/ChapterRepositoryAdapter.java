@@ -77,6 +77,32 @@ public class ChapterRepositoryAdapter implements ChapterRepository {
                 .orElse(false);
     }
 
+    @Override
+    public long countByCourseId(Long courseId) {
+        return springDataChapterRepository.countByCourseIdAndDeletedFalse(courseId);
+    }
+
+    @Override
+    public boolean existsByCourseIdAndChapterOrder(Long courseId, int chapterOrder) {
+        return springDataChapterRepository.existsByCourseIdAndOrderNumAndDeletedFalse(
+                courseId,
+                chapterOrder
+        );
+    }
+
+    @Override
+    public boolean existsByCourseIdAndChapterOrderAndIdNot(
+            Long courseId,
+            int chapterOrder,
+            Long chapterId
+    ) {
+        return springDataChapterRepository.existsByCourseIdAndOrderNumAndIdNotAndDeletedFalse(
+                courseId,
+                chapterOrder,
+                chapterId
+        );
+    }
+
     private Chapter toDomain(ChapterJpaEntity entity) {
         return Chapter.withId(
                 entity.getId(),

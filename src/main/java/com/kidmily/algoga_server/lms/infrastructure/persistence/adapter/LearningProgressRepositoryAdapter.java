@@ -7,6 +7,7 @@ import com.kidmily.algoga_server.lms.infrastructure.persistence.repository.Sprin
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
 import java.util.Optional;
 
 @Repository
@@ -51,6 +52,33 @@ public class LearningProgressRepositoryAdapter implements LearningProgressReposi
     ) {
         return springDataLearningProgressRepository.findByUserIdAndChapterId(userId, chapterId)
                 .map(this::toDomain);
+    }
+
+    @Override
+    public List<LearningProgress> findByUserId(Long userId) {
+        return springDataLearningProgressRepository.findByUserId(userId)
+                .stream()
+                .map(this::toDomain)
+                .toList();
+    }
+
+    @Override
+    public List<LearningProgress> findByUserIdAndCourseId(
+            Long userId,
+            Long courseId
+    ) {
+        return springDataLearningProgressRepository.findByUserIdAndCourseId(userId, courseId)
+                .stream()
+                .map(this::toDomain)
+                .toList();
+    }
+
+    @Override
+    public List<LearningProgress> findByCourseId(Long courseId) {
+        return springDataLearningProgressRepository.findByCourseId(courseId)
+                .stream()
+                .map(this::toDomain)
+                .toList();
     }
 
     @Override

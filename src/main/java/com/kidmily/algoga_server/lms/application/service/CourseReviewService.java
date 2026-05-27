@@ -1,6 +1,7 @@
 package com.kidmily.algoga_server.lms.application.service;
 
 import com.kidmily.algoga_server.lms.application.command.CreateCourseReviewCommand;
+import com.kidmily.algoga_server.lms.application.result.CourseReviewSummaryResult;
 import com.kidmily.algoga_server.lms.application.usecase.CourseReviewUseCase;
 import com.kidmily.algoga_server.lms.domain.model.CourseReview;
 import com.kidmily.algoga_server.lms.domain.repository.CourseCompletionRepository;
@@ -71,6 +72,84 @@ public class CourseReviewService implements CourseReviewUseCase {
                 courseId, reviews.size());
 
         return reviews;
+    }
+
+    @Override
+    public CourseReviewSummaryResult getReviewSummary(Long courseId) {
+        log.info("[Course Review Query] 리뷰 요약 조회 요청. courseId={}", courseId);
+
+        validateCourse(courseId);
+
+        List<CourseReview> reviews = courseReviewRepository.findByCourseId(courseId);
+
+        int totalReviewCount = reviews.size();
+
+        int fiveStarCount = countByRating(reviews, 5);
+        int fourStarCount = countByRating(reviews, 4);
+        int threeStarCount = countByRating(reviews, 3);
+        int twoStarCount = countByRating(reviews, 2);
+        int oneStarCount = countByRating(reviews, 1);
+
+        double averageRating = calculateAverageRating(reviews);
+
+        CourseReviewSummaryResult result = new CourseReviewSummaryResult(
+                courseId,
+                averageRating,
+                totalReviewCount,
+                fiveStarCount,
+                fourStarCount,
+                threeStarCount,
+                twoStarCount,
+                oneStarCount,
+                calculateRate(fiveStarCount, totalReviewCount),
+                calculateRate(fourStarCount, totalReviewCount),
+                calculateRate(threeStarCount, totalReviewCount),
+                calculateRate(twoStarCount, totalReviewCount),
+                calculateRate(oneStarCount, totalReviewCount)
+        );
+
+        log.info("[Course Review Query] 리뷰 요약 조회 완료. courseId={}, totalReviewCount={}, averageRating={}",
+                courseId, result.totalReviewCount(), result.averageRating());
+
+        return result;
+    }
+
+    private int countByRating(
+            List<CourseReview> reviews,
+            int rating
+    ) {
+        return (int) reviews.stream()
+                .filter(review -> review.getRating() == rating)
+                .count();
+    }
+
+    private double calculateAverageRating(List<CourseReview> reviews) {
+        if (reviews.isEmpty()) {
+            return 0.0;
+        }
+
+        double average = reviews.stream()
+                .mapToInt(CourseReview::getRating)
+                .average()
+                .orElse(0.0);
+
+        return roundToOneDecimal(average);
+    }
+
+    private double calculateRate(
+            int count,
+            int total
+    ) {
+        if (total == 0) {
+            return 0.0;
+        }
+
+        double rate = (count * 100.0) / total;
+        return roundToOneDecimal(rate);
+    }
+
+    private double roundToOneDecimal(double value) {
+        return Math.round(value * 10.0) / 10.0;
     }
 
     private void validateCourse(Long courseId) {

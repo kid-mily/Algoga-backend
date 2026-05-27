@@ -5,13 +5,13 @@
 
 
 ### 퀴즈 관리 - 퀴즈 목록 조회
-GET http://localhost:15000/api/v1/courses/3/quizzes
+GET http://localhost:15000/api/v1/admin/courses/3/quizzes
 Authorization: Bearer {{accessToken}}
 
 
 ### 퀴즈 관리 - 퀴즈 등록
 ### 응답의 data.quizId 값을 수정/삭제 테스트에 사용
-POST http://localhost:15000/api/v1/courses/3/quizzes
+POST http://localhost:15000/api/v1/admin/courses/3/quizzes
 Authorization: Bearer {{accessToken}}
 Content-Type: application/json
 
@@ -27,13 +27,13 @@ Content-Type: application/json
 
 
 ### 퀴즈 관리 - 등록 후 목록 조회
-GET http://localhost:15000/api/v1/courses/3/quizzes
+GET http://localhost:15000/api/v1/admin/courses/3/quizzes
 Authorization: Bearer {{accessToken}}
 
 
 ### 퀴즈 관리 - 퀴즈 수정
 ### quizId를 실제 값으로 변경
-PUT http://localhost:15000/api/v1/courses/3/quizzes/3
+PUT http://localhost:15000/api/v1/admin/courses/3/quizzes/3
 Authorization: Bearer {{accessToken}}
 Content-Type: application/json
 
@@ -50,10 +50,10 @@ Content-Type: application/json
 
 ### 퀴즈 관리 - 퀴즈 삭제
 ### 삭제 테스트가 필요할 때만 실행
-DELETE http://localhost:15000/api/v1/courses/3/quizzes/3
+DELETE http://localhost:15000/api/v1/admin/courses/3/quizzes/3
 Authorization: Bearer {{accessToken}}
 
 
 ### 퀴즈 관리 - 삭제 후 목록 조회
-GET http://localhost:15000/api/v1/courses/3/quizzes
+GET http://localhost:15000/api/v1/admin/courses/3/quizzes
 Authorization: Bearer {{accessToken}}

@@ -23,6 +23,14 @@ public record CreateCourseRequest(
         @Schema(description = "강의 가격", example = "100000")
         @NotNull(message = "강의 가격은 필수입니다.")
         @Positive(message = "강의 가격은 0보다 커야 합니다.")
-        Integer price
+        Integer price,
+
+        @Schema(
+                description = "강의 난이도. BEGINNER=초급, INTERMEDIATE=중급, ADVANCED=고급",
+                example = "BEGINNER",
+                allowableValues = {"BEGINNER", "INTERMEDIATE", "ADVANCED"}
+        )
+        @NotBlank(message = "강의 난이도는 필수입니다.")
+        String level
 ) {
 }

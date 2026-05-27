@@ -7,6 +7,7 @@ public class MileageHistory {
     private final Long id;
     private final Long userId;
     private final Long courseId;
+    private final Long managerId;
     private final int amount;
     private final String type;
     private final String reason;
@@ -16,6 +17,7 @@ public class MileageHistory {
             Long id,
             Long userId,
             Long courseId,
+            Long managerId,
             int amount,
             String type,
             String reason,
@@ -24,24 +26,82 @@ public class MileageHistory {
         this.id = id;
         this.userId = userId;
         this.courseId = courseId;
+        this.managerId = managerId;
         this.amount = amount;
         this.type = type;
         this.reason = reason;
         this.createdAt = createdAt;
     }
 
-    public static MileageHistory earnCourseReward(
+    public static MileageHistory create(
             Long userId,
             Long courseId,
-            int amount
+            int amount,
+            String type,
+            String reason
     ) {
         return new MileageHistory(
                 null,
                 userId,
                 courseId,
+                null,
+                amount,
+                type,
+                reason,
+                LocalDateTime.now()
+        );
+    }
+
+    public static MileageHistory earn(
+            Long userId,
+            Long courseId,
+            int amount,
+            String reason
+    ) {
+        return create(userId, courseId, amount, "EARN", reason);
+    }
+
+    public static MileageHistory use(
+            Long userId,
+            Long courseId,
+            int amount,
+            String reason
+    ) {
+        return create(userId, courseId, amount, "USE", reason);
+    }
+
+    public static MileageHistory adminEarn(
+            Long userId,
+            Long managerId,
+            int amount,
+            String reason
+    ) {
+        return new MileageHistory(
+                null,
+                userId,
+                null,
+                managerId,
                 amount,
                 "EARN",
-                "강의 이수 및 퀴즈 완료 보상",
+                reason,
+                LocalDateTime.now()
+        );
+    }
+
+    public static MileageHistory adminUse(
+            Long userId,
+            Long managerId,
+            int amount,
+            String reason
+    ) {
+        return new MileageHistory(
+                null,
+                userId,
+                null,
+                managerId,
+                amount,
+                "USE",
+                reason,
                 LocalDateTime.now()
         );
     }
@@ -50,6 +110,7 @@ public class MileageHistory {
             Long id,
             Long userId,
             Long courseId,
+            Long managerId,
             int amount,
             String type,
             String reason,
@@ -59,6 +120,7 @@ public class MileageHistory {
                 id,
                 userId,
                 courseId,
+                managerId,
                 amount,
                 type,
                 reason,
@@ -76,6 +138,10 @@ public class MileageHistory {
 
     public Long getCourseId() {
         return courseId;
+    }
+
+    public Long getManagerId() {
+        return managerId;
     }
 
     public int getAmount() {

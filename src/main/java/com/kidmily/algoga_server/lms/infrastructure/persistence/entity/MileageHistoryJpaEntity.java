@@ -21,8 +21,11 @@ public class MileageHistoryJpaEntity {
     @Column(name = "user_id", nullable = false)
     private Long userId;
 
-    @Column(name = "lecture_id", nullable = false)
+    @Column(name = "course_id")
     private Long courseId;
+
+    @Column(name = "manager_id")
+    private Long managerId;
 
     @Column(name = "amount", nullable = false)
     private int amount;
@@ -30,7 +33,7 @@ public class MileageHistoryJpaEntity {
     @Column(name = "type", nullable = false, length = 20)
     private String type;
 
-    @Column(name = "reason", nullable = false, length = 255)
+    @Column(name = "reason", nullable = false)
     private String reason;
 
     @Column(name = "created_at", nullable = false)
@@ -39,6 +42,7 @@ public class MileageHistoryJpaEntity {
     public MileageHistoryJpaEntity(
             Long userId,
             Long courseId,
+            Long managerId,
             int amount,
             String type,
             String reason,
@@ -46,6 +50,7 @@ public class MileageHistoryJpaEntity {
     ) {
         this.userId = userId;
         this.courseId = courseId;
+        this.managerId = managerId;
         this.amount = amount;
         this.type = type;
         this.reason = reason;

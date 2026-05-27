@@ -44,6 +44,9 @@ public class CourseJpaEntity {
     @Column(name = "file_url", length = 500)
     private String fileUrl;
 
+    @Column(name = "level", nullable = false, length = 30)
+    private String level;
+
     @Column(nullable = false, length = 30)
     private String status;
 
@@ -70,6 +73,7 @@ public class CourseJpaEntity {
             Integer price,
             String thumbnailUrl,
             String fileUrl,
+            String level,
             String status
     ) {
         this.countryId = countryId;
@@ -79,6 +83,7 @@ public class CourseJpaEntity {
         this.price = price;
         this.thumbnailUrl = thumbnailUrl;
         this.fileUrl = fileUrl;
+        this.level = level;
         this.status = status;
         this.deleted = false;
     }
@@ -88,11 +93,13 @@ public class CourseJpaEntity {
             String description,
             Integer price,
             String thumbnailUrl,
-            String fileUrl
+            String fileUrl,
+            String level
     ) {
         this.title = title;
         this.description = description;
         this.price = price;
+        this.level = level;
 
         if (thumbnailUrl != null) {
             this.thumbnailUrl = thumbnailUrl;

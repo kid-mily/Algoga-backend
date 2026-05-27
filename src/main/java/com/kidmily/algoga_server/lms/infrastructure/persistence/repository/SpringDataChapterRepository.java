@@ -11,4 +11,14 @@ public interface SpringDataChapterRepository extends JpaRepository<ChapterJpaEnt
     List<ChapterJpaEntity> findByCourseIdAndDeletedFalseOrderByOrderNumAsc(Long courseId);
 
     Optional<ChapterJpaEntity> findByIdAndCourseIdAndDeletedFalse(Long id, Long courseId);
+
+    long countByCourseIdAndDeletedFalse(Long courseId);
+
+    boolean existsByCourseIdAndOrderNumAndDeletedFalse(Long courseId, int orderNum);
+
+    boolean existsByCourseIdAndOrderNumAndIdNotAndDeletedFalse(
+            Long courseId,
+            int orderNum,
+            Long id
+    );
 }
