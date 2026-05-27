@@ -28,22 +28,19 @@ public enum LmsErrorCode implements BaseErrorCode {
     COURSE_ALREADY_COMPLETED(HttpStatus.CONFLICT, "LMS_017", "이미 이수 완료한 강의입니다."),
     QUIZ_NOT_SUBMITTED(HttpStatus.BAD_REQUEST, "LMS_018", "퀴즈 제출 후 강의를 이수 완료할 수 있습니다."),
     COURSE_COMPLETION_NOT_FOUND(HttpStatus.NOT_FOUND, "LMS_019", "강의 이수 내역을 찾을 수 없습니다."),
-    COURSE_REWARD_ALREADY_GRANTED(HttpStatus.CONFLICT, "LMS_020", "이미 보상이 지급된 강의입니다."),
-    COUPON_POLICY_NOT_FOUND(HttpStatus.NOT_FOUND, "LMS_021", "쿠폰 정책을 찾을 수 없습니다."),
-    INVALID_COUPON_POLICY(HttpStatus.BAD_REQUEST, "LMS_022", "유효하지 않은 쿠폰 정책입니다."),
+
     QNA_NOT_FOUND(HttpStatus.NOT_FOUND, "LMS_023", "해당 Q&A를 찾을 수 없습니다."),
     QNA_ALREADY_ANSWERED(HttpStatus.CONFLICT, "LMS_024", "이미 답변이 등록된 Q&A입니다."),
     REVIEW_NOT_FOUND(HttpStatus.NOT_FOUND, "LMS_025", "해당 리뷰를 찾을 수 없습니다."),
     REVIEW_ALREADY_EXISTS(HttpStatus.CONFLICT, "LMS_026", "이미 해당 강의에 리뷰를 작성했습니다."),
     INVALID_REVIEW_RATING(HttpStatus.BAD_REQUEST, "LMS_027", "리뷰 평점은 1점부터 5점 사이여야 합니다."),
     QNA_COMMENT_NOT_FOUND(HttpStatus.NOT_FOUND, "LMS_028", "해당 Q&A 댓글을 찾을 수 없습니다."),
-    MILEAGE_USER_NOT_FOUND(HttpStatus.NOT_FOUND, "LMS_029", "마일리지 대상 사용자를 찾을 수 없습니다."),
-    INVALID_MILEAGE_AMOUNT(HttpStatus.BAD_REQUEST, "LMS_030", "마일리지 금액은 1 이상이어야 합니다."),
-    NOT_ENOUGH_MILEAGE(HttpStatus.BAD_REQUEST, "LMS_031", "보유 마일리지가 부족합니다."),
+
     CHAPTER_LIMIT_EXCEEDED(HttpStatus.BAD_REQUEST, "LMS_032", "챕터는 최대 5개까지만 등록할 수 있습니다."),
     DUPLICATED_CHAPTER_ORDER(HttpStatus.BAD_REQUEST, "LMS_033", "이미 사용 중인 챕터 순서입니다."),
     INVALID_COURSE_LEVEL(HttpStatus.BAD_REQUEST, "LMS_034", "강의 난이도는 BEGINNER, INTERMEDIATE, ADVANCED 중 하나여야 합니다."),
     NOT_ENROLLED(HttpStatus.FORBIDDEN, "LMS_035", "수강 등록된 강의가 아닙니다.");
+
     private final HttpStatus status;
     private final String code;
     private final String message;
