@@ -13,6 +13,12 @@ public record CommentResponse(
         @Schema(description = "작성자 ID", example = "1")
         Long userId,
 
+        @Schema(description = "작성자 닉네임", example = "여행조아")
+        String nickname,
+
+        @Schema(description = "작성자 프로필 이미지 URL", example = "https://example.com/profile.jpg")
+        String profileImageUrl,
+
         @Schema(description = "내용", example = "엔화는 환전하고 가시는거 추천해요")
         String content,
 

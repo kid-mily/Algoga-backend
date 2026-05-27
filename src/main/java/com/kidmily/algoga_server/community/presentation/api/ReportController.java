@@ -7,12 +7,14 @@ import com.kidmily.algoga_server.community.presentation.api.request.CreateReport
 import com.kidmily.algoga_server.community.presentation.api.response.CreateReportResponse;
 import com.kidmily.algoga_server.global.annotation.swagger.ApiErrorCodeExample;
 import com.kidmily.algoga_server.global.common.api.response.ApiResponse;
+import com.kidmily.algoga_server.user.settings.CustomUserDetails;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -35,7 +37,8 @@ public class ReportController {
     public ResponseEntity<ApiResponse<CreateReportResponse>> createReport(
             @Valid @RequestBody CreateReportRequest request
     ) {
-        Long currentUserId = 1L;
+        Long currentUserId = ((CustomUserDetails) SecurityContextHolder.getContext()
+                .getAuthentication().getPrincipal()).getUser().getId();
 
         CreateReportCommand command = new CreateReportCommand(
                 currentUserId,
