@@ -81,7 +81,7 @@ Authorization: Bearer {{authToken}}
 
 
 ### 4. [수락] 친구 요청 수락 (친구 요청 목록 조회 후 확인한 relationId를 넣습니다!)
-PATCH http://localhost:15000/api/v1/friends/requests/6/accept
+PATCH http://localhost:15000/api/v1/friends/requests/11/accept
 Authorization: Bearer {{authToken}}
 
 ### 5. [조회] 내 친구 목록 정렬 조회 (영희의 친구 목록 보기)
@@ -97,12 +97,12 @@ Authorization: Bearer {{authToken}}
 
 ### 6. [거절] 친구 요청 거절
 # 주의: PATCH 메소드이며, 반드시 '대기 중(REQUESTED)'인 친구 요청의 relationId를 입력하세요.
-PATCH http://localhost:15000/api/v1/friends/requests/4/reject
+PATCH http://localhost:15000/api/v1/friends/requests/13/reject
 Authorization: Bearer {{authToken}}
 
 ### 7. [삭제] 기존 친구 관계 삭제
 # 주의: DELETE 메소드이며, 이미 '친구(ACCEPTED)' 관계인 relationId를 입력하세요.
-DELETE http://localhost:15000/api/v1/friends/5
+DELETE http://localhost:15000/api/v1/friends/11
 Authorization: Bearer {{authToken}}
 
 ### 8. [차단] 유저 차단하기
