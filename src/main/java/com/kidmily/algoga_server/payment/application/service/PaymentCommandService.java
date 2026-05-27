@@ -6,7 +6,9 @@ import com.kidmily.algoga_server.booking.domain.model.BookingStatus;
 import com.kidmily.algoga_server.booking.domain.repository.BookingRepository;
 import com.kidmily.algoga_server.global.exception.BusinessException;
 import com.kidmily.algoga_server.lms.domain.model.Course;
+import com.kidmily.algoga_server.lms.domain.model.UserCoupon;
 import com.kidmily.algoga_server.lms.domain.repository.CourseRepository;
+import com.kidmily.algoga_server.lms.domain.repository.UserCouponRepository;
 import com.kidmily.algoga_server.payment.application.command.CreateLecturePaymentCommand;
 import com.kidmily.algoga_server.payment.application.command.CreatePaymentCommand;
 import com.kidmily.algoga_server.payment.application.usecase.PaymentCommandUseCase;
@@ -40,6 +42,7 @@ public class PaymentCommandService implements PaymentCommandUseCase {
     private final UserRepository userRepository;
     private final ApplicationEventPublisher eventPublisher;
     private final CourseRepository courseRepository;
+    private final UserCouponRepository userCouponRepository;
 
     @Override
     public Long handle(CreatePaymentCommand command) {
@@ -60,7 +63,15 @@ public class PaymentCommandService implements PaymentCommandUseCase {
             }
         });
 
-        validateAmount(booking, command.paymentType(), command.amount());
+        int couponDiscount = 0;
+        if (command.usedCouponId() != null) {
+            UserCoupon userCoupon = validateCoupon(command.usedCouponId(), command.userId());
+            int baseAmount = getBaseAmount(booking, command.paymentType());
+            couponDiscount = calculateCouponDiscount(userCoupon, baseAmount);
+            log.info("[PaymentCommandService] 쿠폰 적용 - userCouponId: {}, 할인: {}", command.usedCouponId(), couponDiscount);
+        }
+
+        validateAmount(booking, command.paymentType(), command.amount(), couponDiscount);
 
         JsonNode portoneResult = portOneClient.getPayment(command.portonePaymentId());
         String portoneStatus = portoneResult.path("status").asText();
@@ -88,6 +99,11 @@ public class PaymentCommandService implements PaymentCommandUseCase {
             BookingStatus newBookingStatus = resolveBookingStatus(command.paymentType());
             bookingRepository.updateStatus(command.bookingId(), newBookingStatus);
             log.info("[PaymentCommandService] 결제 성공 - bookingId: {}, newStatus: {}", command.bookingId(), newBookingStatus);
+
+            if (command.usedCouponId() != null) {
+                userCouponRepository.markUsed(command.usedCouponId(), LocalDateTime.now());
+                log.info("[PaymentCommandService] 쿠폰 사용 처리 - userCouponId: {}", command.usedCouponId());
+            }
 
             User user = userRepository.findById(command.userId())
                     .orElseThrow(() -> {
@@ -134,6 +150,11 @@ public class PaymentCommandService implements PaymentCommandUseCase {
             }
         });
 
+        if (command.usedCouponId() != null) {
+            UserCoupon userCoupon = validateCoupon(command.usedCouponId(), command.userId());
+            log.info("[PaymentCommandService] 강의 쿠폰 적용 - userCouponId: {}", command.usedCouponId());
+        }
+
         JsonNode portoneResult = portOneClient.getPayment(command.portonePaymentId());
         String portoneStatus = portoneResult.path("status").asText();
         int paidAmount = portoneResult.path("amount").path("total").asInt();
@@ -158,6 +179,11 @@ public class PaymentCommandService implements PaymentCommandUseCase {
         if ("PAID".equals(portoneStatus)) {
             payment.markSuccess(command.portonePaymentId());
             log.info("[PaymentCommandService] 강의 결제 성공 - courseId: {}", command.courseId());
+
+            if (command.usedCouponId() != null) {
+                userCouponRepository.markUsed(command.usedCouponId(), LocalDateTime.now());
+                log.info("[PaymentCommandService] 쿠폰 사용 처리 - userCouponId: {}", command.usedCouponId());
+            }
 
             User user = userRepository.findById(command.userId())
                     .orElseThrow(() -> {
@@ -213,16 +239,49 @@ public class PaymentCommandService implements PaymentCommandUseCase {
         });
     }
 
-    private void validateAmount(Booking booking, PaymentType type, int amount) {
-        int expected = switch (type) {
+    private UserCoupon validateCoupon(Long userCouponId, Long userId) {
+        UserCoupon userCoupon = userCouponRepository.findById(userCouponId)
+                .orElseThrow(() -> new BusinessException(PaymentErrorCode.COUPON_NOT_FOUND));
+
+        if (!userCoupon.getUserId().equals(userId)) {
+            throw new BusinessException(PaymentErrorCode.COUPON_NOT_OWNED);
+        }
+        if ("USED".equals(userCoupon.getStatus())) {
+            throw new BusinessException(PaymentErrorCode.COUPON_ALREADY_USED);
+        }
+        if (userCoupon.getExpiredAt().isBefore(LocalDateTime.now())) {
+            throw new BusinessException(PaymentErrorCode.COUPON_EXPIRED);
+        }
+
+        return userCoupon;
+    }
+
+    private int calculateCouponDiscount(UserCoupon userCoupon, int baseAmount) {
+        if ("PERCENT".equals(userCoupon.getDiscountType())) {
+            return baseAmount * userCoupon.getDiscountValue() / 100;
+        }
+        return Math.min(userCoupon.getDiscountValue(), baseAmount);
+    }
+
+    private int getBaseAmount(Booking booking, PaymentType type) {
+        return switch (type) {
             case DEPOSIT -> booking.getDepositPrice();
             case BALANCE -> booking.getBalancePrice();
             case FULL -> booking.getTotalPrice();
+            case LECTURE_ONLY -> 0;
+        };
+    }
+
+    private void validateAmount(Booking booking, PaymentType type, int amount, int couponDiscount) {
+        int expected = switch (type) {
+            case DEPOSIT -> booking.getDepositPrice() - couponDiscount;
+            case BALANCE -> booking.getBalancePrice() - couponDiscount;
+            case FULL -> booking.getTotalPrice() - couponDiscount;
             case LECTURE_ONLY -> amount;
         };
 
         if (type != PaymentType.LECTURE_ONLY && expected != amount) {
-            log.warn("[PaymentCommandService] 결제 금액 불일치 - 예상: {}, 요청: {}", expected, amount);
+            log.warn("[PaymentCommandService] 결제 금액 불일치 - 예상: {}, 요청: {}, 쿠폰할인: {}", expected, amount, couponDiscount);
             throw new BusinessException(PaymentErrorCode.INVALID_PAYMENT_AMOUNT);
         }
     }
