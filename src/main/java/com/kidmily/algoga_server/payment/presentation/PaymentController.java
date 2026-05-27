@@ -9,6 +9,7 @@ import com.kidmily.algoga_server.payment.exception.PaymentErrorCode;
 import com.kidmily.algoga_server.payment.presentation.api.request.CreatePaymentRequest;
 import com.kidmily.algoga_server.payment.presentation.api.request.WebhookRequest;
 import com.kidmily.algoga_server.payment.presentation.api.response.PaymentResponse;
+import com.kidmily.algoga_server.user.settings.CustomUserDetails;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -18,6 +19,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -89,12 +91,12 @@ public class PaymentController {
         return ResponseEntity.ok().build();
     }
 
-    @GetMapping("/users/{userId}/payments")
-    @Operation(summary = "내 결제 내역 조회", description = "유저의 전체 결제 내역을 조회합니다.")
+    @GetMapping("/me")
+    @Operation(summary = "내 결제 내역 조회", description = "로그인한 유저의 전체 결제 내역을 조회합니다.")
     public ResponseEntity<ApiResponse<List<PaymentResponse>>> getMyPayments(
-            @Parameter(description = "유저 ID", example = "1")
-            @PathVariable Long userId
+            @AuthenticationPrincipal CustomUserDetails userDetails
     ) {
+        Long userId = userDetails.getUser().getId();
         List<PaymentResponse> response = paymentQueryUseCase.getMyPayments(userId);
         return ResponseEntity.ok(ApiResponse.success("MY_PAYMENTS_FOUND", "내 결제 내역 조회에 성공했습니다.", response));
     }
