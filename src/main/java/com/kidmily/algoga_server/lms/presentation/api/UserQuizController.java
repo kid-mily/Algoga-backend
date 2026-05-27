@@ -1,0 +1,121 @@
+package com.kidmily.algoga_server.lms.presentation.api;
+
+import com.kidmily.algoga_server.global.annotation.swagger.ApiErrorCodeExample;
+import com.kidmily.algoga_server.global.common.api.response.ApiResponse;
+import com.kidmily.algoga_server.global.exception.GlobalErrorCode;
+import com.kidmily.algoga_server.lms.application.command.SubmitQuizAnswerCommand;
+import com.kidmily.algoga_server.lms.application.command.SubmitQuizCommand;
+import com.kidmily.algoga_server.lms.application.result.QuizSubmitResult;
+import com.kidmily.algoga_server.lms.application.usecase.UserQuizUseCase;
+import com.kidmily.algoga_server.lms.exception.LmsErrorCode;
+import com.kidmily.algoga_server.lms.presentation.request.SubmitQuizRequest;
+import com.kidmily.algoga_server.lms.presentation.response.QuizSubmitResponse;
+import com.kidmily.algoga_server.lms.presentation.response.UserQuizResponse;
+import com.kidmily.algoga_server.user.settings.CustomUserDetails;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+
+@Tag(name = "퀴즈 풀이", description = "사용자 퀴즈 조회 및 제출/채점 API")
+@RestController
+@RequestMapping("/api/v1/courses/{courseId}/quiz")
+@RequiredArgsConstructor
+public class UserQuizController {
+
+    private final UserQuizUseCase userQuizUseCase;
+
+    @Operation(
+            summary = "사용자 퀴즈 조회",
+            description = """
+                    사용자가 강의의 모든 챕터를 완료한 뒤 퀴즈 목록을 조회합니다.
+                    정답 번호와 해설은 응답에 포함하지 않습니다.
+                    """
+    )
+    @ApiErrorCodeExample(domain = LmsErrorCode.class, value = {
+            "COURSE_NOT_FOUND",
+            "QUIZ_NOT_FOUND",
+            "QUIZ_LOCKED"
+    })
+    @GetMapping
+    public ResponseEntity<ApiResponse<List<UserQuizResponse>>> getQuizzes(
+            @Parameter(description = "강의 ID", example = "3")
+            @PathVariable Long courseId,
+
+            @AuthenticationPrincipal CustomUserDetails userDetails
+    ) {
+        Long currentUserId = userDetails.getUser().getId();
+
+        List<UserQuizResponse> response = userQuizUseCase.getQuizzes(
+                        currentUserId,
+                        courseId
+                )
+                .stream()
+                .map(UserQuizResponse::from)
+                .toList();
+
+        return ResponseEntity.ok(
+                ApiResponse.success(
+                        "USER_QUIZZES_FOUND",
+                        "퀴즈 목록 조회에 성공했습니다.",
+                        response
+                )
+        );
+    }
+
+    @Operation(
+            summary = "사용자 퀴즈 제출 및 채점",
+            description = """
+                    사용자가 제출한 퀴즈 답안을 자동 채점합니다.
+                    전체 문제 수, 정답 수, 점수, 오답 해설을 반환합니다.
+                    """
+    )
+    @ApiErrorCodeExample(domain = GlobalErrorCode.class, value = {"INVALID_REQUEST"})
+    @ApiErrorCodeExample(domain = LmsErrorCode.class, value = {
+            "COURSE_NOT_FOUND",
+            "QUIZ_NOT_FOUND",
+            "QUIZ_LOCKED",
+            "INVALID_QUIZ_SUBMISSION"
+    })
+    @PostMapping("/submit")
+    public ResponseEntity<ApiResponse<QuizSubmitResponse>> submitQuiz(
+            @Parameter(description = "강의 ID", example = "3")
+            @PathVariable Long courseId,
+
+            @Valid @RequestBody SubmitQuizRequest request,
+
+            @AuthenticationPrincipal CustomUserDetails userDetails
+    ) {
+        Long currentUserId = userDetails.getUser().getId();
+
+        List<SubmitQuizAnswerCommand> answers = request.answers()
+                .stream()
+                .map(answer -> new SubmitQuizAnswerCommand(
+                        answer.quizId(),
+                        answer.selectedOption()
+                ))
+                .toList();
+
+        SubmitQuizCommand command = new SubmitQuizCommand(
+                currentUserId,
+                courseId,
+                answers
+        );
+
+        QuizSubmitResult result = userQuizUseCase.submitQuiz(command);
+
+        return ResponseEntity.ok(
+                ApiResponse.success(
+                        "QUIZ_SUBMITTED",
+                        "퀴즈 제출 및 채점에 성공했습니다.",
+                        QuizSubmitResponse.from(result)
+                )
+        );
+    }
+}

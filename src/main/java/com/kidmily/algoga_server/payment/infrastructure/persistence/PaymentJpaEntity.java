@@ -20,8 +20,11 @@ public class PaymentJpaEntity {
     @Column(name = "payment_id")
     private Long id;
 
-    @Column(name = "booking_id", nullable = false)
+    @Column(name = "booking_id", nullable = true)
     private Long bookingId;
+
+    @Column(name = "course_id", nullable = true)
+    private Long courseId;
 
     @Column(name = "user_id", nullable = false)
     private Long userId;
@@ -52,11 +55,12 @@ public class PaymentJpaEntity {
     @Column(name = "created_at")
     private LocalDateTime createdAt;
 
-    public PaymentJpaEntity(Long bookingId, Long userId, PaymentType paymentType,
+    public PaymentJpaEntity(Long bookingId, Long courseId, Long userId, PaymentType paymentType,
                             int amount, int usedMileage, Long usedCouponId,
                             PaymentStatus status, String idempotencyKey,
                             String portonePaymentId, LocalDateTime createdAt) {
         this.bookingId = bookingId;
+        this.courseId = courseId;
         this.userId = userId;
         this.paymentType = paymentType;
         this.amount = amount;

@@ -6,11 +6,13 @@ import com.kidmily.algoga_server.community.exception.PostErrorCode;
 import com.kidmily.algoga_server.community.presentation.api.response.PostListResponse;
 import com.kidmily.algoga_server.global.annotation.swagger.ApiErrorCodeExample;
 import com.kidmily.algoga_server.global.common.api.response.ApiResponse;
+import com.kidmily.algoga_server.user.settings.CustomUserDetails;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -43,7 +45,8 @@ public class MyPostController {
             @Parameter(description = "필터링할 카테고리 (다중 선택 가능, 생략 시 전체)", example = "QUESTION,TRAVEL_REVIEW")
             @RequestParam(required = false) List<PostTagType> categories
     ) {
-        long currentUserId = 1L; // TODO: Spring Security 적용 후 토큰에서 추출하도록 교체
+        Long currentUserId = ((CustomUserDetails) SecurityContextHolder.getContext()
+                .getAuthentication().getPrincipal()).getUser().getId();
 
         PostListResponse responseData = postQueryUseCase.getMyPosts(currentUserId, lastPostId, categories);
         return ResponseEntity.ok(ApiResponse.success("MY_POSTS_FOUND", "내가 작성한 게시글 목록 조회에 성공했습니다.", responseData));

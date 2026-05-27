@@ -7,7 +7,7 @@ import com.kidmily.algoga_server.admin.domain.repository.ManagerRepository;
 import com.kidmily.algoga_server.admin.exception.ManagerErrorCode;
 import com.kidmily.algoga_server.admin.exception.ManagerException;
 import com.kidmily.algoga_server.admin.presentation.api.response.AdminAuthTokenResponse;
-import com.kidmily.algoga_server.admin.settings.AdminJwtProvider;
+import com.kidmily.algoga_server.global.security.GlobalJwtProvider;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -21,7 +21,7 @@ public class ManagerAuthService implements ManagerAuthUseCase {
 
     private final ManagerRepository managerRepository;
     private final PasswordEncoder passwordEncoder;
-    private final AdminJwtProvider adminJwtProvider; // 앞서 만든 어드민 전용 JWT 프로바이더
+    private final GlobalJwtProvider globalJwtProvider; // 앞서 만든 어드민 전용 JWT 프로바이더
 
     @Override
     public AdminAuthTokenResponse login(LoginManagerCommand command) {
@@ -44,8 +44,8 @@ public class ManagerAuthService implements ManagerAuthUseCase {
         String roleName = "ROLE_" + manager.getRole().name();
 
         // 주의: AdminJwtProvider에는 PK(manager.getId())를 함께 넣도록 앞서 구현해 두었습니다.
-        String accessToken = adminJwtProvider.createAccessToken(manager.getId(), manager.getLoginId(), roleName);
-        String refreshToken = adminJwtProvider.createRefreshToken(manager.getLoginId());
+        String accessToken = globalJwtProvider.createAdminAccessToken(manager.getId(), manager.getLoginId(), roleName);
+        String refreshToken = globalJwtProvider.createAdminRefreshToken(manager.getLoginId());
 
         return new AdminAuthTokenResponse(accessToken, refreshToken);
     }

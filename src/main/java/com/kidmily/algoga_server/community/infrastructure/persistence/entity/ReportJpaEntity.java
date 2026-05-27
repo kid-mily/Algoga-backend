@@ -23,6 +23,9 @@ public class ReportJpaEntity {
     @Column(name = "user_id", nullable = false)
     private Long userId;
 
+    @Column(name = "reported_user_id")  // ← 추가
+    private Long reportedUserId;
+
     @Column(name = "target_id", nullable = false)
     private Long targetId;
 

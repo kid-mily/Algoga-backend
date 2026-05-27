@@ -19,7 +19,7 @@ import java.time.LocalDate;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/v1/flights")
+@RequestMapping("/api/v1/public/flights")
 @RequiredArgsConstructor
 @Tag(name = "Flight", description = "항공편 API")
 public class FlightController {
