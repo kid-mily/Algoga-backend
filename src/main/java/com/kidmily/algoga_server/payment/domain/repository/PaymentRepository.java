@@ -2,6 +2,7 @@ package com.kidmily.algoga_server.payment.domain.repository;
 
 import com.kidmily.algoga_server.payment.domain.model.Payment;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -11,4 +12,6 @@ public interface PaymentRepository {
     Optional<Payment> findByIdempotencyKey(String idempotencyKey);
     Optional<Payment> findByPortonePaymentId(String portonePaymentId);
     List<Payment> findByUserId(Long userId);
+    List<Payment> findByBookingId(Long bookingId);
+    List<Payment> findByCreatedAtBetween(LocalDateTime from, LocalDateTime to);
 }

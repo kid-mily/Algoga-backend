@@ -6,6 +6,7 @@ import com.kidmily.algoga_server.payment.infrastructure.mapper.PaymentMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -43,6 +44,22 @@ public class PaymentRepositoryAdapter implements PaymentRepository {
     @Override
     public List<Payment> findByUserId(Long userId) {
         return springDataPaymentRepository.findByUserId(userId)
+                .stream()
+                .map(paymentMapper::toDomain)
+                .toList();
+    }
+
+    @Override
+    public List<Payment> findByBookingId(Long bookingId) {
+        return springDataPaymentRepository.findByBookingId(bookingId)
+                .stream()
+                .map(paymentMapper::toDomain)
+                .toList();
+    }
+
+    @Override
+    public List<Payment> findByCreatedAtBetween(LocalDateTime from, LocalDateTime to) {
+        return springDataPaymentRepository.findByCreatedAtBetween(from, to)
                 .stream()
                 .map(paymentMapper::toDomain)
                 .toList();
