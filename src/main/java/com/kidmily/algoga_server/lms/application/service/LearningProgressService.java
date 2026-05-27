@@ -6,6 +6,7 @@ import com.kidmily.algoga_server.lms.domain.model.Chapter;
 import com.kidmily.algoga_server.lms.domain.model.LearningProgress;
 import com.kidmily.algoga_server.lms.domain.repository.ChapterRepository;
 import com.kidmily.algoga_server.lms.domain.repository.CourseRepository;
+import com.kidmily.algoga_server.lms.domain.repository.EnrollmentRepository;
 import com.kidmily.algoga_server.lms.domain.repository.LearningProgressRepository;
 import com.kidmily.algoga_server.lms.exception.LmsErrorCode;
 import com.kidmily.algoga_server.lms.exception.LmsException;
@@ -26,6 +27,7 @@ public class LearningProgressService implements LearningProgressUseCase {
     private final LearningProgressRepository learningProgressRepository;
     private final CourseRepository courseRepository;
     private final ChapterRepository chapterRepository;
+    private final EnrollmentRepository enrollmentRepository;
 
     @Override
     public LearningProgress updateProgress(UpdateLearningProgressCommand command) {
@@ -34,6 +36,7 @@ public class LearningProgressService implements LearningProgressUseCase {
 
         validateWatchedSeconds(command.watchedSeconds());
         validateCourse(command.courseId());
+        validateEnrollment(command.userId(), command.courseId());
 
         Chapter chapter = chapterRepository.findByIdAndCourseId(
                 command.chapterId(),
@@ -44,11 +47,7 @@ public class LearningProgressService implements LearningProgressUseCase {
             return new LmsException(LmsErrorCode.CHAPTER_NOT_FOUND);
         });
 
-        validatePreviousChapterCompleted(
-                command.userId(),
-                command.courseId(),
-                chapter
-        );
+        validatePreviousChapterCompleted(command.userId(), command.courseId(), chapter);
 
         LearningProgress learningProgress = learningProgressRepository
                 .findByUserIdAndChapterId(command.userId(), command.chapterId())
@@ -76,6 +75,14 @@ public class LearningProgressService implements LearningProgressUseCase {
         return savedProgress;
     }
 
+    private void validateEnrollment(Long userId, Long courseId) {
+        if (!enrollmentRepository.existsByUserIdAndCourseId(userId, courseId)) {
+            log.warn("[Learning Progress Command] 진도율 업데이트 실패. 수강 등록되지 않은 강의입니다. userId={}, courseId={}",
+                    userId, courseId);
+            throw new LmsException(LmsErrorCode.NOT_ENROLLED);
+        }
+    }
+
     private void validateCourse(Long courseId) {
         if (courseRepository.findByIdAndDeletedFalse(courseId).isEmpty()) {
             log.warn("[Learning Progress Command] 진도율 업데이트 실패. 존재하지 않거나 삭제된 강의입니다. courseId={}",
@@ -92,11 +99,7 @@ public class LearningProgressService implements LearningProgressUseCase {
         }
     }
 
-    private void validatePreviousChapterCompleted(
-            Long userId,
-            Long courseId,
-            Chapter currentChapter
-    ) {
+    private void validatePreviousChapterCompleted(Long userId, Long courseId, Chapter currentChapter) {
         List<Chapter> chapters = chapterRepository.findByCourseId(courseId);
 
         Chapter previousChapter = chapters.stream()

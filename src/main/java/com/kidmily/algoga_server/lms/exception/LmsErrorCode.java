@@ -19,7 +19,7 @@ public enum LmsErrorCode implements BaseErrorCode {
     INVALID_CONTINENT_CODE(HttpStatus.BAD_REQUEST, "LMS_008", "유효하지 않은 대륙 코드입니다."),
     CHAPTER_NOT_FOUND(HttpStatus.NOT_FOUND, "LMS_009", "해당 챕터를 찾을 수 없습니다."),
     CHAPTER_VIDEO_REQUIRED(HttpStatus.BAD_REQUEST, "LMS_010", "챕터 영상 파일은 필수입니다."),
-    INVALID_CHAPTER_ORDER(HttpStatus.BAD_REQUEST, "LMS_011", "유효하지 않은 챕터 순서입니다."),
+    INVALID_CHAPTER_ORDER(HttpStatus.BAD_REQUEST, "LMS_011", "챕터 순서는 1부터 5 사이여야 합니다."),
     INVALID_QUIZ_OPTION(HttpStatus.BAD_REQUEST, "LMS_012", "퀴즈 보기는 4개 모두 입력해야 합니다."),
     INVALID_QUIZ_ANSWER(HttpStatus.BAD_REQUEST, "LMS_013", "퀴즈 정답 번호는 1부터 4 사이여야 합니다."),
     CHAPTER_LOCKED(HttpStatus.BAD_REQUEST, "LMS_014", "이전 강의를 먼저 완료해주세요."),
@@ -35,9 +35,15 @@ public enum LmsErrorCode implements BaseErrorCode {
     QNA_ALREADY_ANSWERED(HttpStatus.CONFLICT, "LMS_024", "이미 답변이 등록된 Q&A입니다."),
     REVIEW_NOT_FOUND(HttpStatus.NOT_FOUND, "LMS_025", "해당 리뷰를 찾을 수 없습니다."),
     REVIEW_ALREADY_EXISTS(HttpStatus.CONFLICT, "LMS_026", "이미 해당 강의에 리뷰를 작성했습니다."),
-    INVALID_REVIEW_RATING(HttpStatus.BAD_REQUEST, "LMS_027", "리뷰 평점은 1점부터 5점 사이여야 합니다.");
-
-
+    INVALID_REVIEW_RATING(HttpStatus.BAD_REQUEST, "LMS_027", "리뷰 평점은 1점부터 5점 사이여야 합니다."),
+    QNA_COMMENT_NOT_FOUND(HttpStatus.NOT_FOUND, "LMS_028", "해당 Q&A 댓글을 찾을 수 없습니다."),
+    MILEAGE_USER_NOT_FOUND(HttpStatus.NOT_FOUND, "LMS_029", "마일리지 대상 사용자를 찾을 수 없습니다."),
+    INVALID_MILEAGE_AMOUNT(HttpStatus.BAD_REQUEST, "LMS_030", "마일리지 금액은 1 이상이어야 합니다."),
+    NOT_ENOUGH_MILEAGE(HttpStatus.BAD_REQUEST, "LMS_031", "보유 마일리지가 부족합니다."),
+    CHAPTER_LIMIT_EXCEEDED(HttpStatus.BAD_REQUEST, "LMS_032", "챕터는 최대 5개까지만 등록할 수 있습니다."),
+    DUPLICATED_CHAPTER_ORDER(HttpStatus.BAD_REQUEST, "LMS_033", "이미 사용 중인 챕터 순서입니다."),
+    INVALID_COURSE_LEVEL(HttpStatus.BAD_REQUEST, "LMS_034", "강의 난이도는 BEGINNER, INTERMEDIATE, ADVANCED 중 하나여야 합니다."),
+    NOT_ENROLLED(HttpStatus.FORBIDDEN, "LMS_035", "수강 등록된 강의가 아닙니다.");
     private final HttpStatus status;
     private final String code;
     private final String message;

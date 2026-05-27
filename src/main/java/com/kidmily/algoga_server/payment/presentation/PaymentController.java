@@ -2,10 +2,12 @@ package com.kidmily.algoga_server.payment.presentation;
 
 import com.kidmily.algoga_server.global.annotation.swagger.ApiErrorCodeExample;
 import com.kidmily.algoga_server.global.common.api.response.ApiResponse;
+import com.kidmily.algoga_server.payment.application.command.CreateLecturePaymentCommand;
 import com.kidmily.algoga_server.payment.application.command.CreatePaymentCommand;
 import com.kidmily.algoga_server.payment.application.usecase.PaymentCommandUseCase;
 import com.kidmily.algoga_server.payment.application.usecase.PaymentQueryUseCase;
 import com.kidmily.algoga_server.payment.exception.PaymentErrorCode;
+import com.kidmily.algoga_server.payment.presentation.api.request.CreateLecturePaymentRequest;
 import com.kidmily.algoga_server.payment.presentation.api.request.CreatePaymentRequest;
 import com.kidmily.algoga_server.payment.presentation.api.request.WebhookRequest;
 import com.kidmily.algoga_server.payment.presentation.api.response.PaymentResponse;
@@ -54,6 +56,26 @@ public class PaymentController {
                 .body(ApiResponse.created("PAYMENT_CREATED", "결제가 완료되었습니다.", paymentId));
     }
 
+    @PostMapping("/lecture")
+    @Operation(summary = "강의 단독 결제", description = "패키지 없이 강의만 단독으로 결제합니다. 쿠폰 및 마일리지 적용 가능합니다.")
+    @ApiErrorCodeExample(domain = PaymentErrorCode.class,
+            value = {"COURSE_NOT_FOUND", "DUPLICATE_PAYMENT", "INVALID_PAYMENT_AMOUNT", "PORTONE_API_ERROR"})
+    public ResponseEntity<ApiResponse<Long>> createLecturePayment(
+            @Valid @RequestBody CreateLecturePaymentRequest request
+    ) {
+        CreateLecturePaymentCommand command = new CreateLecturePaymentCommand(
+                request.courseId(),
+                request.userId(),
+                request.amount(),
+                request.usedMileage(),
+                request.usedCouponId(),
+                request.portonePaymentId()
+        );
+        Long paymentId = paymentCommandUseCase.handleLecturePayment(command);
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(ApiResponse.created("LECTURE_PAYMENT_CREATED", "강의 결제가 완료되었습니다.", paymentId));
+    }
+
     @GetMapping("/{paymentId}")
     @Operation(summary = "결제 상세 조회", description = "결제 상세 정보를 조회합니다.")
     @ApiErrorCodeExample(domain = PaymentErrorCode.class, value = {"PAYMENT_NOT_FOUND"})
@@ -80,7 +102,7 @@ public class PaymentController {
                 .body(pdf);
     }
 
-    @GetMapping("/webhook")
+    @PostMapping("/webhook")
     @Operation(summary = "PortOne 웹훅", description = "PortOne 결제 이벤트를 처리합니다.")
     public ResponseEntity<Void> handleWebhook(
             @RequestBody WebhookRequest request
