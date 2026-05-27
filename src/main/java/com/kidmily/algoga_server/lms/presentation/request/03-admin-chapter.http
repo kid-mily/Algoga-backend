@@ -12,7 +12,7 @@ Authorization: Bearer {{managerAccessToken}}
 
 ### 챕터 관리 - 챕터 등록
 ### 응답의 data.chapterId를 수정/삭제 테스트에 사용
-POST http://localhost:15000/api/v1/admin/courses/13/chapters
+POST http://localhost:15000/api/v1/admin/courses/11/chapters
 Authorization: Bearer {{managerAccessToken}}
 Content-Type: multipart/form-data; boundary=boundary
 
@@ -36,13 +36,13 @@ Content-Type: video/mp4
 
 
 ### 챕터 관리 - 챕터 등록 후 목록 조회
-GET http://localhost:15000/api/v1/admin/courses/12/chapters
+GET http://localhost:15000/api/v1/admin/courses/11/chapters
 Authorization: Bearer {{managerAccessToken}}
 
 
 ### 챕터 관리 - 챕터 수정
 ### 아래 chapterId를 실제 챕터 ID로 변경
-PUT http://localhost:15000/api/v1/admin/courses/3/chapters/4
+PUT http://localhost:15000/api/v1/admin/courses/3/chapters/5
 Authorization: Bearer {{managerAccessToken}}
 Content-Type: multipart/form-data; boundary=boundary
 
@@ -67,7 +67,7 @@ Content-Type: video/mp4
 
 ### 챕터 관리 - 챕터 삭제
 ### 삭제 테스트가 필요할 때만 실행
-DELETE http://localhost:15000/api/v1/admin/courses/3/chapters/4
+DELETE http://localhost:15000/api/v1/admin/courses/3/chapters/8
 Authorization: Bearer {{managerAccessToken}}
 
 
