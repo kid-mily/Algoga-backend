@@ -1,15 +1,12 @@
 package com.kidmily.algoga_server.booking.presentation.api.request;
 
 import io.swagger.v3.oas.annotations.media.Schema;
-import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
-
 import java.time.LocalDate;
 
 @Schema(description = "예약 생성 요청")
 public record CreateBookingRequest(
-
         @Schema(description = "숙소 ID", example = "1")
         @NotNull(message = "숙소 ID는 필수입니다.")
         Long accommodationId,
@@ -18,9 +15,9 @@ public record CreateBookingRequest(
         @NotNull(message = "유저 ID는 필수입니다.")
         Long userId,
 
-        @Schema(description = "항공편 정보 JSON")
-        @NotBlank(message = "항공편 정보는 필수입니다.")
-        String flightInfo,
+        @Schema(description = "항공편 정보")
+        @NotNull(message = "항공편 정보는 필수입니다.")
+        FlightInfoRequest flightInfo,
 
         @Schema(description = "항공편 가격", example = "200000")
         @Positive

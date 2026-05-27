@@ -1,5 +1,6 @@
 package com.kidmily.algoga_server.booking.presentation.api;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.kidmily.algoga_server.booking.application.command.CreateBookingCommand;
 import com.kidmily.algoga_server.booking.application.usecase.BookingCommandUseCase;
 import com.kidmily.algoga_server.booking.application.usecase.BookingQueryUseCase;
@@ -28,17 +29,18 @@ public class BookingController {
 
     private final BookingCommandUseCase bookingCommandUseCase;
     private final BookingQueryUseCase bookingQueryUseCase;
+    private final ObjectMapper objectMapper;
 
     @PostMapping("/api/v1/bookings")
     @Operation(summary = "예약 생성", description = "숙소와 항공편을 선택하여 예약을 생성합니다.")
     @ApiErrorCodeExample(domain = BookingErrorCode.class, value = {"PACKAGE_NOT_AVAILABLE"})
     public ResponseEntity<ApiResponse<Long>> createBooking(
             @Valid @RequestBody CreateBookingRequest request
-    ) {
+    ) throws Exception {
         CreateBookingCommand command = new CreateBookingCommand(
                 request.accommodationId(),
                 request.userId(),
-                request.flightInfo(),
+                objectMapper.writeValueAsString(request.flightInfo()),
                 request.flightPrice(),
                 request.checkInDate(),
                 request.checkOutDate()

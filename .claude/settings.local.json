@@ -2,7 +2,12 @@
   "permissions": {
     "allow": [
       "Bash(Get-ChildItem -Path \"C:\\\\Lecture\\\\3-project-algoga\\\\src\\\\main\\\\java\\\\com\\\\kidmily\\\\algoga_server\" -Directory)",
-      "Bash(Select-Object Name)"
+      "Bash(Select-Object Name)",
+      "PowerShell(Get-ChildItem -Path \"C:\\\\Lecture\\\\3-project-algoga\\\\src\\\\main\\\\java\\\\com\\\\kidmily\\\\algoga_server\" -Recurse | Where-Object {$_.PSIsContainer} | Select-Object FullName)",
+      "PowerShell(ls -R \"C:\\\\Lecture\\\\3-project-algoga\" 2>&1)",
+      "Bash(Get-ChildItem -Path \"C:\\\\Lecture\\\\3-project-algoga\\\\src\\\\main\\\\java\\\\com\\\\kidmily\\\\algoga_server\\\\booking\" -Recurse)",
+      "Bash(Select-Object FullName)",
+      "Bash(Sort-Object FullName)"
     ]
   }
 }
