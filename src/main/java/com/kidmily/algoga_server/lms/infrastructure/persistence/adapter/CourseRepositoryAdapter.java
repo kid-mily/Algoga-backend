@@ -62,11 +62,12 @@ public class CourseRepositoryAdapter implements CourseRepository {
             String description,
             Integer price,
             String thumbnailUrl,
-            String fileUrl
+            String fileUrl,
+            String level
     ) {
         return springDataCourseRepository.findByIdAndDeletedFalse(courseId)
                 .map(entity -> {
-                    entity.updateBasicInfo(title, description, price, thumbnailUrl, fileUrl);
+                    entity.updateBasicInfo(title, description, price, thumbnailUrl, fileUrl, level);
                     return courseMapper.toDomain(entity);
                 });
     }
@@ -85,6 +86,19 @@ public class CourseRepositoryAdapter implements CourseRepository {
     public List<Course> findPublishedByCountryId(Long countryId) {
         return springDataCourseRepository
                 .findByCountryIdAndStatusAndDeletedFalseOrderByIdDesc(countryId, PUBLISHED)
+                .stream()
+                .map(courseMapper::toDomain)
+                .toList();
+    }
+
+    @Override
+    public List<Course> findPublishedByCountryIdAndLevel(Long countryId, String level) {
+        return springDataCourseRepository
+                .findByCountryIdAndLevelAndStatusAndDeletedFalseOrderByIdDesc(
+                        countryId,
+                        level,
+                        PUBLISHED
+                )
                 .stream()
                 .map(courseMapper::toDomain)
                 .toList();

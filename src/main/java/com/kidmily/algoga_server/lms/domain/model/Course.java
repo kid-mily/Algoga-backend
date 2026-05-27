@@ -13,6 +13,7 @@ public class Course {
     private Integer price;
     private String thumbnailUrl;
     private String fileUrl;
+    private String level;
     private String status;
     private boolean deleted;
     private List<Chapter> chapters;
@@ -26,6 +27,7 @@ public class Course {
             Integer price,
             String thumbnailUrl,
             String fileUrl,
+            String level,
             String status,
             boolean deleted,
             List<Chapter> chapters
@@ -38,6 +40,7 @@ public class Course {
         this.price = price;
         this.thumbnailUrl = thumbnailUrl;
         this.fileUrl = fileUrl;
+        this.level = level;
         this.status = status;
         this.deleted = deleted;
         this.chapters = chapters != null ? chapters : new ArrayList<>();
@@ -50,7 +53,8 @@ public class Course {
             String description,
             Integer price,
             String thumbnailUrl,
-            String fileUrl
+            String fileUrl,
+            String level
     ) {
         return new Course(
                 null,
@@ -61,6 +65,7 @@ public class Course {
                 price,
                 thumbnailUrl,
                 fileUrl,
+                level,
                 "DRAFT",
                 false,
                 new ArrayList<>()
@@ -76,6 +81,7 @@ public class Course {
             Integer price,
             String thumbnailUrl,
             String fileUrl,
+            String level,
             String status,
             List<Chapter> chapters
     ) {
@@ -88,6 +94,7 @@ public class Course {
                 price,
                 thumbnailUrl,
                 fileUrl,
+                level,
                 status,
                 false,
                 chapters
@@ -103,6 +110,7 @@ public class Course {
             Integer price,
             String thumbnailUrl,
             String fileUrl,
+            String level,
             String status,
             boolean deleted,
             List<Chapter> chapters
@@ -116,6 +124,7 @@ public class Course {
                 price,
                 thumbnailUrl,
                 fileUrl,
+                level,
                 status,
                 deleted,
                 chapters
@@ -164,6 +173,10 @@ public class Course {
 
     public String getFileUrl() {
         return fileUrl;
+    }
+
+    public String getLevel() {
+        return level;
     }
 
     public String getStatus() {

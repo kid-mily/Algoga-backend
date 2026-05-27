@@ -7,13 +7,12 @@ import com.kidmily.algoga_server.lms.infrastructure.persistence.entity.CourseJpa
 import org.springframework.stereotype.Component;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Component
 public class CourseMapper {
 
     public CourseJpaEntity toEntity(Course course) {
-        CourseJpaEntity courseEntity = new CourseJpaEntity(
+        return new CourseJpaEntity(
                 course.getCountryId(),
                 course.getManagerId(),
                 course.getTitle(),
@@ -21,34 +20,19 @@ public class CourseMapper {
                 course.getPrice(),
                 course.getThumbnailUrl(),
                 course.getFileUrl(),
+                course.getLevel(),
                 course.getStatus()
         );
-
-        if (course.getChapters() != null) {
-            course.getChapters().forEach(chapter -> {
-                ChapterJpaEntity chapterEntity = new ChapterJpaEntity(
-                        chapter.getTitle(),
-                        chapter.getVideoUrl(),
-                        chapter.getDurationSeconds(),
-                        chapter.getChapterOrder()
-                );
-                courseEntity.getChapters().add(chapterEntity);
-            });
-        }
-
-        return courseEntity;
     }
 
     public Course toDomain(CourseJpaEntity entity) {
-        List<Chapter> chapters = entity.getChapters().stream()
-                .map(chEntity -> Chapter.withId(
-                        chEntity.getId(),
-                        chEntity.getTitle(),
-                        chEntity.getVideoUrl(),
-                        chEntity.getDurationSeconds(),
-                        chEntity.getOrderNum()
-                ))
-                .collect(Collectors.toList());
+        List<Chapter> chapters = entity.getChapters() == null
+                ? List.of()
+                : entity.getChapters()
+                .stream()
+                .filter(chapter -> !chapter.isDeleted())
+                .map(this::toChapterDomain)
+                .toList();
 
         return Course.withId(
                 entity.getId(),
@@ -59,9 +43,22 @@ public class CourseMapper {
                 entity.getPrice(),
                 entity.getThumbnailUrl(),
                 entity.getFileUrl(),
+                entity.getLevel(),
                 entity.getStatus(),
                 entity.isDeleted(),
                 chapters
+        );
+    }
+
+    private Chapter toChapterDomain(ChapterJpaEntity entity) {
+        return Chapter.withId(
+                entity.getId(),
+                entity.getCourseId(),
+                entity.getTitle(),
+                entity.getVideoUrl(),
+                entity.getDurationSeconds(),
+                entity.getOrderNum(),
+                entity.isDeleted()
         );
     }
 }

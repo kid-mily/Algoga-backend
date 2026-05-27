@@ -24,11 +24,17 @@ public record AdminCourseResponse(
         @Schema(description = "강의 가격", example = "100000")
         Integer price,
 
-        @Schema(description = "썸네일 URL", example = "thumbnails/550e8400-e29b-41d4-a716-446655440000.png")
+        @Schema(description = "썸네일 URL")
         String thumbnailUrl,
 
-        @Schema(description = "첨부파일 경로", example = "documents/550e8400-e29b-41d4-a716-446655440000.pdf")
+        @Schema(description = "첨부파일 경로")
         String fileUrl,
+
+        @Schema(description = "강의 난이도 코드", example = "BEGINNER")
+        String level,
+
+        @Schema(description = "강의 난이도 이름", example = "초급")
+        String levelName,
 
         @Schema(description = "강의 상태", example = "DRAFT")
         String status
@@ -44,7 +50,18 @@ public record AdminCourseResponse(
                 course.getPrice(),
                 course.getThumbnailUrl(),
                 course.getFileUrl(),
+                course.getLevel(),
+                toLevelName(course.getLevel()),
                 course.getStatus()
         );
+    }
+
+    private static String toLevelName(String level) {
+        return switch (level) {
+            case "BEGINNER" -> "초급";
+            case "INTERMEDIATE" -> "중급";
+            case "ADVANCED" -> "고급";
+            default -> "";
+        };
     }
 }

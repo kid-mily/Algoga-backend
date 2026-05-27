@@ -1,5 +1,6 @@
 package com.kidmily.algoga_server.lms.presentation.api.admin;
 
+import com.kidmily.algoga_server.admin.settings.annotation.CurrentManager;
 import com.kidmily.algoga_server.global.annotation.swagger.ApiErrorCodeExample;
 import com.kidmily.algoga_server.global.common.api.response.ApiResponse;
 import com.kidmily.algoga_server.global.common.api.response.PageResponse;
@@ -24,12 +25,13 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 @Tag(name = "Admin Course", description = "콘텐츠 매니저 강의 관리 API")
 @RestController
-@RequestMapping("/api/v1/courses")
+@RequestMapping("/api/v1/admin/courses")
 @RequiredArgsConstructor
 public class AdminCourseController {
 
@@ -42,6 +44,7 @@ public class AdminCourseController {
     )
     @ApiErrorCodeExample(domain = GlobalErrorCode.class, value = {"INVALID_REQUEST"})
     @ApiErrorCodeExample(domain = LmsErrorCode.class, value = {"COUNTRY_NOT_FOUND", "FILE_UPLOAD_FAILED"})
+    @PreAuthorize("hasAnyAuthority('CONTENT_MANAGER', 'ROLE_CONTENT_MANAGER', 'SUPER_ADMIN', 'ROLE_SUPER_ADMIN')")
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<ApiResponse<Long>> createCourse(
             @Parameter(description = "강의 생성 요청 JSON")
@@ -51,21 +54,22 @@ public class AdminCourseController {
             @RequestPart(value = "thumbnail") MultipartFile thumbnailFile,
 
             @Parameter(description = "강의 첨부파일. 선택값입니다.", example = "osaka-guide.pdf")
-            @RequestPart(value = "file", required = false) MultipartFile attachedFile
-    ) {
-        Long currentManagerId = 1L;
+            @RequestPart(value = "file", required = false) MultipartFile attachedFile,
 
+            @CurrentManager Long managerId
+    ) {
         String thumbnailUrl = fileStorageManager.uploadFile(thumbnailFile, "thumbnails");
         String fileUrl = fileStorageManager.uploadFile(attachedFile, "documents");
 
         CreateCourseCommand command = new CreateCourseCommand(
                 request.countryId(),
-                currentManagerId,
+                managerId,
                 request.title(),
                 request.description(),
                 request.price(),
                 thumbnailUrl,
-                fileUrl
+                fileUrl,
+                request.level()
         );
 
         Long savedCourseId = adminContentUseCase.createCourse(command);
@@ -78,31 +82,11 @@ public class AdminCourseController {
                 ));
     }
 
-    // global.common.api.response.PageResponse 추가하기 전.
-//    @Operation(
-//            summary = "어드민 강의 목록 조회",
-//            description = "삭제되지 않은 강의 목록을 최신순으로 조회합니다."
-//    )
-//    @GetMapping
-//    public ResponseEntity<ApiResponse<Page<AdminCourseResponse>>> getCourses(
-//            @ParameterObject Pageable pageable
-//    ) {
-//        Page<AdminCourseResponse> response = adminContentUseCase.getCourses(pageable)
-//                .map(AdminCourseResponse::from);
-//
-//        return ResponseEntity.ok(
-//                ApiResponse.success(
-//                        "ADMIN_COURSES_FOUND",
-//                        "어드민 강의 목록 조회에 성공했습니다.",
-//                        response
-//                )
-//        );
-//    }
-
     @Operation(
             summary = "어드민 강의 목록 조회",
             description = "삭제되지 않은 강의 목록을 최신순으로 조회합니다."
     )
+    @PreAuthorize("hasAnyAuthority('CONTENT_MANAGER', 'ROLE_CONTENT_MANAGER', 'SUPER_ADMIN', 'ROLE_SUPER_ADMIN')")
     @GetMapping
     public ResponseEntity<ApiResponse<PageResponse<AdminCourseResponse>>> getCourses(
             @ParameterObject Pageable pageable
@@ -124,6 +108,7 @@ public class AdminCourseController {
             description = "강의 ID를 기준으로 삭제되지 않은 강의 상세 정보를 조회합니다."
     )
     @ApiErrorCodeExample(domain = LmsErrorCode.class, value = {"COURSE_NOT_FOUND"})
+    @PreAuthorize("hasAnyAuthority('CONTENT_MANAGER', 'ROLE_CONTENT_MANAGER', 'SUPER_ADMIN', 'ROLE_SUPER_ADMIN')")
     @GetMapping("/{courseId}")
     public ResponseEntity<ApiResponse<AdminCourseResponse>> getCourse(
             @Parameter(description = "강의 ID", example = "1")
@@ -142,10 +127,11 @@ public class AdminCourseController {
 
     @Operation(
             summary = "어드민 강의 수정",
-            description = "강의 제목, 설명, 썸네일, 첨부파일을 수정합니다. 파일을 보내지 않으면 기존 파일 경로를 유지합니다."
+            description = "강의 제목, 설명, 가격, 썸네일, 첨부파일을 수정합니다. 파일을 보내지 않으면 기존 파일 경로를 유지합니다."
     )
     @ApiErrorCodeExample(domain = GlobalErrorCode.class, value = {"INVALID_REQUEST"})
     @ApiErrorCodeExample(domain = LmsErrorCode.class, value = {"COURSE_NOT_FOUND", "FILE_UPLOAD_FAILED"})
+    @PreAuthorize("hasAnyAuthority('CONTENT_MANAGER', 'ROLE_CONTENT_MANAGER', 'SUPER_ADMIN', 'ROLE_SUPER_ADMIN')")
     @PutMapping(value = "/{courseId}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<ApiResponse<AdminCourseResponse>> updateCourse(
             @Parameter(description = "강의 ID", example = "1")
@@ -168,7 +154,8 @@ public class AdminCourseController {
                 request.description(),
                 request.price(),
                 thumbnailUrl,
-                fileUrl
+                fileUrl,
+                request.level()
         );
 
         Course updatedCourse = adminContentUseCase.updateCourse(courseId, command);
@@ -187,6 +174,7 @@ public class AdminCourseController {
             description = "강의를 실제 삭제하지 않고 Soft Delete 처리합니다."
     )
     @ApiErrorCodeExample(domain = LmsErrorCode.class, value = {"COURSE_NOT_FOUND"})
+    @PreAuthorize("hasAnyAuthority('CONTENT_MANAGER', 'ROLE_CONTENT_MANAGER', 'SUPER_ADMIN', 'ROLE_SUPER_ADMIN')")
     @DeleteMapping("/{courseId}")
     public ResponseEntity<ApiResponse<Void>> deleteCourse(
             @Parameter(description = "강의 ID", example = "1")

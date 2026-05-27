@@ -23,6 +23,7 @@ public class AdminChapterService implements AdminChapterUseCase {
 
     private final ChapterRepository chapterRepository;
     private final CourseRepository courseRepository;
+    private static final int MAX_CHAPTER_COUNT = 5;
 
     @Override
     @Transactional(readOnly = true)
@@ -46,6 +47,8 @@ public class AdminChapterService implements AdminChapterUseCase {
 
         validateCourse(command.courseId(), "챕터 등록");
         validateChapterOrder(command.chapterOrder());
+        validateChapterLimit(command.courseId());
+        validateDuplicatedChapterOrder(command.courseId(), command.chapterOrder());
 
         if (command.videoUrl() == null) {
             log.warn("[Chapter Command] 챕터 등록 실패. 영상 파일이 없습니다. courseId={}",
@@ -80,6 +83,7 @@ public class AdminChapterService implements AdminChapterUseCase {
 
         validateCourse(courseId, "챕터 수정");
         validateChapterOrder(command.chapterOrder());
+        validateDuplicatedChapterOrderForUpdate(courseId, command.chapterOrder(), chapterId);
 
         Chapter updatedChapter = chapterRepository.updateBasicInfo(
                 chapterId,
@@ -128,10 +132,44 @@ public class AdminChapterService implements AdminChapterUseCase {
     }
 
     private void validateChapterOrder(int chapterOrder) {
-        if (chapterOrder < 1) {
+        if (chapterOrder < 1 || chapterOrder > MAX_CHAPTER_COUNT) {
             log.warn("[Chapter Command] 유효하지 않은 챕터 순서입니다. chapterOrder={}",
                     chapterOrder);
             throw new LmsException(LmsErrorCode.INVALID_CHAPTER_ORDER);
+        }
+    }
+
+    private void validateChapterLimit(Long courseId) {
+        long chapterCount = chapterRepository.countByCourseId(courseId);
+
+        if (chapterCount >= MAX_CHAPTER_COUNT) {
+            log.warn("[Chapter Command] 챕터 등록 실패. 챕터 최대 개수를 초과했습니다. courseId={}, count={}",
+                    courseId, chapterCount);
+            throw new LmsException(LmsErrorCode.CHAPTER_LIMIT_EXCEEDED);
+        }
+    }
+
+    private void validateDuplicatedChapterOrder(Long courseId, int chapterOrder) {
+        if (chapterRepository.existsByCourseIdAndChapterOrder(courseId, chapterOrder)) {
+            log.warn("[Chapter Command] 챕터 등록 실패. 이미 사용 중인 챕터 순서입니다. courseId={}, chapterOrder={}",
+                    courseId, chapterOrder);
+            throw new LmsException(LmsErrorCode.DUPLICATED_CHAPTER_ORDER);
+        }
+    }
+
+    private void validateDuplicatedChapterOrderForUpdate(
+            Long courseId,
+            int chapterOrder,
+            Long chapterId
+    ) {
+        if (chapterRepository.existsByCourseIdAndChapterOrderAndIdNot(
+                courseId,
+                chapterOrder,
+                chapterId
+        )) {
+            log.warn("[Chapter Command] 챕터 수정 실패. 이미 사용 중인 챕터 순서입니다. courseId={}, chapterId={}, chapterOrder={}",
+                    courseId, chapterId, chapterOrder);
+            throw new LmsException(LmsErrorCode.DUPLICATED_CHAPTER_ORDER);
         }
     }
 }

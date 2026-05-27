@@ -21,6 +21,12 @@ public interface SpringDataCourseRepository extends JpaRepository<CourseJpaEntit
             String status
     );
 
+    List<CourseJpaEntity> findByCountryIdAndLevelAndStatusAndDeletedFalseOrderByIdDesc(
+            Long countryId,
+            String level,
+            String status
+    );
+
     long countByCountryIdAndStatusAndDeletedFalse(
             Long countryId,
             String status

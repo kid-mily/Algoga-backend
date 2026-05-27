@@ -1,6 +1,7 @@
 package com.kidmily.algoga_server.lms.presentation.request.admin;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -17,9 +18,10 @@ public record UpdateChapterRequest(
         @Min(value = 1, message = "영상 재생 시간은 1초 이상이어야 합니다.")
         Integer durationSeconds,
 
-        @Schema(description = "수정할 챕터 노출 순서", example = "1")
+        @Schema(description = "챕터 노출 순서", example = "1")
         @NotNull(message = "챕터 순서는 필수입니다.")
         @Min(value = 1, message = "챕터 순서는 1 이상이어야 합니다.")
+        @Max(value = 5, message = "챕터 순서는 5 이하여야 합니다.")
         Integer chapterOrder
 ) {
 }

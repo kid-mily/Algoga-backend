@@ -26,10 +26,11 @@ public class AdminContentService implements AdminContentUseCase {
 
     @Override
     public Long createCourse(CreateCourseCommand command) {
-        log.info("[Course Command] 강의 생성 요청. countryId={}, managerId={}, title={}",
-                command.countryId(), command.managerId(), command.title());
+        log.info("[Course Command] 강의 생성 요청. countryId={}, managerId={}, title={}, level={}",
+                command.countryId(), command.managerId(), command.title(), command.level());
 
         validateCountry(command.countryId(), "강의 생성");
+        validateCourseLevel(command.level());
 
         Course newCourse = Course.create(
                 command.countryId(),
@@ -38,7 +39,8 @@ public class AdminContentService implements AdminContentUseCase {
                 command.description(),
                 command.price(),
                 command.thumbnailUrl(),
-                command.fileUrl()
+                command.fileUrl(),
+                command.level()
         );
 
         Course savedCourse = courseRepository.save(newCourse);
@@ -80,8 +82,10 @@ public class AdminContentService implements AdminContentUseCase {
 
     @Override
     public Course updateCourse(Long courseId, UpdateCourseCommand command) {
-        log.info("[Course Command] 강의 수정 요청. courseId={}, title={}",
-                courseId, command.title());
+        log.info("[Course Command] 강의 수정 요청. courseId={}, title={}, level={}",
+                courseId, command.title(), command.level());
+
+        validateCourseLevel(command.level());
 
         Course updatedCourse = courseRepository.updateBasicInfo(
                 courseId,
@@ -89,7 +93,8 @@ public class AdminContentService implements AdminContentUseCase {
                 command.description(),
                 command.price(),
                 command.thumbnailUrl(),
-                command.fileUrl()
+                command.fileUrl(),
+                command.level()
         ).orElseThrow(() -> {
             log.warn("[Course Command] 강의 수정 실패. 존재하지 않거나 삭제된 강의입니다. courseId={}", courseId);
             return new LmsException(LmsErrorCode.COURSE_NOT_FOUND);
@@ -119,6 +124,15 @@ public class AdminContentService implements AdminContentUseCase {
             log.warn("[Course Command] {} 실패. 존재하지 않는 국가입니다. countryId={}",
                     action, countryId);
             throw new LmsException(LmsErrorCode.COUNTRY_NOT_FOUND);
+        }
+    }
+
+    private void validateCourseLevel(String level) {
+        if (!"BEGINNER".equals(level)
+                && !"INTERMEDIATE".equals(level)
+                && !"ADVANCED".equals(level)) {
+            log.warn("[Course Command] 유효하지 않은 강의 난이도입니다. level={}", level);
+            throw new LmsException(LmsErrorCode.INVALID_COURSE_LEVEL);
         }
     }
 }

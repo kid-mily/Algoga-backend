@@ -4,11 +4,13 @@ import com.kidmily.algoga_server.global.annotation.swagger.ApiErrorCodeExample;
 import com.kidmily.algoga_server.global.common.api.response.ApiResponse;
 import com.kidmily.algoga_server.global.exception.GlobalErrorCode;
 import com.kidmily.algoga_server.lms.application.command.CreateCourseReviewCommand;
+import com.kidmily.algoga_server.lms.application.result.CourseReviewSummaryResult;
 import com.kidmily.algoga_server.lms.application.usecase.CourseReviewUseCase;
 import com.kidmily.algoga_server.lms.domain.model.CourseReview;
 import com.kidmily.algoga_server.lms.exception.LmsErrorCode;
 import com.kidmily.algoga_server.lms.presentation.request.CreateCourseReviewRequest;
 import com.kidmily.algoga_server.lms.presentation.response.CourseReviewResponse;
+import com.kidmily.algoga_server.lms.presentation.response.CourseReviewSummaryResponse;
 import com.kidmily.algoga_server.user.settings.CustomUserDetails;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -22,7 +24,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
-@Tag(name = "강의 리뷰", description = "강의 리뷰 등록 및 조회 API")
+@Tag(name = "강의 리뷰", description = "강의 리뷰 등록, 조회, 요약 API")
 @RestController
 @RequestMapping("/api/v1/courses/{courseId}/reviews")
 @RequiredArgsConstructor
@@ -89,6 +91,27 @@ public class CourseReviewController {
                         "COURSE_REVIEWS_FOUND",
                         "리뷰 목록 조회에 성공했습니다.",
                         response
+                )
+        );
+    }
+
+    @Operation(
+            summary = "강의 리뷰 요약 조회",
+            description = "특정 강의의 평균 평점, 전체 리뷰 수, 별점별 리뷰 수와 비율을 조회합니다."
+    )
+    @ApiErrorCodeExample(domain = LmsErrorCode.class, value = {"COURSE_NOT_FOUND"})
+    @GetMapping("/summary")
+    public ResponseEntity<ApiResponse<CourseReviewSummaryResponse>> getReviewSummary(
+            @Parameter(description = "강의 ID", example = "3")
+            @PathVariable Long courseId
+    ) {
+        CourseReviewSummaryResult result = courseReviewUseCase.getReviewSummary(courseId);
+
+        return ResponseEntity.ok(
+                ApiResponse.success(
+                        "COURSE_REVIEW_SUMMARY_FOUND",
+                        "리뷰 요약 조회에 성공했습니다.",
+                        CourseReviewSummaryResponse.from(result)
                 )
         );
     }

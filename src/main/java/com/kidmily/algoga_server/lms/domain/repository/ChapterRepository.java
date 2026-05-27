@@ -23,4 +23,14 @@ public interface ChapterRepository {
     );
 
     boolean softDelete(Long chapterId, Long courseId);
+
+    long countByCourseId(Long courseId);
+
+    boolean existsByCourseIdAndChapterOrder(Long courseId, int chapterOrder);
+
+    boolean existsByCourseIdAndChapterOrderAndIdNot(
+            Long courseId,
+            int chapterOrder,
+            Long chapterId
+    );
 }

@@ -5,6 +5,7 @@ public record UpdateCourseCommand(
         String description,
         Integer price,
         String thumbnailUrl,
-        String fileUrl
+        String fileUrl,
+        String level
 ) {
 }

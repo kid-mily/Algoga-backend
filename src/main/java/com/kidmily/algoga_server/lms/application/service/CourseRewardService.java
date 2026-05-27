@@ -2,8 +2,19 @@ package com.kidmily.algoga_server.lms.application.service;
 
 import com.kidmily.algoga_server.lms.application.command.RewardCourseCommand;
 import com.kidmily.algoga_server.lms.application.usecase.CourseRewardUseCase;
-import com.kidmily.algoga_server.lms.domain.model.*;
-import com.kidmily.algoga_server.lms.domain.repository.*;
+import com.kidmily.algoga_server.lms.domain.model.CouponPolicy;
+import com.kidmily.algoga_server.lms.domain.model.Course;
+import com.kidmily.algoga_server.lms.domain.model.CourseReward;
+import com.kidmily.algoga_server.lms.domain.model.MileageHistory;
+import com.kidmily.algoga_server.lms.domain.model.QuizSubmission;
+import com.kidmily.algoga_server.lms.domain.model.UserCoupon;
+import com.kidmily.algoga_server.lms.domain.repository.CouponPolicyRepository;
+import com.kidmily.algoga_server.lms.domain.repository.CourseCompletionRepository;
+import com.kidmily.algoga_server.lms.domain.repository.CourseRepository;
+import com.kidmily.algoga_server.lms.domain.repository.CourseRewardRepository;
+import com.kidmily.algoga_server.lms.domain.repository.MileageHistoryRepository;
+import com.kidmily.algoga_server.lms.domain.repository.QuizSubmissionRepository;
+import com.kidmily.algoga_server.lms.domain.repository.UserCouponRepository;
 import com.kidmily.algoga_server.lms.exception.LmsErrorCode;
 import com.kidmily.algoga_server.lms.exception.LmsException;
 import lombok.RequiredArgsConstructor;
@@ -69,10 +80,11 @@ public class CourseRewardService implements CourseRewardUseCase {
         int mileageRate = calculateMileageRate(quizSubmission.getCorrectCount());
         int mileageAmount = calculateMileageAmount(course.getPrice(), mileageRate);
 
-        MileageHistory mileageHistory = MileageHistory.earnCourseReward(
+        MileageHistory mileageHistory = MileageHistory.earn(
                 command.userId(),
                 command.courseId(),
-                mileageAmount
+                mileageAmount,
+                "강의 이수 및 퀴즈 완료 보상"
         );
 
         MileageHistory savedMileageHistory = mileageHistoryRepository.save(mileageHistory);

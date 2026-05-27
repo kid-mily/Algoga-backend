@@ -10,6 +10,8 @@ public record CourseListResponse(
         Integer price,
         String thumbnailUrl,
         String fileUrl,
+        String level,
+        String levelName,
         String status
 ) {
 
@@ -22,7 +24,18 @@ public record CourseListResponse(
                 course.getPrice(),
                 course.getThumbnailUrl(),
                 course.getFileUrl(),
+                course.getLevel(),
+                toLevelName(course.getLevel()),
                 course.getStatus()
         );
+    }
+
+    private static String toLevelName(String level) {
+        return switch (level) {
+            case "BEGINNER" -> "초급";
+            case "INTERMEDIATE" -> "중급";
+            case "ADVANCED" -> "고급";
+            default -> "";
+        };
     }
 }

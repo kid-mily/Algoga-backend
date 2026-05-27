@@ -7,7 +7,7 @@ import java.util.List;
 
 public interface SpringDataMileageHistoryRepository extends JpaRepository<MileageHistoryJpaEntity, Long> {
 
-    List<MileageHistoryJpaEntity> findByUserId(Long userId);
+    List<MileageHistoryJpaEntity> findAllByOrderByCreatedAtDesc();
 
-    List<MileageHistoryJpaEntity> findByUserIdAndCourseId(Long userId, Long courseId);
+    List<MileageHistoryJpaEntity> findByUserIdOrderByCreatedAtDesc(Long userId);
 }
