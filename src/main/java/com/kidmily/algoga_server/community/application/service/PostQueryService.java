@@ -1,5 +1,8 @@
 package com.kidmily.algoga_server.community.application.service;
 
+import com.kidmily.algoga_server.community.application.port.CountryPort;
+import com.kidmily.algoga_server.community.application.port.CoursePort;
+import com.kidmily.algoga_server.community.application.port.UserPort;
 import com.kidmily.algoga_server.community.application.usecase.PostQueryUseCase;
 import com.kidmily.algoga_server.community.domain.model.Comment;
 import com.kidmily.algoga_server.community.domain.model.Post;
@@ -29,6 +32,9 @@ public class PostQueryService implements PostQueryUseCase {
     private final CommentRepository commentRepository;
     private final LikeDislikeRepository likeDislikeRepository;
     private static final int PAGE_SIZE = 10;
+    private final UserPort userPort;
+    private final CountryPort countryPort;  // ← 추가
+    private final CoursePort coursePort;
 
     @Override
     @Transactional
@@ -48,13 +54,6 @@ public class PostQueryService implements PostQueryUseCase {
         Long dislikeCount = likeDislikeRepository.countDislikes(TargetType.POST, postId);
 
 
-//        List<CreateCommentResponse> comments = commentRepository
-//                .findActiveCommentsByPostId(postId)
-//                .stream()
-//                .map(c -> new CreateCommentResponse(c.getCommentId(), c.getUserId(), c.getContent(),  c.getParentId(), c.getCreatedAt()))
-//                .toList();
-
-
         List<CommentResponse> comments = toCommentTree(
                 commentRepository.findActiveCommentsByPostId(postId)
         );
@@ -71,6 +70,8 @@ public class PostQueryService implements PostQueryUseCase {
         return new PostResponse(
                 post.getId(),
                 post.getAuthorId(),
+                userPort.getNickname(post.getAuthorId()),           // ← 추가
+                userPort.getProfileImageUrl(post.getAuthorId()),    // ← 추가
                 tags,
                 post.getTitle(),
                 post.getContent(),
@@ -139,6 +140,13 @@ public class PostQueryService implements PostQueryUseCase {
         Long dislikeCount = likeDislikeRepository.countDislikes(TargetType.POST, post.getId());
         Long commentCount = (long) commentRepository.findActiveCommentsByPostId(post.getId()).size();
 
+        String nickname = userPort.getNickname(post.getAuthorId());
+        String profileImageUrl = userPort.getProfileImageUrl(post.getAuthorId());
+        String countryName = countryPort.getCountryName(post.getCountryId());  // ← 추가
+
+        Stream<TagResponse> countryStream = countryName != null ?
+                Stream.of(TagResponse.fromCountry(countryName)) : Stream.empty();
+
         Stream<TagResponse> categoryStream = post.getCategory() != null ?
                 Stream.of(TagResponse.fromCategory(post.getCategory())) : Stream.empty();
         Stream<TagResponse> freeTagStream = post.getFreeTags() != null ?
@@ -152,10 +160,10 @@ public class PostQueryService implements PostQueryUseCase {
         return new PostListItemResponse(
                 post.getId(),
                 post.getAuthorId(),
-                "임시닉네임",  // TODO: User 도메인 추가 후 교체
-                null, // TODO: User 도메인 추가 후 교체, 프로필 url
-                post.getCountryId(), // TODO: 나라 도메인 추가 후 교체
-                "임시나라",  // TODO: 나라 도메인 추가 후 교체
+                nickname,
+                profileImageUrl,
+                post.getCountryId(),
+                countryName,        // ← "임시나라" → countryName으로 변경
                 tags,
                 post.getTitle(),
                 post.getContent(),
@@ -174,6 +182,8 @@ public class PostQueryService implements PostQueryUseCase {
                 .map(c -> new CommentResponse(
                         c.getCommentId(),
                         c.getUserId(),
+                        userPort.getNickname(c.getUserId()),
+                        userPort.getProfileImageUrl(c.getUserId()),
                         c.getContent(),
                         c.getCreatedAt(),
                         // 해당 댓글의 대댓글 붙이기
@@ -182,6 +192,8 @@ public class PostQueryService implements PostQueryUseCase {
                                 .map(r -> new CommentResponse(
                                         r.getCommentId(),
                                         r.getUserId(),
+                                        userPort.getNickname(r.getUserId()),
+                                        userPort.getProfileImageUrl(c.getUserId()),
                                         r.getContent(),
                                         r.getCreatedAt(),
                                         List.of()

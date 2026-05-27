@@ -7,6 +7,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 @RequiredArgsConstructor
@@ -21,5 +22,10 @@ public class CountryRepositoryAdapter implements CountryRepository {
                 .stream()
                 .map(countryMapper::toDomain)
                 .toList();
+    }
+    @Override
+    public Optional<Country> findById(Long id) {
+        return springDataRepository.findById(id)
+                .map(countryMapper::toDomain);
     }
 }

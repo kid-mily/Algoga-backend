@@ -14,6 +14,9 @@ public record TagResponse(
         public static TagResponse fromCategory(PostTagType category) {
                 return new TagResponse(category, category.getDescription());
         }
+        public static TagResponse fromCountry(String countryName) {
+                return new TagResponse(PostTagType.COUNTRY, countryName);
+        }
 
         public static TagResponse fromFreeTag(String freeTag) {
                 return new TagResponse(PostTagType.FREE, freeTag);

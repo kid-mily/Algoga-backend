@@ -6,6 +6,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
@@ -34,7 +35,14 @@ public record CreatePostRequest(
 
         @Schema(description = "자유 태그 목록 (최대 10개)", example = "[\"도쿄\", \"맛집\", \"여행\"]")
         @Size(max = 10, message = "자유 태그는 최대 10개입니다.")
-        List<String> freeTags
+        List<String> freeTags,
+
+        @Schema(
+                description = "업로드할 이미지 파일 목록 (최대 10장)",
+                type = "array",
+                format = "binary"
+        )
+        List<MultipartFile> images
 
 ) {
 }
