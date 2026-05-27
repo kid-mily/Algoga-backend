@@ -38,7 +38,7 @@ public class CalendarQueryService implements CalendarQueryUseCase {
         List<Calendar> calendars = calendarRepository.findByUserIdAndDateRange(userId, startDate, endDate);
 
         List<ScheduleResponse> schedules = calendars.stream()
-                .map(this::toScheduleResponse)
+                .flatMap(calendar -> toScheduleResponses(calendar).stream())
                 .sorted((a, b) -> a.eventDate().compareTo(b.eventDate()))
                 .toList();
 
@@ -61,10 +61,24 @@ public class CalendarQueryService implements CalendarQueryUseCase {
     private String resolveTitle(Calendar calendar) {
         if (calendar.getType() == CalendarType.TRIP) {
             return accommodationPort.getAccommodationName(calendar.getReferenceId());
-        } else if (calendar.getType() == CalendarType.LECTURE) {
-            return lecturePort.getLectureName(calendar.getReferenceId());
         }
         return "D-day";
+    }
+
+    private List<ScheduleResponse> toScheduleResponses(Calendar calendar) {
+        if (calendar.getType() == CalendarType.LECTURE) {
+            String title = lecturePort.getLectureName(calendar.getReferenceId());
+            LocalDate startDate = lecturePort.getLectureStartDate(calendar.getReferenceId());
+            LocalDate endDate = lecturePort.getLectureEndDate(calendar.getReferenceId());
+
+            return List.of(
+                    new ScheduleResponse(calendar.getCalendarId(), title,
+                            CalendarType.LECTURE_START, startDate, calculateDDay(startDate)),
+                    new ScheduleResponse(calendar.getCalendarId(), title,
+                            CalendarType.LECTURE_END, endDate, calculateDDay(endDate))
+            );
+        }
+        return List.of(toScheduleResponse(calendar));
     }
 
     private String calculateDDay(LocalDate eventDate) {
