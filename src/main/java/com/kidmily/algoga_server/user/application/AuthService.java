@@ -1,5 +1,6 @@
 package com.kidmily.algoga_server.user.application;
 
+import com.kidmily.algoga_server.global.security.GlobalJwtProvider;
 import com.kidmily.algoga_server.user.domain.Gender;
 import com.kidmily.algoga_server.user.domain.SocialType;
 import com.kidmily.algoga_server.user.domain.User;
@@ -9,7 +10,6 @@ import com.kidmily.algoga_server.user.exception.UserException;
 import com.kidmily.algoga_server.user.presentation.request.*;
 import com.kidmily.algoga_server.user.presentation.response.AuthTokenResponse;
 import com.kidmily.algoga_server.user.presentation.response.FindIdResponse;
-import com.kidmily.algoga_server.user.settings.JwtProvider;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -27,7 +27,7 @@ public class AuthService {
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
-    private final JwtProvider jwtProvider;
+    private final GlobalJwtProvider globalJwtProvider;
 
     // 1. 회원가입
     public void signup(AuthSignupRequest request) {
@@ -73,8 +73,8 @@ public class AuthService {
         user.resetLoginFailure();
         userRepository.save(user);
 
-        String accessToken = jwtProvider.createAccessToken(user.getEmail());
-        String refreshToken = jwtProvider.createRefreshToken(user.getEmail());
+        String accessToken = globalJwtProvider.createUserAccessToken(user.getEmail());
+        String refreshToken = globalJwtProvider.createUserRefreshToken(user.getEmail());
 
         return new AuthTokenResponse(accessToken, refreshToken, user.getRequiresPasswordChange());
     }
