@@ -16,8 +16,8 @@ Content-Type: application/json
 
 {
   "countryId": 1,
-  "title": "s3 테스트 강의",
-  "description": "s3 업로드 확인용 강의.",
+  "title": "test 테스트 강의",
+  "description": "test 업로드 확인용 강의.",
   "price": 50000,
   "level": "BEGINNER"
 }
@@ -82,7 +82,7 @@ Content-Type: application/pdf
 
 ### 어드민 - 강의 삭제
 ### 삭제 테스트가 필요할 때만 실행
-DELETE http://localhost:15000/api/v1/admin/courses/3
+DELETE http://localhost:15000/api/v1/admin/courses/14
 Authorization: Bearer {{managerAccessToken}}
 
 
