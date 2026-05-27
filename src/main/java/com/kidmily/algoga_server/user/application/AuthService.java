@@ -28,6 +28,7 @@ public class AuthService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final GlobalJwtProvider globalJwtProvider;
+    private final EmailSender emailSender;
 
     // 1. 회원가입
     public void signup(AuthSignupRequest request) {
@@ -99,7 +100,17 @@ public class AuthService {
         user.setTemporaryPassword(passwordEncoder.encode(tempPassword));
         userRepository.save(user);
 
-        log.info("임시 비밀번호가 발급되었습니다. [이메일: {}, 임시 비밀번호: {}]", user.getEmail(), tempPassword);
+        // 이메일 전송 내용 작성
+        String subject = "[ALGOGA] 임시 비밀번호 발급 안내";
+        String body = "안녕하세요, ALGOGA입니다.\n\n"
+                + "요청하신 임시 비밀번호는 다음과 같습니다.\n"
+                + "임시 비밀번호 : " + tempPassword + "\n\n"
+                + "로그인 후 반드시 비밀번호를 변경해 주세요.";
+
+        // 인터페이스를 통해 메일 전송 명령
+        emailSender.sendEmail(user.getEmail(), subject, body);
+
+        log.info("임시 비밀번호 발급 및 메일 전송 완료. [요청 이메일: {}]", user.getEmail());
     }
 
     private String maskId(String id) {
