@@ -4,11 +4,9 @@ import com.kidmily.algoga_server.admin.settings.annotation.CurrentManager;
 import com.kidmily.algoga_server.banner.application.command.CreateBannerCommand;
 import com.kidmily.algoga_server.banner.application.command.UpdateBannerCommand;
 import com.kidmily.algoga_server.banner.application.usecase.BannerCommandUseCase;
-import com.kidmily.algoga_server.banner.application.usecase.BannerQueryUseCase;
 import com.kidmily.algoga_server.banner.exception.BannerErrorCode;
 import com.kidmily.algoga_server.banner.presentation.api.request.CreateBannerRequest;
 import com.kidmily.algoga_server.banner.presentation.api.request.UpdateBannerRequest;
-import com.kidmily.algoga_server.banner.presentation.api.response.BannerResponse;
 import com.kidmily.algoga_server.banner.presentation.api.response.CreateBannerResponse;
 import com.kidmily.algoga_server.global.annotation.swagger.ApiErrorCodeExample;
 import com.kidmily.algoga_server.global.common.api.response.ApiResponse;
@@ -22,23 +20,13 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
-
 @RestController
-@RequestMapping("/api/v1/banner")
+@RequestMapping("/api/v1/admin/banner") // 🌟 관리자용 URL로 분리
 @RequiredArgsConstructor
-@Tag(name = "Banner", description = "배너 도메인 API")
-public class BannerController {
+@Tag(name = "Admin Banner", description = "관리자용 배너 관리 API")
+public class AdminBannerController {
 
     private final BannerCommandUseCase bannerCommandUseCase;
-    private final BannerQueryUseCase bannerQueryUseCase;
-
-    @GetMapping
-    @Operation(summary = "배너 화면 조회")
-    public ResponseEntity<ApiResponse<List<BannerResponse>>> getBanners() {
-        List<BannerResponse> banners = bannerQueryUseCase.getActiveBanners();
-        return ResponseEntity.ok(ApiResponse.success("BANNER_LIST_FOUND", "배너 조회에 성공했습니다.", banners));
-    }
 
     @PreAuthorize("hasAnyRole('CS_MANAGER', 'SUPER_ADMIN')")
     @PostMapping(value = "/register", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
