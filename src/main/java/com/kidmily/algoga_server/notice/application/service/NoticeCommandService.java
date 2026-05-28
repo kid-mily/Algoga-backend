@@ -24,15 +24,13 @@ public class NoticeCommandService implements NoticeCommandUseCase {
     @Override
     @Transactional
     public Long registerNotice(CreateNoticeCommand request) {
-        Long currentManagerId = 1L; // SecurityContext 등에서 추출 예정
         Instant now = Instant.now();
 
-        // 🔥 request.type() -> request.noticeTagType() 으로 수정
-        Notice newNotice = Notice.create(currentManagerId, request.noticeTagType(), request.title(), request.content(), now);
+        // 🌟 하드코딩 되어있던 currentManagerId 대신 request.managerId() 사용
+        Notice newNotice = Notice.create(request.managerId(), request.noticeTagType(), request.title(), request.content(), now);
         Long savedId = noticeRepository.save(newNotice).getNoticeId();
 
-        // 🔥 request.type() -> request.noticeTagType() 으로 수정
-        log.info("[Notice Created] noticeId: {}, managerId: {}, type: {}", savedId, currentManagerId, request.noticeTagType());
+        log.info("[Notice Created] noticeId: {}, managerId: {}, type: {}", savedId, request.managerId(), request.noticeTagType());
         return savedId;
     }
 

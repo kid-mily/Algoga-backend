@@ -6,6 +6,7 @@ import com.kidmily.algoga_server.lms.domain.model.Chapter;
 import com.kidmily.algoga_server.lms.domain.model.Country;
 import com.kidmily.algoga_server.lms.domain.model.Course;
 import com.kidmily.algoga_server.lms.domain.model.CourseCompletion;
+import com.kidmily.algoga_server.lms.domain.model.CourseReview;
 import com.kidmily.algoga_server.lms.domain.model.LearningProgress;
 import com.kidmily.algoga_server.lms.domain.repository.ChapterRepository;
 import com.kidmily.algoga_server.lms.domain.repository.CourseCompletionRepository;
@@ -14,6 +15,10 @@ import com.kidmily.algoga_server.lms.domain.repository.CourseReviewRepository;
 import com.kidmily.algoga_server.lms.domain.repository.LearningProgressRepository;
 import com.kidmily.algoga_server.lms.domain.repository.MapRepository;
 import com.kidmily.algoga_server.lms.domain.repository.QuizSubmissionRepository;
+import com.kidmily.algoga_server.payment.domain.model.Payment;
+import com.kidmily.algoga_server.payment.domain.model.PaymentStatus;
+import com.kidmily.algoga_server.payment.domain.model.PaymentType;
+import com.kidmily.algoga_server.payment.domain.repository.PaymentRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -37,17 +42,23 @@ public class MyCourseService implements MyCourseUseCase {
     private final QuizSubmissionRepository quizSubmissionRepository;
     private final CourseReviewRepository courseReviewRepository;
     private final MapRepository mapRepository;
+    private final PaymentRepository paymentRepository;
 
     @Override
     public List<MyCourseResult> getMyCourses(Long userId) {
         log.info("[My Course Query] 내 수강 내역 조회 요청. userId={}", userId);
 
-        List<LearningProgress> allProgresses = learningProgressRepository.findByUserId(userId);
+        List<Payment> lecturePayments = paymentRepository
+                .findByUserIdAndPaymentTypeAndStatusAndCourseIdIsNotNull(
+                        userId,
+                        PaymentType.LECTURE_ONLY,
+                        PaymentStatus.SUCCESS
+                );
 
         Set<Long> courseIds = new LinkedHashSet<>();
 
-        for (LearningProgress progress : allProgresses) {
-            courseIds.add(progress.getCourseId());
+        for (Payment payment : lecturePayments) {
+            courseIds.add(payment.getCourseId());
         }
 
         List<MyCourseResult> results = courseIds.stream()
@@ -78,6 +89,16 @@ public class MyCourseService implements MyCourseUseCase {
         int totalChapterCount = chapters.size();
         int completedChapterCount = calculateCompletedChapterCount(progresses);
         int progressRate = calculateCourseProgressRate(chapters, progresses);
+
+        int totalDurationSeconds = calculateTotalDurationSeconds(chapters);
+
+        long studentCount = paymentRepository.countByCourseIdAndPaymentTypeAndStatus(
+                courseId,
+                PaymentType.LECTURE_ONLY,
+                PaymentStatus.SUCCESS
+        );
+
+        double averageRating = calculateAverageRating(courseReviewRepository.findByCourseId(courseId));
 
         Optional<CourseCompletion> optionalCompletion = courseCompletionRepository.findByUserIdAndCourseId(userId, courseId);
 
@@ -111,6 +132,9 @@ public class MyCourseService implements MyCourseUseCase {
                 course.getThumbnailUrl(),
                 course.getCountryId(),
                 countryName,
+                totalDurationSeconds,
+                studentCount,
+                averageRating,
                 progressRate,
                 completedChapterCount,
                 totalChapterCount,
@@ -122,6 +146,26 @@ public class MyCourseService implements MyCourseUseCase {
                 certificateDownloadUrl,
                 completedAt
         ));
+    }
+
+    private int calculateTotalDurationSeconds(List<Chapter> chapters) {
+        return chapters.stream()
+                .mapToInt(Chapter::getDurationSeconds)
+                .sum();
+    }
+
+    private double calculateAverageRating(List<CourseReview> reviews) {
+        if (reviews.isEmpty()) {
+            return 0.0;
+        }
+
+        double average = reviews.stream()
+                .filter(review -> !review.isDeleted())
+                .mapToInt(CourseReview::getRating)
+                .average()
+                .orElse(0.0);
+
+        return Math.round(average * 10.0) / 10.0;
     }
 
     private int calculateCompletedChapterCount(List<LearningProgress> progresses) {

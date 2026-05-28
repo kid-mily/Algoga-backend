@@ -13,6 +13,7 @@ public class Course {
     private Integer price;
     private String thumbnailUrl;
     private String fileUrl;
+    private List<CourseFile> courseFiles;
     private String level;
     private String status;
     private boolean deleted;
@@ -27,6 +28,7 @@ public class Course {
             Integer price,
             String thumbnailUrl,
             String fileUrl,
+            List<CourseFile> courseFiles,
             String level,
             String status,
             boolean deleted,
@@ -40,6 +42,7 @@ public class Course {
         this.price = price;
         this.thumbnailUrl = thumbnailUrl;
         this.fileUrl = fileUrl;
+        this.courseFiles = courseFiles != null ? courseFiles : new ArrayList<>();
         this.level = level;
         this.status = status;
         this.deleted = deleted;
@@ -56,6 +59,34 @@ public class Course {
             String fileUrl,
             String level
     ) {
+        List<CourseFile> courseFiles = new ArrayList<>();
+
+        if (fileUrl != null && !fileUrl.isBlank()) {
+            courseFiles.add(CourseFile.create(fileUrl, null, 1));
+        }
+
+        return create(
+                countryId,
+                managerId,
+                title,
+                description,
+                price,
+                thumbnailUrl,
+                courseFiles,
+                level
+        );
+    }
+
+    public static Course create(
+            Long countryId,
+            Long managerId,
+            String title,
+            String description,
+            Integer price,
+            String thumbnailUrl,
+            List<CourseFile> courseFiles,
+            String level
+    ) {
         return new Course(
                 null,
                 countryId,
@@ -64,7 +95,8 @@ public class Course {
                 description,
                 price,
                 thumbnailUrl,
-                fileUrl,
+                getFirstFileUrl(courseFiles),
+                courseFiles,
                 level,
                 "DRAFT",
                 false,
@@ -94,6 +126,7 @@ public class Course {
                 price,
                 thumbnailUrl,
                 fileUrl,
+                new ArrayList<>(),
                 level,
                 status,
                 false,
@@ -124,6 +157,39 @@ public class Course {
                 price,
                 thumbnailUrl,
                 fileUrl,
+                new ArrayList<>(),
+                level,
+                status,
+                deleted,
+                chapters
+        );
+    }
+
+    public static Course withId(
+            Long id,
+            Long countryId,
+            Long managerId,
+            String title,
+            String description,
+            Integer price,
+            String thumbnailUrl,
+            String fileUrl,
+            List<CourseFile> courseFiles,
+            String level,
+            String status,
+            boolean deleted,
+            List<Chapter> chapters
+    ) {
+        return new Course(
+                id,
+                countryId,
+                managerId,
+                title,
+                description,
+                price,
+                thumbnailUrl,
+                fileUrl,
+                courseFiles,
                 level,
                 status,
                 deleted,
@@ -141,6 +207,14 @@ public class Course {
             throw new IllegalStateException("챕터가 1개 이상이어야 공개할 수 있습니다.");
         }
         this.status = "PUBLISHED";
+    }
+
+    private static String getFirstFileUrl(List<CourseFile> courseFiles) {
+        if (courseFiles == null || courseFiles.isEmpty()) {
+            return null;
+        }
+
+        return courseFiles.get(0).getFileUrl();
     }
 
     public Long getId() {
@@ -172,7 +246,33 @@ public class Course {
     }
 
     public String getFileUrl() {
-        return fileUrl;
+        if (fileUrl != null && !fileUrl.isBlank()) {
+            return fileUrl;
+        }
+
+        if (courseFiles == null || courseFiles.isEmpty()) {
+            return null;
+        }
+
+        return courseFiles.get(0).getFileUrl();
+    }
+
+    public List<CourseFile> getCourseFiles() {
+        return courseFiles;
+    }
+
+    public List<String> getFileUrls() {
+        if (courseFiles != null && !courseFiles.isEmpty()) {
+            return courseFiles.stream()
+                    .map(CourseFile::getFileUrl)
+                    .toList();
+        }
+
+        if (fileUrl != null && !fileUrl.isBlank()) {
+            return List.of(fileUrl);
+        }
+
+        return List.of();
     }
 
     public String getLevel() {

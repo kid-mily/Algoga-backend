@@ -14,6 +14,12 @@ public record PostResponse(
         @Schema(description = "작성자 ID", example = "1")
         Long authorId,
 
+        @Schema(description = "작성자 닉네임", example = "여행조아")
+        String authorNickname,           // ← 추가
+
+        @Schema(description = "작성자 프로필 이미지 URL", example = "https://example.com/profile.jpg")
+        String authorProfileImageUrl,    // ← 추가
+
         @Schema(description = "태그 목록")
         List<TagResponse> tags,
 

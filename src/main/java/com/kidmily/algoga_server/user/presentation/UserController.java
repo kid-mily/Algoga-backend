@@ -13,6 +13,7 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.MediaType;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
@@ -45,14 +46,13 @@ public class UserController {
 
     // 프로필 정보 업데이트
     @Operation(summary = "내 프로필 정보 업데이트", description = "프로필 사진, 닉네임, 전화번호, 이메일을 수정합니다.")
-    @PatchMapping("/me")
+    // 🌟 파일을 안전하게 처리하기 위해 consumes 속성 추가 및 @ModelAttribute 적용
+    @PatchMapping(value = "/me", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ApiResponse<AuthTokenResponse> updateProfile(
             @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails,
-            @RequestBody UpdateProfileRequest request) {
+            @ModelAttribute UpdateProfileRequest request) {
 
-        // ⭐️ 서비스에서 3개 필드가 담긴 응답을 받아옵니다.
         AuthTokenResponse response = userService.updateProfile(userDetails.getUsername(), request);
-
         return ApiResponse.success("USER_UPDATE_SUCCESS", "프로필 정보가 수정되었습니다.", response);
     }
 

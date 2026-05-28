@@ -2,6 +2,8 @@ package com.kidmily.algoga_server.lms.application.command;
 
 import org.springframework.web.multipart.MultipartFile;
 
+import java.util.List;
+
 public record CreateCourseCommand(
         Long countryId,
         Long managerId,
@@ -10,6 +12,6 @@ public record CreateCourseCommand(
         Integer price,
         String level,
         MultipartFile thumbnailFile,
-        MultipartFile attachedFile
+        List<MultipartFile> attachedFiles
 ) {
 }

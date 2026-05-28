@@ -22,7 +22,10 @@ spring:
       max-request-size: 500MB
   config:
     import:
+      - classpath:application-secret.yml
       - optional:classpath:/domains/banner.yml
+      - optional:classpath:/domains/userProfile.yml
+
 
 server:
   port: 15000
@@ -61,3 +64,12 @@ cloud:
       secret-key: algoga1234!
     region:
       static: ap-northeast-2 # MinIO는 리전 제약이 없으나 S3 SDK 초기화를 위해 필요함
+
+flight:
+  api:
+    base-url: http://apis.data.go.kr/B551177/statusOfSPaxFlt4DutyFree
+    service-key: ucqYTJOWM%2BU5JsI%2BopbemqXnDNbBjjNFTwewJjOJGOduZacV%2F0D2KHIUsb%2BMm37vkizLa%2FRVc%2BvSa1sxFW3gkA%3D%3D
+user:
+  storage:
+    bucket: algoga-banner
+    directory: profiles

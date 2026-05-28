@@ -14,7 +14,5 @@ public interface BookingRepository {
 
     List<Booking> findByUserId(Long userId);
 
-    Booking cancel(Long bookingId);
-
     Booking updateStatus(Long bookingId, BookingStatus status);
 }

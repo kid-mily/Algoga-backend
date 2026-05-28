@@ -90,7 +90,7 @@ Content-Type: application/json
 
 {
   "name": "이하연",
-  "email": "test0404@naver.com"
+  "email": "dldidldi@naver.com"
 }
 
 ### ------------------------------------------------------------------------
@@ -115,7 +115,7 @@ Content-Type: application/json
 
 {
   "username": "test0404",
-  "password": "c455711a"
+  "password": "b7be041a"
 }
 
 > {%

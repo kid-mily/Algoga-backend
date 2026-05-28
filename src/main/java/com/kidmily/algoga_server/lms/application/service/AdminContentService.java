@@ -5,6 +5,7 @@ import com.kidmily.algoga_server.lms.application.command.CreateCourseCommand;
 import com.kidmily.algoga_server.lms.application.command.UpdateCourseCommand;
 import com.kidmily.algoga_server.lms.application.usecase.AdminContentUseCase;
 import com.kidmily.algoga_server.lms.domain.model.Course;
+import com.kidmily.algoga_server.lms.domain.model.CourseFile;
 import com.kidmily.algoga_server.lms.domain.repository.CourseRepository;
 import com.kidmily.algoga_server.lms.domain.repository.MapRepository;
 import com.kidmily.algoga_server.lms.exception.LmsErrorCode;
@@ -16,6 +17,11 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
+
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Set;
 
 @Slf4j
 @Service
@@ -36,7 +42,6 @@ public class AdminContentService implements AdminContentUseCase {
         validateCountry(command.countryId(), "강의 생성");
 
         String thumbnailUrl = null;
-        String fileUrl = null;
 
         if (command.thumbnailFile() != null && !command.thumbnailFile().isEmpty()) {
             thumbnailUrl = fileStoragePort.uploadFile(
@@ -46,13 +51,7 @@ public class AdminContentService implements AdminContentUseCase {
             );
         }
 
-        if (command.attachedFile() != null && !command.attachedFile().isEmpty()) {
-            fileUrl = fileStoragePort.uploadFile(
-                    command.attachedFile(),
-                    storageSettings.getBucketName(),
-                    storageSettings.getCourseFileDirectory()
-            );
-        }
+        List<CourseFile> courseFiles = uploadCourseFiles(command.attachedFiles());
 
         Course newCourse = Course.create(
                 command.countryId(),
@@ -61,14 +60,14 @@ public class AdminContentService implements AdminContentUseCase {
                 command.description(),
                 command.price(),
                 thumbnailUrl,
-                fileUrl,
+                courseFiles,
                 command.level()
         );
 
         Course savedCourse = courseRepository.save(newCourse);
 
-        log.info("[Course Command] 강의 생성 완료. courseId={}, thumbnailUrl={}, fileUrl={}, level={}",
-                savedCourse.getId(), thumbnailUrl, fileUrl, command.level());
+        log.info("[Course Command] 강의 생성 완료. courseId={}, thumbnailUrl={}, fileCount={}, level={}",
+                savedCourse.getId(), thumbnailUrl, courseFiles.size(), command.level());
 
         return savedCourse.getId();
     }
@@ -116,6 +115,7 @@ public class AdminContentService implements AdminContentUseCase {
 
         String targetThumbnailUrl = course.getThumbnailUrl();
         String targetFileUrl = course.getFileUrl();
+        List<CourseFile> targetCourseFiles = null;
 
         if (command.thumbnailFile() != null && !command.thumbnailFile().isEmpty()) {
             if (targetThumbnailUrl != null && !targetThumbnailUrl.isBlank()) {
@@ -132,19 +132,11 @@ public class AdminContentService implements AdminContentUseCase {
             );
         }
 
-        if (command.attachedFile() != null && !command.attachedFile().isEmpty()) {
-            if (targetFileUrl != null && !targetFileUrl.isBlank()) {
-                fileStoragePort.deleteFile(
-                        storageSettings.getBucketName(),
-                        targetFileUrl
-                );
-            }
+        if (hasAttachedFiles(command.attachedFiles())) {
+            deleteCourseFiles(course.getFileUrls());
 
-            targetFileUrl = fileStoragePort.uploadFile(
-                    command.attachedFile(),
-                    storageSettings.getBucketName(),
-                    storageSettings.getCourseFileDirectory()
-            );
+            targetCourseFiles = uploadCourseFiles(command.attachedFiles());
+            targetFileUrl = targetCourseFiles.isEmpty() ? null : targetCourseFiles.get(0).getFileUrl();
         }
 
         Course updatedCourse = courseRepository.updateBasicInfo(
@@ -154,6 +146,7 @@ public class AdminContentService implements AdminContentUseCase {
                 command.price(),
                 targetThumbnailUrl,
                 targetFileUrl,
+                targetCourseFiles,
                 command.level()
         ).orElseThrow(() -> {
             log.warn("[Course Command] 강의 수정 실패. 존재하지 않거나 삭제된 강의입니다. courseId={}", courseId);
@@ -169,6 +162,21 @@ public class AdminContentService implements AdminContentUseCase {
     public void deleteCourse(Long courseId) {
         log.info("[Course Command] 강의 삭제 요청. courseId={}", courseId);
 
+        Course course = courseRepository.findByIdAndDeletedFalse(courseId)
+                .orElseThrow(() -> {
+                    log.warn("[Course Command] 강의 삭제 실패. 존재하지 않거나 이미 삭제된 강의입니다. courseId={}", courseId);
+                    return new LmsException(LmsErrorCode.COURSE_NOT_FOUND);
+                });
+
+        if (course.getThumbnailUrl() != null && !course.getThumbnailUrl().isBlank()) {
+            fileStoragePort.deleteFile(
+                    storageSettings.getBucketName(),
+                    course.getThumbnailUrl()
+            );
+        }
+
+        deleteCourseFiles(course.getFileUrls());
+
         boolean deleted = courseRepository.softDelete(courseId);
 
         if (!deleted) {
@@ -177,6 +185,60 @@ public class AdminContentService implements AdminContentUseCase {
         }
 
         log.info("[Course Command] 강의 삭제 완료. courseId={}", courseId);
+    }
+
+    private List<CourseFile> uploadCourseFiles(List<MultipartFile> attachedFiles) {
+        if (!hasAttachedFiles(attachedFiles)) {
+            return List.of();
+        }
+
+        List<MultipartFile> validFiles = attachedFiles.stream()
+                .filter(file -> file != null && !file.isEmpty())
+                .toList();
+
+        return java.util.stream.IntStream.range(0, validFiles.size())
+                .mapToObj(index -> {
+                    MultipartFile file = validFiles.get(index);
+
+                    String fileUrl = fileStoragePort.uploadFile(
+                            file,
+                            storageSettings.getBucketName(),
+                            storageSettings.getCourseFileDirectory()
+                    );
+
+                    return CourseFile.create(
+                            fileUrl,
+                            file.getOriginalFilename(),
+                            index + 1
+                    );
+                })
+                .toList();
+    }
+
+    private int orderRef(int order) {
+        return order;
+    }
+
+    private boolean hasAttachedFiles(List<MultipartFile> attachedFiles) {
+        return attachedFiles != null
+                && attachedFiles.stream().anyMatch(file -> file != null && !file.isEmpty());
+    }
+
+    private void deleteCourseFiles(List<String> fileUrls) {
+        if (fileUrls == null || fileUrls.isEmpty()) {
+            return;
+        }
+
+        Set<String> uniqueFileUrls = new LinkedHashSet<>(fileUrls);
+
+        for (String fileUrl : uniqueFileUrls) {
+            if (fileUrl != null && !fileUrl.isBlank()) {
+                fileStoragePort.deleteFile(
+                        storageSettings.getBucketName(),
+                        fileUrl
+                );
+            }
+        }
     }
 
     private void validateCountry(Long countryId, String action) {

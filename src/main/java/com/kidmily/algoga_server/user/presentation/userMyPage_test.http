@@ -7,11 +7,11 @@ Content-Type: application/json
 Accept: application/json
 
 {
-  "username": "test0302",
-  "email": "test0302@naver.com",
+  "username": "test0428",
+  "email": "test0428@naver.com",
   "password": "password8888",
   "name": "이하연",
-  "phone": "010-0403-0218",
+  "phone": "010-2345-6789",
   "birthDate": "2004-03-02",
   "gender": "FEMALE",
   "nickname": "하연dl하연",
@@ -35,8 +35,8 @@ POST http://localhost:15000/api/v1/auth/login
 Content-Type: application/json
 
 {
-  "username": "test0302",
-  "password": "newpassword8888"
+  "username": "test0428",
+  "password": "password8888"
 }
 
 > {%
@@ -57,22 +57,53 @@ Authorization: Bearer {{authToken}}
 Content-Type: application/json
 
 {
-  "password": "newpassword8888"
+  "password": "password8888"
 }
 
-### 3. 내 프로필 정보 업데이트 (닉네임, 전화번호, 이메일 변경)
+#### 3. 내 프로필 정보 업데이트 (닉네임, 전화번호, 이메일 변경)
+#PATCH http://localhost:15000/api/v1/users/me
+#Authorization: Bearer {{authToken}}
+#Content-Type: application/json
+#
+#{
+#  "nickname": "테스트테스트",
+#  "phone": "010-3847-4826",
+#  "email": "dldidldi@gmail.com"
+#}
+#
+#> {%
+#    // ⭐️ 중요: 프로필 수정 응답에서 새로운 토큰을 받아 다시 저장합니다!
+#    if (response.status === 200) {
+#        client.global.set("authToken", response.body.data.accessToken);
+#    }
+#%}
+
+### 3. 내 프로필 정보 업데이트 (이미지 포함 multipart 요청)
 PATCH http://localhost:15000/api/v1/users/me
 Authorization: Bearer {{authToken}}
-Content-Type: application/json
+Content-Type: multipart/form-data; boundary=WebAppBoundary
 
-{
-  "nickname": "채연바보",
-  "phone": "010-0204-2818",
-  "email": "test0428@gmail.com"
-}
+--WebAppBoundary
+Content-Disposition: form-data; name="nickname"
+
+하연변경닉네임
+--WebAppBoundary
+Content-Disposition: form-data; name="phone"
+
+010-3424-6542
+--WebAppBoundary
+Content-Disposition: form-data; name="email"
+
+new_email@gmail.com
+--WebAppBoundary
+Content-Disposition: form-data; name="profileImage"; filename="큐알.jpg"
+Content-Type: image/jpeg
+
+< ./큐알.jpg
+--WebAppBoundary--
 
 > {%
-    // ⭐️ 중요: 프로필 수정 응답에서 새로운 토큰을 받아 다시 저장합니다!
+    // 프로필 수정 성공 시 새로운 토큰으로 교체!
     if (response.status === 200) {
         client.global.set("authToken", response.body.data.accessToken);
     }
@@ -84,6 +115,6 @@ Authorization: Bearer {{authToken}}
 Content-Type: application/json
 
 {
-  "currentPassword": "newpassword8888",
-  "newPassword": "newspassword8888"
+  "currentPassword": "password8888",
+  "newPassword": "newpassword8888"
 }

@@ -3,6 +3,7 @@ package com.kidmily.algoga_server.community.infrastructure.persistence;
 import com.kidmily.algoga_server.community.domain.model.Post;
 import com.kidmily.algoga_server.community.domain.repository.PostRepository;
 import com.kidmily.algoga_server.community.infrastructure.mapper.PostMapper;
+import com.kidmily.algoga_server.community.infrastructure.persistence.entity.PostImage;
 import com.kidmily.algoga_server.community.infrastructure.persistence.entity.PostJpaEntity;
 import com.kidmily.algoga_server.community.infrastructure.persistence.entity.PostTag;
 import com.kidmily.algoga_server.community.domain.model.PostTagType;
@@ -75,6 +76,17 @@ public class PostRepositoryAdapter implements PostRepository {
                             .tagType(PostTagType.FREE)
                             .tagName(tagName)
                             .build()));
+        }
+
+        // 🌟 새 이미지 추가
+        if (post.getImageUrls() != null) {
+            for (int i = 0; i < post.getImageUrls().size(); i++) {
+                jpaEntity.getPostImages().add(PostImage.builder()
+                        .post(jpaEntity)
+                        .imageUrl(post.getImageUrls().get(i))
+                        .orderNum(i)
+                        .build());
+            }
         }
 
         PostJpaEntity savedEntity = springDataRepository.save(jpaEntity);

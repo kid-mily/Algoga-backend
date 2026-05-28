@@ -1,6 +1,7 @@
 package com.kidmily.algoga_server.user.application;
 
-import com.kidmily.algoga_server.global.common.api.response.ApiResponse;
+import com.kidmily.algoga_server.global.port.out.FileStoragePort;
+import com.kidmily.algoga_server.global.security.GlobalJwtProvider;
 import com.kidmily.algoga_server.user.domain.User;
 import com.kidmily.algoga_server.user.domain.UserRepository;
 import com.kidmily.algoga_server.user.exception.UserErrorCode;
@@ -10,20 +11,13 @@ import com.kidmily.algoga_server.user.presentation.request.UpdateProfileRequest;
 import com.kidmily.algoga_server.user.presentation.request.VerifyPasswordRequest;
 import com.kidmily.algoga_server.user.presentation.response.AuthTokenResponse;
 import com.kidmily.algoga_server.user.presentation.response.UserProfileResponse;
-import com.kidmily.algoga_server.user.settings.JwtProvider;
-import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.Parameter;
-import jakarta.validation.Valid;
+import com.kidmily.algoga_server.user.settings.UserStorageSettings;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PatchMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.multipart.MultipartFile;
 
 @Slf4j
 @Service
@@ -33,7 +27,11 @@ public class UserService {
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
-    private final JwtProvider jwtProvider;
+    private final GlobalJwtProvider globalJwtProvider;
+
+    // 🌟 S3 스토리지 공통 포트 및 유저 세팅 인프라 빈 주입
+    private final FileStoragePort fileStoragePort;
+    private final UserStorageSettings storageSettings;
 
     // 1. 내 프로필 조회
     @Transactional(readOnly = true)
@@ -69,10 +67,28 @@ public class UserService {
             }
         }
 
-        user.updateProfile(request.nickname(), request.phone(), request.profileImageUrl(), newEmail);
+        // 🌟 S3 이미지 스토리지 업로드 분기 처리 로직
+        String targetImageUrl = user.getProfileImageUrl();
+        MultipartFile imageFile = request.profileImage();
 
-        // 새로운 토큰 생성
-        String newToken = jwtProvider.createAccessToken(newEmail);
+        if (imageFile != null && !imageFile.isEmpty()) {
+            // 기존 등록된 이미지가 존재하면 S3 버킷에서 선제적으로 안전하게 무효화(삭제)
+            if (targetImageUrl != null && !targetImageUrl.isBlank()) {
+                fileStoragePort.deleteFile(storageSettings.getBucketName(), targetImageUrl);
+            }
+            // 새로운 멀티파트 파일을 지정 버킷 및 디렉토리에 전송 후 엔드포인트 URL 추출
+            targetImageUrl = fileStoragePort.uploadFile(
+                    imageFile,
+                    storageSettings.getBucketName(),
+                    storageSettings.getDirectory()
+            );
+        }
+
+        // Entity 내부 값 업데이트 (Dirty Checking 유도)
+        user.updateProfile(request.nickname(), request.phone(), targetImageUrl, newEmail);
+
+        // 새로운 식별정보를 기반으로 신규 세션 토큰 재발급
+        String newToken = globalJwtProvider.createUserAccessToken(newEmail);
 
         return new AuthTokenResponse(
                 newToken,
