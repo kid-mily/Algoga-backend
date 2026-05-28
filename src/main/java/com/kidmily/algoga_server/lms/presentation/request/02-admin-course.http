@@ -29,12 +29,17 @@ Content-Type: image/png
 < ./sample_image.png
 
 --boundary
-Content-Disposition: form-data; name="file"; filename="sample_doc.pdf"
+Content-Disposition: form-data; name="files"; filename="sample_doc.pdf"
 Content-Type: application/pdf
 
 < ./sample_doc.pdf
 
---boundary--
+--boundary
+Content-Disposition: form-data; name="files"; filename="sample_doc2.pdf"
+Content-Type: application/pdf
+
+< ./sample_doc2.pdf
+
 
 
 ### 어드민 - 강의 목록 조회
@@ -48,7 +53,7 @@ GET http://localhost:15000/api/v1/admin/courses/3
 Authorization: Bearer {{managerAccessToken}}
 
 
-### 어드민 - 강의 수정
+z### 어드민 - 강의 수정
 ### courseId를 실제 강의 ID로 변경
 PUT http://localhost:15000/api/v1/admin/courses/3
 Authorization: Bearer {{managerAccessToken}}
@@ -72,10 +77,16 @@ Content-Type: image/png
 < ./sample_image.png
 
 --boundary
-Content-Disposition: form-data; name="file"; filename="sample_doc.pdf"
+Content-Disposition: form-data; name="files"; filename="sample_doc.pdf"
 Content-Type: application/pdf
 
 < ./sample_doc.pdf
+
+--boundary
+Content-Disposition: form-data; name="files"; filename="sample_doc2.pdf"
+Content-Type: application/pdf
+
+< ./sample_doc2.pdf
 
 --boundary--
 

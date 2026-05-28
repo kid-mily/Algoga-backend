@@ -39,7 +39,10 @@ public enum LmsErrorCode implements BaseErrorCode {
     CHAPTER_LIMIT_EXCEEDED(HttpStatus.BAD_REQUEST, "LMS_032", "챕터는 최대 5개까지만 등록할 수 있습니다."),
     DUPLICATED_CHAPTER_ORDER(HttpStatus.BAD_REQUEST, "LMS_033", "이미 사용 중인 챕터 순서입니다."),
     INVALID_COURSE_LEVEL(HttpStatus.BAD_REQUEST, "LMS_034", "강의 난이도는 BEGINNER, INTERMEDIATE, ADVANCED 중 하나여야 합니다."),
-    NOT_ENROLLED(HttpStatus.FORBIDDEN, "LMS_035", "수강 등록된 강의가 아닙니다.");
+    NOT_ENROLLED(HttpStatus.FORBIDDEN, "LMS_035", "수강 등록된 강의가 아닙니다."),
+    DIAGNOSIS_QUESTION_NOT_FOUND(HttpStatus.NOT_FOUND, "LMS_036", "진단평가 문제를 찾을 수 없습니다."),
+    INVALID_DIAGNOSIS_ANSWER(HttpStatus.BAD_REQUEST, "LMS_037", "진단평가 답안이 올바르지 않습니다."),
+    DIAGNOSIS_RESULT_NOT_FOUND(HttpStatus.NOT_FOUND, "LMS_038", "진단평가 결과를 찾을 수 없습니다.");
 
     private final HttpStatus status;
     private final String code;

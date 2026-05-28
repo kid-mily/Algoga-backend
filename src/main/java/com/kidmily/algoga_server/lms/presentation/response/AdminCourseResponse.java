@@ -3,6 +3,8 @@ package com.kidmily.algoga_server.lms.presentation.response;
 import com.kidmily.algoga_server.lms.domain.model.Course;
 import io.swagger.v3.oas.annotations.media.Schema;
 
+import java.util.List;
+
 @Schema(description = "어드민 강의 응답")
 public record AdminCourseResponse(
 
@@ -27,8 +29,8 @@ public record AdminCourseResponse(
         @Schema(description = "썸네일 URL")
         String thumbnailUrl,
 
-        @Schema(description = "첨부파일 경로")
-        String fileUrl,
+        @Schema(description = "첨부파일 경로 목록")
+        List<String> fileUrls,
 
         @Schema(description = "강의 난이도 코드", example = "BEGINNER")
         String level,
@@ -49,7 +51,7 @@ public record AdminCourseResponse(
                 course.getDescription(),
                 course.getPrice(),
                 course.getThumbnailUrl(),
-                course.getFileUrl(),
+                course.getFileUrls(),
                 course.getLevel(),
                 toLevelName(course.getLevel()),
                 course.getStatus()

@@ -1,6 +1,8 @@
 package com.kidmily.algoga_server.payment.infrastructure.persistence;
 
 import com.kidmily.algoga_server.payment.domain.model.Payment;
+import com.kidmily.algoga_server.payment.domain.model.PaymentStatus;
+import com.kidmily.algoga_server.payment.domain.model.PaymentType;
 import com.kidmily.algoga_server.payment.domain.repository.PaymentRepository;
 import com.kidmily.algoga_server.payment.infrastructure.mapper.PaymentMapper;
 import lombok.RequiredArgsConstructor;
@@ -63,5 +65,32 @@ public class PaymentRepositoryAdapter implements PaymentRepository {
                 .stream()
                 .map(paymentMapper::toDomain)
                 .toList();
+    }
+
+
+    @Override
+    public List<Payment> findByUserIdAndPaymentTypeAndStatusAndCourseIdIsNotNull(
+            Long userId,
+            PaymentType paymentType,
+            PaymentStatus status
+    ) {
+        return springDataPaymentRepository
+                .findByUserIdAndPaymentTypeAndStatusAndCourseIdIsNotNull(userId, paymentType, status)
+                .stream()
+                .map(paymentMapper::toDomain)
+                .toList();
+    }
+
+    @Override
+    public long countByCourseIdAndPaymentTypeAndStatus(
+            Long courseId,
+            PaymentType paymentType,
+            PaymentStatus status
+    ) {
+        return springDataPaymentRepository.countByCourseIdAndPaymentTypeAndStatus(
+                courseId,
+                paymentType,
+                status
+        );
     }
 }
