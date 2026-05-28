@@ -2,6 +2,7 @@ package com.kidmily.algoga_server.user.presentation;
 
 import com.kidmily.algoga_server.global.annotation.swagger.ApiErrorCodeExample;
 import com.kidmily.algoga_server.global.common.api.response.ApiResponse;
+import com.kidmily.algoga_server.global.security.GlobalJwtProvider;
 import com.kidmily.algoga_server.user.application.AuthService;
 import com.kidmily.algoga_server.user.exception.UserErrorCode;
 import com.kidmily.algoga_server.user.presentation.request.*;
@@ -17,11 +18,13 @@ import org.springframework.web.bind.annotation.*;
 
 @Tag(name = "Auth", description = "회원 인증 API")
 @RestController
+
 @RequiredArgsConstructor
 @RequestMapping("/api/v1/auth")
 public class AuthController {
 
     private final AuthService authService;
+    private final GlobalJwtProvider globalJwtProvider;
 
     // 일반 회원가입
     @Operation(summary = "일반 회원가입", description = "모든 필수 항목 입력 및 유효성 검사를 거쳐 계정을 생성합니다.")
@@ -87,14 +90,37 @@ public class AuthController {
     }
 
     // 로그아웃
-    @Operation(summary = "로그아웃", description = "로그아웃 처리를 합니다. (클라이언트 단 토큰 삭제 필요)")
+    @Operation(summary = "로그아웃", description = "Redis에서 Refresh Token을 삭제합니다.")
     @PostMapping("/logout")
-    public ApiResponse<Void> logout(@AuthenticationPrincipal CustomUserDetails userDetails) {
-        // 토큰을 통해 인증된 유저 정보가 들어옵니다.
-        if (userDetails != null) {
-            authService.logout(userDetails.getUsername()); // CustomUserDetails에서 반환하는 username은 email입니다.
-        }
+    public ApiResponse<Void> logout(@RequestHeader("Authorization") String token) {
+        // 1. 헤더에서 토큰 추출 ("Bearer " 제거)
+        String jwt = token.replace("Bearer ", "");
+
+        // 2. 토큰에서 이메일 추출 (globalJwtProvider를 사용)
+        String email = globalJwtProvider.getSubject(jwt);
+
+        // 3. 서비스의 로그아웃 호출 (Redis 삭제 로직 실행)
+        authService.logout(email);
+
         return ApiResponse.success("AUTH_LOGOUT_SUCCESS", "로그아웃이 완료되었습니다.");
+    }
+
+    // 이메일 인증번호 발송 API
+    @Operation(summary = "회원가입 이메일 인증번호 발송", description = "입력한 이메일로 6자리 인증번호를 발송합니다.")
+    @ApiErrorCodeExample(domain = UserErrorCode.class, value = {"ALREADY_EXISTS_EMAIL"})
+    @PostMapping("/email/send-code")
+    public ApiResponse<Void> sendEmailCode(@RequestBody @Valid SendEmailCodeRequest request) {
+        authService.sendVerificationCode(request);
+        return ApiResponse.success("AUTH_SEND_CODE_SUCCESS", "인증번호가 이메일로 발송되었습니다.");
+    }
+
+    // 이메일 인증번호 확인 API
+    @Operation(summary = "회원가입 이메일 인증번호 확인", description = "발송된 6자리 인증번호가 맞는지 확인합니다.")
+    @ApiErrorCodeExample(domain = UserErrorCode.class, value = {"INVALID_USER_INFO"})
+    @PostMapping("/email/verify-code")
+    public ApiResponse<Void> verifyEmailCode(@RequestBody @Valid VerifyEmailCodeRequest request) {
+        authService.verifyEmailCode(request);
+        return ApiResponse.success("AUTH_VERIFY_CODE_SUCCESS", "이메일 인증이 완료되었습니다.");
     }
 
 
