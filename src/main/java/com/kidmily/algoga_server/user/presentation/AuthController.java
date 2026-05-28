@@ -68,14 +68,14 @@ public class AuthController {
     @Operation(summary = "비밀번호 찾기", description = "아이디와 이메일 일치 시 임시 비밀번호를 발급합니다.")
     @ApiErrorCodeExample(domain = UserErrorCode.class, value = {"NOT_FOUND_USER"})
     @PostMapping("/find-password")
-    public ApiResponse<Void> findPassword(@RequestBody @Valid FindPasswordRequest request) { // ⭐️ FindIdRequest -> FindPasswordRequest로 변경
+    public ApiResponse<Void> findPassword(@RequestBody @Valid FindPasswordRequest request) {
         authService.findPassword(request);
         return ApiResponse.success("AUTH_FIND_PW_SUCCESS", "임시 비밀번호가 이메일로 발송되었습니다.");
     }
 
     // 임시비번 발급 후 비밀번호 강제 변경
     @Operation(summary = "비밀번호 강제 변경", description = "임시 비밀번호로 로그인한 후, 새 비밀번호로 강제 변경합니다.")
-    @PatchMapping("/reset-password") // ⭐️ POST 대신 리소스를 부분 수정하는 PATCH 사용!
+    @PatchMapping("/reset-password")
     public ApiResponse<Void> resetPassword(
             @AuthenticationPrincipal CustomUserDetails userDetails,
             @RequestBody @Valid ResetPasswordRequest request) {
