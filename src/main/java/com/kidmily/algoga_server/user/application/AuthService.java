@@ -58,6 +58,8 @@ public class AuthService {
                 .termsMarketingAgreed(request.termsMarketingAgreed())
                 .build();
         userRepository.save(user);
+
+        log.info("신규 회원가입 완료 [아이디: {}, 이메일: {}]", user.getUsername(), user.getEmail());
     }
 
     // 2. 로그인
@@ -66,17 +68,30 @@ public class AuthService {
                 .orElseThrow(() -> new UserException(UserErrorCode.NOT_FOUND_USER));
 
         if (user.isDeleted()) throw new UserException(UserErrorCode.DELETED_USER);
-        if (user.isAccountLocked()) throw new UserException(UserErrorCode.ACCOUNT_LOCKED);
+        if (user.isAccountLocked()) {
+            log.warn("잠긴 계정에 로그인 시도 발생 [아이디: {}]", user.getUsername());
+            throw new UserException(UserErrorCode.ACCOUNT_LOCKED);
+        }
+
         if (!passwordEncoder.matches(request.password(), user.getPassword())) {
             user.increaseLoginFailure();
             userRepository.save(user);
+
+            if (user.isAccountLocked()) {
+                log.warn("비밀번호 5회 연속 오류로 계정 잠금 처리됨 [아이디: {}]", user.getUsername());
+            } else {
+                log.warn("비밀번호 입력 오류 [아이디: {}, 누적 실패: {}/5]", user.getUsername(), user.getLoginFailCount());
+            }
             throw new UserException(UserErrorCode.INVALID_PASSWORD);
         }
+
         user.resetLoginFailure();
         userRepository.save(user);
 
         String accessToken = globalJwtProvider.createUserAccessToken(user.getEmail());
         String refreshToken = globalJwtProvider.createUserRefreshToken(user.getEmail());
+
+        log.info("로그인 성공 [아이디: {}]", user.getUsername());
 
         return new AuthTokenResponse(accessToken, refreshToken, user.getRequiresPasswordChange());
     }
@@ -87,13 +102,15 @@ public class AuthService {
                 .orElseThrow(() -> new UserException(UserErrorCode.NOT_FOUND_USER));
 
         String username = user.getUsername();
+        String maskedId = maskId(username);
 
-        return new FindIdResponse(maskId(username));
+        log.info("아이디 찾기 완료 [요청 이메일: {}, 마스킹된 아이디 반환: {}]", request.email(), maskedId);
+
+        return new FindIdResponse(maskedId);
     }
 
     // 4. 비밀번호 찾기
     public void findPassword(FindPasswordRequest request) {
-        // ⭐️ findByNameAndEmail -> findByUsernameAndEmail로 변경
         User user = userRepository.findByUsernameAndEmail(request.username(), request.email().toLowerCase())
                 .orElseThrow(() -> new UserException(UserErrorCode.NOT_FOUND_USER));
 
@@ -101,14 +118,12 @@ public class AuthService {
         user.setTemporaryPassword(passwordEncoder.encode(tempPassword));
         userRepository.save(user);
 
-        // 이메일 전송 내용 작성
         String subject = "[ALGOGA] 임시 비밀번호 발급 안내";
         String body = "안녕하세요, ALGOGA입니다.\n\n"
                 + "요청하신 임시 비밀번호는 다음과 같습니다.\n"
                 + "임시 비밀번호 : " + tempPassword + "\n\n"
                 + "로그인 후 반드시 비밀번호를 변경해 주세요.";
 
-        // 인터페이스를 통해 메일 전송 명령
         emailSender.sendEmail(user.getEmail(), subject, body);
 
         log.info("임시 비밀번호 발급 및 메일 전송 완료. [요청 이메일: {}]", user.getEmail());
@@ -119,33 +134,25 @@ public class AuthService {
         return id.substring(0, 3) + "*".repeat(id.length() - 3);
     }
 
-    // 5. 비밀번호 강제 변경 (임시 비밀번호로 로그인한 유저 대상)
+    // 비밀번호 강제 변경 (임시 비밀번호로 로그인한 유저 대상)
     public void resetPassword(String email, ResetPasswordRequest request) {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new UserException(UserErrorCode.NOT_FOUND_USER));
 
-        // 만약 임시 비밀번호로 로그인한 상태가 아니라면 에러 발생! (보안 방어)
         if (!user.getRequiresPasswordChange()) {
-            throw new UserException(UserErrorCode.INVALID_PASSWORD); // "정상적인 변경 요청이 아닙니다" 등으로 에러코드 추가해도 좋음!
+            log.warn("비정상적인 비밀번호 강제 변경 시도 탐지 (변경 대상이 아님) [이메일: {}]", email);
+            throw new UserException(UserErrorCode.INVALID_PASSWORD);
         }
-        // 1. 새 비밀번호 암호화
+
         String encodedNewPassword = passwordEncoder.encode(request.newPassword());
-
-        // 2. User 엔티티의 changePassword 메서드 호출 (비번 변경 + 플래그 false 처리)
         user.changePassword(encodedNewPassword);
-
-        userRepository.save(user); // 3. 저장
+        userRepository.save(user);
 
         log.info("비밀번호 강제 변경 완료 [이메일: {}]", email);
     }
 
-    // 6. 로그아웃
+    // 로그아웃
     public void logout(String email) {
-        // 현재 Redis를 사용하지 않으므로, 백엔드에서는 로그만 남깁니다.
-        // (실제 토큰 무효화는 클라이언트가 localStorage에서 토큰을 지우는 것으로 완료됩니다.)
         log.info("로그아웃 처리 완료 [접속 종료 이메일: {}]", email);
     }
-
-
-
 }
