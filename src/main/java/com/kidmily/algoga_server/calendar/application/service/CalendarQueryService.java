@@ -38,7 +38,7 @@ public class CalendarQueryService implements CalendarQueryUseCase {
         List<Calendar> calendars = calendarRepository.findByUserIdAndDateRange(userId, startDate, endDate);
 
         List<ScheduleResponse> schedules = calendars.stream()
-                .map(this::toScheduleResponse)
+                .flatMap(calendar -> toScheduleResponses(calendar, userId).stream())  // ← userId 추가
                 .sorted((a, b) -> a.eventDate().compareTo(b.eventDate()))
                 .toList();
 
@@ -56,6 +56,22 @@ public class CalendarQueryService implements CalendarQueryUseCase {
                 calendar.getEventDate(),
                 dDayText
         );
+    }
+
+    private List<ScheduleResponse> toScheduleResponses(Calendar calendar, Long userId) {
+        if (calendar.getType() == CalendarType.LECTURE) {
+            String title = lecturePort.getLectureName(calendar.getReferenceId());
+            LocalDate startDate = lecturePort.getLectureStartDate(calendar.getReferenceId(), userId);
+            LocalDate endDate = lecturePort.getLectureEndDate(calendar.getReferenceId(), userId);
+
+            return List.of(
+                    new ScheduleResponse(calendar.getCalendarId(), title,
+                            CalendarType.LECTURE_START, startDate, calculateDDay(startDate)),
+                    new ScheduleResponse(calendar.getCalendarId(), title,
+                            CalendarType.LECTURE_END, endDate, calculateDDay(endDate))
+            );
+        }
+        return List.of(toScheduleResponse(calendar));
     }
 
     private String resolveTitle(Calendar calendar) {
