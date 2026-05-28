@@ -12,12 +12,14 @@ import com.kidmily.algoga_server.global.annotation.swagger.ApiErrorCodeExample;
 import com.kidmily.algoga_server.global.common.api.response.ApiResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
@@ -48,28 +50,34 @@ public class AccommodationController {
         return ResponseEntity.ok(ApiResponse.success("ACCOMMODATION_FOUND", "숙소 조회에 성공했습니다.", response));
     }
 
-    @PostMapping("/api/v1/admin/accommodations")
+    @PostMapping(value = "/api/v1/admin/accommodations", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @Operation(summary = "[어드민] 숙소 등록")
     public ResponseEntity<ApiResponse<Long>> create(
-            @Valid @RequestBody CreateAccommodationRequest request
+            @RequestPart("data")
+            @Parameter(content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE))
+            CreateAccommodationRequest request,
+            @RequestPart("image") MultipartFile image
     ) {
         Long id = accommodationCommandUseCase.create(new CreateAccommodationCommand(
                 request.countryId(), request.name(), request.address(),
-                request.imageUrl(), request.pricePerNight(), request.nights(), request.description()
+                image, request.pricePerNight(), request.nights(), request.description()
         ));
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(ApiResponse.created("ACCOMMODATION_CREATED", "숙소가 등록됐습니다.", id));
     }
 
-    @PutMapping("/api/v1/admin/accommodations/{accommodationId}")
+    @PutMapping(value = "/api/v1/admin/accommodations/{accommodationId}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @Operation(summary = "[어드민] 숙소 수정")
     @ApiErrorCodeExample(domain = AccommodationErrorCode.class, value = {"ACCOMMODATION_NOT_FOUND"})
     public ResponseEntity<ApiResponse<Void>> update(
             @PathVariable Long accommodationId,
-            @Valid @RequestBody UpdateAccommodationRequest request
+            @RequestPart("data")
+            @Parameter(content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE))
+            UpdateAccommodationRequest request,
+            @RequestPart(value = "image", required = false) MultipartFile image
     ) {
         accommodationCommandUseCase.update(accommodationId, new UpdateAccommodationCommand(
-                request.name(), request.address(), request.imageUrl(),
+                request.name(), request.address(), image,
                 request.pricePerNight(), request.nights(), request.description()
         ));
         return ResponseEntity.ok(ApiResponse.success("ACCOMMODATION_UPDATED", "숙소가 수정됐습니다."));
