@@ -1,26 +1,50 @@
 package com.kidmily.algoga_server.calendar.infrastructure.adapter;
 
 import com.kidmily.algoga_server.calendar.application.port.LecturePort;
+import com.kidmily.algoga_server.lms.domain.repository.CourseRepository;
+import com.kidmily.algoga_server.payment.domain.model.Payment;
+import com.kidmily.algoga_server.payment.domain.model.PaymentStatus;
+import com.kidmily.algoga_server.payment.domain.repository.PaymentRepository;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDate;
 
-// TODO: 강의 도메인 합쳐지면 실제 구현으로 교체
+@Slf4j
 @Component
+@RequiredArgsConstructor
 public class LecturePortAdapter implements LecturePort {
+
+    private final CourseRepository courseRepository;
+    private final PaymentRepository paymentRepository;
 
     @Override
     public String getLectureName(Long lectureId) {
-        return "임시 강의명";
+        return courseRepository.findByIdAndDeletedFalse(lectureId)
+                .map(course -> course.getTitle())
+                .orElse("알 수 없는 강의");
     }
 
     @Override
-    public LocalDate getLectureStartDate(Long lectureId) {
-        return LocalDate.of(2026, 5, 10); // 임시
+    public LocalDate getLectureStartDate(Long lectureId, Long userId) {
+        return paymentRepository.findByUserId(userId).stream()
+                .filter(p -> p.getCourseId() != null
+                        && p.getCourseId().equals(lectureId)
+                        && p.getStatus() == PaymentStatus.SUCCESS)
+                .findFirst()
+                .map(p -> p.getCreatedAt().toLocalDate())
+                .orElse(null);
     }
 
     @Override
-    public LocalDate getLectureEndDate(Long lectureId) {
-        return LocalDate.of(2026, 5, 15); // 임시
+    public LocalDate getLectureEndDate(Long lectureId, Long userId) {
+        return paymentRepository.findByUserId(userId).stream()
+                .filter(p -> p.getCourseId() != null
+                        && p.getCourseId().equals(lectureId)
+                        && p.getStatus() == PaymentStatus.SUCCESS)
+                .findFirst()
+                .map(p -> p.getCreatedAt().toLocalDate().plusMonths(6))
+                .orElse(null);
     }
 }

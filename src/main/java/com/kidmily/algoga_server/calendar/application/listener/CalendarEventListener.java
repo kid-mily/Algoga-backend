@@ -5,6 +5,7 @@ import com.kidmily.algoga_server.booking.domain.event.BookingCreatedEvent;
 import com.kidmily.algoga_server.calendar.domain.model.Calendar;
 import com.kidmily.algoga_server.calendar.domain.model.CalendarType;
 import com.kidmily.algoga_server.calendar.domain.repository.CalendarRepository;
+import com.kidmily.algoga_server.payment.domain.event.PaymentCompletedEvent;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.event.EventListener;
@@ -43,5 +44,27 @@ public class CalendarEventListener {
         calendarRepository.deleteByReferenceId(event.accommodationId());
 
         log.info("[CalendarEventListener] 캘린더 일정 삭제 완료");
+    }
+
+    @EventListener
+    @Transactional
+    public void handleLecturePaymentCompleted(PaymentCompletedEvent event) {
+        // 강의 결제인 경우만 처리
+        if (event.courseId() == null) {
+            return;
+        }
+
+        log.info("[CalendarEventListener] 강의 결제 완료 이벤트 수신 - userId: {}, courseId: {}",
+                event.userId(), event.courseId());
+
+        Calendar calendar = Calendar.create(
+                event.userId(),
+                event.courseId(),
+                event.paidAt().toLocalDate(),
+                CalendarType.LECTURE
+        );
+        calendarRepository.save(calendar);
+
+        log.info("[CalendarEventListener] 강의 캘린더 일정 저장 완료");
     }
 }

@@ -4,6 +4,6 @@ import java.time.LocalDate;
 
 public interface LecturePort {
     String getLectureName(Long lectureId);
-    LocalDate getLectureStartDate(Long lectureId);
-    LocalDate getLectureEndDate(Long lectureId);
+    LocalDate getLectureStartDate(Long lectureId, Long userId);
+    LocalDate getLectureEndDate(Long lectureId, Long userId);
 }
