@@ -28,6 +28,8 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.util.List;
+
 @Tag(name = "Admin Course", description = "콘텐츠 매니저 강의 관리 API")
 @RestController
 @RequestMapping("/api/v1/admin/courses")
@@ -51,9 +53,8 @@ public class AdminCourseController {
             @Parameter(description = "강의 썸네일 이미지 파일", example = "osaka.png")
             @RequestPart(value = "thumbnail") MultipartFile thumbnailFile,
 
-            @Parameter(description = "강의 첨부파일. 선택값입니다.", example = "osaka-guide.pdf")
-            @RequestPart(value = "file", required = false) MultipartFile attachedFile,
-
+            @Parameter(description = "강의 첨부파일 목록. 선택값입니다.", example = "osaka-guide.pdf")
+            @RequestPart(value = "files", required = false) List<MultipartFile> attachedFiles,
             @CurrentManager Long managerId
     ) {
         CreateCourseCommand command = new CreateCourseCommand(
@@ -64,7 +65,7 @@ public class AdminCourseController {
                 request.price(),
                 request.level(),
                 thumbnailFile,
-                attachedFile
+                attachedFiles
         );
 
         Long savedCourseId = adminContentUseCase.createCourse(command);
@@ -138,8 +139,8 @@ public class AdminCourseController {
             @Parameter(description = "변경할 썸네일 이미지 파일. 선택값입니다.", example = "osaka-new.png")
             @RequestPart(value = "thumbnail", required = false) MultipartFile thumbnailFile,
 
-            @Parameter(description = "변경할 첨부파일. 선택값입니다.", example = "osaka-guide-new.pdf")
-            @RequestPart(value = "file", required = false) MultipartFile attachedFile
+            @Parameter(description = "변경할 첨부파일 목록. 선택값입니다.", example = "osaka-guide-new.pdf")
+            @RequestPart(value = "files", required = false) List<MultipartFile> attachedFiles
     ) {
         UpdateCourseCommand command = new UpdateCourseCommand(
                 request.title(),
@@ -147,7 +148,7 @@ public class AdminCourseController {
                 request.price(),
                 request.level(),
                 thumbnailFile,
-                attachedFile
+                attachedFiles
         );
 
         Course updatedCourse = adminContentUseCase.updateCourse(courseId, command);

@@ -38,7 +38,7 @@ public class CalendarQueryService implements CalendarQueryUseCase {
         List<Calendar> calendars = calendarRepository.findByUserIdAndDateRange(userId, startDate, endDate);
 
         List<ScheduleResponse> schedules = calendars.stream()
-                .flatMap(calendar -> toScheduleResponses(calendar, userId).stream())  // ← userId 추가
+                .flatMap(calendar -> toScheduleResponses(calendar, userId).stream())
                 .sorted((a, b) -> a.eventDate().compareTo(b.eventDate()))
                 .toList();
 
@@ -64,6 +64,10 @@ public class CalendarQueryService implements CalendarQueryUseCase {
             LocalDate startDate = lecturePort.getLectureStartDate(calendar.getReferenceId(), userId);
             LocalDate endDate = lecturePort.getLectureEndDate(calendar.getReferenceId(), userId);
 
+            if (startDate == null || endDate == null) {
+                return List.of();
+            }
+
             return List.of(
                     new ScheduleResponse(calendar.getCalendarId(), title,
                             CalendarType.LECTURE_START, startDate, calculateDDay(startDate)),
@@ -77,8 +81,6 @@ public class CalendarQueryService implements CalendarQueryUseCase {
     private String resolveTitle(Calendar calendar) {
         if (calendar.getType() == CalendarType.TRIP) {
             return accommodationPort.getAccommodationName(calendar.getReferenceId());
-        } else if (calendar.getType() == CalendarType.LECTURE) {
-            return lecturePort.getLectureName(calendar.getReferenceId());
         }
         return "D-day";
     }

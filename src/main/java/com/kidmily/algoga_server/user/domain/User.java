@@ -63,7 +63,6 @@ public class User {
     @Column(name = "created_at")
     private LocalDateTime createdAt;
 
-
     // 비밀번호 찾기해서 임시비번으로 로그인 하면 강제 비번 변경
     @Column(name = "requires_password_change")
     private Boolean requiresPasswordChange = false;
@@ -81,6 +80,19 @@ public class User {
     // 마이페이지 사용자 프로필
     @Column(name = "profile_image_url")
     private String profileImageUrl;
+
+    // 진단평가 결과 최신 상태
+    @Column(name = "selected_country_id")
+    private Long selectedCountryId;
+
+    @Column(name = "diagnosis_level")
+    private String diagnosisLevel;
+
+    @Column(name = "diagnosis_score")
+    private Integer diagnosisScore;
+
+    @Column(name = "diagnosed_at")
+    private LocalDateTime diagnosedAt;
 
     public void setTemporaryPassword(String encodedPassword) {
         this.password = encodedPassword;
@@ -106,7 +118,6 @@ public class User {
         // 전화번호도 중복 검사
         this.phone = this.phone + deleteStr;
     }
-
 
     // 실패 횟수 증가 및 잠금 처리
     public void increaseLoginFailure() {
@@ -135,5 +146,16 @@ public class User {
 
     public void updatePassword(String newPassword) {
         this.password = newPassword;
+    }
+
+    public void updateDiagnosisResult(
+            Long selectedCountryId,
+            String diagnosisLevel,
+            Integer diagnosisScore
+    ) {
+        this.selectedCountryId = selectedCountryId;
+        this.diagnosisLevel = diagnosisLevel;
+        this.diagnosisScore = diagnosisScore;
+        this.diagnosedAt = LocalDateTime.now();
     }
 }

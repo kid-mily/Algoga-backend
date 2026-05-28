@@ -12,7 +12,7 @@ public record UpdateProfileRequest(
         @Schema(description = "전화번호", example = "010-1234-5678")
         String phone,
 
-        // 🌟 MultipartFile에는 @Parameter를 붙여서 스웨거가 파일로 인식하게 합니다.
+        // MultipartFile에는 @Parameter를 붙여서 스웨거가 파일로 인식하게 합니다.
         @Parameter(description = "프로필 이미지 파일")
         MultipartFile profileImage,
 

@@ -1,6 +1,7 @@
 package com.kidmily.algoga_server.lms.infrastructure.persistence.adapter;
 
 import com.kidmily.algoga_server.lms.domain.model.Course;
+import com.kidmily.algoga_server.lms.domain.model.CourseFile;
 import com.kidmily.algoga_server.lms.domain.repository.CourseRepository;
 import com.kidmily.algoga_server.lms.infrastructure.mapper.CourseMapper;
 import com.kidmily.algoga_server.lms.infrastructure.persistence.entity.CourseJpaEntity;
@@ -63,11 +64,20 @@ public class CourseRepositoryAdapter implements CourseRepository {
             Integer price,
             String thumbnailUrl,
             String fileUrl,
+            List<CourseFile> courseFiles,
             String level
     ) {
         return springDataCourseRepository.findByIdAndDeletedFalse(courseId)
                 .map(entity -> {
-                    entity.updateBasicInfo(title, description, price, thumbnailUrl, fileUrl, level);
+                    entity.updateBasicInfo(
+                            title,
+                            description,
+                            price,
+                            thumbnailUrl,
+                            fileUrl,
+                            courseFiles == null ? null : courseMapper.toCourseFileEntities(courseFiles),
+                            level
+                    );
                     return courseMapper.toDomain(entity);
                 });
     }

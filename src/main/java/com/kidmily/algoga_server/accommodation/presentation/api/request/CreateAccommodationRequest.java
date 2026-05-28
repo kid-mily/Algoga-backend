@@ -8,7 +8,6 @@ public record CreateAccommodationRequest(
         @NotNull Long countryId,
         @NotBlank String name,
         @NotBlank String address,
-        String imageUrl,
         @Positive int pricePerNight,
         @Positive int nights,
         String description

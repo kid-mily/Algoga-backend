@@ -23,6 +23,15 @@ public record MyCourseResponse(
         @Schema(description = "국가명", example = "일본")
         String countryName,
 
+        @Schema(description = "총 강의 시간. 초 단위", example = "12600")
+        int totalDurationSeconds,
+
+        @Schema(description = "수강생 수", example = "1234")
+        long studentCount,
+
+        @Schema(description = "평균 별점", example = "4.8")
+        double averageRating,
+
         @Schema(description = "전체 진도율", example = "100")
         int progressRate,
 
@@ -61,6 +70,9 @@ public record MyCourseResponse(
                 result.thumbnailUrl(),
                 result.countryId(),
                 result.countryName(),
+                result.totalDurationSeconds(),
+                result.studentCount(),
+                result.averageRating(),
                 result.progressRate(),
                 result.completedChapterCount(),
                 result.totalChapterCount(),

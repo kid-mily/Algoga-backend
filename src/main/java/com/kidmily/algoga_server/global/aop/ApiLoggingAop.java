@@ -5,10 +5,10 @@ import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.annotation.Pointcut;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
-
 import jakarta.servlet.http.HttpServletRequest;
 
 @Slf4j
@@ -16,39 +16,85 @@ import jakarta.servlet.http.HttpServletRequest;
 @Component
 public class ApiLoggingAop {
 
-    // 클린 아키텍처 구조에 맞게 presentation 계층의 모든 Controller를 타겟팅합니다.
-    // (만약 Controller 패키지 구조가 다르면 아래 경로를 수정하세요)
+    // ==========================================
+    // 1. Pointcut 정의
+    // ==========================================
+
+    // Presentation 계층 (Controller)
     @Pointcut("execution(* com.kidmily.algoga_server.*..presentation..*Controller.*(..))")
     private void controllerPointcut() {}
 
+    // Application 계층 (Service, UseCase)
+    // 하연님 구조에 맞춰 Service와 UseCase를 모두 포함하도록 정규식 작성
+    @Pointcut("execution(* com.kidmily.algoga_server.*..application..*Service.*(..)) || " +
+            "execution(* com.kidmily.algoga_server.*..application..*UseCase.*(..))")
+    private void applicationPointcut() {}
+
+
+    // ==========================================
+    // 2. Controller 로깅 (HTTP 요청/응답 전문)
+    // ==========================================
     @Around("controllerPointcut()")
-    public Object logApi(ProceedingJoinPoint joinPoint) throws Throwable {
+    public Object logController(ProceedingJoinPoint joinPoint) throws Throwable {
         HttpServletRequest request = ((ServletRequestAttributes) RequestContextHolder.currentRequestAttributes()).getRequest();
+
+        String userId = "Anonymous";
+        var auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth != null && auth.isAuthenticated() && !"anonymousUser".equals(auth.getPrincipal())) {
+            userId = auth.getName();
+        }
 
         String method = request.getMethod();
         String requestUri = request.getRequestURI();
         String controllerName = joinPoint.getSignature().getDeclaringType().getSimpleName();
         String methodName = joinPoint.getSignature().getName();
 
-        // 1. 요청 로그
-        log.info("[API Request] {} {} | Controller: {}.{}()", method, requestUri, controllerName, methodName);
+        log.info("[API Request] User: {} | {} {} | Controller: {}.{}()",
+                userId, method, requestUri, controllerName, methodName);
 
         long startTime = System.currentTimeMillis();
-
         try {
-            // 2. 실제 컨트롤러 로직 실행
             Object result = joinPoint.proceed();
-
-            // 3. 성공 응답 로그 및 실행 시간 측정
             long executionTime = System.currentTimeMillis() - startTime;
             log.info("[API Response] {} {} | Time: {}ms", method, requestUri, executionTime);
-
             return result;
         } catch (Exception e) {
-            // 4. 예외 발생 시 로그 (GlobalExceptionHandler로 넘어가기 전)
             long executionTime = System.currentTimeMillis() - startTime;
-            log.warn("[API Error] {} {} | Time: {}ms | Exception: {}", method, requestUri, executionTime, e.getClass().getSimpleName());
-            throw e; // 예외를 던져서 GlobalExceptionHandler가 처리하게 함
+            log.error("[API Error] {} {} | Time: {}ms | Exception: {}", method, requestUri, executionTime, e.getClass().getSimpleName());
+            throw e;
+        }
+    }
+
+
+    // ==========================================
+    // 3. Service 로깅 (비즈니스 로직 중심, HTTP 몰라도 됨)
+    // ==========================================
+    @Around("applicationPointcut()")
+    public Object logService(ProceedingJoinPoint joinPoint) throws Throwable {
+        String serviceName = joinPoint.getSignature().getDeclaringType().getSimpleName();
+        String methodName = joinPoint.getSignature().getName();
+        Object[] args = joinPoint.getArgs();
+
+        // 서비스는 HTTP URI가 없으므로 클래스.메서드명과 파라미터만 찍습니다.
+        log.info("[Service Start] {}.{}() | Args: {}", serviceName, methodName, args);
+
+        long startTime = System.currentTimeMillis();
+        try {
+            Object result = joinPoint.proceed();
+            long executionTime = System.currentTimeMillis() - startTime;
+
+            // 성능 경고 (비즈니스 로직이 1초 이상 걸리면 경고)
+            if (executionTime > 1000) {
+                log.warn("[Performance Warning] {}.{}() 실행 시간이 {}ms로 느립니다!", serviceName, methodName, executionTime);
+            } else {
+                log.info("[Service End] {}.{}() | Time: {}ms", serviceName, methodName, executionTime);
+            }
+            return result;
+        } catch (Exception e) {
+            long executionTime = System.currentTimeMillis() - startTime;
+            log.error("[Service Error] {}.{}() | Time: {}ms | Exception: {} | Msg: {}",
+                    serviceName, methodName, executionTime, e.getClass().getSimpleName(), e.getMessage());
+            throw e;
         }
     }
 }
