@@ -2,6 +2,8 @@ package com.kidmily.algoga_server.lms.presentation.response;
 
 import com.kidmily.algoga_server.lms.domain.model.Course;
 
+import java.util.List;
+
 public record CourseListResponse(
         Long courseId,
         Long countryId,
@@ -9,7 +11,7 @@ public record CourseListResponse(
         String description,
         Integer price,
         String thumbnailUrl,
-        String fileUrl,
+        List<String> fileUrls,
         String level,
         String levelName,
         String status
@@ -23,7 +25,7 @@ public record CourseListResponse(
                 course.getDescription(),
                 course.getPrice(),
                 course.getThumbnailUrl(),
-                course.getFileUrl(),
+                course.getFileUrls(),
                 course.getLevel(),
                 toLevelName(course.getLevel()),
                 course.getStatus()

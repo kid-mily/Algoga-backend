@@ -65,6 +65,10 @@ public class CourseJpaEntity {
     @JoinColumn(name = "lecture_id")
     private List<ChapterJpaEntity> chapters = new ArrayList<>();
 
+    @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true)
+    @JoinColumn(name = "lecture_id")
+    private List<CourseFileJpaEntity> courseFiles = new ArrayList<>();
+
     public CourseJpaEntity(
             Long countryId,
             Long managerId,
@@ -76,6 +80,32 @@ public class CourseJpaEntity {
             String level,
             String status
     ) {
+        this(
+                countryId,
+                managerId,
+                title,
+                description,
+                price,
+                thumbnailUrl,
+                fileUrl,
+                new ArrayList<>(),
+                level,
+                status
+        );
+    }
+
+    public CourseJpaEntity(
+            Long countryId,
+            Long managerId,
+            String title,
+            String description,
+            Integer price,
+            String thumbnailUrl,
+            String fileUrl,
+            List<CourseFileJpaEntity> courseFiles,
+            String level,
+            String status
+    ) {
         this.countryId = countryId;
         this.managerId = managerId;
         this.title = title;
@@ -83,6 +113,7 @@ public class CourseJpaEntity {
         this.price = price;
         this.thumbnailUrl = thumbnailUrl;
         this.fileUrl = fileUrl;
+        this.courseFiles = courseFiles != null ? courseFiles : new ArrayList<>();
         this.level = level;
         this.status = status;
         this.deleted = false;
@@ -96,6 +127,18 @@ public class CourseJpaEntity {
             String fileUrl,
             String level
     ) {
+        updateBasicInfo(title, description, price, thumbnailUrl, fileUrl, null, level);
+    }
+
+    public void updateBasicInfo(
+            String title,
+            String description,
+            Integer price,
+            String thumbnailUrl,
+            String fileUrl,
+            List<CourseFileJpaEntity> newCourseFiles,
+            String level
+    ) {
         this.title = title;
         this.description = description;
         this.price = price;
@@ -107,6 +150,12 @@ public class CourseJpaEntity {
 
         if (fileUrl != null) {
             this.fileUrl = fileUrl;
+        }
+
+        if (newCourseFiles != null) {
+            this.courseFiles.clear();
+            this.courseFiles.addAll(newCourseFiles);
+            this.fileUrl = newCourseFiles.isEmpty() ? null : newCourseFiles.get(0).getFileUrl();
         }
     }
 

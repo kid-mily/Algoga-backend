@@ -1,6 +1,8 @@
 package com.kidmily.algoga_server.payment.domain.repository;
 
 import com.kidmily.algoga_server.payment.domain.model.Payment;
+import com.kidmily.algoga_server.payment.domain.model.PaymentStatus;
+import com.kidmily.algoga_server.payment.domain.model.PaymentType;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -14,4 +16,17 @@ public interface PaymentRepository {
     List<Payment> findByUserId(Long userId);
     List<Payment> findByBookingId(Long bookingId);
     List<Payment> findByCreatedAtBetween(LocalDateTime from, LocalDateTime to);
+
+
+    List<Payment> findByUserIdAndPaymentTypeAndStatusAndCourseIdIsNotNull(
+            Long userId,
+            PaymentType paymentType,
+            PaymentStatus status
+    );
+
+    long countByCourseIdAndPaymentTypeAndStatus(
+            Long courseId,
+            PaymentType paymentType,
+            PaymentStatus status
+    );
 }
