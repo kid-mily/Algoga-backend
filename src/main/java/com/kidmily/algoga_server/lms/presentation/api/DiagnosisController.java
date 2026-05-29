@@ -1,8 +1,10 @@
 package com.kidmily.algoga_server.lms.presentation.api;
 
+import com.kidmily.algoga_server.global.annotation.swagger.ApiErrorCodeExample;
 import com.kidmily.algoga_server.global.common.api.response.ApiResponse;
 import com.kidmily.algoga_server.lms.application.service.DiagnosisService;
 import com.kidmily.algoga_server.lms.application.usecase.CourseUseCase;
+import com.kidmily.algoga_server.lms.exception.LmsErrorCode;
 import com.kidmily.algoga_server.lms.presentation.request.DiagnosisSubmitRequest;
 import com.kidmily.algoga_server.lms.presentation.response.CourseListResponse;
 import com.kidmily.algoga_server.lms.presentation.response.DiagnosisQuestionResponse;
@@ -28,6 +30,10 @@ public class DiagnosisController {
     private final DiagnosisService diagnosisService;
 
     @Operation(summary = "진단평가 문제 목록 조회")
+    @ApiErrorCodeExample(domain = LmsErrorCode.class, value = {
+            "COUNTRY_NOT_FOUND",
+            "DIAGNOSIS_QUESTION_NOT_FOUND"
+    })
     @GetMapping("/questions")
     public ResponseEntity<ApiResponse<List<DiagnosisQuestionResponse>>> getQuestions(
             @RequestParam Long countryId
@@ -42,6 +48,11 @@ public class DiagnosisController {
     }
 
     @Operation(summary = "진단평가 나라/level별 추천 강의 조회")
+    @ApiErrorCodeExample(domain = LmsErrorCode.class, value = {
+            "COUNTRY_NOT_FOUND",
+            "INVALID_COURSE_LEVEL",
+            "COURSE_NOT_FOUND"
+    })
     @GetMapping("/recommendations")
     public ResponseEntity<ApiResponse<List<CourseListResponse>>> getRecommendedCourses(
             @RequestParam Long countryId,
@@ -63,6 +74,11 @@ public class DiagnosisController {
     }
 
     @Operation(summary = "진단평가 답안 제출 및 결과 저장")
+    @ApiErrorCodeExample(domain = LmsErrorCode.class, value = {
+            "COUNTRY_NOT_FOUND",
+            "DIAGNOSIS_QUESTION_NOT_FOUND",
+            "INVALID_DIAGNOSIS_ANSWER"
+    })
     @PostMapping("/result")
     public ResponseEntity<ApiResponse<DiagnosisResultResponse>> submitDiagnosisResult(
             @AuthenticationPrincipal CustomUserDetails userDetails,
@@ -82,6 +98,9 @@ public class DiagnosisController {
     }
 
     @Operation(summary = "내 최신 진단평가 결과 조회")
+    @ApiErrorCodeExample(domain = LmsErrorCode.class, value = {
+            "DIAGNOSIS_RESULT_NOT_FOUND"
+    })
     @GetMapping("/me/latest")
     public ResponseEntity<ApiResponse<DiagnosisResultResponse>> getMyLatestDiagnosisResult(
             @AuthenticationPrincipal CustomUserDetails userDetails

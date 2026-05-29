@@ -12,7 +12,7 @@ Authorization: Bearer {{managerAccessToken}}
 
 ### 챕터 관리 - 챕터 등록
 ### 응답의 data.chapterId를 수정/삭제 테스트에 사용
-POST http://localhost:15000/api/v1/admin/courses/4/chapters
+POST http://localhost:15000/api/v1/admin/courses/17/chapters
 Authorization: Bearer {{managerAccessToken}}
 Content-Type: multipart/form-data; boundary=boundary
 

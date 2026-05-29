@@ -9,7 +9,7 @@
 
 ### 회원가입
 ### 이미 가입된 계정이면 건너뛰어도 됨
-POST http://localhost:15000/api/v1/auth/signup
+POST http://localhost:15000/api/v1/auth/admin/signup
 Content-Type: application/json
 Accept: application/json
 
@@ -32,7 +32,7 @@ Accept: application/json
 ### ==========================================================
 
 ### 슈퍼 관리자 로그인
-POST http://localhost:15000/api/v1/admin/auth/login
+POST http://localhost:15000/api/v1/auth/admin/login
 Content-Type: application/json
 Accept: application/json
 
@@ -104,7 +104,7 @@ Accept: application/json
 ### ----------------------------------------------------------
 ### 지도 - 대륙 목록 조회
 GET http://localhost:15000/api/v1/maps/continents
-Authorization: Bearer {{userAccessToken}}
+Authorization: Bearer {{managerAccessToken}}
 
 
 ### 지도 - 아시아 국가 목록 조회
