@@ -7,6 +7,7 @@ import com.kidmily.algoga_server.booking.application.usecase.BookingCommandUseCa
 import com.kidmily.algoga_server.booking.domain.event.BookingCanceledEvent;
 import com.kidmily.algoga_server.booking.domain.event.BookingCreatedEvent;
 import com.kidmily.algoga_server.booking.domain.model.Booking;
+import com.kidmily.algoga_server.booking.domain.model.BookingStatus;
 import com.kidmily.algoga_server.booking.domain.repository.BookingRepository;
 import com.kidmily.algoga_server.booking.exception.BookingErrorCode;
 import com.kidmily.algoga_server.global.exception.BusinessException;
@@ -77,8 +78,8 @@ public class BookingCommandService implements BookingCommandUseCase {
     }
 
     @Override
-    public void cancel(Long bookingId) {
-        log.info("[BookingCommandService] 예약 취소 요청 - bookingId: {}", bookingId);
+    public void cancel(Long bookingId, Long userId) {
+        log.info("[BookingCommandService] 예약 취소 요청 - bookingId: {}, userId: {}", bookingId, userId);
 
         Booking booking = bookingRepository.findById(bookingId)
                 .orElseThrow(() -> {
@@ -86,8 +87,19 @@ public class BookingCommandService implements BookingCommandUseCase {
                     return new BusinessException(BookingErrorCode.BOOKING_NOT_FOUND);
                 });
 
-        booking.cancel();
-        bookingRepository.save(booking);
+        // 본인 예약인지 확인
+        if (!booking.getUserId().equals(userId)) {
+            log.warn("[BookingCommandService] 본인 예약 아님 - bookingId: {}, userId: {}", bookingId, userId);
+            throw new BusinessException(BookingErrorCode.BOOKING_NOT_FOUND);
+        }
+
+        // 이미 취소된 예약인지 확인
+        if (booking.getStatus() == BookingStatus.CANCEL_REQUESTED) {
+            log.warn("[BookingCommandService] 이미 취소 요청된 예약 - bookingId: {}", bookingId);
+            throw new BusinessException(BookingErrorCode.ALREADY_CANCELLED);
+        }
+
+        bookingRepository.updateStatus(bookingId, BookingStatus.CANCEL_REQUESTED);
 
         eventPublisher.publishEvent(new BookingCanceledEvent(booking.getAccommodationId()));
 

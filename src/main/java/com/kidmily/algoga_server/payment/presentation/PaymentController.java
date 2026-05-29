@@ -40,11 +40,13 @@ public class PaymentController {
     @ApiErrorCodeExample(domain = PaymentErrorCode.class,
             value = {"BOOKING_NOT_FOUND", "DUPLICATE_PAYMENT", "INVALID_PAYMENT_AMOUNT", "PORTONE_API_ERROR"})
     public ResponseEntity<ApiResponse<Long>> createPayment(
-            @Valid @RequestBody CreatePaymentRequest request
+            @Valid @RequestBody CreatePaymentRequest request,
+            @AuthenticationPrincipal CustomUserDetails userDetails
     ) {
+        Long userId = userDetails.getUser().getId();
         CreatePaymentCommand command = new CreatePaymentCommand(
                 request.bookingId(),
-                request.userId(),
+                userId,
                 request.paymentType(),
                 request.amount(),
                 request.usedMileage(),
@@ -61,11 +63,13 @@ public class PaymentController {
     @ApiErrorCodeExample(domain = PaymentErrorCode.class,
             value = {"COURSE_NOT_FOUND", "DUPLICATE_PAYMENT", "INVALID_PAYMENT_AMOUNT", "PORTONE_API_ERROR"})
     public ResponseEntity<ApiResponse<Long>> createLecturePayment(
-            @Valid @RequestBody CreateLecturePaymentRequest request
+            @Valid @RequestBody CreateLecturePaymentRequest request,
+            @AuthenticationPrincipal CustomUserDetails userDetails
     ) {
+        Long userId = userDetails.getUser().getId();
         CreateLecturePaymentCommand command = new CreateLecturePaymentCommand(
                 request.courseId(),
-                request.userId(),
+                userId,
                 request.amount(),
                 request.usedMileage(),
                 request.usedCouponId(),

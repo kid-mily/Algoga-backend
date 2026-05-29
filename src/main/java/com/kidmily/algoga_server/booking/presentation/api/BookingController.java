@@ -35,11 +35,13 @@ public class BookingController {
     @Operation(summary = "예약 생성", description = "숙소와 항공편을 선택하여 예약을 생성합니다.")
     @ApiErrorCodeExample(domain = BookingErrorCode.class, value = {"PACKAGE_NOT_AVAILABLE"})
     public ResponseEntity<ApiResponse<Long>> createBooking(
-            @Valid @RequestBody CreateBookingRequest request
+            @Valid @RequestBody CreateBookingRequest request,
+            @AuthenticationPrincipal CustomUserDetails userDetails
     ) throws Exception {
+        Long userId = userDetails.getUser().getId();
         CreateBookingCommand command = new CreateBookingCommand(
                 request.accommodationId(),
-                request.userId(),
+                userId,
                 objectMapper.writeValueAsString(request.flightInfo()),
                 request.flightPrice(),
                 request.checkInDate(),
@@ -76,9 +78,10 @@ public class BookingController {
     @ApiErrorCodeExample(domain = BookingErrorCode.class, value = {"BOOKING_NOT_FOUND"})
     public ResponseEntity<ApiResponse<Void>> cancelBooking(
             @Parameter(description = "예약 ID", example = "1")
-            @PathVariable Long bookingId
+            @PathVariable Long bookingId,
+            @AuthenticationPrincipal CustomUserDetails userDetails // 추가
     ) {
-        bookingCommandUseCase.cancel(bookingId);
+        bookingCommandUseCase.cancel(bookingId, userDetails.getUser().getId()); // userId 전달
         return ResponseEntity.ok(ApiResponse.success("BOOKING_CANCELLED", "예약 취소 요청이 완료되었습니다."));
     }
 }

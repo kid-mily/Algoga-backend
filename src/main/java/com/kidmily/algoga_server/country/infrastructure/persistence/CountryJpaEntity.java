@@ -22,13 +22,18 @@ public class CountryJpaEntity {
     @Column(name = "name", nullable = false)
     private String name;
 
+    @Column(name = "iata_code", length = 10)
+    private String iataCode;
+
     @Column(name = "is_active", nullable = false)
     private boolean isActive;
 
-    public CountryJpaEntity(Long id, String continent, String name, boolean isActive) {
+    public CountryJpaEntity(Long id, String continent, String name, String iataCode, boolean isActive) {
         this.id = id;
         this.continent = continent;
         this.name = name;
+        this.iataCode = iataCode;
         this.isActive = isActive;
     }
+
 }

@@ -7,6 +7,7 @@ import com.kidmily.algoga_server.global.exception.BusinessException;
 import com.kidmily.algoga_server.payment.domain.model.Payment;
 import com.kidmily.algoga_server.payment.domain.model.PaymentStatus;
 import com.kidmily.algoga_server.payment.domain.repository.PaymentRepository;
+import com.kidmily.algoga_server.payment.infrastructure.portone.PortOneClient; // 추가
 import com.kidmily.algoga_server.refund.application.command.CreateRefundCommand;
 import com.kidmily.algoga_server.refund.application.usecase.RefundCommandUseCase;
 import com.kidmily.algoga_server.refund.domain.model.RefundRequest;
@@ -31,6 +32,7 @@ public class RefundCommandService implements RefundCommandUseCase {
     private final RefundRepository refundRepository;
     private final BookingRepository bookingRepository;
     private final PaymentRepository paymentRepository;
+    private final PortOneClient portOneClient; // 추가
 
     @Override
     public Long handle(CreateRefundCommand command) {
@@ -168,9 +170,30 @@ public class RefundCommandService implements RefundCommandUseCase {
             throw new BusinessException(RefundErrorCode.INVALID_REFUND_STATUS);
         }
 
+        // 1. Payment 조회 → portonePaymentId 획득
+        Payment payment = paymentRepository.findById(refundRequest.getPaymentId())
+                .orElseThrow(() -> new BusinessException(RefundErrorCode.PAYMENT_NOT_FOUND));
+
+        // 2. PortOne 실제 환불 API 호출
+        portOneClient.cancelPayment(
+                payment.getPortonePaymentId(),
+                refundRequest.getAmount(),
+                refundRequest.getReason()
+        );
+
+        // 3. Payment 상태 → REFUNDED
+        payment.markRefunded();
+        paymentRepository.save(payment);
+
+        // 4. Booking 상태 → REFUNDED
+        bookingRepository.updateStatus(refundRequest.getBookingId(), BookingStatus.REFUNDED);
+
+        // 5. RefundRequest 상태 → COMPLETED
         refundRequest.complete();
         refundRepository.save(refundRequest);
-        log.info("[RefundCommandService] 환불 완료 - refundId: {}", refundId);
+
+        log.info("[RefundCommandService] 환불 완료 - refundId: {}, portonePaymentId: {}",
+                refundId, payment.getPortonePaymentId());
     }
 
     private RefundRequest findRefundOrThrow(Long refundId) {
