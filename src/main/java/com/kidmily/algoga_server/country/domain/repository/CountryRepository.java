@@ -6,4 +6,5 @@ import java.util.Optional;
 public interface CountryRepository {
     List<Country> findAllActive();
     Optional<Country> findById(Long id);
+    Country save(String continent, String name, String iataCode);
 }

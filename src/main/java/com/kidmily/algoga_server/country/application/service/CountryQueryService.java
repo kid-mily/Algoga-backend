@@ -25,7 +25,8 @@ public class CountryQueryService implements CountryQueryUseCase {
                 .map(country -> new CountryResponse(
                         country.getId(),
                         country.getContinent(),
-                        country.getName()
+                        country.getName(),
+                        country.getIataCode()
                 ))
                 .toList();
 

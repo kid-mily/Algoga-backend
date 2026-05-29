@@ -1,7 +1,9 @@
 package com.kidmily.algoga_server.payment.application.service;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.kidmily.algoga_server.benefit.domain.model.MileageHistory;
 import com.kidmily.algoga_server.benefit.domain.model.UserCoupon;
+import com.kidmily.algoga_server.benefit.domain.repository.MileageHistoryRepository;
 import com.kidmily.algoga_server.benefit.domain.repository.UserCouponRepository;
 import com.kidmily.algoga_server.booking.domain.model.Booking;
 import com.kidmily.algoga_server.booking.domain.model.BookingStatus;
@@ -29,6 +31,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Slf4j
 @Service
@@ -43,6 +46,7 @@ public class PaymentCommandService implements PaymentCommandUseCase {
     private final ApplicationEventPublisher eventPublisher;
     private final CourseRepository courseRepository;
     private final UserCouponRepository userCouponRepository;
+    private final MileageHistoryRepository mileageHistoryRepository;
 
     @Override
     public Long handle(CreatePaymentCommand command) {
@@ -71,7 +75,12 @@ public class PaymentCommandService implements PaymentCommandUseCase {
             log.info("[PaymentCommandService] 쿠폰 적용 - userCouponId: {}, 할인: {}", command.usedCouponId(), couponDiscount);
         }
 
-        validateAmount(booking, command.paymentType(), command.amount(), couponDiscount);
+        if (command.usedMileage() > 0) {
+            validateMileageBalance(command.userId(), command.usedMileage());
+            log.info("[PaymentCommandService] 마일리지 적용 - userId: {}, 마일리지: {}", command.userId(), command.usedMileage());
+        }
+
+        validateAmount(booking, command.paymentType(), command.amount(), couponDiscount, command.usedMileage());
 
         JsonNode portoneResult = portOneClient.getPayment(command.portonePaymentId());
         String portoneStatus = portoneResult.path("status").asText();
@@ -103,6 +112,13 @@ public class PaymentCommandService implements PaymentCommandUseCase {
             if (command.usedCouponId() != null) {
                 userCouponRepository.markUsed(command.usedCouponId(), LocalDateTime.now());
                 log.info("[PaymentCommandService] 쿠폰 사용 처리 - userCouponId: {}", command.usedCouponId());
+            }
+
+            if (command.usedMileage() > 0) {
+                mileageHistoryRepository.save(MileageHistory.use(
+                        command.userId(), null, command.usedMileage(), "결제 마일리지 사용"
+                ));
+                log.info("[PaymentCommandService] 마일리지 차감 - userId: {}, 차감액: {}", command.userId(), command.usedMileage());
             }
 
             User user = userRepository.findById(command.userId())
@@ -155,6 +171,11 @@ public class PaymentCommandService implements PaymentCommandUseCase {
             log.info("[PaymentCommandService] 강의 쿠폰 적용 - userCouponId: {}", command.usedCouponId());
         }
 
+        if (command.usedMileage() > 0) {
+            validateMileageBalance(command.userId(), command.usedMileage());
+            log.info("[PaymentCommandService] 강의 마일리지 적용 - userId: {}, 마일리지: {}", command.userId(), command.usedMileage());
+        }
+
         JsonNode portoneResult = portOneClient.getPayment(command.portonePaymentId());
         String portoneStatus = portoneResult.path("status").asText();
         int paidAmount = portoneResult.path("amount").path("total").asInt();
@@ -183,6 +204,13 @@ public class PaymentCommandService implements PaymentCommandUseCase {
             if (command.usedCouponId() != null) {
                 userCouponRepository.markUsed(command.usedCouponId(), LocalDateTime.now());
                 log.info("[PaymentCommandService] 쿠폰 사용 처리 - userCouponId: {}", command.usedCouponId());
+            }
+
+            if (command.usedMileage() > 0) {
+                mileageHistoryRepository.save(MileageHistory.use(
+                        command.userId(), command.courseId(), command.usedMileage(), "강의 결제 마일리지 사용"
+                ));
+                log.info("[PaymentCommandService] 마일리지 차감 - userId: {}, 차감액: {}", command.userId(), command.usedMileage());
             }
 
             User user = userRepository.findById(command.userId())
@@ -272,17 +300,28 @@ public class PaymentCommandService implements PaymentCommandUseCase {
         };
     }
 
-    private void validateAmount(Booking booking, PaymentType type, int amount, int couponDiscount) {
+    private void validateAmount(Booking booking, PaymentType type, int amount, int couponDiscount, int usedMileage) {
         int expected = switch (type) {
-            case DEPOSIT -> booking.getDepositPrice() - couponDiscount;
-            case BALANCE -> booking.getBalancePrice() - couponDiscount;
-            case FULL -> booking.getTotalPrice() - couponDiscount;
+            case DEPOSIT -> booking.getDepositPrice() - couponDiscount - usedMileage;
+            case BALANCE -> booking.getBalancePrice() - couponDiscount - usedMileage;
+            case FULL -> booking.getTotalPrice() - couponDiscount - usedMileage;
             case LECTURE_ONLY -> amount;
         };
 
         if (type != PaymentType.LECTURE_ONLY && expected != amount) {
-            log.warn("[PaymentCommandService] 결제 금액 불일치 - 예상: {}, 요청: {}, 쿠폰할인: {}", expected, amount, couponDiscount);
+            log.warn("[PaymentCommandService] 결제 금액 불일치 - 예상: {}, 요청: {}, 쿠폰할인: {}, 마일리지: {}", expected, amount, couponDiscount, usedMileage);
             throw new BusinessException(PaymentErrorCode.INVALID_PAYMENT_AMOUNT);
+        }
+    }
+
+    private void validateMileageBalance(Long userId, int usedMileage) {
+        List<MileageHistory> histories = mileageHistoryRepository.findByUserId(userId);
+        int balance = histories.stream()
+                .mapToInt(h -> "EARN".equals(h.getType()) ? h.getAmount() : -h.getAmount())
+                .sum();
+        if (balance < usedMileage) {
+            log.warn("[PaymentCommandService] 마일리지 잔액 부족 - userId: {}, 잔액: {}, 요청: {}", userId, balance, usedMileage);
+            throw new BusinessException(PaymentErrorCode.INSUFFICIENT_MILEAGE);
         }
     }
 

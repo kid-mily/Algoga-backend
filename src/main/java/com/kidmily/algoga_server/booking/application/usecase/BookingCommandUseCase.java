@@ -6,5 +6,5 @@ public interface BookingCommandUseCase {
 
     Long handle(CreateBookingCommand command);
 
-    void cancel(Long bookingId);
+    void cancel(Long bookingId, Long userId);
 }

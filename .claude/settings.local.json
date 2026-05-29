@@ -7,7 +7,12 @@
       "PowerShell(ls -R \"C:\\\\Lecture\\\\3-project-algoga\" 2>&1)",
       "Bash(Get-ChildItem -Path \"C:\\\\Lecture\\\\3-project-algoga\\\\src\\\\main\\\\java\\\\com\\\\kidmily\\\\algoga_server\\\\booking\" -Recurse)",
       "Bash(Select-Object FullName)",
-      "Bash(Sort-Object FullName)"
+      "Bash(Sort-Object FullName)",
+      "Bash(ls -la /c/Lecture/ 2>&1 | head -20)",
+      "Bash(ls /mnt/c/Lecture/)",
+      "Bash(Get-ChildItem -Path \"C:\\\\Lecture\\\\algoga-server-front\\\\src\" -Recurse -Directory)",
+      "Bash(Select-Object -ExpandProperty FullName)",
+      "Bash(Sort-Object)"
     ]
   }
 }

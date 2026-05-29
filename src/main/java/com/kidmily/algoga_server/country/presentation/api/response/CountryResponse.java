@@ -12,6 +12,9 @@ public record CountryResponse(
         String contient,
 
         @Schema(description = "국가명", example = "일본")
-        String name
+        String name,
+
+        @Schema(description = "대표 공항 IATA 코드", example = "NRT")
+        String iataCode
 ) {
 }

@@ -13,6 +13,7 @@ public class CountryMapper {
                 jpaEntity.getId(),
                 jpaEntity.getContinent(),
                 jpaEntity.getName(),
+                jpaEntity.getIataCode(),
                 jpaEntity.isActive()
         );
     }

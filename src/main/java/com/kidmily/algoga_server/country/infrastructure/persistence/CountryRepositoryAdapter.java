@@ -28,4 +28,10 @@ public class CountryRepositoryAdapter implements CountryRepository {
         return springDataRepository.findById(id)
                 .map(countryMapper::toDomain);
     }
+
+    @Override
+    public Country save(String continent, String name, String iataCode) {
+        CountryJpaEntity entity = new CountryJpaEntity(null, continent, name, iataCode, true);
+        return countryMapper.toDomain(springDataRepository.save(entity));
+    }
 }
