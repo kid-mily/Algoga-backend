@@ -1,0 +1,78 @@
+### =========================================
+### 🌟 [이메일 인증 테스트]
+### =========================================
+
+### 1. 이메일 인증번호 발송 요청
+# (주의) 하연님이 메일을 확인할 수 있는 '진짜 이메일'을 적어주세요!
+POST http://localhost:15000/api/v1/auth/email/send-code
+Content-Type: application/json
+
+{
+  "email": "lhy2004lhy@gmail.com"
+}
+
+> {%
+    client.test("Request executed successfully", function() {
+        client.assert(response.status === 200, "Response status is not 200");
+    });
+%}
+
+
+### 2. 이메일 인증번호 확인
+# 💡 위 API를 실행하고 실제 메일함으로 날아온 6자리 숫자를 "code"에 적고 실행하세요!
+POST http://localhost:15000/api/v1/auth/email/verify-code
+Content-Type: application/json
+
+{
+  "email": "lhy2004lhy@gmail.com",
+  "code": "205846"
+}
+
+> {%
+    client.test("Request executed successfully", function() {
+        client.assert(response.status === 200, "Response status is not 200");
+    });
+%}
+
+
+### 3. 회원가입 (이메일 인증 완료 후 진행)
+# 💡 반드시 위 1번, 2번을 순서대로 통과한 "같은 이메일"을 넣어야 가입이 성공합니다!
+POST http://localhost:15000/api/v1/auth/signup
+Content-Type: application/json
+
+{
+  "username": "algoga_new_user",
+  "email": "lhy2004lhy@gmail.com",
+  "password": "Password123",
+  "name": "김알고가",
+  "phone": "010-1234-5678",
+  "birthDate": "2000-01-01",
+  "gender": "MALE",
+  "nickname": "알고가조아",
+  "termsServiceAgreed": true,
+  "termsPrivacyAgreed": true,
+  "termsMarketingAgreed": false
+}
+
+
+
+### 3. 일반 로그인 (POST /api/v1/auth/login)
+# - 1번에서 가입한 정보로 로그인을 시도합니다.
+# - 로그인이 성공하면 발급받은 accessToken과 refreshToken을 변수에 자동 저장합니다.
+POST http://localhost:15000/api/v1/auth/login
+Content-Type: application/json
+Accept: application/json
+
+{
+  "username": "algoga_new_user",
+  "password": "Password123"
+}
+
+> {%
+    // 로그인 응답으로 온 토큰을 인텔리제이 메모리에 임시로 저장합니다.
+    if(response.status === 200) {
+        client.global.set("accessToken", response.body.data.accessToken);
+        client.global.set("refreshToken", response.body.data.refreshToken);
+        client.log("Access Token: " + client.global.get("accessToken"));
+    }
+%}

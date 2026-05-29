@@ -30,6 +30,40 @@ Accept: application/json
     });
 %}
 
+
+### 1. 일반 회원가입 (POST /api/v1/auth/signup)
+# - 정상적인 데이터를 넣어서 가입이 잘 되는지 확인합니다.
+# "termsServiceAgreed" 랑 "termsPrivacyAgreed" 둘 다 필수 동의 약관이기 때문에
+# 둘 중 하나만 false여도 회원가입 안됨
+POST http://localhost:15000/api/v1/auth/signup
+Content-Type: application/json
+Accept: application/json
+
+{
+  "username": "wndmsld12",
+  "email": "wndmsld12@gmail.com",
+  "password": "password8888",
+  "name": "이주은",
+  "phone": "010-1357-2468",
+  "birthDate": "2004-03-02",
+  "gender": "FEMALE",
+  "nickname": "주은주은",
+  "referralCode": "REF008",
+  "signupPath": "인스타그램",
+  "termsServiceAgreed": true,
+  "termsPrivacyAgreed": true,
+  "termsMarketingAgreed": false
+}
+
+> {%
+    // 응답이 오면 상태 코드와 결과를 콘솔에 출력합니다.
+    client.test("회원가입 성공 여부 확인", function() {
+        client.assert(response.status === 201, "상태 코드가 201이 아닙니다.");
+        client.log("응답 메시지: " + response.body.message);
+    });
+%}
+
+
 ### ------------------------------------------------------------------------
 
 ### 2. 일반 회원가입 - 이메일 중복 에러 테스트

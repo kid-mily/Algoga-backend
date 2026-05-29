@@ -6,6 +6,8 @@ import com.kidmily.algoga_server.user.domain.Gender;
 import com.kidmily.algoga_server.user.domain.SocialType;
 import com.kidmily.algoga_server.user.domain.User;
 import com.kidmily.algoga_server.user.domain.UserRepository;
+import com.kidmily.algoga_server.user.exception.AuthErrorCode;
+import com.kidmily.algoga_server.user.exception.AuthException;
 import com.kidmily.algoga_server.user.exception.UserErrorCode;
 import com.kidmily.algoga_server.user.exception.UserException;
 import com.kidmily.algoga_server.user.presentation.request.*;
@@ -13,12 +15,14 @@ import com.kidmily.algoga_server.user.presentation.response.AuthTokenResponse;
 import com.kidmily.algoga_server.user.presentation.response.FindIdResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 
 @Slf4j
 @Service
@@ -30,15 +34,69 @@ public class AuthService {
     private final PasswordEncoder passwordEncoder;
     private final GlobalJwtProvider globalJwtProvider;
     private final EmailSender emailSender;
+    private final RedisTemplate<String, String> redisTemplate; // Redis 도구 주입!
 
-    // 1. 회원가입
-    public void signup(AuthSignupRequest request) {
-        if (userRepository.existsByEmail(request.email())) {
-            throw new UserException(UserErrorCode.ALREADY_EXISTS_EMAIL);
+    // 이메일 인증번호 발송
+    public void sendVerificationCode(SendEmailCodeRequest request) {
+        String email = request.email().toLowerCase();
+
+        if (userRepository.existsByEmail(email)) {
+            throw new AuthException(AuthErrorCode.DUPLICATE_EMAIL);
         }
+
+        // 6자리 랜덤 난수 생성
+        String code = String.valueOf((int) (Math.random() * 899999) + 100000);
+
+        // Redis에 저장 (키: "AUTH_CODE:이메일", 값: 인증번호, 만료시간: 3분)
+        redisTemplate.opsForValue().set("AUTH_CODE:" + email, code, 3, TimeUnit.MINUTES);
+
+        // 이메일 발송
+        String subject = "[ALGOGA] 회원가입 이메일 인증번호";
+        String body = "안녕하세요, ALGOGA입니다.\n\n"
+                + "요청하신 회원가입 인증번호는 다음과 같습니다.\n"
+                + "인증번호 : [" + code + "]\n\n"
+                + "3분 이내에 입력해 주세요.";
+
+        emailSender.sendEmail(email, subject, body);
+        log.info("회원가입 인증번호 발송 완료 [요청 이메일: {}]", email);
+    }
+
+    // 이메일 인증번호 확인
+    public void verifyEmailCode(VerifyEmailCodeRequest request) {
+        String email = request.email().toLowerCase();
+
+        // 1. Redis에서 해당 이메일의 인증번호 꺼내기
+        String savedCode = redisTemplate.opsForValue().get("AUTH_CODE:" + email);
+
+        // 2. 검증 (포스트잇이 없거나, 번호가 다르면 에러!)
+        if (savedCode == null || !savedCode.equals(request.code())) {
+            throw new AuthException(AuthErrorCode.EMAIL_AUTH_CODE_MISMATCH);
+        }
+
+        // 3. 인증 성공 시: 기존 포스트잇 떼서 버리고, "인증 완료" 포스트잇을 30분짜리로 새로 붙임
+        redisTemplate.delete("AUTH_CODE:" + email);
+        redisTemplate.opsForValue().set("AUTH_SUCCESS:" + email, "true", 30, TimeUnit.MINUTES);
+
+        log.info("이메일 인증 성공 [이메일: {}]", email);
+    }
+
+    // 최종 회원가입
+    public void signup(AuthSignupRequest request) {
+        String email = request.email().toLowerCase();
+
+        if (userRepository.existsByEmail(email)) {
+            throw new AuthException(AuthErrorCode.DUPLICATE_EMAIL);
+        }
+
+        // 가입 직전에 Redis에 "인증 완료" 포스트잇이 있는지 확인!
+        String isVerified = redisTemplate.opsForValue().get("AUTH_SUCCESS:" + email);
+        if (isVerified == null || !isVerified.equals("true")) {
+            throw new AuthException(AuthErrorCode.EMAIL_NOT_VERIFIED);
+        }
+
         User user = User.builder()
                 .username(request.username())
-                .email(request.email().toLowerCase())
+                .email(email)
                 .password(passwordEncoder.encode(request.password()))
                 .name(request.name())
                 .phone(request.phone())
@@ -59,10 +117,13 @@ public class AuthService {
                 .build();
         userRepository.save(user);
 
+        // 가입이 성공적으로 끝났으니, "인증 완료" 포스트잇도 떼서 버립니다! (청소)
+        redisTemplate.delete("AUTH_SUCCESS:" + email);
+
         log.info("신규 회원가입 완료 [아이디: {}, 이메일: {}]", user.getUsername(), user.getEmail());
     }
 
-    // 2. 로그인
+    // 4. 로그인
     public AuthTokenResponse login(AuthLoginRequest request) {
         User user = userRepository.findByUsername(request.username())
                 .orElseThrow(() -> new UserException(UserErrorCode.NOT_FOUND_USER));
@@ -91,12 +152,20 @@ public class AuthService {
         String accessToken = globalJwtProvider.createUserAccessToken(user.getEmail());
         String refreshToken = globalJwtProvider.createUserRefreshToken(user.getEmail());
 
+        // Redis에 Refresh Token 저장 (만료시간 7일)
+        redisTemplate.opsForValue().set(
+                "RT:" + user.getEmail(),
+                refreshToken,
+                604800000,
+                TimeUnit.MILLISECONDS
+        );
+
         log.info("로그인 성공 [아이디: {}]", user.getUsername());
 
         return new AuthTokenResponse(accessToken, refreshToken, user.getRequiresPasswordChange());
     }
 
-    // 3. 아이디 찾기 (아이디를 가져와서 마스킹하도록 수정)
+    // 5. 아이디 찾기
     public FindIdResponse findId(FindIdRequest request) {
         User user = userRepository.findByNameAndEmail(request.name(), request.email().toLowerCase())
                 .orElseThrow(() -> new UserException(UserErrorCode.NOT_FOUND_USER));
@@ -109,7 +178,7 @@ public class AuthService {
         return new FindIdResponse(maskedId);
     }
 
-    // 4. 비밀번호 찾기
+    // 6. 비밀번호 찾기
     public void findPassword(FindPasswordRequest request) {
         User user = userRepository.findByUsernameAndEmail(request.username(), request.email().toLowerCase())
                 .orElseThrow(() -> new UserException(UserErrorCode.NOT_FOUND_USER));
@@ -134,7 +203,7 @@ public class AuthService {
         return id.substring(0, 3) + "*".repeat(id.length() - 3);
     }
 
-    // 비밀번호 강제 변경 (임시 비밀번호로 로그인한 유저 대상)
+    // 7. 비밀번호 강제 변경
     public void resetPassword(String email, ResetPasswordRequest request) {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new UserException(UserErrorCode.NOT_FOUND_USER));
@@ -151,8 +220,21 @@ public class AuthService {
         log.info("비밀번호 강제 변경 완료 [이메일: {}]", email);
     }
 
-    // 로그아웃
+    // 8. 로그아웃 (Redis에서 토큰 삭제 로직 추가됨)
     public void logout(String email) {
+        // Redis에서 해당 유저의 Refresh Token 삭제
+        redisTemplate.delete("RT:" + email);
         log.info("로그아웃 처리 완료 [접속 종료 이메일: {}]", email);
+    }
+
+    // 토큰 재발급을 위한 검증 메서드 (이게 있어야 재발급이 됩니다!)
+    public String refreshAccessToken(String email, String refreshToken) {
+        String savedRefreshToken = redisTemplate.opsForValue().get("RT:" + email);
+
+        if (savedRefreshToken == null || !savedRefreshToken.equals(refreshToken)) {
+            throw new AuthException(AuthErrorCode.REFRESH_TOKEN_NOT_FOUND);
+        }
+
+        return globalJwtProvider.createUserAccessToken(email);
     }
 }
