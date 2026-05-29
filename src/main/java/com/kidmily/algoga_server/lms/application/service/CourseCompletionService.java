@@ -3,6 +3,7 @@ package com.kidmily.algoga_server.lms.application.service;
 import com.kidmily.algoga_server.lms.application.command.CompleteCourseCommand;
 import com.kidmily.algoga_server.lms.application.usecase.CourseCompletionUseCase;
 import com.kidmily.algoga_server.lms.domain.model.Chapter;
+import com.kidmily.algoga_server.lms.domain.model.Course;
 import com.kidmily.algoga_server.lms.domain.model.CourseCompletion;
 import com.kidmily.algoga_server.lms.domain.repository.ChapterRepository;
 import com.kidmily.algoga_server.lms.domain.repository.CourseCompletionRepository;
@@ -11,8 +12,10 @@ import com.kidmily.algoga_server.lms.domain.repository.LearningProgressRepositor
 import com.kidmily.algoga_server.lms.domain.repository.QuizSubmissionRepository;
 import com.kidmily.algoga_server.lms.exception.LmsErrorCode;
 import com.kidmily.algoga_server.lms.exception.LmsException;
+import com.kidmily.algoga_server.notification.domain.event.CourseCompletedEvent;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -29,6 +32,7 @@ public class CourseCompletionService implements CourseCompletionUseCase {
     private final LearningProgressRepository learningProgressRepository;
     private final QuizSubmissionRepository quizSubmissionRepository;
     private final CourseCompletionRepository courseCompletionRepository;
+    private final ApplicationEventPublisher eventPublisher; // 추가
 
     @Override
     public CourseCompletion completeCourse(CompleteCourseCommand command) {
@@ -44,8 +48,17 @@ public class CourseCompletionService implements CourseCompletionUseCase {
                 command.userId(),
                 command.courseId()
         );
-
+        // 알림 이벤트 추가
         CourseCompletion savedCourseCompletion = courseCompletionRepository.save(courseCompletion);
+
+        String courseName = courseRepository.findByIdAndDeletedFalse(command.courseId())
+                .map(Course::getTitle)
+                .orElse("강의");
+
+        eventPublisher.publishEvent(new CourseCompletedEvent(
+                savedCourseCompletion.getUserId(),
+                courseName
+        )); // 추가
 
         log.info("[Course Completion Command] 강의 이수 완료 처리 성공. userId={}, courseId={}, completionId={}, certificateCode={}",
                 savedCourseCompletion.getUserId(),

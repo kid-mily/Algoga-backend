@@ -9,7 +9,7 @@ public enum NotificationType {
 
     // 학습
     COURSE_REGISTERED("강의 수강 등록", NotificationCategory.LEARNING),
-    COURSE_COMPLETED("강의 수강 완료", NotificationCategory.LEARNING),
+    COURSE_COMPLETED("강의 수강 완료", NotificationCategory.LEARNING), // 완료
     DDAY_REMINDER("D-day 알림", NotificationCategory.LEARNING),
 
     // Q&A
