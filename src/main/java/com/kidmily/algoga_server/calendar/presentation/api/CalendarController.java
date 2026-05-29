@@ -2,6 +2,7 @@ package com.kidmily.algoga_server.calendar.presentation.api;
 
 import com.kidmily.algoga_server.calendar.application.usecase.CalendarQueryUseCase;
 import com.kidmily.algoga_server.calendar.exception.CalendarErrorCode;
+import com.kidmily.algoga_server.calendar.exception.CalendarException;
 import com.kidmily.algoga_server.calendar.presentation.api.response.CalendarResponse;
 import com.kidmily.algoga_server.global.annotation.swagger.ApiErrorCodeExample;
 import com.kidmily.algoga_server.global.common.api.response.ApiResponse;
@@ -13,6 +14,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @RestController
 @RequiredArgsConstructor
@@ -34,9 +37,15 @@ public class CalendarController {
             @Parameter(description = "조회 월", example = "5")
             @RequestParam int month
     ) {
-        Long currentUserId = ((CustomUserDetails) SecurityContextHolder.getContext()
-                .getAuthentication().getPrincipal()).getUser().getId();
+        Object principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
 
+        // 비로그인이면 빈 캘린더 반환
+        if (!(principal instanceof CustomUserDetails)) {
+            return ResponseEntity.ok(ApiResponse.success("CALENDAR_FOUND", "통합 캘린더 조회에 성공했습니다.",
+                    new CalendarResponse(year, month, List.of())));
+        }
+
+        Long currentUserId = ((CustomUserDetails) principal).getUser().getId();
         CalendarResponse responseData = calendarQueryUseCase.getCalendar(currentUserId, year, month);
 
         return ResponseEntity.ok(ApiResponse.success("CALENDAR_FOUND", "통합 캘린더 조회에 성공했습니다.", responseData));

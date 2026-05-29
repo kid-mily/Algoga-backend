@@ -7,7 +7,8 @@ public record CommentRepliedEvent(
         Long replierId,         // 대댓글 작성자
         String replierNickname,
         Long postId,
-        Long parentCommentId
+        Long parentCommentId,
+        String replyContent
 ) implements NotificationEvent {
 
     @Override
@@ -24,4 +25,10 @@ public record CommentRepliedEvent(
     public String getMessage() {
         return replierNickname + "님이 내 댓글에 답글을 달았습니다";
     }
+
+    @Override
+    public String getDetail() { return replyContent; }
+
+    @Override
+    public Long getReferenceId() { return postId; }
 }

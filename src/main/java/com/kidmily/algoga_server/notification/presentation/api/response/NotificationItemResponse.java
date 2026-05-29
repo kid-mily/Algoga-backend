@@ -16,6 +16,12 @@ public record NotificationItemResponse(
         @Schema(description = "알림 메시지", example = "김민준님이 내 게시글에 댓글을 달았습니다")
         String message,
 
+        @Schema(description = "알림 세부내용", example = "정말 멋진 풍경이에요!")
+        String detail,
+
+        @Schema(description = "알림 참조 ID (게시글ID, 결제ID 등)", example = "43")
+        Long referenceId,
+
         @Schema(description = "읽음 여부", example = "false")
         Boolean isRead,
 

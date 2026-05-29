@@ -7,6 +7,10 @@ public record PaymentCompletedEvent(
         String itemName,
         int amount
 ) implements NotificationEvent {
+    @Override
+    public String getDetail() {
+        return "";
+    }
 
     @Override
     public Long getReceiverId() {
@@ -22,4 +26,7 @@ public record PaymentCompletedEvent(
     public String getMessage() {
         return "결제 완료: " + itemName + " " + amount + "원";
     }
+
+    @Override
+    public Long getReferenceId() { return null; }
 }

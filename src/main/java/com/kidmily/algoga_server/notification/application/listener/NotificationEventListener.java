@@ -1,17 +1,23 @@
 package com.kidmily.algoga_server.notification.application.listener;
 
+import com.kidmily.algoga_server.calendar.application.port.AccommodationPort;
+import com.kidmily.algoga_server.notification.application.port.CoursePort;
 import com.kidmily.algoga_server.notification.domain.event.NotificationEvent;
 import com.kidmily.algoga_server.notification.domain.model.Notification;
 import com.kidmily.algoga_server.notification.domain.model.NotificationCategory;
 import com.kidmily.algoga_server.notification.domain.model.NotificationSetting;
+import com.kidmily.algoga_server.notification.domain.model.NotificationType;
 import com.kidmily.algoga_server.notification.domain.repository.NotificationRepository;
 import com.kidmily.algoga_server.notification.domain.repository.NotificationSettingRepository;
+import com.kidmily.algoga_server.payment.domain.event.PaymentCompletedEvent;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.event.EventListener;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
+
+
 
 @Slf4j
 @Component
@@ -20,6 +26,9 @@ public class NotificationEventListener {
 
     private final NotificationRepository notificationRepository;
     private final NotificationSettingRepository notificationSettingRepository;
+    private final CoursePort coursePort;
+
+
 
     @Async
     @EventListener
@@ -46,7 +55,9 @@ public class NotificationEventListener {
         Notification notification = Notification.create(
                 event.getReceiverId(),
                 event.getType(),
-                event.getMessage()
+                event.getMessage(),
+                event.getDetail(),
+                event.getReferenceId()
         );
 
         notificationRepository.save(notification);
@@ -68,5 +79,43 @@ public class NotificationEventListener {
                 ));
 
         return setting.isEnabledFor(category);
+    }
+
+    // 결제 알림
+    @Async
+    @EventListener
+    @Transactional
+    public void handlePaymentCompletedEvent(
+            PaymentCompletedEvent event) {
+
+        log.info("[NotificationEventListener] 결제 완료 이벤트 수신 - userId: {}", event.userId());
+
+        String message = resolvePaymentMessage(event);
+
+        Notification notification = Notification.create(
+                event.userId(),
+                NotificationType.PAYMENT_COMPLETED,
+                message,
+                null,
+                null
+        );
+
+        notificationRepository.save(notification);
+
+        log.info("[NotificationEventListener] 결제 완료 알림 저장 완료 - userId: {}", event.userId());
+    }
+
+    private String resolvePaymentMessage(
+            PaymentCompletedEvent event) {
+        if (event.courseId() != null) {
+            String courseName = coursePort.getCourseName(event.courseId());
+            return courseName + " 강의가 결제 완료되었습니다";
+        }
+        return switch (event.paymentType()) {
+            case DEPOSIT -> event.bookingNumber() + " 숙소 계약금 결제가 완료되었습니다";
+            case BALANCE -> event.bookingNumber() + " 숙소 잔금 결제가 완료되었습니다";
+            case FULL -> event.bookingNumber() + " 숙소 결제가 완료되었습니다";
+            default -> event.bookingNumber() + " 결제가 완료되었습니다";
+        };
     }
 }

@@ -46,6 +46,8 @@ public class NotificationQueryService implements NotificationQueryUseCase {
                         n.getNotificationId(),
                         n.getType(),
                         n.getMessage(),
+                        n.getDetail(),
+                        n.getReferenceId(),
                         n.getIsRead(),
                         n.getCreatedAt()
                 ))

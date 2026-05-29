@@ -19,4 +19,8 @@ public interface SpringDataNotificationRepository extends JpaRepository<Notifica
     @Modifying
     @Query("UPDATE NotificationJpaEntity n SET n.isRead = true WHERE n.userId = :userId AND n.isRead = false")
     void markAllAsRead(@Param("userId") Long userId);
+
+    @Modifying
+    @Query("DELETE FROM NotificationJpaEntity n WHERE n.userId = :userId")
+    void deleteAllByUserId(@Param("userId") Long userId);
 }

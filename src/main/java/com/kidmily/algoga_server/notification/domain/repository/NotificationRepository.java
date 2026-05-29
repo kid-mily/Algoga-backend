@@ -13,4 +13,5 @@ public interface NotificationRepository {
     long countUnreadByUserId(Long userId);
     void markAllAsRead(Long userId);
     void deleteById(Long notificationId);
+    void deleteAllByUserId(Long userId);
 }
