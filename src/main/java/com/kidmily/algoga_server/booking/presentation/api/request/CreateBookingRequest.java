@@ -11,10 +11,6 @@ public record CreateBookingRequest(
         @NotNull(message = "숙소 ID는 필수입니다.")
         Long accommodationId,
 
-        @Schema(description = "유저 ID", example = "1")
-        @NotNull(message = "유저 ID는 필수입니다.")
-        Long userId,
-
         @Schema(description = "항공편 정보")
         @NotNull(message = "항공편 정보는 필수입니다.")
         FlightInfoRequest flightInfo,

@@ -40,14 +40,14 @@ Content-Type: application/json
 Accept: application/json
 
 {
-  "username": "wndmsld12",
-  "email": "wndmsld12@gmail.com",
+  "username": "wndmsld11",
+  "email": "wndmsld11@gmail.com",
   "password": "password8888",
   "name": "이주은",
-  "phone": "010-1357-2468",
+  "phone": "010-4836-3344",
   "birthDate": "2004-03-02",
   "gender": "FEMALE",
-  "nickname": "주은주은",
+  "nickname": "주은은",
   "referralCode": "REF008",
   "signupPath": "인스타그램",
   "termsServiceAgreed": true,

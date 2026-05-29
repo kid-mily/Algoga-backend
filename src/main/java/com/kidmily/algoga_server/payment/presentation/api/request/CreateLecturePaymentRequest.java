@@ -8,9 +8,6 @@ public record CreateLecturePaymentRequest(
         @NotNull(message = "강의 ID는 필수입니다.")
         Long courseId,
 
-        @NotNull(message = "사용자 ID는 필수입니다.")
-        Long userId,
-
         @Min(value = 1, message = "결제 금액은 1원 이상이어야 합니다.")
         int amount,
 

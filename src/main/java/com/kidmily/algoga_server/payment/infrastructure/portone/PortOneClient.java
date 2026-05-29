@@ -7,6 +7,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
 
+import java.util.Map; // 추가
+
 @Slf4j
 @Component
 public class PortOneClient {
@@ -33,6 +35,21 @@ public class PortOneClient {
                     .body(JsonNode.class);
         } catch (Exception e) {
             log.warn("[PortOneClient] PortOne API 호출 실패 - portonePaymentId: {}", portonePaymentId);
+            throw new BusinessException(PaymentErrorCode.PORTONE_API_ERROR);
+        }
+    }
+
+    // 결제 취소 - 환불 완료 처리 시 호출
+    public void cancelPayment(String portonePaymentId, int amount, String reason) {
+        log.info("[PortOneClient] 결제 취소 요청 - portonePaymentId: {}", portonePaymentId);
+        try {
+            restClient.post()
+                    .uri("/payments/{paymentId}/cancel", portonePaymentId)
+                    .body(Map.of("reason", reason, "amount", amount))
+                    .retrieve()
+                    .toBodilessEntity();
+        } catch (Exception e) {
+            log.warn("[PortOneClient] PortOne 취소 API 호출 실패 - portonePaymentId: {}", portonePaymentId);
             throw new BusinessException(PaymentErrorCode.PORTONE_API_ERROR);
         }
     }

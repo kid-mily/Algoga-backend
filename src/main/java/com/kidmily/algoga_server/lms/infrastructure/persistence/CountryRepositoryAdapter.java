@@ -30,4 +30,5 @@ public class CountryRepositoryAdapter implements CountryRepository {
         return springDataRepository.findById(id)
                 .map(countryMapper::toDomain);
     }
+
 }

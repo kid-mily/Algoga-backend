@@ -76,4 +76,10 @@ public class Booking {
         this.status = BookingStatus.CANCEL_REQUESTED;
         this.updatedAt = LocalDateTime.now();
     }
+
+    // 환불 완료 시 상태 변경
+    public void markRefunded() {
+        this.status = BookingStatus.REFUNDED;
+        this.updatedAt = LocalDateTime.now();
+    }
 }
