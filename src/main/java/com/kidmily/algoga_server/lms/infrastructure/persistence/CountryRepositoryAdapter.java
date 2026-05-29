@@ -1,8 +1,9 @@
-package com.kidmily.algoga_server.country.infrastructure.persistence;
+package com.kidmily.algoga_server.lms.infrastructure.persistence;
 
-import com.kidmily.algoga_server.country.domain.model.Country;
-import com.kidmily.algoga_server.country.domain.repository.CountryRepository;
-import com.kidmily.algoga_server.country.infrastructure.mapper.CountryMapper;
+import com.kidmily.algoga_server.lms.domain.model.Country;
+import com.kidmily.algoga_server.lms.domain.repository.CountryRepository;
+import com.kidmily.algoga_server.lms.infrastructure.mapper.CountryMapper;
+import com.kidmily.algoga_server.lms.infrastructure.persistence.repository.SpringDataCountryRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 
@@ -18,20 +19,16 @@ public class CountryRepositoryAdapter implements CountryRepository {
 
     @Override
     public List<Country> findAllActive() {
-        return springDataRepository.findByIsActiveTrue()
+        return springDataRepository.findByActiveTrue()  // IsActive → Active로 변경
                 .stream()
                 .map(countryMapper::toDomain)
                 .toList();
     }
+
     @Override
     public Optional<Country> findById(Long id) {
         return springDataRepository.findById(id)
                 .map(countryMapper::toDomain);
     }
 
-    @Override
-    public Country save(String continent, String name, String iataCode) {
-        CountryJpaEntity entity = new CountryJpaEntity(null, continent, name, iataCode, true);
-        return countryMapper.toDomain(springDataRepository.save(entity));
-    }
 }
