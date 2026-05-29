@@ -1,8 +1,8 @@
 package com.kidmily.algoga_server.community.infrastructure.persistence;
 
 import com.kidmily.algoga_server.community.application.port.CountryPort;
-import com.kidmily.algoga_server.country.domain.model.Country;
-import com.kidmily.algoga_server.country.domain.repository.CountryRepository;
+import com.kidmily.algoga_server.lms.domain.model.Country;
+import com.kidmily.algoga_server.lms.domain.repository.CountryRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
