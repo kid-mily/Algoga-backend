@@ -88,11 +88,12 @@ public class AuthService {
             throw new AuthException(AuthErrorCode.DUPLICATE_EMAIL);
         }
 
-        // 가입 직전에 Redis에 "인증 완료" 포스트잇이 있는지 확인!
-        String isVerified = redisTemplate.opsForValue().get("AUTH_SUCCESS:" + email);
-        if (isVerified == null || !isVerified.equals("true")) {
-            throw new AuthException(AuthErrorCode.EMAIL_NOT_VERIFIED);
-        }
+        // 이메일 인증은 2차로 넘김.
+//        // 가입 직전에 Redis에 "인증 완료" 포스트잇이 있는지 확인!
+//        String isVerified = redisTemplate.opsForValue().get("AUTH_SUCCESS:" + email);
+//        if (isVerified == null || !isVerified.equals("true")) {
+//            throw new AuthException(AuthErrorCode.EMAIL_NOT_VERIFIED);
+//        }
 
         User user = User.builder()
                 .username(request.username())
@@ -117,8 +118,9 @@ public class AuthService {
                 .build();
         userRepository.save(user);
 
-        // 가입이 성공적으로 끝났으니, "인증 완료" 포스트잇도 떼서 버립니다! (청소)
-        redisTemplate.delete("AUTH_SUCCESS:" + email);
+        // 이메일 인증은 2차
+//        // 가입이 성공적으로 끝났으니, "인증 완료" 포스트잇도 떼서 버립니다! (청소)
+//        redisTemplate.delete("AUTH_SUCCESS:" + email);
 
         log.info("신규 회원가입 완료 [아이디: {}, 이메일: {}]", user.getUsername(), user.getEmail());
     }
