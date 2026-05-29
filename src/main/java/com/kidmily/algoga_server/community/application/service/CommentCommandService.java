@@ -68,7 +68,8 @@ public class CommentCommandService implements CommentCommandUseCase {
                         post.getAuthorId(),
                         command.userId(),
                         commenterNickname,
-                        command.postId()
+                        command.postId(),
+                        command.content()
                 ));
             }
         } else {
@@ -79,7 +80,8 @@ public class CommentCommandService implements CommentCommandUseCase {
                         command.userId(),
                         commenterNickname,
                         command.postId(),
-                        command.parentId()
+                        command.parentId(),
+                        command.content()
                 ));
             }
         }

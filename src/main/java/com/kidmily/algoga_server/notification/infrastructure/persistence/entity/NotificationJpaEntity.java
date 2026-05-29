@@ -36,6 +36,12 @@ public class NotificationJpaEntity {
     @Column(name = "created_at")
     private LocalDateTime createdAt;
 
+    @Column(name = "detail", length = 500)
+    private String detail;
+
+    @Column(name = "reference_id")
+    private Long referenceId;
+
     @PrePersist
     protected void onCreate() {
         this.createdAt = LocalDateTime.now();

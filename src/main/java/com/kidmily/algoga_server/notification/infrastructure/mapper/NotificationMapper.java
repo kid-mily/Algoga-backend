@@ -15,6 +15,8 @@ public interface NotificationMapper {
                 .userId(notification.getUserId())
                 .type(notification.getType())
                 .message(notification.getMessage())
+                .detail(notification.getDetail())
+                .referenceId(notification.getReferenceId())
                 .isRead(notification.getIsRead())
                 .build();
     }
@@ -26,6 +28,8 @@ public interface NotificationMapper {
                 entity.getUserId(),
                 entity.getType(),
                 entity.getMessage(),
+                entity.getDetail(),
+                entity.getReferenceId(),
                 entity.getIsRead(),
                 entity.getCreatedAt()
         );

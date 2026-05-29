@@ -40,6 +40,11 @@ public class NotificationRepositoryAdapter implements NotificationRepository {
     }
 
     @Override
+    public void deleteAllByUserId(Long userId) {
+        springDataRepository.deleteAllByUserId(userId);
+    }
+
+    @Override
     public long countUnreadByUserId(Long userId) {
         return springDataRepository.countByUserIdAndIsReadFalse(userId);
     }

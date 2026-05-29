@@ -6,6 +6,10 @@ public record ReservationConfirmedEvent(
         Long receiverId,
         String reservationName
 ) implements NotificationEvent {
+    @Override
+    public String getDetail() {
+        return "";
+    }
 
     @Override
     public Long getReceiverId() {
@@ -21,4 +25,7 @@ public record ReservationConfirmedEvent(
     public String getMessage() {
         return "예약 확정: " + reservationName;
     }
+
+    @Override
+    public Long getReferenceId() { return null; }
 }

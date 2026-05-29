@@ -21,4 +21,12 @@ public record CourseRegisteredEvent(
     public String getMessage() {
         return "강좌 수강 등록 완료: " + courseName;
     }
+
+    @Override
+    public String getDetail() {
+        return "";
+    }
+
+    @Override
+    public Long getReferenceId() { return null; }
 }

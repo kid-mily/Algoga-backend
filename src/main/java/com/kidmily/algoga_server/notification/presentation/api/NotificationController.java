@@ -2,6 +2,7 @@ package com.kidmily.algoga_server.notification.presentation.api;
 
 import com.kidmily.algoga_server.global.annotation.swagger.ApiErrorCodeExample;
 import com.kidmily.algoga_server.global.common.api.response.ApiResponse;
+import com.kidmily.algoga_server.notification.application.usecase.NotificationCommandUseCase;
 import com.kidmily.algoga_server.notification.application.usecase.NotificationQueryUseCase;
 import com.kidmily.algoga_server.notification.exception.NotificationErrorCode;
 import com.kidmily.algoga_server.notification.exception.NotificationException;
@@ -14,10 +15,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequiredArgsConstructor
@@ -26,6 +24,7 @@ import org.springframework.web.bind.annotation.RestController;
 public class NotificationController {
 
     private final NotificationQueryUseCase notificationQueryUseCase;
+    private final NotificationCommandUseCase notificationCommandUseCase;
 
 
     private Long getCurrentUserId() {
@@ -85,5 +84,61 @@ public class NotificationController {
                 "알림 목록 조회에 성공했습니다.",
                 responseData
         ));
+    }
+
+    // 개별 읽음
+    @PatchMapping("/{notificationId}/read")
+    @Operation(summary = "알림 개별 읽음 처리", description = "특정 알림을 읽음 처리합니다.")
+    @ApiErrorCodeExample(domain = NotificationErrorCode.class, value = {
+            "NOTIFICATION_UNAUTHORIZED",
+            "NOTIFICATION_NOT_FOUND"
+    })
+    public ResponseEntity<Void> markAsRead(
+            @Parameter(description = "알림 ID", example = "1")
+            @PathVariable Long notificationId
+    ) {
+        Long currentUserId = getCurrentUserId();
+        notificationCommandUseCase.markAsRead(currentUserId, notificationId);
+        return ResponseEntity.noContent().build();
+    }
+
+    // 전체 읽음
+    @PatchMapping("/read-all")
+    @Operation(summary = "알림 전체 읽음 처리", description = "모든 알림을 읽음 처리합니다.")
+    @ApiErrorCodeExample(domain = NotificationErrorCode.class, value = {
+            "NOTIFICATION_UNAUTHORIZED"
+    })
+    public ResponseEntity<Void> markAllAsRead() {
+        Long currentUserId = getCurrentUserId();
+        notificationCommandUseCase.markAllAsRead(currentUserId);
+        return ResponseEntity.noContent().build();
+    }
+
+    // 개별 삭제
+    @DeleteMapping("/{notificationId}")
+    @Operation(summary = "알림 개별 삭제", description = "특정 알림을 삭제합니다.")
+    @ApiErrorCodeExample(domain = NotificationErrorCode.class, value = {
+            "NOTIFICATION_UNAUTHORIZED",
+            "NOTIFICATION_NOT_FOUND"
+    })
+    public ResponseEntity<Void> deleteNotification(
+            @Parameter(description = "알림 ID", example = "1")
+            @PathVariable Long notificationId
+    ) {
+        Long currentUserId = getCurrentUserId();
+        notificationCommandUseCase.deleteNotification(currentUserId, notificationId);
+        return ResponseEntity.noContent().build();
+    }
+
+    // 전체 삭제
+    @DeleteMapping
+    @Operation(summary = "알림 전체 삭제", description = "모든 알림을 삭제합니다.")
+    @ApiErrorCodeExample(domain = NotificationErrorCode.class, value = {
+            "NOTIFICATION_UNAUTHORIZED"
+    })
+    public ResponseEntity<Void> deleteAllNotifications() {
+        Long currentUserId = getCurrentUserId();
+        notificationCommandUseCase.deleteAllNotifications(currentUserId);
+        return ResponseEntity.noContent().build();
     }
 }

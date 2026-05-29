@@ -8,8 +8,8 @@ import org.springframework.stereotype.Component;
 @Component
 @RequiredArgsConstructor
 public class CoursePortAdapter implements CoursePort {
-
     private final CourseRepository courseRepository;
+
 
     @Override
     public String getCourseName(Long courseId) {

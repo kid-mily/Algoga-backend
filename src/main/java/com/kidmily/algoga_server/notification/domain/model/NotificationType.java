@@ -16,11 +16,11 @@ public enum NotificationType {
     QNA_ANSWERED("Q&A 답변 등록", NotificationCategory.QNA),
 
     // 커뮤니티
-    POST_COMMENTED("게시글 댓글", NotificationCategory.COMMUNITY),
-    COMMENT_REPLIED("댓글 대댓글", NotificationCategory.COMMUNITY),
+    POST_COMMENTED("게시글 댓글", NotificationCategory.COMMUNITY), // 완료
+    COMMENT_REPLIED("댓글 대댓글", NotificationCategory.COMMUNITY), //
 
     // 결제/예약 (필수 알림 - 설정 무관)
-    PAYMENT_COMPLETED("결제 완료", NotificationCategory.MANDATORY),
+    PAYMENT_COMPLETED("결제 완료", NotificationCategory.MANDATORY), // 완료
     RESERVATION_CONFIRMED("예약 확정", NotificationCategory.MANDATORY),
     REFUND_APPROVED("환불 승인", NotificationCategory.MANDATORY),
     REFUND_REJECTED("환불 거절", NotificationCategory.MANDATORY),

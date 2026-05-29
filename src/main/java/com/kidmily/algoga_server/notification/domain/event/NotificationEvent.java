@@ -6,4 +6,6 @@ public interface NotificationEvent {
     Long getReceiverId();        // 알림 받을 사람
     NotificationType getType();  // 알림 타입
     String getMessage();         // 알림 메시지
+    String getDetail();
+    Long getReferenceId();
 }
