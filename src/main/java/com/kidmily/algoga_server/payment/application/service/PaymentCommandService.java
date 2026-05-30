@@ -14,6 +14,7 @@ import com.kidmily.algoga_server.lms.domain.repository.CourseRepository;
 import com.kidmily.algoga_server.payment.application.command.CreateLecturePaymentCommand;
 import com.kidmily.algoga_server.payment.application.command.CreatePaymentCommand;
 import com.kidmily.algoga_server.payment.application.usecase.PaymentCommandUseCase;
+import com.kidmily.algoga_server.payment.domain.event.PackagePaymentCompletedEvent;
 import com.kidmily.algoga_server.payment.domain.event.PaymentCompletedEvent;
 import com.kidmily.algoga_server.payment.domain.model.Payment;
 import com.kidmily.algoga_server.payment.domain.model.PaymentStatus;
@@ -137,6 +138,17 @@ public class PaymentCommandService implements PaymentCommandUseCase {
                     command.amount(),
                     LocalDateTime.now()
             ));
+            // 캘린더용 패키지 이벤트 발행 승재 추가
+            if (command.paymentType() == PaymentType.DEPOSIT || command.paymentType() == PaymentType.FULL) {
+                eventPublisher.publishEvent(new PackagePaymentCompletedEvent(
+                        user.getId(),
+                        booking.getAccommodationId(),
+                        booking.getCheckInDate()
+                ));
+                log.info("[PaymentCommandService] 패키지 캘린더 이벤트 발행 - userId: {}, accommodationId: {}",
+                        user.getId(), booking.getAccommodationId());
+            }
+
         } else {
             payment.markFailed();
             log.warn("[PaymentCommandService] 결제 실패 - portoneStatus: {}", portoneStatus);

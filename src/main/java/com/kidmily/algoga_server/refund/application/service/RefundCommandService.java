@@ -11,6 +11,7 @@ import com.kidmily.algoga_server.payment.infrastructure.portone.PortOneClient; /
 import com.kidmily.algoga_server.refund.application.command.CreateRefundCommand;
 import com.kidmily.algoga_server.refund.application.usecase.RefundCommandUseCase;
 import com.kidmily.algoga_server.refund.domain.event.RefundApprovedEvent;
+import com.kidmily.algoga_server.refund.domain.event.RefundRejectedEvent;
 import com.kidmily.algoga_server.refund.domain.model.RefundRequest;
 import com.kidmily.algoga_server.refund.domain.model.RefundStatus;
 import com.kidmily.algoga_server.refund.domain.repository.RefundRepository;
@@ -160,6 +161,22 @@ public class RefundCommandService implements RefundCommandUseCase {
         refundRequest.reject(rejectReason);
         refundRepository.save(refundRequest);
         log.info("[RefundCommandService] 환불 반려 완료 - refundId: {}", refundId);
+
+        // payment 조회해서 강의/패키지 구분 승재 추가
+        Payment payment = paymentRepository.findById(refundRequest.getPaymentId())
+                .orElseThrow(() -> new BusinessException(RefundErrorCode.PAYMENT_NOT_FOUND));
+
+        RefundRejectedEvent event;
+        if (payment.getCourseId() != null) {
+            event = RefundRejectedEvent.ofLecture(refundRequest.getUserId(), payment.getCourseId());
+        } else {
+            Booking booking = bookingRepository.findById(refundRequest.getBookingId())
+                    .orElseThrow(() -> new BusinessException(RefundErrorCode.BOOKING_NOT_FOUND));
+            event = RefundRejectedEvent.ofTrip(refundRequest.getUserId(), booking.getAccommodationId());
+        }
+        eventPublisher.publishEvent(event);
+
+        log.info("[RefundCommandService] RefundRejectedEvent 발행 완료 - userId: {}", refundRequest.getUserId());
     }
 
     @Override
@@ -206,11 +223,12 @@ public class RefundCommandService implements RefundCommandUseCase {
 
 
         // 🌟 [추가 영역 B] 모든 DB 저장이 완벽히 성공한 이 시점에 캘린더 연동 벨을 울립니다
-        RefundApprovedEvent event = new RefundApprovedEvent(
-                booking.getUserId(),         // 유저 ID
-                booking.getAccommodationId(),   // 제거할 숙소/패키지 ID
-                "TRIP"                       // CalendarType.TRIP과 매칭될 문자열 고정
-        );
+        RefundApprovedEvent event;
+        if (payment.getCourseId() != null) {
+            event = RefundApprovedEvent.ofLecture(booking.getUserId(), payment.getCourseId());
+        } else {
+            event = RefundApprovedEvent.ofTrip(booking.getUserId(), booking.getAccommodationId());
+        }
         eventPublisher.publishEvent(event);
 
         log.info("[RefundCommandService] 캘린더 연동을 위한 RefundApprovedEvent 발행 완료");

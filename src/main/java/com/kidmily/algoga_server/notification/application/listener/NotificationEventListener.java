@@ -10,6 +10,8 @@ import com.kidmily.algoga_server.notification.domain.model.NotificationType;
 import com.kidmily.algoga_server.notification.domain.repository.NotificationRepository;
 import com.kidmily.algoga_server.notification.domain.repository.NotificationSettingRepository;
 import com.kidmily.algoga_server.payment.domain.event.PaymentCompletedEvent;
+import com.kidmily.algoga_server.refund.domain.event.RefundApprovedEvent;
+import com.kidmily.algoga_server.refund.domain.event.RefundRejectedEvent;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.event.EventListener;
@@ -31,7 +33,7 @@ public class NotificationEventListener {
     private final CoursePort coursePort;
 
 
-
+    // 댓글 알림
     @Async
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     @Transactional(propagation = Propagation.REQUIRES_NEW)
@@ -120,4 +122,43 @@ public class NotificationEventListener {
             default -> event.bookingNumber() + " 결제가 완료되었습니다";
         };
     }
+
+    // 환불 승인 알림
+    @Async
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public void handleRefundApproved(RefundApprovedEvent event) {
+        log.info("[NotificationEventListener] 환불 승인 이벤트 수신 - userId: {}", event.userId());
+
+        Notification notification = Notification.create(
+                event.userId(),
+                NotificationType.REFUND_APPROVED,
+                "환불이 승인되었습니다.",
+                null,
+                null
+        );
+
+        notificationRepository.save(notification);
+        log.info("[NotificationEventListener] 환불 승인 알림 저장 완료 - userId: {}", event.userId());
+    }
+
+    // 환불 거절 알림
+    @Async
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public void handleRefundRejected(RefundRejectedEvent event) {
+        log.info("[NotificationEventListener] 환불 거절 이벤트 수신 - userId: {}", event.userId());
+
+        Notification notification = Notification.create(
+                event.userId(),
+                NotificationType.REFUND_REJECTED,
+                "환불이 거절되었습니다.",
+                null,
+                null
+        );
+
+        notificationRepository.save(notification);
+        log.info("[NotificationEventListener] 환불 거절 알림 저장 완료 - userId: {}", event.userId());
+    }
+
 }

@@ -35,12 +35,6 @@ public class CalendarRepositoryAdapter implements CalendarRepository {
                 .toList();
     }
 
-//    @Override
-//    @Transactional
-//    public void deleteByReferenceId(Long referenceId) {
-//        springDataRepository.deleteByReferenceId(referenceId);
-//    }
-
     @Override
     @Transactional
     public void deleteByUserIdAndReferenceIdAndType(Long userId, Long referenceId, CalendarType type) {

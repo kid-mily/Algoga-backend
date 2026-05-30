@@ -22,8 +22,8 @@ public enum NotificationType {
     // 결제/예약 (필수 알림 - 설정 무관)
     PAYMENT_COMPLETED("결제 완료", NotificationCategory.MANDATORY), // 완료
     RESERVATION_CONFIRMED("예약 확정", NotificationCategory.MANDATORY),
-    REFUND_APPROVED("환불 승인", NotificationCategory.MANDATORY),
-    REFUND_REJECTED("환불 거절", NotificationCategory.MANDATORY),
+    REFUND_APPROVED("환불 승인", NotificationCategory.MANDATORY), // 진행종
+    REFUND_REJECTED("환불 거절", NotificationCategory.MANDATORY), // 진행중
 
     // 공지사항
     NOTICE_CREATED("공지사항 등록", NotificationCategory.NOTICE),

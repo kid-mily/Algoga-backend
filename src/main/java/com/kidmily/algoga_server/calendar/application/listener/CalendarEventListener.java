@@ -1,15 +1,14 @@
 package com.kidmily.algoga_server.calendar.application.listener;
 
 import com.kidmily.algoga_server.booking.domain.event.BookingCanceledEvent;
-import com.kidmily.algoga_server.booking.domain.event.BookingCreatedEvent;
 import com.kidmily.algoga_server.calendar.domain.model.Calendar;
 import com.kidmily.algoga_server.calendar.domain.model.CalendarType;
 import com.kidmily.algoga_server.calendar.domain.repository.CalendarRepository;
+import com.kidmily.algoga_server.payment.domain.event.PackagePaymentCompletedEvent;
 import com.kidmily.algoga_server.payment.domain.event.PaymentCompletedEvent;
 import com.kidmily.algoga_server.refund.domain.event.RefundApprovedEvent;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.context.event.EventListener;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Propagation;
@@ -24,12 +23,11 @@ public class CalendarEventListener {
 
     private final CalendarRepository calendarRepository;
 
-    // 단순 예약 생성 완료 시 일정 추가
     @Async
-    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT) // 예약 완료 커밋 성공 시에만!
-    @Transactional(propagation = Propagation.REQUIRES_NEW)              // 비동기 스레드 내 독자적 트랜잭션 보장
-    public void handleBookingCreated(BookingCreatedEvent event) {
-        log.info("[CalendarEventListener] 예약 생성 완료 커밋 확인 - userId: {}, packageId: {}",
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public void handlePackagePaymentCompleted(PackagePaymentCompletedEvent event) {
+        log.info("[CalendarEventListener] 패키지 결제 완료 커밋 확인 - userId: {}, accommodationId: {}",
                 event.userId(), event.accommodationId());
 
         try {
@@ -40,12 +38,13 @@ public class CalendarEventListener {
                     CalendarType.TRIP
             );
             calendarRepository.save(calendar);
-            log.info("[CalendarEventListener] 캘린더 일정 저장 완료");
+            log.info("[CalendarEventListener] 패키지 캘린더 일정 저장 완료");
         } catch (Exception e) {
-            log.error("[CalendarEventListener] 예약 생성 반영 중 캘린더 처리 실패! - userId: {}, error: {}",
+            log.error("[CalendarEventListener] 패키지 결제 반영 중 캘린더 처리 실패! - userId: {}, error: {}",
                     event.userId(), e.getMessage(), e);
         }
     }
+
 
     // 단순 예약 취소 완료 시 일정 삭제
     @Async
