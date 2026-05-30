@@ -11,6 +11,7 @@ public record CreateCourseCommand(
         String description,
         Integer price,
         String level,
+        String status,
         MultipartFile thumbnailFile,
         List<MultipartFile> attachedFiles
 ) {

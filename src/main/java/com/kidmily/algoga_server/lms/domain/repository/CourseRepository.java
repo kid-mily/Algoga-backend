@@ -27,7 +27,8 @@ public interface CourseRepository {
             String thumbnailUrl,
             String fileUrl,
             List<CourseFile> courseFiles,
-            String level
+            String level,
+            String status
     );
 
     boolean softDelete(Long courseId);
