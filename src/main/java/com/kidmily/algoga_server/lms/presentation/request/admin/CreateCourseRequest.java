@@ -31,6 +31,13 @@ public record CreateCourseRequest(
                 allowableValues = {"BEGINNER", "INTERMEDIATE", "ADVANCED"}
         )
         @NotBlank(message = "강의 난이도는 필수입니다.")
-        String level
+        String level,
+
+        @Schema(
+                description = "강의 공개 상태. PUBLISHED=공개, DRAFT=비공개",
+                example = "PUBLISHED",
+                allowableValues = {"PUBLISHED", "DRAFT"}
+        )
+        String status
 ) {
 }

@@ -64,6 +64,7 @@ public class AdminCourseController {
                 request.description(),
                 request.price(),
                 request.level(),
+                request.status(),
                 thumbnailFile,
                 attachedFiles
         );
@@ -147,6 +148,7 @@ public class AdminCourseController {
                 request.description(),
                 request.price(),
                 request.level(),
+                request.status(),
                 thumbnailFile,
                 attachedFiles
         );

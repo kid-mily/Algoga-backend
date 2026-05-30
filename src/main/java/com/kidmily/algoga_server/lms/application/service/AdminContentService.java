@@ -61,7 +61,8 @@ public class AdminContentService implements AdminContentUseCase {
                 command.price(),
                 thumbnailUrl,
                 courseFiles,
-                command.level()
+                command.level(),
+                normalizeCourseStatus(command.status(), "DRAFT")
         );
 
         Course savedCourse = courseRepository.save(newCourse);
@@ -70,6 +71,18 @@ public class AdminContentService implements AdminContentUseCase {
                 savedCourse.getId(), thumbnailUrl, courseFiles.size(), command.level());
 
         return savedCourse.getId();
+    }
+
+    private String normalizeCourseStatus(String status, String defaultStatus) {
+        if (status == null || status.isBlank()) {
+            return defaultStatus;
+        }
+
+        return switch (status.trim().toUpperCase()) {
+            case "PUBLISHED" -> "PUBLISHED";
+            case "DRAFT" -> "DRAFT";
+            default -> defaultStatus;
+        };
     }
 
     @Override
@@ -147,7 +160,8 @@ public class AdminContentService implements AdminContentUseCase {
                 targetThumbnailUrl,
                 targetFileUrl,
                 targetCourseFiles,
-                command.level()
+                command.level(),
+                normalizeCourseStatus(command.status(), course.getStatus())
         ).orElseThrow(() -> {
             log.warn("[Course Command] 강의 수정 실패. 존재하지 않거나 삭제된 강의입니다. courseId={}", courseId);
             return new LmsException(LmsErrorCode.COURSE_NOT_FOUND);

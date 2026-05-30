@@ -1,0 +1,43 @@
+### 강의 공개로 수정
+PUT http://localhost:15000/api/v1/admin/courses/11
+Authorization: Bearer {{managerAccessToken}}
+Content-Type: multipart/form-data; boundary=boundary
+
+--boundary
+Content-Disposition: form-data; name="request"
+Content-Type: application/json
+
+{
+  "title": "테스트 강의",
+  "description": "공개 상태 테스트",
+  "price": 10000,
+  "level": "BEGINNER",
+  "status": "PUBLISHED"
+}
+
+--boundary--
+
+
+### 강의 비공개로 수정
+PUT http://localhost:15000/api/v1/admin/courses/11
+Authorization: Bearer {{managerAccessToken}}
+Content-Type: multipart/form-data; boundary=boundary
+
+--boundary
+Content-Disposition: form-data; name="request"
+Content-Type: application/json
+
+{
+  "title": "테스트 강의",
+  "description": "비공개 상태 테스트",
+  "price": 10000,
+  "level": "BEGINNER",
+  "status": "DRAFT"
+}
+
+--boundary--
+
+
+### 강의 상세 조회
+GET http://localhost:15000/api/v1/admin/courses/11
+Authorization: Bearer {{managerAccessToken}}

@@ -65,7 +65,8 @@ public class CourseRepositoryAdapter implements CourseRepository {
             String thumbnailUrl,
             String fileUrl,
             List<CourseFile> courseFiles,
-            String level
+            String level,
+            String status
     ) {
         return springDataCourseRepository.findByIdAndDeletedFalse(courseId)
                 .map(entity -> {
@@ -76,7 +77,8 @@ public class CourseRepositoryAdapter implements CourseRepository {
                             thumbnailUrl,
                             fileUrl,
                             courseFiles == null ? null : courseMapper.toCourseFileEntities(courseFiles),
-                            level
+                            level,
+                            status
                     );
                     return courseMapper.toDomain(entity);
                 });

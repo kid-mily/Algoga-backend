@@ -125,9 +125,10 @@ public class CourseJpaEntity {
             Integer price,
             String thumbnailUrl,
             String fileUrl,
-            String level
+            String level,
+            String status
     ) {
-        updateBasicInfo(title, description, price, thumbnailUrl, fileUrl, null, level);
+        updateBasicInfo(title, description, price, thumbnailUrl, fileUrl, null, level, status);
     }
 
     public void updateBasicInfo(
@@ -137,12 +138,14 @@ public class CourseJpaEntity {
             String thumbnailUrl,
             String fileUrl,
             List<CourseFileJpaEntity> newCourseFiles,
-            String level
+            String level,
+            String status
     ) {
         this.title = title;
         this.description = description;
         this.price = price;
         this.level = level;
+        this.status = status;
 
         if (thumbnailUrl != null) {
             this.thumbnailUrl = thumbnailUrl;

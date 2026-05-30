@@ -57,7 +57,8 @@ public class Course {
             Integer price,
             String thumbnailUrl,
             String fileUrl,
-            String level
+            String level,
+            String status
     ) {
         List<CourseFile> courseFiles = new ArrayList<>();
 
@@ -73,7 +74,8 @@ public class Course {
                 price,
                 thumbnailUrl,
                 courseFiles,
-                level
+                level,
+                status
         );
     }
 
@@ -85,7 +87,8 @@ public class Course {
             Integer price,
             String thumbnailUrl,
             List<CourseFile> courseFiles,
-            String level
+            String level,
+            String status
     ) {
         return new Course(
                 null,
@@ -98,7 +101,7 @@ public class Course {
                 getFirstFileUrl(courseFiles),
                 courseFiles,
                 level,
-                "DRAFT",
+                status,
                 false,
                 new ArrayList<>()
         );
