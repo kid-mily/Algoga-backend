@@ -2,6 +2,7 @@
 package com.kidmily.algoga_server.calendar.infrastructure.persistence;
 
 import com.kidmily.algoga_server.calendar.domain.model.Calendar;
+import com.kidmily.algoga_server.calendar.domain.model.CalendarType;
 import com.kidmily.algoga_server.calendar.domain.repository.CalendarRepository;
 import com.kidmily.algoga_server.calendar.infrastructure.mapper.CalendarMapper;
 import com.kidmily.algoga_server.calendar.infrastructure.persistence.repository.SpringDataCalendarRepository;
@@ -34,9 +35,15 @@ public class CalendarRepositoryAdapter implements CalendarRepository {
                 .toList();
     }
 
+//    @Override
+//    @Transactional
+//    public void deleteByReferenceId(Long referenceId) {
+//        springDataRepository.deleteByReferenceId(referenceId);
+//    }
+
     @Override
     @Transactional
-    public void deleteByReferenceId(Long referenceId) {
-        springDataRepository.deleteByReferenceId(referenceId);
+    public void deleteByUserIdAndReferenceIdAndType(Long userId, Long referenceId, CalendarType type) {
+        springDataRepository.deleteByUserIdAndReferenceIdAndType(userId, referenceId, type);
     }
 }

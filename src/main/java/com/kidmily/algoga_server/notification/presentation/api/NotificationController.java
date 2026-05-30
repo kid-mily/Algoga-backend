@@ -14,6 +14,7 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
@@ -26,14 +27,6 @@ public class NotificationController {
     private final NotificationQueryUseCase notificationQueryUseCase;
     private final NotificationCommandUseCase notificationCommandUseCase;
 
-
-    private Long getCurrentUserId() {
-        Object principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-        if (!(principal instanceof CustomUserDetails)) {
-            throw new NotificationException(NotificationErrorCode.NOTIFICATION_UNAUTHORIZED);
-        }
-        return ((CustomUserDetails) principal).getUser().getId();
-    }
 
     @GetMapping("/unread-count")
     @Operation(summary = "읽지 않은 알림 개수 조회", description = "종 아이콘 뱃지에 표시할 읽지 않은 알림 개수를 조회합니다.")
@@ -72,9 +65,10 @@ public class NotificationController {
             @RequestParam(defaultValue = "8") int size,
 
             @Parameter(description = "읽음 여부 필터 (전체: 생략, 읽지 않음: false)")
-            @RequestParam(required = false) Boolean isRead
+            @RequestParam(required = false) Boolean isRead,
+            @AuthenticationPrincipal CustomUserDetails userDetails
     ) {
-        Long currentUserId = getCurrentUserId();
+        Long currentUserId = userDetails.getUser().getId();
 
         NotificationListResponse responseData = notificationQueryUseCase.getNotifications(
                 currentUserId, isRead, page, size);
@@ -95,9 +89,10 @@ public class NotificationController {
     })
     public ResponseEntity<Void> markAsRead(
             @Parameter(description = "알림 ID", example = "1")
-            @PathVariable Long notificationId
+            @PathVariable Long notificationId,
+            @AuthenticationPrincipal CustomUserDetails userDetails
     ) {
-        Long currentUserId = getCurrentUserId();
+        Long currentUserId = userDetails.getUser().getId();
         notificationCommandUseCase.markAsRead(currentUserId, notificationId);
         return ResponseEntity.noContent().build();
     }
@@ -108,8 +103,10 @@ public class NotificationController {
     @ApiErrorCodeExample(domain = NotificationErrorCode.class, value = {
             "NOTIFICATION_UNAUTHORIZED"
     })
-    public ResponseEntity<Void> markAllAsRead() {
-        Long currentUserId = getCurrentUserId();
+    public ResponseEntity<Void> markAllAsRead(
+            @AuthenticationPrincipal CustomUserDetails userDetails
+    ) {
+        Long currentUserId = userDetails.getUser().getId();
         notificationCommandUseCase.markAllAsRead(currentUserId);
         return ResponseEntity.noContent().build();
     }
@@ -123,9 +120,10 @@ public class NotificationController {
     })
     public ResponseEntity<Void> deleteNotification(
             @Parameter(description = "알림 ID", example = "1")
-            @PathVariable Long notificationId
+            @PathVariable Long notificationId,
+            @AuthenticationPrincipal CustomUserDetails userDetails
     ) {
-        Long currentUserId = getCurrentUserId();
+        Long currentUserId = userDetails.getUser().getId();
         notificationCommandUseCase.deleteNotification(currentUserId, notificationId);
         return ResponseEntity.noContent().build();
     }
@@ -136,8 +134,10 @@ public class NotificationController {
     @ApiErrorCodeExample(domain = NotificationErrorCode.class, value = {
             "NOTIFICATION_UNAUTHORIZED"
     })
-    public ResponseEntity<Void> deleteAllNotifications() {
-        Long currentUserId = getCurrentUserId();
+    public ResponseEntity<Void> deleteAllNotifications(
+            @AuthenticationPrincipal CustomUserDetails userDetails
+    ) {
+        Long currentUserId = userDetails.getUser().getId();
         notificationCommandUseCase.deleteAllNotifications(currentUserId);
         return ResponseEntity.noContent().build();
     }

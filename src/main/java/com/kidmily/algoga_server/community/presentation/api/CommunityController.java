@@ -5,7 +5,6 @@ import com.kidmily.algoga_server.community.application.port.UserPort;
 import com.kidmily.algoga_server.community.application.usecase.CommentCommandUseCase;
 import com.kidmily.algoga_server.community.application.usecase.PostCommandUseCase;
 import com.kidmily.algoga_server.community.application.usecase.PostQueryUseCase;
-import com.kidmily.algoga_server.community.application.usecase.ReactionCommandUseCase;
 import com.kidmily.algoga_server.community.domain.model.Comment;
 import com.kidmily.algoga_server.community.exception.PostErrorCode;
 import com.kidmily.algoga_server.community.domain.model.PostTagType;
@@ -22,7 +21,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 
@@ -37,7 +36,6 @@ public class CommunityController {
     private final PostCommandUseCase postCommandUseCase;
     private final PostQueryUseCase postQueryUseCase;
     private final CommentCommandUseCase commentCommandUseCase;
-    private final ReactionCommandUseCase reactionCommandUseCase;
     private final UserPort userPort;
 
 
@@ -54,10 +52,10 @@ public class CommunityController {
             "POST_UNAUTHORIZED"
     })
     public ResponseEntity<ApiResponse<CreatePostResponse>> createPost(
-            @Valid @ModelAttribute CreatePostRequest request
+            @Valid @ModelAttribute CreatePostRequest request,
+            @AuthenticationPrincipal CustomUserDetails userDetails
     ) {
-        Long currentUserId = ((CustomUserDetails) SecurityContextHolder.getContext()
-                .getAuthentication().getPrincipal()).getUser().getId();
+        Long currentUserId = userDetails.getUser().getId();
 
         CreatePostCommand command = new CreatePostCommand(
                 currentUserId,
@@ -113,10 +111,10 @@ public class CommunityController {
     public ResponseEntity<ApiResponse<UpdatePostResponse>> updatePost(
             @Parameter(description = "게시글 ID", example = "1")
             @PathVariable Long postId,
-            @Valid @ModelAttribute UpdatePostRequest request
+            @Valid @ModelAttribute UpdatePostRequest request,
+            @AuthenticationPrincipal CustomUserDetails userDetails
     ) {
-        Long currentUserId = ((CustomUserDetails) SecurityContextHolder.getContext()
-                .getAuthentication().getPrincipal()).getUser().getId();
+        Long currentUserId = userDetails.getUser().getId();
 
         UpdatePostCommand command = new UpdatePostCommand(
                 postId,
@@ -146,10 +144,11 @@ public class CommunityController {
     })
     public ResponseEntity<Void> deletePost(
             @Parameter(description = "게시글 ID", example = "1")
-            @PathVariable Long postId
+            @PathVariable Long postId,
+            @AuthenticationPrincipal CustomUserDetails userDetails
     ) {
-        Long currentUserId = ((CustomUserDetails) SecurityContextHolder.getContext()
-                .getAuthentication().getPrincipal()).getUser().getId();
+        Long currentUserId = userDetails.getUser().getId();
+
 
         DeletePostCommand command = new DeletePostCommand(postId, currentUserId);
         postCommandUseCase.handle(command);
@@ -180,10 +179,11 @@ public class CommunityController {
     public ResponseEntity<ApiResponse<CreateCommentResponse>> createComment(
             @Parameter(description = "게시글 ID", example = "1")
             @PathVariable Long postId,
-            @RequestBody @Valid CreateCommentRequest request
+            @RequestBody @Valid CreateCommentRequest request,
+            @AuthenticationPrincipal CustomUserDetails userDetails
     ) {
-        Long currentUserId = ((CustomUserDetails) SecurityContextHolder.getContext()
-                .getAuthentication().getPrincipal()).getUser().getId();
+        Long currentUserId = userDetails.getUser().getId();
+
 
         CreateCommentCommand command = new CreateCommentCommand(
                 postId,
