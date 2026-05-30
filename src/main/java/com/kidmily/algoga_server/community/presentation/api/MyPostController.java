@@ -12,7 +12,7 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -43,10 +43,11 @@ public class MyPostController {
             @RequestParam(required = false) Long lastPostId,
 
             @Parameter(description = "필터링할 카테고리 (다중 선택 가능, 생략 시 전체)", example = "QUESTION,TRAVEL_REVIEW")
-            @RequestParam(required = false) List<PostTagType> categories
+            @RequestParam(required = false) List<PostTagType> categories,
+            @AuthenticationPrincipal CustomUserDetails userDetails
     ) {
-        Long currentUserId = ((CustomUserDetails) SecurityContextHolder.getContext()
-                .getAuthentication().getPrincipal()).getUser().getId();
+        Long currentUserId = userDetails.getUser().getId();
+
 
         PostListResponse responseData = postQueryUseCase.getMyPosts(currentUserId, lastPostId, categories);
         return ResponseEntity.ok(ApiResponse.success("MY_POSTS_FOUND", "내가 작성한 게시글 목록 조회에 성공했습니다.", responseData));

@@ -85,8 +85,8 @@ public class NotificationEventListener {
 
     // 결제 알림
     @Async
-    @EventListener
-    @Transactional
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void handlePaymentCompletedEvent(
             PaymentCompletedEvent event) {
 

@@ -10,12 +10,14 @@ import com.kidmily.algoga_server.payment.domain.repository.PaymentRepository;
 import com.kidmily.algoga_server.payment.infrastructure.portone.PortOneClient; // 추가
 import com.kidmily.algoga_server.refund.application.command.CreateRefundCommand;
 import com.kidmily.algoga_server.refund.application.usecase.RefundCommandUseCase;
+import com.kidmily.algoga_server.refund.domain.event.RefundApprovedEvent;
 import com.kidmily.algoga_server.refund.domain.model.RefundRequest;
 import com.kidmily.algoga_server.refund.domain.model.RefundStatus;
 import com.kidmily.algoga_server.refund.domain.repository.RefundRepository;
 import com.kidmily.algoga_server.refund.exception.RefundErrorCode;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -33,6 +35,7 @@ public class RefundCommandService implements RefundCommandUseCase {
     private final BookingRepository bookingRepository;
     private final PaymentRepository paymentRepository;
     private final PortOneClient portOneClient; // 추가
+    private final ApplicationEventPublisher eventPublisher; // 🌟승재 추가
 
     @Override
     public Long handle(CreateRefundCommand command) {
@@ -188,12 +191,29 @@ public class RefundCommandService implements RefundCommandUseCase {
         // 4. Booking 상태 → REFUNDED
         bookingRepository.updateStatus(refundRequest.getBookingId(), BookingStatus.REFUNDED);
 
+        // 🌟 [추가 영역 A] 이벤트를 만들기 위해 Booking 엔티티 정보를 명확히 조회해옵니다.
+        // (bookingRepository 명세에 맞게 findById 등으로 유저 ID와 숙소 ID를 수집합니다.)
+        Booking booking = bookingRepository.findById(refundRequest.getBookingId())
+                .orElseThrow(() -> new BusinessException(RefundErrorCode.BOOKING_NOT_FOUND));
+
         // 5. RefundRequest 상태 → COMPLETED
         refundRequest.complete();
         refundRepository.save(refundRequest);
 
         log.info("[RefundCommandService] 환불 완료 - refundId: {}, portonePaymentId: {}",
                 refundId, payment.getPortonePaymentId());
+
+
+
+        // 🌟 [추가 영역 B] 모든 DB 저장이 완벽히 성공한 이 시점에 캘린더 연동 벨을 울립니다
+        RefundApprovedEvent event = new RefundApprovedEvent(
+                booking.getUserId(),         // 유저 ID
+                booking.getAccommodationId(),   // 제거할 숙소/패키지 ID
+                "TRIP"                       // CalendarType.TRIP과 매칭될 문자열 고정
+        );
+        eventPublisher.publishEvent(event);
+
+        log.info("[RefundCommandService] 캘린더 연동을 위한 RefundApprovedEvent 발행 완료");
     }
 
     private RefundRequest findRefundOrThrow(Long refundId) {
