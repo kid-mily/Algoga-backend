@@ -5,10 +5,12 @@ import com.kidmily.algoga_server.global.annotation.swagger.ApiErrorCodeExample;
 import com.kidmily.algoga_server.global.common.api.response.ApiResponse;
 import com.kidmily.algoga_server.global.exception.GlobalErrorCode;
 import com.kidmily.algoga_server.benefit.application.command.CreateCouponPolicyCommand;
+import com.kidmily.algoga_server.benefit.application.command.UpdateCouponPolicyCommand;
 import com.kidmily.algoga_server.benefit.application.usecase.CouponPolicyUseCase;
 import com.kidmily.algoga_server.benefit.domain.model.CouponPolicy;
 import com.kidmily.algoga_server.benefit.exception.BenefitErrorCode;
 import com.kidmily.algoga_server.benefit.presentation.request.CreateCouponPolicyRequest;
+import com.kidmily.algoga_server.benefit.presentation.request.UpdateCouponPolicyRequest;
 import com.kidmily.algoga_server.benefit.presentation.response.CouponPolicyResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -40,7 +42,8 @@ public class AdminCouponController {
     @ApiErrorCodeExample(domain = GlobalErrorCode.class, value = {"INVALID_REQUEST"})
     @ApiErrorCodeExample(domain = BenefitErrorCode.class, value = {
             "COURSE_NOT_FOUND",
-            "INVALID_COUPON_POLICY"
+            "INVALID_COUPON_POLICY",
+            "DUPLICATED_COUPON_POLICY_NAME"
     })
     @PreAuthorize("hasAnyAuthority('CONTENT_MANAGER', 'ROLE_CONTENT_MANAGER', 'SUPER_ADMIN', 'ROLE_SUPER_ADMIN')")
     @PostMapping
@@ -92,6 +95,72 @@ public class AdminCouponController {
                         "COUPON_POLICIES_FOUND",
                         "강의별 쿠폰 정책 목록 조회에 성공했습니다.",
                         response
+                )
+        );
+    }
+
+    @Operation(
+            summary = "강의별 쿠폰 정책 수정",
+            description = "특정 강의에 등록된 활성 쿠폰 정책의 쿠폰명, 할인 타입, 할인 값, 유효기간을 수정합니다."
+    )
+    @ApiErrorCodeExample(domain = GlobalErrorCode.class, value = {"INVALID_REQUEST"})
+    @ApiErrorCodeExample(domain = BenefitErrorCode.class, value = {
+            "COURSE_NOT_FOUND",
+            "COUPON_POLICY_NOT_FOUND",
+            "INVALID_COUPON_POLICY",
+            "DUPLICATED_COUPON_POLICY_NAME"
+    })
+    @PreAuthorize("hasAnyAuthority('CONTENT_MANAGER', 'ROLE_CONTENT_MANAGER', 'SUPER_ADMIN', 'ROLE_SUPER_ADMIN')")
+    @PutMapping("/{couponPolicyId}")
+    public ResponseEntity<ApiResponse<CouponPolicyResponse>> updateCouponPolicy(
+            @Parameter(description = "강의 ID", example = "3")
+            @PathVariable Long courseId,
+
+            @Parameter(description = "쿠폰 정책 ID", example = "1")
+            @PathVariable Long couponPolicyId,
+
+            @Valid @RequestBody UpdateCouponPolicyRequest request
+    ) {
+        UpdateCouponPolicyCommand command = new UpdateCouponPolicyCommand(
+                courseId,
+                couponPolicyId,
+                request.couponName(),
+                request.discountType(),
+                request.discountValue(),
+                request.validDays()
+        );
+
+        CouponPolicy couponPolicy = couponPolicyUseCase.updateCouponPolicy(command);
+
+        return ResponseEntity.ok(
+                ApiResponse.success(
+                        "COUPON_POLICY_UPDATED",
+                        "강의별 쿠폰 정책 수정에 성공했습니다.",
+                        CouponPolicyResponse.from(couponPolicy)
+                )
+        );
+    }
+
+    @Operation(
+            summary = "강의별 쿠폰 정책 삭제",
+            description = "특정 강의에 등록된 쿠폰 정책을 실제 삭제하지 않고 비활성화합니다."
+    )
+    @ApiErrorCodeExample(domain = BenefitErrorCode.class, value = {"COURSE_NOT_FOUND", "COUPON_POLICY_NOT_FOUND"})
+    @PreAuthorize("hasAnyAuthority('CONTENT_MANAGER', 'ROLE_CONTENT_MANAGER', 'SUPER_ADMIN', 'ROLE_SUPER_ADMIN')")
+    @DeleteMapping("/{couponPolicyId}")
+    public ResponseEntity<ApiResponse<Void>> deleteCouponPolicy(
+            @Parameter(description = "강의 ID", example = "3")
+            @PathVariable Long courseId,
+
+            @Parameter(description = "쿠폰 정책 ID", example = "1")
+            @PathVariable Long couponPolicyId
+    ) {
+        couponPolicyUseCase.deactivateCouponPolicy(courseId, couponPolicyId);
+
+        return ResponseEntity.ok(
+                ApiResponse.success(
+                        "COUPON_POLICY_DEACTIVATED",
+                        "강의별 쿠폰 정책 삭제에 성공했습니다."
                 )
         );
     }

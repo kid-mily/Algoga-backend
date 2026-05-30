@@ -68,6 +68,50 @@ public class CouponPolicyRepositoryAdapter implements CouponPolicyRepository {
         return springDataCouponPolicyRepository.existsByCourseIdAndActiveTrue(courseId);
     }
 
+    @Override
+    public boolean existsByCourseIdAndCouponName(Long courseId, String couponName) {
+        return springDataCouponPolicyRepository.existsByCourseIdAndCouponName(courseId, couponName);
+    }
+
+    @Override
+    public boolean existsByCourseIdAndCouponNameAndIdNot(
+            Long courseId,
+            String couponName,
+            Long couponPolicyId
+    ) {
+        return springDataCouponPolicyRepository.existsByCourseIdAndCouponNameAndIdNot(
+                courseId,
+                couponName,
+                couponPolicyId
+        );
+    }
+
+    @Override
+    public Optional<CouponPolicy> updateBasicInfo(
+            Long couponPolicyId,
+            Long courseId,
+            String couponName,
+            String discountType,
+            int discountValue,
+            int validDays
+    ) {
+        return springDataCouponPolicyRepository.findByIdAndCourseIdAndActiveTrue(couponPolicyId, courseId)
+                .map(entity -> {
+                    entity.updateBasicInfo(couponName, discountType, discountValue, validDays);
+                    return toDomain(entity);
+                });
+    }
+
+    @Override
+    public boolean deactivate(Long couponPolicyId, Long courseId) {
+        return springDataCouponPolicyRepository.findByIdAndCourseIdAndActiveTrue(couponPolicyId, courseId)
+                .map(entity -> {
+                    entity.deactivate();
+                    return true;
+                })
+                .orElse(false);
+    }
+
     private CouponPolicy toDomain(CouponPolicyJpaEntity entity) {
         return CouponPolicy.withId(
                 entity.getId(),

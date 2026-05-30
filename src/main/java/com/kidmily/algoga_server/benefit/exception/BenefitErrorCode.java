@@ -13,6 +13,7 @@ public enum BenefitErrorCode implements BaseErrorCode {
 
     COUPON_POLICY_NOT_FOUND(HttpStatus.NOT_FOUND, "BENEFIT_002", "쿠폰 정책을 찾을 수 없습니다."),
     INVALID_COUPON_POLICY(HttpStatus.BAD_REQUEST, "BENEFIT_003", "유효하지 않은 쿠폰 정책입니다."),
+    DUPLICATED_COUPON_POLICY_NAME(HttpStatus.CONFLICT, "BENEFIT_011", "이미 사용 중인 쿠폰명입니다."),
 
     MILEAGE_USER_NOT_FOUND(HttpStatus.NOT_FOUND, "BENEFIT_004", "마일리지 대상 사용자를 찾을 수 없습니다."),
     INVALID_MILEAGE_AMOUNT(HttpStatus.BAD_REQUEST, "BENEFIT_005", "마일리지 금액은 1 이상이어야 합니다."),

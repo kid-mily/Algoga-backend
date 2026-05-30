@@ -14,14 +14,14 @@ Content-Type: application/json
 Accept: application/json
 
 {
-  "username": "test",
-  "email": "testuser88@algoga.com",
-  "password": "password12345",
-  "name": "윤라프",
-  "phone": "010-8888-9999",
-  "birthDate": "2022-01-26",
+  "username": "test2",
+  "email": "test2@algoga.com",
+  "password": "test1234",
+  "name": "라프윤",
+  "phone": "010-4343-9999",
+  "birthDate": "2022-11-26",
   "gender": "MALE",
-  "nickname": "윤라프개귀여워",
+  "nickname": "윤라프",
   "referralCode": "REF003",
   "signupPath": "인스타그램"
 }
