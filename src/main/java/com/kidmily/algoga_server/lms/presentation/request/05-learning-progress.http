@@ -111,7 +111,7 @@ Accept: application/json
 
 ### 강의 수강 - 챕터 진도율 업데이트
 ### 아래 URL의 1을 실제 chapterId로 변경해서 실행
-POST http://localhost:15000/api/v1/courses/4/chapters/16/progress
+POST http://localhost:15000/api/v1/courses/3/chapters/3/progress
 Authorization: Bearer {{userAccessToken}}
 Content-Type: application/json
 Accept: application/json

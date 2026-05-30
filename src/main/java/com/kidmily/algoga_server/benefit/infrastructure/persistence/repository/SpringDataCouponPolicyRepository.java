@@ -4,6 +4,7 @@ import com.kidmily.algoga_server.benefit.infrastructure.persistence.entity.Coupo
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.List;
+import java.util.Optional;
 
 public interface SpringDataCouponPolicyRepository extends JpaRepository<CouponPolicyJpaEntity, Long> {
 
@@ -11,5 +12,11 @@ public interface SpringDataCouponPolicyRepository extends JpaRepository<CouponPo
 
     List<CouponPolicyJpaEntity> findByCourseIdAndActiveTrue(Long courseId);
 
+    Optional<CouponPolicyJpaEntity> findByIdAndCourseIdAndActiveTrue(Long id, Long courseId);
+
     boolean existsByCourseIdAndActiveTrue(Long courseId);
+
+    boolean existsByCourseIdAndCouponName(Long courseId, String couponName);
+
+    boolean existsByCourseIdAndCouponNameAndIdNot(Long courseId, String couponName, Long id);
 }
