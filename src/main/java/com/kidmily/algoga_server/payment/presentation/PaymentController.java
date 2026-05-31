@@ -80,6 +80,20 @@ public class PaymentController {
                 .body(ApiResponse.created("LECTURE_PAYMENT_CREATED", "강의 결제가 완료되었습니다.", paymentId));
     }
 
+    @GetMapping("/calculate/lecture")
+    @Operation(summary = "강의 결제 금액 계산", description = "쿠폰 및 마일리지 적용 후 최종 결제 금액을 반환합니다.")
+    public ResponseEntity<ApiResponse<Integer>> calculateLectureAmount(
+            @RequestParam Long courseId,
+            @RequestParam(defaultValue = "0") int usedMileage,
+            @RequestParam(required = false) Long usedCouponId,
+            @AuthenticationPrincipal CustomUserDetails userDetails
+    ) {
+        int finalAmount = paymentQueryUseCase.calculateLectureAmount(
+                courseId, usedMileage, usedCouponId, userDetails.getUser().getId()
+        );
+        return ResponseEntity.ok(ApiResponse.success("LECTURE_AMOUNT_CALCULATED", "결제 금액 계산에 성공했습니다.", finalAmount));
+    }
+
     @GetMapping("/{paymentId}")
     @Operation(summary = "결제 상세 조회", description = "결제 상세 정보를 조회합니다.")
     @ApiErrorCodeExample(domain = PaymentErrorCode.class, value = {"PAYMENT_NOT_FOUND"})

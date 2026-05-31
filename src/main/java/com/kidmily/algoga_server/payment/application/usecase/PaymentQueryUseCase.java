@@ -13,4 +13,5 @@ public interface PaymentQueryUseCase {
     List<PaymentResponse> getAdminPayments(LocalDate from, LocalDate to);
     byte[] getAdminPaymentsExcel(LocalDate from, LocalDate to);
     List<PaymentStatsResponse> getAdminPaymentStats();
+    int calculateLectureAmount(Long courseId, int usedMileage, Long usedCouponId, Long userId);
 }

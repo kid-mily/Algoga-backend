@@ -1,8 +1,15 @@
 package com.kidmily.algoga_server.payment.application.service;
 
+import com.kidmily.algoga_server.benefit.domain.model.MileageHistory;
+import com.kidmily.algoga_server.benefit.domain.model.UserCoupon;
+import com.kidmily.algoga_server.benefit.domain.repository.MileageHistoryRepository;
+import com.kidmily.algoga_server.benefit.domain.repository.UserCouponRepository;
+import com.kidmily.algoga_server.benefit.exception.BenefitErrorCode;
 import com.kidmily.algoga_server.booking.domain.model.Booking;
 import com.kidmily.algoga_server.booking.domain.repository.BookingRepository;
 import com.kidmily.algoga_server.global.exception.BusinessException;
+import com.kidmily.algoga_server.lms.domain.model.Course;
+import com.kidmily.algoga_server.lms.domain.repository.CourseRepository;
 import com.kidmily.algoga_server.payment.application.usecase.PaymentQueryUseCase;
 import com.kidmily.algoga_server.payment.domain.model.Payment;
 import com.kidmily.algoga_server.payment.domain.model.PaymentStatus;
@@ -37,6 +44,9 @@ public class PaymentQueryService implements PaymentQueryUseCase {
     private final PaymentRepository paymentRepository;
     private final BookingRepository bookingRepository;
     private final ConfirmationPdfGenerator confirmationPdfGenerator;
+    private final CourseRepository courseRepository;
+    private final UserCouponRepository userCouponRepository;
+    private final MileageHistoryRepository mileageHistoryRepository;
 
     @Override
     public PaymentResponse getPayment(Long paymentId) {
@@ -161,5 +171,34 @@ public class PaymentQueryService implements PaymentQueryUseCase {
                 .sorted(Comparator.comparingInt(PaymentStatsResponse::year)
                         .thenComparingInt(PaymentStatsResponse::month))
                 .toList();
+    }
+
+    public int calculateLectureAmount(Long courseId, int usedMileage, Long usedCouponId, Long userId) {
+        Course course = courseRepository.findByIdAndDeletedFalse(courseId)
+                .orElseThrow(() -> new BusinessException(PaymentErrorCode.COURSE_NOT_FOUND));
+        int basePrice = course.getPrice();
+
+        int couponDiscount = 0;
+        if (usedCouponId != null) {
+            UserCoupon userCoupon = userCouponRepository.findById(usedCouponId)
+                    .orElseThrow(() -> new BusinessException(BenefitErrorCode.COUPON_POLICY_NOT_FOUND));
+            if ("PERCENT".equals(userCoupon.getDiscountType())) {
+                couponDiscount = basePrice * userCoupon.getDiscountValue() / 100;
+            } else {
+                couponDiscount = Math.min(userCoupon.getDiscountValue(), basePrice);
+            }
+        }
+
+        if (usedMileage > 0) {
+            List<MileageHistory> histories = mileageHistoryRepository.findByUserId(userId);
+            int balance = histories.stream()
+                    .mapToInt(h -> "EARN".equals(h.getType()) ? h.getAmount() : -h.getAmount())
+                    .sum();
+            if (balance < usedMileage) {
+                throw new BusinessException(PaymentErrorCode.INSUFFICIENT_MILEAGE);
+            }
+        }
+
+        return Math.max(0, basePrice - couponDiscount - usedMileage);
     }
 }
