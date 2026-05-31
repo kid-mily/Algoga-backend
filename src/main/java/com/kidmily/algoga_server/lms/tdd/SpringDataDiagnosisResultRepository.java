@@ -1,4 +1,4 @@
-package com.kidmily.algoga_server.lms.infrastructure.persistence.repository;
+package com.kidmily.algoga_server.lms.tdd;
 
 import com.kidmily.algoga_server.lms.infrastructure.persistence.entity.DiagnosisResultJpaEntity;
 import org.springframework.data.jpa.repository.JpaRepository;

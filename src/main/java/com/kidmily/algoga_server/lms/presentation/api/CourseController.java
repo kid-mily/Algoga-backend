@@ -2,9 +2,13 @@ package com.kidmily.algoga_server.lms.presentation.api;
 
 import com.kidmily.algoga_server.global.common.api.response.ApiResponse;
 import com.kidmily.algoga_server.lms.application.usecase.CourseUseCase;
+import com.kidmily.algoga_server.lms.application.service.CourseService;
+import com.kidmily.algoga_server.lms.domain.model.Course;
 import com.kidmily.algoga_server.lms.presentation.response.CourseListResponse;
+import com.kidmily.algoga_server.user.settings.CustomUserDetails;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -15,14 +19,22 @@ import java.util.List;
 public class CourseController {
 
     private final CourseUseCase courseUseCase;
+    private final CourseService courseService;
 
     @GetMapping("/countries/{countryId}")
     public ResponseEntity<ApiResponse<List<CourseListResponse>>> getCoursesByCountry(
-            @PathVariable Long countryId
+            @PathVariable Long countryId,
+            @AuthenticationPrincipal CustomUserDetails userDetails
     ) {
+        Long currentUserId = getCurrentUserId(userDetails);
+
         List<CourseListResponse> response = courseUseCase.getPublishedCoursesByCountry(countryId)
                 .stream()
-                .map(CourseListResponse::from)
+                .map(course -> CourseListResponse.from(
+                        course,
+                        courseService.isEnrolled(currentUserId, course.getId()),
+                        courseService.isPaid(currentUserId, course.getId())
+                ))
                 .toList();
 
         return ResponseEntity.ok(
@@ -32,5 +44,36 @@ public class CourseController {
                         response
                 )
         );
+    }
+
+    @GetMapping("/{courseId}")
+    public ResponseEntity<ApiResponse<CourseListResponse>> getCourse(
+            @PathVariable Long courseId,
+            @AuthenticationPrincipal CustomUserDetails userDetails
+    ) {
+        Long currentUserId = getCurrentUserId(userDetails);
+        Course course = courseUseCase.getPublishedCourse(courseId);
+
+        CourseListResponse response = CourseListResponse.from(
+                course,
+                courseService.isEnrolled(currentUserId, course.getId()),
+                courseService.isPaid(currentUserId, course.getId())
+        );
+
+        return ResponseEntity.ok(
+                ApiResponse.success(
+                        "COURSE_FOUND",
+                        "강의 상세 조회에 성공했습니다.",
+                        response
+                )
+        );
+    }
+
+    private Long getCurrentUserId(CustomUserDetails userDetails) {
+        if (userDetails == null) {
+            return null;
+        }
+
+        return userDetails.getUser().getId();
     }
 }

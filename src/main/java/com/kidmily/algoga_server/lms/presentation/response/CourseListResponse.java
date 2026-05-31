@@ -14,10 +14,20 @@ public record CourseListResponse(
         List<String> fileUrls,
         String level,
         String levelName,
-        String status
+        String status,
+        boolean enrolled,
+        boolean paid
 ) {
 
     public static CourseListResponse from(Course course) {
+        return from(course, false, false);
+    }
+
+    public static CourseListResponse from(
+            Course course,
+            boolean enrolled,
+            boolean paid
+    ) {
         return new CourseListResponse(
                 course.getId(),
                 course.getCountryId(),
@@ -28,7 +38,9 @@ public record CourseListResponse(
                 course.getFileUrls(),
                 course.getLevel(),
                 toLevelName(course.getLevel()),
-                course.getStatus()
+                course.getStatus(),
+                enrolled,
+                paid
         );
     }
 
