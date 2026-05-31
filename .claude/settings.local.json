@@ -12,7 +12,11 @@
       "Bash(ls /mnt/c/Lecture/)",
       "Bash(Get-ChildItem -Path \"C:\\\\Lecture\\\\algoga-server-front\\\\src\" -Recurse -Directory)",
       "Bash(Select-Object -ExpandProperty FullName)",
-      "Bash(Sort-Object)"
+      "Bash(Sort-Object)",
+      "Bash(grep -E \"\\\\.\\(java|ts|tsx|js\\)$\")",
+      "Bash(xargs grep -l -i \"amadeus\")",
+      "Bash(xargs grep -l \"payment\\\\|Payment\")",
+      "Bash(grep -i \"\\\\.java$\")"
     ]
   }
 }
