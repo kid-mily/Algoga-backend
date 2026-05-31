@@ -101,7 +101,7 @@ public class BookingCommandService implements BookingCommandUseCase {
 
         bookingRepository.updateStatus(bookingId, BookingStatus.CANCEL_REQUESTED);
 
-        eventPublisher.publishEvent(new BookingCanceledEvent(booking.getUserId(), booking.getAccommodationId()));
+        eventPublisher.publishEvent(new BookingCanceledEvent(booking.getUserId(), booking.getAccommodationId(),  booking.getId()));
 
         log.info("[BookingCommandService] 예약 취소 완료 - bookingId: {}", bookingId);
     }

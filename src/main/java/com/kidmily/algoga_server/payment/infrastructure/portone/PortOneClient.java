@@ -16,6 +16,7 @@ public class PortOneClient {
     private final RestClient restClient;
     private final PortOneProperties properties;
 
+
     public PortOneClient(PortOneProperties properties) {
         this.properties = properties;
         this.restClient = RestClient.builder()

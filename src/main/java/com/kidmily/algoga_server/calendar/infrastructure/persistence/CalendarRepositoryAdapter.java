@@ -5,6 +5,7 @@ import com.kidmily.algoga_server.calendar.domain.model.Calendar;
 import com.kidmily.algoga_server.calendar.domain.model.CalendarType;
 import com.kidmily.algoga_server.calendar.domain.repository.CalendarRepository;
 import com.kidmily.algoga_server.calendar.infrastructure.mapper.CalendarMapper;
+import com.kidmily.algoga_server.calendar.infrastructure.persistence.entity.CalendarJpaEntity;
 import com.kidmily.algoga_server.calendar.infrastructure.persistence.repository.SpringDataCalendarRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
@@ -35,15 +36,24 @@ public class CalendarRepositoryAdapter implements CalendarRepository {
                 .toList();
     }
 
-//    @Override
-//    @Transactional
-//    public void deleteByReferenceId(Long referenceId) {
-//        springDataRepository.deleteByReferenceId(referenceId);
-//    }
-
     @Override
     @Transactional
     public void deleteByUserIdAndReferenceIdAndType(Long userId, Long referenceId, CalendarType type) {
         springDataRepository.deleteByUserIdAndReferenceIdAndType(userId, referenceId, type);
+    }
+
+    @Override
+    public List<Calendar> findByType(CalendarType type) {
+        return springDataRepository.findByType(type)
+                .stream()
+                .map(calendarMapper::toDomain)
+                .toList();
+    }
+    @Override
+    public Calendar update(Calendar calendar) {
+        CalendarJpaEntity entity = springDataRepository.findById(calendar.getCalendarId())
+                .orElseThrow(() -> new RuntimeException("캘린더를 찾을 수 없습니다."));
+        entity.updateDDayAlertSent(calendar.getIsDDayAlertSent());
+        return calendarMapper.toDomain(springDataRepository.save(entity));
     }
 }

@@ -1,7 +1,6 @@
 package com.kidmily.algoga_server.calendar.application.service;
 
-import com.kidmily.algoga_server.calendar.application.port.LecturePort;
-import com.kidmily.algoga_server.calendar.application.port.AccommodationPort;
+import com.kidmily.algoga_server.calendar.application.policy.CalendarSchedulePolicy;
 import com.kidmily.algoga_server.calendar.application.usecase.CalendarQueryUseCase;
 import com.kidmily.algoga_server.calendar.domain.model.Calendar;
 import com.kidmily.algoga_server.calendar.domain.model.CalendarType;
@@ -24,8 +23,7 @@ import java.util.List;
 public class CalendarQueryService implements CalendarQueryUseCase {
 
     private final CalendarRepository calendarRepository;
-    private final AccommodationPort accommodationPort;
-    private final LecturePort lecturePort;
+    private final CalendarSchedulePolicy calendarSchedulePolicy;
 
     @Override
     public CalendarResponse getCalendar(Long userId, int year, int month) {
@@ -60,9 +58,9 @@ public class CalendarQueryService implements CalendarQueryUseCase {
 
     private List<ScheduleResponse> toScheduleResponses(Calendar calendar, Long userId) {
         if (calendar.getType() == CalendarType.LECTURE) {
-            String title = lecturePort.getLectureName(calendar.getReferenceId());
-            LocalDate startDate = lecturePort.getLectureStartDate(calendar.getReferenceId(), userId);
-            LocalDate endDate = lecturePort.getLectureEndDate(calendar.getReferenceId(), userId);
+            String title = calendarSchedulePolicy.resolveLectureName(calendar.getReferenceId());
+            LocalDate startDate = calendarSchedulePolicy.resolveLectureStartDate(calendar.getReferenceId(), userId);
+            LocalDate endDate = calendarSchedulePolicy.resolveLectureEndDate(calendar.getReferenceId(), userId);
 
             if (startDate == null || endDate == null) {
                 return List.of();
@@ -80,7 +78,10 @@ public class CalendarQueryService implements CalendarQueryUseCase {
 
     private String resolveTitle(Calendar calendar) {
         if (calendar.getType() == CalendarType.TRIP) {
-            return accommodationPort.getAccommodationName(calendar.getReferenceId());
+            return calendarSchedulePolicy.resolveAccommodationName(calendar.getReferenceId());
+        }
+        if (calendar.getType() == CalendarType.FLIGHT) {
+            return calendarSchedulePolicy.resolveFlightName(calendar.getReferenceId());
         }
         return "D-day";
     }

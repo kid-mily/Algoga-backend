@@ -44,4 +44,8 @@ public class CalendarJpaEntity {
     protected void onCreate() {
         this.createdAt = LocalDateTime.now();
     }
+
+    public void updateDDayAlertSent(Boolean isDDayAlertSent) {
+        this.isDDayAlertSent = isDDayAlertSent;
+    }
 }
