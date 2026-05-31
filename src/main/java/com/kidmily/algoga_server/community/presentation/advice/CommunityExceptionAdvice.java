@@ -63,22 +63,22 @@ public class CommunityExceptionAdvice implements CommonExceptionAdvice {
         return ResponseEntity.status(errorCode.getStatus()).body(response);
     }
 
-    @ExceptionHandler(HttpMessageNotReadableException.class)
-    public ResponseEntity<ErrorResponse> handleHttpMessageNotReadableException(HttpMessageNotReadableException e) {
-        String traceId = getOrCreateTraceId();
-
-        log.warn("[HttpMessageNotReadableException] traceId: {}, message: {}", traceId, e.getMessage());
-
-        ErrorResponse response = new ErrorResponse(
-                Instant.now(),
-                HttpStatus.BAD_REQUEST.value(),
-                "POST_000",
-                "잘못된 요청입니다. 입력값을 확인해주세요.",
-                traceId
-        );
-
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
-    }
+//    @ExceptionHandler(HttpMessageNotReadableException.class)
+//    public ResponseEntity<ErrorResponse> handleHttpMessageNotReadableException(HttpMessageNotReadableException e) {
+//        String traceId = getOrCreateTraceId();
+//
+//        log.warn("[HttpMessageNotReadableException] traceId: {}, message: {}", traceId, e.getMessage());
+//
+//        ErrorResponse response = new ErrorResponse(
+//                Instant.now(),
+//                HttpStatus.BAD_REQUEST.value(),
+//                "POST_000",
+//                "잘못된 요청입니다. 입력값을 확인해주세요.",
+//                traceId
+//        );
+//
+//        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+//    }
 
     @ExceptionHandler(ReportException.class)
     public ResponseEntity<ErrorResponse> handleReportException(ReportException e) {
