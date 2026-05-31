@@ -80,12 +80,19 @@ public class AuthService {
         log.info("이메일 인증 성공 [이메일: {}]", email);
     }
 
-    // 최종 회원가입
+    // 회원가입
     public void signup(AuthSignupRequest request) {
         String email = request.email().toLowerCase();
 
+        // 이메일 중복 검사
         if (userRepository.existsByEmail(email)) {
             throw new AuthException(AuthErrorCode.DUPLICATE_EMAIL);
+        }
+
+        // 아이디(username) 중복 검사
+        if (userRepository.existsByUsername(request.username())) {
+            // (주의: DUPLICATE_USERNAME 은 하연님의 AuthErrorCode 에 있는 이름으로 맞춰주세요!)
+            throw new AuthException(AuthErrorCode.DUPLICATE_USERNAME);
         }
 
         // 이메일 인증은 2차로 넘김.
