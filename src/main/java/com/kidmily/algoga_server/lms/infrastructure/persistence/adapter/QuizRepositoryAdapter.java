@@ -3,7 +3,7 @@ package com.kidmily.algoga_server.lms.infrastructure.persistence.adapter;
 import com.kidmily.algoga_server.lms.domain.model.Quiz;
 import com.kidmily.algoga_server.lms.domain.repository.QuizRepository;
 import com.kidmily.algoga_server.lms.infrastructure.persistence.entity.QuizJpaEntity;
-import com.kidmily.algoga_server.lms.infrastructure.persistence.repository.SpringDataQuizRepository;
+import com.kidmily.algoga_server.lms.tdd.SpringDataQuizRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 

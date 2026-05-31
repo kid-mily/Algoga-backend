@@ -1,0 +1,77 @@
+### 강의 공개로 수정
+PUT http://localhost:15000/api/v1/admin/courses/11
+Authorization: Bearer {{managerAccessToken}}
+Content-Type: multipart/form-data; boundary=boundary
+
+--boundary
+Content-Disposition: form-data; name="request"
+Content-Type: application/json
+
+{
+  "title": "테스트 강의",
+  "description": "공개 상태 테스트",
+  "price": 10000,
+  "level": "BEGINNER",
+  "status": "PUBLISHED"
+}
+
+--boundary--
+
+
+### 강의 비공개로 수정
+PUT http://localhost:15000/api/v1/admin/courses/11
+Authorization: Bearer {{managerAccessToken}}
+Content-Type: multipart/form-data; boundary=boundary
+
+--boundary
+Content-Disposition: form-data; name="request"
+Content-Type: application/json
+
+{
+  "title": "테스트 강의",
+  "description": "비공개 상태 테스트",
+  "price": 10000,
+  "level": "BEGINNER",
+  "status": "DRAFT"
+}
+
+--boundary--
+
+
+### 어드민 강의 상세 조회
+GET http://localhost:15000/api/v1/admin/courses/11
+Authorization: Bearer {{managerAccessToken}}
+
+
+### 유저 강의 상세 조회 - 결제/수강 상태 확인
+GET http://localhost:15000/api/v1/courses/11
+Authorization: Bearer {{userAccessToken}}
+
+
+### 유저 강의 목록 조회 - 결제/수강 상태 확인
+GET http://localhost:15000/api/v1/courses/countries/1
+Authorization: Bearer {{userAccessToken}}
+
+
+### 강의 단독 결제
+POST http://localhost:15000/api/v1/payments/lecture
+Authorization: Bearer {{userAccessToken}}
+Content-Type: application/json
+
+{
+  "courseId": 11,
+  "amount": 10000,
+  "usedMileage": 0,
+  "usedCouponId": null,
+  "portonePaymentId": "1"
+}
+
+
+### 내 수강 강의 목록 조회
+GET http://localhost:15000/api/v1/my/courses
+Authorization: Bearer {{userAccessToken}}
+
+
+### 내 결제 내역 조회
+GET http://localhost:15000/api/v1/payments/me
+Authorization: Bearer {{userAccessToken}}

@@ -9,6 +9,8 @@ public interface CourseUseCase {
 
     List<Course> getPublishedCoursesByCountry(Long countryId);
 
+    Course getPublishedCourse(Long courseId);
+
     List<Course> getRecommendedCoursesByCountryAndLevel(Long countryId, String level);
 
     long countPublishedCoursesByCountry(Long countryId);

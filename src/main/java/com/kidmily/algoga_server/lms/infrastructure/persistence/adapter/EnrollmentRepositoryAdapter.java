@@ -3,7 +3,7 @@ package com.kidmily.algoga_server.lms.infrastructure.persistence.adapter;
 import com.kidmily.algoga_server.lms.domain.model.Enrollment;
 import com.kidmily.algoga_server.lms.domain.repository.EnrollmentRepository;
 import com.kidmily.algoga_server.lms.infrastructure.persistence.entity.EnrollmentJpaEntity;
-import com.kidmily.algoga_server.lms.infrastructure.persistence.repository.SpringDataEnrollmentRepository;
+import com.kidmily.algoga_server.lms.tdd.SpringDataEnrollmentRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 

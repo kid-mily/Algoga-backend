@@ -3,7 +3,7 @@ package com.kidmily.algoga_server.lms.infrastructure.persistence.adapter;
 import com.kidmily.algoga_server.lms.domain.model.Country;
 import com.kidmily.algoga_server.lms.domain.repository.MapRepository;
 import com.kidmily.algoga_server.lms.infrastructure.persistence.entity.CountryJpaEntity;
-import com.kidmily.algoga_server.lms.infrastructure.persistence.repository.SpringDataMapRepository;
+import com.kidmily.algoga_server.lms.tdd.SpringDataMapRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 
