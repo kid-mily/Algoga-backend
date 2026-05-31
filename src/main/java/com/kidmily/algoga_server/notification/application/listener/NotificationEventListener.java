@@ -116,9 +116,9 @@ public class NotificationEventListener {
             return courseName + " 강의가 결제 완료되었습니다";
         }
         return switch (event.paymentType()) {
-            case DEPOSIT -> event.bookingNumber() + " 숙소 계약금 결제가 완료되었습니다";
-            case BALANCE -> event.bookingNumber() + " 숙소 잔금 결제가 완료되었습니다";
-            case FULL -> event.bookingNumber() + " 숙소 결제가 완료되었습니다";
+            case DEPOSIT -> event.bookingNumber() + " 패키지 계약금 결제가 완료되었습니다";
+            case BALANCE -> event.bookingNumber() + " 패키지 잔금 결제가 완료되었습니다";
+            case FULL -> event.bookingNumber() + " 패키지 결제가 완료되었습니다";
             default -> event.bookingNumber() + " 결제가 완료되었습니다";
         };
     }

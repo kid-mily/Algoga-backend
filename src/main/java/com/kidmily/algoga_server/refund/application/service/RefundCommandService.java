@@ -208,7 +208,7 @@ public class RefundCommandService implements RefundCommandUseCase {
         // 4. Booking 상태 → REFUNDED
         bookingRepository.updateStatus(refundRequest.getBookingId(), BookingStatus.REFUNDED);
 
-        // 🌟 [추가 영역 A] 이벤트를 만들기 위해 Booking 엔티티 정보를 명확히 조회해옵니다.
+        // 이벤트를 만들기 위해 Booking 엔티티 정보를 명확히 조회해옵니다.
         // (bookingRepository 명세에 맞게 findById 등으로 유저 ID와 숙소 ID를 수집합니다.)
         Booking booking = bookingRepository.findById(refundRequest.getBookingId())
                 .orElseThrow(() -> new BusinessException(RefundErrorCode.BOOKING_NOT_FOUND));
@@ -222,12 +222,12 @@ public class RefundCommandService implements RefundCommandUseCase {
 
 
 
-        // 🌟 [추가 영역 B] 모든 DB 저장이 완벽히 성공한 이 시점에 캘린더 연동 벨을 울립니다
+        // 모든 DB 저장이 완벽히 성공한 이 시점에 캘린더 연동 벨을 울립니다
         RefundApprovedEvent event;
         if (payment.getCourseId() != null) {
             event = RefundApprovedEvent.ofLecture(booking.getUserId(), payment.getCourseId());
         } else {
-            event = RefundApprovedEvent.ofTrip(booking.getUserId(), booking.getAccommodationId());
+            event = RefundApprovedEvent.ofTrip(booking.getUserId(), booking.getAccommodationId(), booking.getId() );
         }
         eventPublisher.publishEvent(event);
 

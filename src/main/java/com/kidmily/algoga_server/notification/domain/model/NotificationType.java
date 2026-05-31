@@ -8,22 +8,22 @@ import lombok.RequiredArgsConstructor;
 public enum NotificationType {
 
     // 학습
-    COURSE_REGISTERED("강의 수강 등록", NotificationCategory.LEARNING),
-    COURSE_COMPLETED("강의 수강 완료", NotificationCategory.LEARNING), // 완료
+    COURSE_REGISTERED("강의 수강 등록", NotificationCategory.LEARNING), // 필요없음
+    COURSE_COMPLETED("강의 수강 완료", NotificationCategory.LEARNING), // ⭐완료
     DDAY_REMINDER("D-day 알림", NotificationCategory.LEARNING),
 
     // Q&A
     QNA_ANSWERED("Q&A 답변 등록", NotificationCategory.QNA),
 
     // 커뮤니티
-    POST_COMMENTED("게시글 댓글", NotificationCategory.COMMUNITY), // 완료
-    COMMENT_REPLIED("댓글 대댓글", NotificationCategory.COMMUNITY), //
+    POST_COMMENTED("게시글 댓글", NotificationCategory.COMMUNITY), // ⭐완료
+    COMMENT_REPLIED("댓글 대댓글", NotificationCategory.COMMUNITY), // ⭐완료
 
     // 결제/예약 (필수 알림 - 설정 무관)
-    PAYMENT_COMPLETED("결제 완료", NotificationCategory.MANDATORY), // 완료
-    RESERVATION_CONFIRMED("예약 확정", NotificationCategory.MANDATORY),
-    REFUND_APPROVED("환불 승인", NotificationCategory.MANDATORY), // 진행종
-    REFUND_REJECTED("환불 거절", NotificationCategory.MANDATORY), // 진행중
+    PAYMENT_COMPLETED("결제 완료", NotificationCategory.MANDATORY), // ⭐완료
+    RESERVATION_CONFIRMED("예약 확정", NotificationCategory.MANDATORY), // 필요없음
+    REFUND_APPROVED("환불 승인", NotificationCategory.MANDATORY), // ⭐완료
+    REFUND_REJECTED("환불 거절", NotificationCategory.MANDATORY), // ⭐완료
 
     // 공지사항
     NOTICE_CREATED("공지사항 등록", NotificationCategory.NOTICE),

@@ -7,19 +7,20 @@ package com.kidmily.algoga_server.refund.domain.event;
 public record RefundApprovedEvent(
         Long userId,
         Long referenceId,       // 캘린더 테이블의 referenceId와 매핑되는 ID (courseId 또는 accommodationId)
+        Long bookingId,
         String type             // "LECTURE" (강의) 또는 "TRIP" (여행/패키지)
 ) {
     /**
      * 강의(Lecture) 환불 승인 시 이벤트를 생성하는 팩토리 메서드
      */
     public static RefundApprovedEvent ofLecture(Long userId, Long courseId) {
-        return new RefundApprovedEvent(userId, courseId, "LECTURE");
+        return new RefundApprovedEvent(userId, courseId,null, "LECTURE");
     }
 
     /**
      * 여행/패키지(Trip) 환불 승인 시 이벤트를 생성하는 팩토리 메서드
      */
-    public static RefundApprovedEvent ofTrip(Long userId, Long accommodationId) {
-        return new RefundApprovedEvent(userId, accommodationId, "TRIP");
+    public static RefundApprovedEvent ofTrip(Long userId, Long accommodationId, Long bookingId) {
+        return new RefundApprovedEvent(userId, accommodationId, bookingId, "TRIP");
     }
 }

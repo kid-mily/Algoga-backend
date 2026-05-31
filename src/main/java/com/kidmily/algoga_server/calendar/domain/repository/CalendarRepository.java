@@ -11,4 +11,6 @@ public interface CalendarRepository {
     List<Calendar> findByUserIdAndDateRange(Long userId, LocalDate startDate, LocalDate endDate);
     // 기존 단일 referenceId 삭제에서 -> 안전한 복합 조건 삭제 포트로 변경
     void deleteByUserIdAndReferenceIdAndType(Long userId, Long referenceId, CalendarType type);
+    List<Calendar> findByType(CalendarType type);
+    Calendar update(Calendar calendar);
 }

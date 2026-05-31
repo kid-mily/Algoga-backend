@@ -5,5 +5,6 @@ public enum CalendarType {
     LECTURE_START,  //
     LECTURE_END,    //
     TRIP,      // 여행
+    FLIGHT, // 항공권
     D_DAY      // D-day
 }

@@ -143,6 +143,7 @@ public class PaymentCommandService implements PaymentCommandUseCase {
                 eventPublisher.publishEvent(new PackagePaymentCompletedEvent(
                         user.getId(),
                         booking.getAccommodationId(),
+                        booking.getId(),
                         booking.getCheckInDate()
                 ));
                 log.info("[PaymentCommandService] 패키지 캘린더 이벤트 발행 - userId: {}, accommodationId: {}",
