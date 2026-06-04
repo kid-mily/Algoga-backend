@@ -4,14 +4,14 @@ spring:
 
   data:
     redis:
-      host: localhost
-      port: 6379
+      host: ${REDIS_HOST}
+      port: ${REDIS_PORT}
 
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
-    url: jdbc:mysql://localhost:3306/algoga
-    username: algoga
-    password: algoga
+    url: ${DB_URL}
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
 
   jpa:
     open-in-view: false
@@ -25,12 +25,23 @@ spring:
     multipart:
       max-file-size: 500MB
       max-request-size: 500MB
+
   config:
     import:
-      - classpath:application-secret.yml
       - optional:classpath:/domains/banner.yml
       - optional:classpath:/domains/userProfile.yml
 
+  mail:
+    host: smtp.gmail.com
+    port: 587
+    username: ${GMAIL_USERNAME}
+    password: ${GMAIL_PASSWORD}
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
 
 server:
   port: 15000
@@ -41,39 +52,38 @@ logging:
     org.hibernate.SQL: debug
 
 springdoc:
-  default-produces-media-type: application/json # API 응답(Response) 기본 미디어 타입
+  default-produces-media-type: application/json
 
 jwt:
-  secret-key: algoga-project-secret-key-must-be-long-enough-for-security # 32바이트 이상 임의의 문자열
-  access-token-expiration: 1800000 # 30분 (밀리초)
-  refresh-token-expiration: 604800000 # 7일 (밀리초)
+  secret-key: ${JWT_SECRET_KEY}
+  access-token-expiration: 1800000 # 30분
+  refresh-token-expiration: 604800000 # 7일
 
 app:
   file:
     upload-root: uploads
 
 portone:
-  base-url: https://api.portone.io
-  store-id: store-9e71265b-7e7b-42d3-b858-ac959180f553
-  api-secret: 367rNbr7795DzHdcbKLR3Kl2Jk9a8LQuETfliDlKpyH0IIQe9W9TfAuOg62oCVqTeutbhpF9QByk2q6P
-  channel-key: channel-key-16bc953e-35b9-4cf7-8ea5-a42f1884381f
+  base-url: ${PORTONE_BASE_URL}
+  store-id: ${PORTONE_STORE_ID}
+  api-secret: ${PORTONE_API_SECRET}
+  channel-key: ${PORTONE_CHANNEL_KEY}
 
 cloud:
   aws:
     s3:
-      # Nginx로 443(HTTPS) -> 9000 프록시를 설정했으므로 도메인을 그대로 씁니다.
-      endpoint: https://algoga-bucket.kro.kr
-
+      endpoint: ${S3_ENDPOINT}
     credentials:
-      access-key: algoga
-      secret-key: algoga1234!
+      access-key: ${AWS_ACCESS_KEY}
+      secret-key: ${AWS_SECRET_KEY}
     region:
-      static: ap-northeast-2 # MinIO는 리전 제약이 없으나 S3 SDK 초기화를 위해 필요함
+      static: ap-northeast-2
 
 flight:
   api:
-    base-url: http://apis.data.go.kr/B551177/statusOfSPaxFlt4DutyFree
-    service-key: ucqYTJOWM%2BU5JsI%2BopbemqXnDNbBjjNFTwewJjOJGOduZacV%2F0D2KHIUsb%2BMm37vkizLa%2FRVc%2BvSa1sxFW3gkA%3D%3D
+    base-url: ${FLIGHT_BASE_URL}
+    service-key: ${FLIGHT_API_SERVICE_KEY}
+
 user:
   storage:
     bucket: algoga-banner
