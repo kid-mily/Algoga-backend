@@ -173,7 +173,7 @@ public class CommunityController {
     @Operation(summary = "댓글/대댓글 작성", description = "게시글에 댓글 또는 대댓글을 작성합니다.")
     @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "201", description = "댓글 작성에 성공했습니다.")
     @ApiErrorCodeExample(domain = PostErrorCode.class, value = {
-            "POST_NOT_FOUND",       // 400 존재하지 않는 게시글
+            "POST_NOT_FOUND",       // 404 존재하지 않는 게시글
             "COMMENT_UNAUTHORIZED"     // 401 비로그인
     })
     public ResponseEntity<ApiResponse<CreateCommentResponse>> createComment(
