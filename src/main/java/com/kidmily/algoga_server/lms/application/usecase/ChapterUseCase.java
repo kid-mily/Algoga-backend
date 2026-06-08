@@ -6,7 +6,7 @@ import com.kidmily.algoga_server.lms.domain.model.Chapter;
 
 import java.util.List;
 
-public interface AdminChapterUseCase {
+public interface ChapterUseCase {
 
     List<Chapter> getChapters(Long courseId);
 

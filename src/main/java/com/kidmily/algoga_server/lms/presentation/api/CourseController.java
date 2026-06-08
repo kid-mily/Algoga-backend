@@ -2,7 +2,6 @@ package com.kidmily.algoga_server.lms.presentation.api;
 
 import com.kidmily.algoga_server.global.common.api.response.ApiResponse;
 import com.kidmily.algoga_server.lms.application.usecase.CourseUseCase;
-import com.kidmily.algoga_server.lms.application.service.CourseService;
 import com.kidmily.algoga_server.lms.domain.model.Course;
 import com.kidmily.algoga_server.lms.presentation.response.CourseListResponse;
 import com.kidmily.algoga_server.user.settings.CustomUserDetails;
@@ -19,7 +18,6 @@ import java.util.List;
 public class CourseController {
 
     private final CourseUseCase courseUseCase;
-    private final CourseService courseService;
 
     @GetMapping("/countries/{countryId}")
     public ResponseEntity<ApiResponse<List<CourseListResponse>>> getCoursesByCountry(
@@ -32,8 +30,8 @@ public class CourseController {
                 .stream()
                 .map(course -> CourseListResponse.from(
                         course,
-                        courseService.isEnrolled(currentUserId, course.getId()),
-                        courseService.isPaid(currentUserId, course.getId())
+                        courseUseCase.isEnrolled(currentUserId, course.getId()),
+                        courseUseCase.isPaid(currentUserId, course.getId())
                 ))
                 .toList();
 
@@ -56,8 +54,8 @@ public class CourseController {
 
         CourseListResponse response = CourseListResponse.from(
                 course,
-                courseService.isEnrolled(currentUserId, course.getId()),
-                courseService.isPaid(currentUserId, course.getId())
+                courseUseCase.isEnrolled(currentUserId, course.getId()),
+                courseUseCase.isPaid(currentUserId, course.getId())
         );
 
         return ResponseEntity.ok(

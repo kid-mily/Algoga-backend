@@ -6,7 +6,7 @@ import com.kidmily.algoga_server.global.exception.GlobalErrorCode;
 import com.kidmily.algoga_server.lms.application.command.SubmitQuizAnswerCommand;
 import com.kidmily.algoga_server.lms.application.command.SubmitQuizCommand;
 import com.kidmily.algoga_server.lms.application.result.QuizSubmitResult;
-import com.kidmily.algoga_server.lms.application.usecase.UserQuizUseCase;
+import com.kidmily.algoga_server.lms.application.usecase.QuizUseCase;
 import com.kidmily.algoga_server.lms.exception.LmsErrorCode;
 import com.kidmily.algoga_server.lms.presentation.request.SubmitQuizRequest;
 import com.kidmily.algoga_server.lms.presentation.response.QuizSubmitResponse;
@@ -29,7 +29,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class UserQuizController {
 
-    private final UserQuizUseCase userQuizUseCase;
+    private final QuizUseCase quizUseCase;
 
     @Operation(
             summary = "사용자 퀴즈 조회",
@@ -52,7 +52,7 @@ public class UserQuizController {
     ) {
         Long currentUserId = userDetails.getUser().getId();
 
-        List<UserQuizResponse> response = userQuizUseCase.getQuizzes(
+        List<UserQuizResponse> response = quizUseCase.getQuizzes(
                         currentUserId,
                         courseId
                 )
@@ -108,7 +108,7 @@ public class UserQuizController {
                 answers
         );
 
-        QuizSubmitResult result = userQuizUseCase.submitQuiz(command);
+        QuizSubmitResult result = quizUseCase.submitQuiz(command);
 
         return ResponseEntity.ok(
                 ApiResponse.success(

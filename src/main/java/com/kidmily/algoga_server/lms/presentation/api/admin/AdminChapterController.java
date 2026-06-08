@@ -5,7 +5,7 @@ import com.kidmily.algoga_server.global.common.api.response.ApiResponse;
 import com.kidmily.algoga_server.global.exception.GlobalErrorCode;
 import com.kidmily.algoga_server.lms.application.command.CreateChapterCommand;
 import com.kidmily.algoga_server.lms.application.command.UpdateChapterCommand;
-import com.kidmily.algoga_server.lms.application.usecase.AdminChapterUseCase;
+import com.kidmily.algoga_server.lms.application.usecase.ChapterUseCase;
 import com.kidmily.algoga_server.lms.domain.model.Chapter;
 import com.kidmily.algoga_server.lms.exception.LmsErrorCode;
 import com.kidmily.algoga_server.lms.infrastructure.document.LocalFileStorageManager;
@@ -14,6 +14,8 @@ import com.kidmily.algoga_server.lms.presentation.request.admin.UpdateChapterReq
 import com.kidmily.algoga_server.lms.presentation.response.AdminChapterResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -32,7 +34,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class AdminChapterController {
 
-    private final AdminChapterUseCase adminChapterUseCase;
+    private final ChapterUseCase chapterUseCase;
     private final LocalFileStorageManager fileStorageManager;
     @Operation(
             summary = "챕터 목록 조회",
@@ -45,7 +47,7 @@ public class AdminChapterController {
             @Parameter(description = "강의 ID", example = "1")
             @PathVariable Long courseId
     ) {
-        List<AdminChapterResponse> response = adminChapterUseCase.getChapters(courseId)
+        List<AdminChapterResponse> response = chapterUseCase.getChapters(courseId)
                 .stream()
                 .map(AdminChapterResponse::from)
                 .toList();
@@ -79,7 +81,10 @@ public class AdminChapterController {
             @Parameter(description = "챕터 등록 요청 JSON")
             @Valid @RequestPart(value = "request") CreateChapterRequest request,
 
-            @Parameter(description = "챕터 영상 파일", example = "chapter-video.mp4")
+            @Parameter(
+                    description = "챕터 영상 파일",
+                    content = @Content(mediaType = MediaType.APPLICATION_OCTET_STREAM_VALUE, schema = @Schema(type = "string", format = "binary"))
+            )
             @RequestPart(value = "video") MultipartFile videoFile
     ) {
 
@@ -91,7 +96,7 @@ public class AdminChapterController {
                 request.chapterOrder()
         );
 
-        Chapter savedChapter = adminChapterUseCase.createChapter(command);
+        Chapter savedChapter = chapterUseCase.createChapter(command);
 
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(ApiResponse.created(
@@ -124,7 +129,10 @@ public class AdminChapterController {
             @Parameter(description = "챕터 수정 요청 JSON")
             @Valid @RequestPart(value = "request") UpdateChapterRequest request,
 
-            @Parameter(description = "변경할 챕터 영상 파일. 선택값입니다.", example = "chapter-video-new.mp4")
+            @Parameter(
+                    description = "변경할 챕터 영상 파일. 선택값입니다.",
+                    content = @Content(mediaType = MediaType.APPLICATION_OCTET_STREAM_VALUE, schema = @Schema(type = "string", format = "binary"))
+            )
             @RequestPart(value = "video", required = false) MultipartFile videoFile
     ) {
 
@@ -135,7 +143,7 @@ public class AdminChapterController {
                 request.chapterOrder()
         );
 
-        Chapter updatedChapter = adminChapterUseCase.updateChapter(courseId, chapterId, command);
+        Chapter updatedChapter = chapterUseCase.updateChapter(courseId, chapterId, command);
 
         return ResponseEntity.ok(
                 ApiResponse.success(
@@ -160,7 +168,7 @@ public class AdminChapterController {
             @Parameter(description = "챕터 ID", example = "1")
             @PathVariable Long chapterId
     ) {
-        adminChapterUseCase.deleteChapter(courseId, chapterId);
+        chapterUseCase.deleteChapter(courseId, chapterId);
 
         return ResponseEntity.ok(
                 ApiResponse.success(

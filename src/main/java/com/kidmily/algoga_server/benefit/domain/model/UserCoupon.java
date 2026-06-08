@@ -63,6 +63,24 @@ public class UserCoupon {
         );
     }
 
+    public static UserCoupon issueWelcome(Long userId) {
+        LocalDateTime now = LocalDateTime.now();
+
+        return new UserCoupon(
+                null,
+                userId,
+                null,
+                null,
+                "웰컴쿠폰",
+                "RATE",
+                10,
+                "ISSUED",
+                now,
+                now.plusDays(30),
+                null
+        );
+    }
+
     public static UserCoupon withId(
             Long id,
             Long userId,

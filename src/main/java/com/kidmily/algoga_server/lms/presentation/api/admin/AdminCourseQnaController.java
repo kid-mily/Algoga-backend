@@ -6,7 +6,7 @@ import com.kidmily.algoga_server.global.common.api.response.ApiResponse;
 import com.kidmily.algoga_server.global.exception.GlobalErrorCode;
 import com.kidmily.algoga_server.lms.application.command.AnswerCourseQnaCommand;
 import com.kidmily.algoga_server.lms.application.command.CreateCourseQnaCommentCommand;
-import com.kidmily.algoga_server.lms.application.usecase.CourseQnaUseCase;
+import com.kidmily.algoga_server.lms.application.usecase.CourseUseCase;
 import com.kidmily.algoga_server.lms.domain.model.CourseQna;
 import com.kidmily.algoga_server.lms.domain.model.CourseQnaComment;
 import com.kidmily.algoga_server.lms.exception.LmsErrorCode;
@@ -30,7 +30,7 @@ import org.springframework.web.bind.annotation.*;
 @RequiredArgsConstructor
 public class AdminCourseQnaController {
 
-    private final CourseQnaUseCase courseQnaUseCase;
+    private final CourseUseCase courseUseCase;
 
     @Operation(
             summary = "강의 Q&A 답변 등록",
@@ -62,7 +62,7 @@ public class AdminCourseQnaController {
                 request.answer()
         );
 
-        CourseQna qna = courseQnaUseCase.answerQna(command);
+        CourseQna qna = courseUseCase.answerQna(command);
 
         return ResponseEntity.ok(
                 ApiResponse.success(
@@ -103,7 +103,7 @@ public class AdminCourseQnaController {
                 request.content()
         );
 
-        CourseQnaComment comment = courseQnaUseCase.createComment(command);
+        CourseQnaComment comment = courseUseCase.createComment(command);
 
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(ApiResponse.created(

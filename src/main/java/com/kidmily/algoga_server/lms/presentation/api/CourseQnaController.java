@@ -6,7 +6,7 @@ import com.kidmily.algoga_server.global.exception.GlobalErrorCode;
 import com.kidmily.algoga_server.lms.application.command.CreateCourseQnaCommand;
 import com.kidmily.algoga_server.lms.application.command.CreateCourseQnaCommentCommand;
 import com.kidmily.algoga_server.lms.application.result.CourseQnaDetailResult;
-import com.kidmily.algoga_server.lms.application.usecase.CourseQnaUseCase;
+import com.kidmily.algoga_server.lms.application.usecase.CourseUseCase;
 import com.kidmily.algoga_server.lms.domain.model.CourseQna;
 import com.kidmily.algoga_server.lms.domain.model.CourseQnaComment;
 import com.kidmily.algoga_server.lms.exception.LmsErrorCode;
@@ -34,7 +34,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class CourseQnaController {
 
-    private final CourseQnaUseCase courseQnaUseCase;
+    private final CourseUseCase courseUseCase;
 
     @Operation(
             summary = "강의 Q&A 등록",
@@ -60,7 +60,7 @@ public class CourseQnaController {
                 request.question()
         );
 
-        CourseQna qna = courseQnaUseCase.createQna(command);
+        CourseQna qna = courseUseCase.createQna(command);
 
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(ApiResponse.created(
@@ -80,7 +80,7 @@ public class CourseQnaController {
             @Parameter(description = "강의 ID", example = "3")
             @PathVariable Long courseId
     ) {
-        List<CourseQnaResponse> response = courseQnaUseCase.getQnas(courseId)
+        List<CourseQnaResponse> response = courseUseCase.getQnas(courseId)
                 .stream()
                 .map(CourseQnaResponse::from)
                 .toList();
@@ -110,7 +110,7 @@ public class CourseQnaController {
             @Parameter(description = "Q&A ID", example = "1")
             @PathVariable Long qnaId
     ) {
-        CourseQnaDetailResult result = courseQnaUseCase.getQnaDetail(courseId, qnaId);
+        CourseQnaDetailResult result = courseUseCase.getQnaDetail(courseId, qnaId);
 
         return ResponseEntity.ok(
                 ApiResponse.success(
@@ -152,7 +152,7 @@ public class CourseQnaController {
                 request.content()
         );
 
-        CourseQnaComment comment = courseQnaUseCase.createComment(command);
+        CourseQnaComment comment = courseUseCase.createComment(command);
 
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(ApiResponse.created(

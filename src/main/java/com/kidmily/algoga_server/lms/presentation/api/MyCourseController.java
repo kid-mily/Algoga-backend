@@ -1,7 +1,7 @@
 package com.kidmily.algoga_server.lms.presentation.api;
 
 import com.kidmily.algoga_server.global.common.api.response.ApiResponse;
-import com.kidmily.algoga_server.lms.application.usecase.MyCourseUseCase;
+import com.kidmily.algoga_server.lms.application.usecase.CourseUseCase;
 import com.kidmily.algoga_server.lms.presentation.response.MyCourseResponse;
 import com.kidmily.algoga_server.user.settings.CustomUserDetails;
 import io.swagger.v3.oas.annotations.Operation;
@@ -19,7 +19,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class MyCourseController {
 
-    private final MyCourseUseCase myCourseUseCase;
+    private final CourseUseCase courseUseCase;
 
     @Operation(
             summary = "내 수강 강의 목록 조회",
@@ -34,7 +34,7 @@ public class MyCourseController {
     ) {
         Long currentUserId = userDetails.getUser().getId();
 
-        List<MyCourseResponse> response = myCourseUseCase.getMyCourses(currentUserId)
+        List<MyCourseResponse> response = courseUseCase.getMyCourses(currentUserId)
                 .stream()
                 .map(MyCourseResponse::from)
                 .toList();

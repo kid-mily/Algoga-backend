@@ -5,7 +5,7 @@ import com.kidmily.algoga_server.global.common.api.response.ApiResponse;
 import com.kidmily.algoga_server.global.exception.GlobalErrorCode;
 import com.kidmily.algoga_server.lms.application.command.CreateQuizCommand;
 import com.kidmily.algoga_server.lms.application.command.UpdateQuizCommand;
-import com.kidmily.algoga_server.lms.application.usecase.AdminQuizUseCase;
+import com.kidmily.algoga_server.lms.application.usecase.QuizUseCase;
 import com.kidmily.algoga_server.lms.domain.model.Quiz;
 import com.kidmily.algoga_server.lms.exception.LmsErrorCode;
 import com.kidmily.algoga_server.lms.presentation.request.admin.CreateQuizRequest;
@@ -29,7 +29,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class AdminQuizController {
 
-    private final AdminQuizUseCase adminQuizUseCase;
+    private final QuizUseCase quizUseCase;
 
     @Operation(
             summary = "퀴즈 목록 조회",
@@ -42,7 +42,7 @@ public class AdminQuizController {
             @Parameter(description = "강의 ID", example = "3")
             @PathVariable Long courseId
     ) {
-        List<AdminQuizResponse> response = adminQuizUseCase.getQuizzes(courseId)
+        List<AdminQuizResponse> response = quizUseCase.getQuizzes(courseId)
                 .stream()
                 .map(AdminQuizResponse::from)
                 .toList();
@@ -81,7 +81,7 @@ public class AdminQuizController {
                 request.explanation()
         );
 
-        Quiz savedQuiz = adminQuizUseCase.createQuiz(command);
+        Quiz savedQuiz = quizUseCase.createQuiz(command);
 
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(ApiResponse.created(
@@ -118,7 +118,7 @@ public class AdminQuizController {
                 request.explanation()
         );
 
-        Quiz updatedQuiz = adminQuizUseCase.updateQuiz(courseId, quizId, command);
+        Quiz updatedQuiz = quizUseCase.updateQuiz(courseId, quizId, command);
 
         return ResponseEntity.ok(
                 ApiResponse.success(
@@ -143,7 +143,7 @@ public class AdminQuizController {
             @Parameter(description = "퀴즈 ID", example = "1")
             @PathVariable Long quizId
     ) {
-        adminQuizUseCase.deleteQuiz(courseId, quizId);
+        quizUseCase.deleteQuiz(courseId, quizId);
 
         return ResponseEntity.ok(
                 ApiResponse.success(

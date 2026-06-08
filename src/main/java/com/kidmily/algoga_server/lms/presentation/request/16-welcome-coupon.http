@@ -1,0 +1,32 @@
+### 회원가입
+POST http://localhost:15000/api/v1/auth/signup
+Content-Type: application/json
+
+{
+  "username": "welcomeuser01",
+  "email": "welcomeuser01@test.com",
+  "password": "password123",
+  "name": "웰컴유저",
+  "phone": "010-1134-2222",
+  "birthDate": "2000-01-01",
+  "gender": "MALE",
+  "nickname": "welcome01",
+  "referralCode": null,
+  "signupPath": "DIRECT",
+  "termsServiceAgreed": true,
+  "termsPrivacyAgreed": true,
+  "termsMarketingAgreed": false
+}
+
+### 로그인
+POST http://localhost:15000/api/v1/auth/login
+Content-Type: application/json
+
+{
+  "username": "welcomeuser01",
+  "password": "Password123!"
+}
+
+### 내 쿠폰 조회
+GET http://localhost:15000/api/v1/my/benefits/coupons
+Authorization: Bearer {{accessToken}}

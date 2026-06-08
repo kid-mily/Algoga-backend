@@ -1,24 +1,25 @@
 package com.kidmily.algoga_server.lms.application.service;
 
+import com.kidmily.algoga_server.lms.application.command.CreateQuizCommand;
 import com.kidmily.algoga_server.lms.application.command.SubmitQuizAnswerCommand;
 import com.kidmily.algoga_server.lms.application.command.SubmitQuizCommand;
+import com.kidmily.algoga_server.lms.application.command.UpdateQuizCommand;
 import com.kidmily.algoga_server.lms.application.result.QuizSubmitResult;
 import com.kidmily.algoga_server.lms.application.result.WrongQuizAnswerResult;
-import com.kidmily.algoga_server.lms.application.usecase.UserQuizUseCase;
+import com.kidmily.algoga_server.lms.application.usecase.QuizUseCase;
 import com.kidmily.algoga_server.lms.domain.model.Chapter;
 import com.kidmily.algoga_server.lms.domain.model.Quiz;
+import com.kidmily.algoga_server.lms.domain.model.QuizSubmission;
 import com.kidmily.algoga_server.lms.domain.repository.ChapterRepository;
 import com.kidmily.algoga_server.lms.domain.repository.CourseRepository;
 import com.kidmily.algoga_server.lms.domain.repository.LearningProgressRepository;
 import com.kidmily.algoga_server.lms.domain.repository.QuizRepository;
+import com.kidmily.algoga_server.lms.domain.repository.QuizSubmissionRepository;
 import com.kidmily.algoga_server.lms.exception.LmsErrorCode;
 import com.kidmily.algoga_server.lms.exception.LmsException;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import com.kidmily.algoga_server.lms.domain.model.QuizSubmission;
-import com.kidmily.algoga_server.lms.domain.repository.QuizSubmissionRepository;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -28,11 +29,10 @@ import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-@Slf4j
 @Service
 @RequiredArgsConstructor
-@Transactional(readOnly = true)
-public class UserQuizService implements UserQuizUseCase {
+@Transactional
+public class QuizService implements QuizUseCase {
 
     private final CourseRepository courseRepository;
     private final ChapterRepository chapterRepository;
@@ -41,46 +41,79 @@ public class UserQuizService implements UserQuizUseCase {
     private final QuizSubmissionRepository quizSubmissionRepository;
 
     @Override
-    public List<Quiz> getQuizzes(
-            Long userId,
-            Long courseId
-    ) {
-        log.info("[User Quiz Query] 사용자 퀴즈 목록 조회 요청. userId={}, courseId={}",
-                userId, courseId);
+    @Transactional(readOnly = true)
+    public List<Quiz> getQuizzes(Long courseId) {
+        validateCourse(courseId);
+        return quizRepository.findByCourseId(courseId);
+    }
 
+    @Override
+    @Transactional(readOnly = true)
+    public List<Quiz> getQuizzes(Long userId, Long courseId) {
         validateCourse(courseId);
         validateAllChaptersCompleted(userId, courseId);
 
         List<Quiz> quizzes = quizRepository.findByCourseId(courseId);
-
         if (quizzes.isEmpty()) {
-            log.warn("[User Quiz Query] 퀴즈 목록 조회 실패. 등록된 퀴즈가 없습니다. userId={}, courseId={}",
-                    userId, courseId);
             throw new LmsException(LmsErrorCode.QUIZ_NOT_FOUND);
         }
-
-        log.info("[User Quiz Query] 사용자 퀴즈 목록 조회 완료. userId={}, courseId={}, count={}",
-                userId, courseId, quizzes.size());
 
         return quizzes;
     }
 
     @Override
-    @Transactional
-    public QuizSubmitResult submitQuiz(SubmitQuizCommand command) {
-        log.info("[User Quiz Command] 사용자 퀴즈 제출 요청. userId={}, courseId={}, answerCount={}",
-                command.userId(),
-                command.courseId(),
-                command.answers() == null ? 0 : command.answers().size());
+    public Quiz createQuiz(CreateQuizCommand command) {
+        validateCourse(command.courseId());
+        validateOptions(command.option1(), command.option2(), command.option3(), command.option4());
+        validateCorrectOption(command.correctOption());
 
+        return quizRepository.save(Quiz.create(
+                command.courseId(),
+                command.question(),
+                command.option1(),
+                command.option2(),
+                command.option3(),
+                command.option4(),
+                command.correctOption(),
+                command.explanation()
+        ));
+    }
+
+    @Override
+    public Quiz updateQuiz(Long courseId, Long quizId, UpdateQuizCommand command) {
+        validateCourse(courseId);
+        validateOptions(command.option1(), command.option2(), command.option3(), command.option4());
+        validateCorrectOption(command.correctOption());
+
+        return quizRepository.updateBasicInfo(
+                quizId,
+                courseId,
+                command.question(),
+                command.option1(),
+                command.option2(),
+                command.option3(),
+                command.option4(),
+                command.correctOption(),
+                command.explanation()
+        ).orElseThrow(() -> new LmsException(LmsErrorCode.QUIZ_NOT_FOUND));
+    }
+
+    @Override
+    public void deleteQuiz(Long courseId, Long quizId) {
+        validateCourse(courseId);
+
+        if (!quizRepository.softDelete(quizId, courseId)) {
+            throw new LmsException(LmsErrorCode.QUIZ_NOT_FOUND);
+        }
+    }
+
+    @Override
+    public QuizSubmitResult submitQuiz(SubmitQuizCommand command) {
         validateCourse(command.courseId());
         validateAllChaptersCompleted(command.userId(), command.courseId());
 
         List<Quiz> quizzes = quizRepository.findByCourseId(command.courseId());
-
         if (quizzes.isEmpty()) {
-            log.warn("[User Quiz Command] 퀴즈 제출 실패. 등록된 퀴즈가 없습니다. userId={}, courseId={}",
-                    command.userId(), command.courseId());
             throw new LmsException(LmsErrorCode.QUIZ_NOT_FOUND);
         }
 
@@ -94,41 +127,30 @@ public class UserQuizService implements UserQuizUseCase {
 
         for (SubmitQuizAnswerCommand answer : command.answers()) {
             Quiz quiz = quizMap.get(answer.quizId());
-
             boolean correct = quiz.getCorrectOption() == answer.selectedOption();
 
             if (correct) {
                 correctCount++;
-                continue;
+            } else {
+                wrongAnswers.add(new WrongQuizAnswerResult(
+                        quiz.getId(),
+                        quiz.getQuestion(),
+                        answer.selectedOption(),
+                        quiz.getCorrectOption(),
+                        quiz.getExplanation()
+                ));
             }
-
-            wrongAnswers.add(new WrongQuizAnswerResult(
-                    quiz.getId(),
-                    quiz.getQuestion(),
-                    answer.selectedOption(),
-                    quiz.getCorrectOption(),
-                    quiz.getExplanation()
-            ));
         }
 
         int score = calculateScore(correctCount, quizzes.size());
 
-        QuizSubmission quizSubmission = QuizSubmission.create(
+        quizSubmissionRepository.save(QuizSubmission.create(
                 command.userId(),
                 command.courseId(),
                 quizzes.size(),
                 correctCount,
                 score
-        );
-
-        quizSubmissionRepository.save(quizSubmission);
-
-        log.info("[User Quiz Command] 사용자 퀴즈 제출 완료 및 결과 저장. userId={}, courseId={}, totalCount={}, correctCount={}, score={}",
-                command.userId(),
-                command.courseId(),
-                quizzes.size(),
-                correctCount,
-                score);
+        ));
 
         return new QuizSubmitResult(
                 command.userId(),
@@ -142,21 +164,14 @@ public class UserQuizService implements UserQuizUseCase {
 
     private void validateCourse(Long courseId) {
         if (courseRepository.findByIdAndDeletedFalse(courseId).isEmpty()) {
-            log.warn("[User Quiz] 퀴즈 처리 실패. 존재하지 않거나 삭제된 강의입니다. courseId={}",
-                    courseId);
             throw new LmsException(LmsErrorCode.COURSE_NOT_FOUND);
         }
     }
 
-    private void validateAllChaptersCompleted(
-            Long userId,
-            Long courseId
-    ) {
+    private void validateAllChaptersCompleted(Long userId, Long courseId) {
         List<Chapter> chapters = chapterRepository.findByCourseId(courseId);
 
         if (chapters.isEmpty()) {
-            log.warn("[User Quiz] 퀴즈 잠금. 강의에 등록된 챕터가 없습니다. userId={}, courseId={}",
-                    userId, courseId);
             throw new LmsException(LmsErrorCode.QUIZ_LOCKED);
         }
 
@@ -169,20 +184,24 @@ public class UserQuizService implements UserQuizUseCase {
                 .toList();
 
         if (!incompleteChapterIds.isEmpty()) {
-            log.warn("[User Quiz] 퀴즈 잠금. 완료하지 않은 챕터가 있습니다. userId={}, courseId={}, incompleteChapterIds={}",
-                    userId, courseId, incompleteChapterIds);
             throw new LmsException(LmsErrorCode.QUIZ_LOCKED);
         }
     }
 
-    private void validateSubmission(
-            List<SubmitQuizAnswerCommand> answers,
-            Map<Long, Quiz> quizMap,
-            int quizCount
-    ) {
+    private void validateOptions(String option1, String option2, String option3, String option4) {
+        if (isBlank(option1) || isBlank(option2) || isBlank(option3) || isBlank(option4)) {
+            throw new LmsException(LmsErrorCode.INVALID_QUIZ_OPTION);
+        }
+    }
+
+    private void validateCorrectOption(int correctOption) {
+        if (correctOption < 1 || correctOption > 4) {
+            throw new LmsException(LmsErrorCode.INVALID_QUIZ_ANSWER);
+        }
+    }
+
+    private void validateSubmission(List<SubmitQuizAnswerCommand> answers, Map<Long, Quiz> quizMap, int quizCount) {
         if (answers == null || answers.size() != quizCount) {
-            log.warn("[User Quiz Command] 퀴즈 제출 답안 검증 실패. 제출 답안 수가 퀴즈 수와 일치하지 않습니다. answerCount={}, quizCount={}",
-                    answers == null ? 0 : answers.size(), quizCount);
             throw new LmsException(LmsErrorCode.INVALID_QUIZ_SUBMISSION);
         }
 
@@ -196,22 +215,20 @@ public class UserQuizService implements UserQuizUseCase {
                     || answer.selectedOption() > 4
                     || !quizMap.containsKey(answer.quizId())
                     || !submittedQuizIds.add(answer.quizId())) {
-
-                log.warn("[User Quiz Command] 퀴즈 제출 답안 검증 실패. answer={}",
-                        answer);
                 throw new LmsException(LmsErrorCode.INVALID_QUIZ_SUBMISSION);
             }
         }
     }
 
-    private int calculateScore(
-            int correctCount,
-            int totalCount
-    ) {
+    private int calculateScore(int correctCount, int totalCount) {
         if (totalCount <= 0) {
             return 0;
         }
 
         return (int) Math.round((correctCount * 100.0) / totalCount);
+    }
+
+    private boolean isBlank(String value) {
+        return value == null || value.isBlank();
     }
 }

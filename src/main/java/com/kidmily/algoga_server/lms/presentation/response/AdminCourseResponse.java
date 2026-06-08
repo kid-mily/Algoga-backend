@@ -1,6 +1,7 @@
 package com.kidmily.algoga_server.lms.presentation.response;
 
 import com.kidmily.algoga_server.lms.domain.model.Course;
+import com.kidmily.algoga_server.lms.domain.model.CourseLevel;
 import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.util.List;
@@ -32,6 +33,9 @@ public record AdminCourseResponse(
         @Schema(description = "첨부파일 경로 목록")
         List<String> fileUrls,
 
+        @Schema(description = "강의 자료 파일 목록")
+        List<CourseFileResponse> files,
+
         @Schema(description = "강의 난이도 코드", example = "BEGINNER")
         String level,
 
@@ -52,6 +56,10 @@ public record AdminCourseResponse(
                 course.getPrice(),
                 course.getThumbnailUrl(),
                 course.getFileUrls(),
+                course.getCourseFiles()
+                        .stream()
+                        .map(CourseFileResponse::from)
+                        .toList(),
                 course.getLevel(),
                 toLevelName(course.getLevel()),
                 course.getStatus()
@@ -59,11 +67,8 @@ public record AdminCourseResponse(
     }
 
     private static String toLevelName(String level) {
-        return switch (level) {
-            case "BEGINNER" -> "초급";
-            case "INTERMEDIATE" -> "중급";
-            case "ADVANCED" -> "고급";
-            default -> "";
-        };
+        return CourseLevel.find(level)
+                .map(CourseLevel::displayName)
+                .orElse("");
     }
 }

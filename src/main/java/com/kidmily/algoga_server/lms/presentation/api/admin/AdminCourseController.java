@@ -7,7 +7,7 @@ import com.kidmily.algoga_server.global.common.api.response.PageResponse;
 import com.kidmily.algoga_server.global.exception.GlobalErrorCode;
 import com.kidmily.algoga_server.lms.application.command.CreateCourseCommand;
 import com.kidmily.algoga_server.lms.application.command.UpdateCourseCommand;
-import com.kidmily.algoga_server.lms.application.usecase.AdminContentUseCase;
+import com.kidmily.algoga_server.lms.application.usecase.CourseUseCase;
 import com.kidmily.algoga_server.lms.domain.model.Course;
 import com.kidmily.algoga_server.lms.exception.LmsErrorCode;
 import com.kidmily.algoga_server.lms.presentation.request.admin.CreateCourseRequest;
@@ -15,6 +15,9 @@ import com.kidmily.algoga_server.lms.presentation.request.admin.UpdateCourseRequ
 import com.kidmily.algoga_server.lms.presentation.response.AdminCourseResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.ArraySchema;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -36,7 +39,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class AdminCourseController {
 
-    private final AdminContentUseCase adminContentUseCase;
+    private final CourseUseCase courseUseCase;
 
     @Operation(
             summary = "어드민 강의 생성",
@@ -50,10 +53,16 @@ public class AdminCourseController {
             @Parameter(description = "강의 생성 요청 JSON")
             @Valid @RequestPart(value = "request") CreateCourseRequest request,
 
-            @Parameter(description = "강의 썸네일 이미지 파일", example = "osaka.png")
+            @Parameter(
+                    description = "강의 썸네일 이미지 파일",
+                    content = @Content(mediaType = MediaType.APPLICATION_OCTET_STREAM_VALUE, schema = @Schema(type = "string", format = "binary"))
+            )
             @RequestPart(value = "thumbnail") MultipartFile thumbnailFile,
 
-            @Parameter(description = "강의 첨부파일 목록. 선택값입니다.", example = "osaka-guide.pdf")
+            @Parameter(
+                    description = "강의 첨부파일 목록. 선택값입니다.",
+                    content = @Content(array = @ArraySchema(schema = @Schema(type = "string", format = "binary")))
+            )
             @RequestPart(value = "files", required = false) List<MultipartFile> attachedFiles,
             @CurrentManager Long managerId
     ) {
@@ -69,7 +78,7 @@ public class AdminCourseController {
                 attachedFiles
         );
 
-        Long savedCourseId = adminContentUseCase.createCourse(command);
+        Long savedCourseId = courseUseCase.createCourse(command);
 
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(ApiResponse.created(
@@ -88,7 +97,7 @@ public class AdminCourseController {
     public ResponseEntity<ApiResponse<PageResponse<AdminCourseResponse>>> getCourses(
             @ParameterObject Pageable pageable
     ) {
-        Page<AdminCourseResponse> response = adminContentUseCase.getCourses(pageable)
+        Page<AdminCourseResponse> response = courseUseCase.getCourses(pageable)
                 .map(AdminCourseResponse::from);
 
         return ResponseEntity.ok(
@@ -111,7 +120,7 @@ public class AdminCourseController {
             @Parameter(description = "강의 ID", example = "1")
             @PathVariable Long courseId
     ) {
-        Course course = adminContentUseCase.getCourse(courseId);
+        Course course = courseUseCase.getCourse(courseId);
 
         return ResponseEntity.ok(
                 ApiResponse.success(
@@ -137,10 +146,16 @@ public class AdminCourseController {
             @Parameter(description = "강의 수정 요청 JSON")
             @Valid @RequestPart(value = "request") UpdateCourseRequest request,
 
-            @Parameter(description = "변경할 썸네일 이미지 파일. 선택값입니다.", example = "osaka-new.png")
+            @Parameter(
+                    description = "변경할 썸네일 이미지 파일. 선택값입니다.",
+                    content = @Content(mediaType = MediaType.APPLICATION_OCTET_STREAM_VALUE, schema = @Schema(type = "string", format = "binary"))
+            )
             @RequestPart(value = "thumbnail", required = false) MultipartFile thumbnailFile,
 
-            @Parameter(description = "변경할 첨부파일 목록. 선택값입니다.", example = "osaka-guide-new.pdf")
+            @Parameter(
+                    description = "변경할 첨부파일 목록. 선택값입니다.",
+                    content = @Content(array = @ArraySchema(schema = @Schema(type = "string", format = "binary")))
+            )
             @RequestPart(value = "files", required = false) List<MultipartFile> attachedFiles
     ) {
         UpdateCourseCommand command = new UpdateCourseCommand(
@@ -153,7 +168,7 @@ public class AdminCourseController {
                 attachedFiles
         );
 
-        Course updatedCourse = adminContentUseCase.updateCourse(courseId, command);
+        Course updatedCourse = courseUseCase.updateCourse(courseId, command);
 
         return ResponseEntity.ok(
                 ApiResponse.success(
@@ -175,7 +190,7 @@ public class AdminCourseController {
             @Parameter(description = "강의 ID", example = "1")
             @PathVariable Long courseId
     ) {
-        adminContentUseCase.deleteCourse(courseId);
+        courseUseCase.deleteCourse(courseId);
 
         return ResponseEntity.ok(
                 ApiResponse.success(

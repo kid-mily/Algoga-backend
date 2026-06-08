@@ -1,5 +1,6 @@
 package com.kidmily.algoga_server.user.application;
 
+import com.kidmily.algoga_server.global.event.UserSignedUpEvent;
 import com.kidmily.algoga_server.global.infrastructure.mail.EmailSender;
 import com.kidmily.algoga_server.global.security.GlobalJwtProvider;
 import com.kidmily.algoga_server.user.domain.Gender;
@@ -15,6 +16,7 @@ import com.kidmily.algoga_server.user.presentation.response.AuthTokenResponse;
 import com.kidmily.algoga_server.user.presentation.response.FindIdResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -35,6 +37,7 @@ public class AuthService {
     private final GlobalJwtProvider globalJwtProvider;
     private final EmailSender emailSender;
     private final RedisTemplate<String, String> redisTemplate; // Redis 도구 주입!
+    private final ApplicationEventPublisher eventPublisher;
 
     // 이메일 인증번호 발송
     public void sendVerificationCode(SendEmailCodeRequest request) {
@@ -116,7 +119,8 @@ public class AuthService {
                 .termsPrivacyAgreed(request.termsPrivacyAgreed())
                 .termsMarketingAgreed(request.termsMarketingAgreed())
                 .build();
-        userRepository.save(user);
+        User savedUser = userRepository.save(user);
+        eventPublisher.publishEvent(new UserSignedUpEvent(savedUser.getId()));
 
         // 이메일 인증은 2차
 //        // 가입이 성공적으로 끝났으니, "인증 완료" 포스트잇도 떼서 버립니다! (청소)
