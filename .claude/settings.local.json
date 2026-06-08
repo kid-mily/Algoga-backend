@@ -16,7 +16,8 @@
       "Bash(grep -E \"\\\\.\\(java|ts|tsx|js\\)$\")",
       "Bash(xargs grep -l -i \"amadeus\")",
       "Bash(xargs grep -l \"payment\\\\|Payment\")",
-      "Bash(grep -i \"\\\\.java$\")"
+      "Bash(grep -i \"\\\\.java$\")",
+      "Bash(Get-ChildItem -Path \"C:\\\\Lecture\\\\3-project-algoga\" -Recurse -Directory)"
     ]
   }
 }
