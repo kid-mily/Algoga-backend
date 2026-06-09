@@ -32,7 +32,6 @@ public class CommentController {
     @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "댓글 수정에 성공했습니다.")
     @ApiErrorCodeExample(domain = PostErrorCode.class, value = {
             "COMMENT_NOT_FOUND",
-            "COMMENT_UNAUTHORIZED",
             "COMMENT_UPDATE_FORBIDDEN"
     })
     public ResponseEntity<ApiResponse<UpdateCommentResponse>> updateComment(

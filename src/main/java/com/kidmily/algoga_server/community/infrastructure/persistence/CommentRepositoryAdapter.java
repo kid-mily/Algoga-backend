@@ -64,4 +64,21 @@ public class CommentRepositoryAdapter implements CommentRepository {
                 .map(commentMapper::toDomain)
                 .toList();
     }
+
+    @Override
+    public List<Comment> findAllByPostId(Long postId) {
+        return springDataRepository.findByPostId(postId)
+                .stream()
+                .map(commentMapper::toDomain)
+                .toList();
+    }
+
+    @Override
+    public void softDeleteAll(List<Comment> comments) {
+        comments.forEach(comment -> {
+            CommentJpaEntity entity = springDataRepository.findById(comment.getCommentId())
+                    .orElseThrow();
+            entity.softDelete();
+        });
+    }
 }

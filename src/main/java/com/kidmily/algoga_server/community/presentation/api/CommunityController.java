@@ -102,7 +102,6 @@ public class CommunityController {
     @Operation(summary = "게시글 수정", description = "본인 게시글의 제목, 내용, 카테고리, 태그, 새 사진 파일들을 수정합니다.")
     @ApiErrorCodeExample(domain = PostErrorCode.class, value = {
             "POST_INVALID_REQUEST",
-            "POST_UNAUTHORIZED",
             "POST_NOT_FOUND",
             "POST_UPDATE_FORBIDDEN",
             "POST_CATEGORY_INVALID",
@@ -140,7 +139,6 @@ public class CommunityController {
     @ApiErrorCodeExample(domain = PostErrorCode.class, value = {
             "POST_NOT_FOUND",          // 404 Not Found (스웨거 명세에 확실하게 추가 완료)
             "POST_DELETE_FORBIDDEN",   // 403 Forbidden (본인 글이 아닐 때)
-            "POST_UNAUTHORIZED"        // 401 Unauthorized (로그인 안 했을 때)
     })
     public ResponseEntity<Void> deletePost(
             @Parameter(description = "게시글 ID", example = "1")
