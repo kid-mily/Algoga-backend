@@ -48,9 +48,12 @@ public class Report {
     }
 
     public static Report create(Long userId, Long reportedUserId, Long targetId, TargetType targetType,
-                                ReasonType reasonType, String detail) {
+                                ReasonType reasonType, String detail, boolean isDuplicated) {
         if (userId.equals(reportedUserId)) {
             throw new ReportException(ReportErrorCode.REPORT_SELF_NOT_ALLOWED);
+        }
+        if (isDuplicated) {
+            throw new ReportException(ReportErrorCode.REPORT_DUPLICATED);
         }
         return new Report(userId, reportedUserId, targetId, targetType, reasonType, detail);
     }

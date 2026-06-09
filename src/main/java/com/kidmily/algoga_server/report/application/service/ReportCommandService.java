@@ -30,9 +30,8 @@ public class ReportCommandService implements ReportCommandUseCase {
         ReportTargetInfo targetInfo = reportTargetPort.findTargetInfo(command.targetType(), command.targetId())
                 .orElseThrow(() -> new ReportException(ReportErrorCode.REPORT_TARGET_NOT_FOUND));
 
-        if (reportRepository.existsByUserAndTarget(command.userId(), command.targetType(), command.targetId())) {
-            throw new ReportException(ReportErrorCode.REPORT_DUPLICATED);
-        }
+        boolean isDuplicated = reportRepository.existsByUserAndTarget(
+                command.userId(), command.targetType(), command.targetId());
 
         Report report = Report.create(
                 command.userId(),
@@ -40,7 +39,8 @@ public class ReportCommandService implements ReportCommandUseCase {
                 command.targetId(),
                 command.targetType(),
                 command.reasonType(),
-                command.detail()
+                command.detail(),
+                isDuplicated
         );
 
         Report savedReport = reportRepository.save(report);
