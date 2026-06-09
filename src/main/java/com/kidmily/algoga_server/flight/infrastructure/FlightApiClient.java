@@ -3,6 +3,10 @@ package com.kidmily.algoga_server.flight.infrastructure;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.kidmily.algoga_server.flight.domain.model.FlightInfo;
+import com.kidmily.algoga_server.flight.exception.FlightErrorCode;
+import com.kidmily.algoga_server.global.exception.BusinessException;
+import io.github.resilience4j.circuitbreaker.CallNotPermittedException;
+import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
@@ -36,6 +40,9 @@ public class FlightApiClient {
         this.objectMapper = new ObjectMapper();
     }
 
+    private static final String FLIGHT_CB = "flight";
+
+    @CircuitBreaker(name = FLIGHT_CB, fallbackMethod = "getDepartureFlightsFallback")
     public List<FlightInfo> getDepartureFlights(String destinationCode, LocalDate departureDate) {
         log.info("[FlightApiClient] 정기운항편 조회 - destination: {}, date: {}", destinationCode, departureDate);
 
@@ -46,12 +53,22 @@ public class FlightApiClient {
                 "&numOfRows=100" +
                 "&pageNo=1";
 
-        String response = restClient.get()
-                .uri(URI.create(url))
-                .retrieve()
-                .body(String.class);
+        try {
+            String response = restClient.get()
+                    .uri(URI.create(url))
+                    .retrieve()
+                    .body(String.class);
+            return parseFlights(response, destinationCode, departureDate);
+        } catch (Exception e) {
+            log.warn("[FlightApiClient] 항공편 API 호출 실패 - destination: {}, error: {}", destinationCode, e.getMessage());
+            throw new BusinessException(FlightErrorCode.FLIGHT_API_ERROR);
+        }
+    }
 
-        return parseFlights(response, destinationCode, departureDate);
+    // 서킷브레이커 OPEN 상태일 때 호출되는 fallback
+    private List<FlightInfo> getDepartureFlightsFallback(String destinationCode, LocalDate departureDate, CallNotPermittedException e) {
+        log.error("[FlightApiClient] 서킷브레이커 OPEN - 항공편 조회 차단됨 destination: {}", destinationCode);
+        throw new BusinessException(FlightErrorCode.FLIGHT_CIRCUIT_OPEN);
     }
 
     private List<FlightInfo> parseFlights(String json, String destinationCode, LocalDate departureDate) {
