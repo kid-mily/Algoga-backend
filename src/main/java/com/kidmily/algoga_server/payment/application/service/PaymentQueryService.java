@@ -22,6 +22,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -78,6 +79,7 @@ public class PaymentQueryService implements PaymentQueryUseCase {
         return confirmationPdfGenerator.generate(payment, booking);
     }
 
+    @Cacheable(value = "myPayments", key = "#userId")
     @Override
     public List<PaymentResponse> getMyPayments(Long userId) {
         log.info("[PaymentQueryService] 내 결제 내역 조회 - userId: {}", userId);
@@ -147,6 +149,7 @@ public class PaymentQueryService implements PaymentQueryUseCase {
         }
     }
 
+    @Cacheable(value = "adminPaymentStats", key = "'all'")
     @Override
     public List<PaymentStatsResponse> getAdminPaymentStats() {
         log.info("[PaymentQueryService] 어드민 월별 수익 통계 조회");

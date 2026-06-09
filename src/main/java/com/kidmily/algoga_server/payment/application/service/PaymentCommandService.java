@@ -27,6 +27,8 @@ import com.kidmily.algoga_server.user.domain.UserRepository;
 import com.kidmily.algoga_server.user.exception.UserErrorCode;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Caching;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -62,6 +64,10 @@ public class PaymentCommandService implements PaymentCommandUseCase {
         return savePayment(command, portoneStatus, paidAmount);
     }
 
+    @Caching(evict = {
+            @CacheEvict(value = "myPayments", key = "#command.userId()"),
+            @CacheEvict(value = "adminPaymentStats", key = "'all'")
+    })
     @Transactional
     public Long savePayment(CreatePaymentCommand command, String portoneStatus, int paidAmount) {
         Booking booking = bookingRepository.findById(command.bookingId())
