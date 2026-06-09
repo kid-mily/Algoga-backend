@@ -8,6 +8,7 @@ import com.kidmily.algoga_server.booking.presentation.api.response.BookingRespon
 import com.kidmily.algoga_server.global.exception.BusinessException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -31,6 +32,7 @@ public class BookingQueryService implements BookingQueryUseCase {
         return toResponse(booking);
     }
 
+    @Cacheable(value = "myBookings", key = "#userId")
     @Override
     public List<BookingResponse> getMyBookings(Long userId) {
         log.info("[BookingQueryService] 내 예약 목록 조회 - userId: {}", userId);
