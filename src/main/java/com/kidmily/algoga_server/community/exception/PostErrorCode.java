@@ -19,6 +19,7 @@ public enum PostErrorCode implements BaseErrorCode {
     POST_TITLE_BLANK(HttpStatus.BAD_REQUEST, "POST_006", "제목은 필수입니다."),
     POST_CONTENT_BLANK(HttpStatus.BAD_REQUEST, "POST_007", "본문은 필수입니다."),
     REPORT_DETAIL_TOO_LONG(HttpStatus.BAD_REQUEST, "POST_020", "신고 상세 내용은 최대 255자입니다."),
+    COMMENT_DEPTH_EXCEEDED(HttpStatus.BAD_REQUEST, "POST_023", "대댓글에는 댓글을 달 수 없습니다."),
 
     // 401 - 인증
     POST_UNAUTHORIZED(HttpStatus.UNAUTHORIZED, "POST_008", "게시글 작성 권한이 없습니다."),

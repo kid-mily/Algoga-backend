@@ -21,14 +21,13 @@ import java.time.LocalDate;
 public class FlightReminderMailService {
 
     private final JavaMailSender mailSender;
-    private final UserPort userPort;
     private final CalendarSchedulePolicy calendarSchedulePolicy;
     private final ObjectMapper objectMapper;
 
     @Async
     public void sendFlightReminder(Long userId, Long bookingId, LocalDate departureDate) {
-        String email = userPort.getUserEmail(userId);
-        String name = userPort.getUserName(userId);
+        String email = calendarSchedulePolicy.resolveUserEmail(userId);
+        String name = calendarSchedulePolicy.resolveUserName(userId);
 
         if (email == null) {
             log.warn("[FlightReminderMailService] 유저 이메일 없음 - userId: {}", userId);

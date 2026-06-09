@@ -3,6 +3,7 @@ package com.kidmily.algoga_server.calendar.application.policy;
 import com.kidmily.algoga_server.calendar.application.port.AccommodationPort;
 import com.kidmily.algoga_server.calendar.application.port.BookingPort;
 import com.kidmily.algoga_server.calendar.application.port.LecturePort;
+import com.kidmily.algoga_server.calendar.application.port.UserPort;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -16,6 +17,7 @@ public class CalendarSchedulePolicy {
     private final BookingPort bookingPort;
     private final LecturePort lecturePort;
     private final AccommodationPort accommodationPort;
+    private final UserPort userPort;
 
     // 항공권 관련
     public LocalDate resolveFlightDepartureDate(Long bookingId) {
@@ -49,5 +51,14 @@ public class CalendarSchedulePolicy {
     }
     public String resolveFlightInfo(Long bookingId) {
         return bookingPort.getFlightInfo(bookingId);
+    }
+
+    // 유저 관련 이메일 추가
+    public String resolveUserEmail(Long userId) {
+        return userPort.getUserEmail(userId);
+    }
+
+    public String resolveUserName(Long userId) {
+        return userPort.getUserName(userId);
     }
 }

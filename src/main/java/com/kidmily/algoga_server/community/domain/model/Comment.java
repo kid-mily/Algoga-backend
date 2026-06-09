@@ -79,4 +79,11 @@ public class Comment {
     public boolean isDeleted() { return deleted; }
     public LocalDateTime getCreatedAt() { return createdAt; }
     public boolean isReply() { return parentId != null; }
+
+    // 대댓글의 대댓글 방지
+    public static void validateDepth(Long parentId) {
+        if (parentId != null) {
+            throw new CommentException(PostErrorCode.COMMENT_DEPTH_EXCEEDED);
+        }
+    }
 }
