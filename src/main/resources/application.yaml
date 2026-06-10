@@ -105,3 +105,17 @@ user:
   storage:
     bucket: algoga-banner
     directory: profiles
+
+resilience4j:
+  circuitbreaker:
+    configs:
+      default:
+        registerHealthIndicator: true
+        slidingWindowSize: 10 # 10번의 호출을 기준으로 통계 산출
+        minimumNumberOfCalls: 5 # 최소 5번 호출 후부터 실패율 계산
+        permittedNumberOfCallsInHalfOpenState: 3 # 반열림 상태에서 허용할 테스트 호출 수
+        waitDurationInOpenState: 10s # 서킷이 열린 후 10초 대기 후 반열림 상태로 전환
+        failureRateThreshold: 50 # 실패율 50% 이상이면 서킷 오픈 (호출 차단)
+    instances:
+      groqLlmApi:
+        baseConfig: default

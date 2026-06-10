@@ -28,7 +28,10 @@ public class VectorPromptFilterAdapter implements PromptFilterPort {
     @Value("classpath:chatbot/data-filter.csv")
     private Resource csvResource;
 
-    // 🌟 빡빡한 통과 기준 (필요시 0.75까지 올려도 됩니다)
+    // bucket4j , 서킷브레이커
+    // 1명의 사용자가 악의적으로 API 여러 번 호출 하는 것을 막자.
+
+    // 🌟 빡빡한 통과 기준 (필요시 0.85까지 올려도 됩니다)
     private static final double PASS_THRESHOLD = 0.85;
 
     @PostConstruct

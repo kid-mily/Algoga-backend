@@ -6,6 +6,6 @@ import jakarta.validation.constraints.NotNull;
 
 public record AskSuggestedRequest(
         @NotNull(message = "예상 질문 ID는 필수입니다.")
-        @Schema(description = "선택한 예상 질문 ID", example = "1")
+        @Schema(description = "클릭한 예상 질문 버튼의 고유 ID", example = "1")
         Long suggestedQuestionId
 ) {}

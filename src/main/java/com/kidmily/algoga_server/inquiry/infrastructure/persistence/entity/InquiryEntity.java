@@ -1,6 +1,7 @@
-package com.kidmily.algoga_server.chatbot.infrastructure.persistence.entity;
+// inquiry/infrastructure/persistence/entity/InquiryEntity.java
+package com.kidmily.algoga_server.inquiry.infrastructure.persistence.entity;
 
-import com.kidmily.algoga_server.chatbot.domain.model.InquiryStatus;
+import com.kidmily.algoga_server.inquiry.domain.model.InquiryStatus;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Builder;
@@ -37,13 +38,13 @@ public class InquiryEntity {
     private Instant answeredAt;
 
     @Column(name = "manager_id")
-    private Long managerId; // 관리자가 1:1 문의에 답변을 달 때 업데이트됨 (null 허용)
+    private Long managerId;
 
     @Builder
-    public InquiryEntity(Long inquiryId, Long managerId, Long userId, String question, String answer, InquiryStatus status, Instant createdAt, Instant answeredAt) {
+    public InquiryEntity(Long inquiryId, Long userId, Long managerId, String question, String answer, InquiryStatus status, Instant createdAt, Instant answeredAt) {
         this.inquiryId = inquiryId;
-        this.managerId = managerId; // 추가
         this.userId = userId;
+        this.managerId = managerId;
         this.question = question;
         this.answer = answer;
         this.status = status;

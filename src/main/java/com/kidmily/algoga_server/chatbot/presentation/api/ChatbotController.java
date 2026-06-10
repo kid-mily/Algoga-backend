@@ -1,21 +1,25 @@
 // chatbot/presentation/api/ChatbotController.java
 package com.kidmily.algoga_server.chatbot.presentation.api;
 
-// ... 기존 임포트 유지
 import com.kidmily.algoga_server.chatbot.application.command.AskChatbotCommand;
 import com.kidmily.algoga_server.chatbot.application.usecase.ChatbotCommandUseCase;
 import com.kidmily.algoga_server.chatbot.application.usecase.ChatbotQueryUseCase;
 import com.kidmily.algoga_server.chatbot.presentation.api.request.AskChatbotRequest;
 import com.kidmily.algoga_server.chatbot.presentation.api.request.AskSuggestedRequest;
-import com.kidmily.algoga_server.chatbot.presentation.api.request.CreateInquiryRequest;
 import com.kidmily.algoga_server.chatbot.presentation.api.response.ChatbotAnswerResponse;
 import com.kidmily.algoga_server.chatbot.presentation.api.response.SuggestedQuestionResponse;
+import com.kidmily.algoga_server.chatbot.presentation.api.response.UnifiedChatHistoryResponse;
 import com.kidmily.algoga_server.global.common.api.response.ApiResponse;
+// 🌟 명세해주신 경로 적용
+import com.kidmily.algoga_server.user.settings.CustomUserDetails;
+import com.kidmily.algoga_server.user.domain.User;
+
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -23,55 +27,49 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/v1/chatbot")
 @RequiredArgsConstructor
-@Tag(name = "Chatbot", description = "AI 챗봇 및 고객센터 도메인 API")
+@Tag(name = "Chatbot", description = "AI 챗봇 도메인 API")
 public class ChatbotController {
 
     private final ChatbotCommandUseCase chatbotCommandUseCase;
-    private final ChatbotQueryUseCase chatbotQueryUseCase; // 신규 추가 (조회용)
+    private final ChatbotQueryUseCase chatbotQueryUseCase;
 
-    // 1. 예상 질문 버튼 목록 조회 (GET)
+    @GetMapping("/history")
+    @Operation(summary = "통합 채팅방 내역 전체 조회", description = "사용자의 AI 챗봇 대화 이력과 1:1 수동 문의 기록을 결합하여 시간순으로 정렬 조회합니다.")
+    public ResponseEntity<ApiResponse<List<UnifiedChatHistoryResponse>>> getChatHistory(
+            @AuthenticationPrincipal CustomUserDetails userDetails // 🌟 Security 주입
+    ) {
+        Long userId = userDetails.getUser().getId(); // 🌟 User 엔티티에서 PK 추출
+
+        List<UnifiedChatHistoryResponse> response = chatbotQueryUseCase.getUnifiedChatHistory(userId);
+        return ResponseEntity.ok(ApiResponse.success("UNIFIED_CHAT_HISTORY_LOADED", "통합 채팅 내역 조회 성공", response));
+    }
+
     @GetMapping("/suggested-questions")
-    @Operation(summary = "예상 질문 목록 조회", description = "프론트엔드 챗봇 UI에 띄워줄 질문 버튼 목록을 조회합니다.")
+    @Operation(summary = "조회용 예상 질문 목록 조회")
     public ResponseEntity<ApiResponse<List<SuggestedQuestionResponse>>> getSuggestedQuestions() {
-        List<SuggestedQuestionResponse> response = chatbotQueryUseCase.getSuggestedQuestions();
-        return ResponseEntity.ok(ApiResponse.success("SUGGESTED_QUESTIONS_LOADED", "예상 질문 목록을 불러왔습니다.", response));
+        return ResponseEntity.ok(ApiResponse.success("SUGGESTED_QUESTIONS_LOADED", "성공", chatbotQueryUseCase.getSuggestedQuestions()));
     }
 
-    // 2. 해당하는 예상 질문 클릭 시 답변 조회 (POST)
     @PostMapping("/suggested-questions/ask")
-    @Operation(summary = "예상 질문 답변 요청", description = "선택한 질문에 대응되는 고정 답변을 반환합니다.")
-    public ResponseEntity<ApiResponse<ChatbotAnswerResponse>> askSuggestedQuestion(
-            @Valid @RequestBody AskSuggestedRequest request
-    ) {
-        ChatbotAnswerResponse responseData = chatbotCommandUseCase.askSuggestedQuestion(request.suggestedQuestionId());
-        return ResponseEntity.ok(ApiResponse.success("SUGGESTED_ANSWERED", "예상 질문 답변이 완료되었습니다.", responseData));
+    @Operation(summary = "조회용 예상 질문 답변 요청")
+    public ResponseEntity<ApiResponse<ChatbotAnswerResponse>> askSuggestedQuestion(@Valid @RequestBody AskSuggestedRequest request) {
+        return ResponseEntity.ok(ApiResponse.success("SUGGESTED_ANSWERED", "성공", chatbotCommandUseCase.askSuggestedQuestion(request.suggestedQuestionId())));
     }
 
-    // 3. AI 봇 직접입력 (기존 로직 유지)
     @PostMapping("/ask")
-    @Operation(summary = "AI 챗봇 직접 입력", description = "LLM을 통한 직접 상담을 진행합니다.")
+    @Operation(summary = "AI 챗봇 직접 입력")
     public ResponseEntity<ApiResponse<ChatbotAnswerResponse>> askToChatbot(
-            @Valid @RequestBody AskChatbotRequest request
+            @Valid @RequestBody AskChatbotRequest request,
+            @AuthenticationPrincipal CustomUserDetails userDetails // 🌟 Security 주입
     ) {
-        Long userId = 1L; // (임시)
+        Long userId = userDetails.getUser().getId(); // 🌟 User 엔티티에서 PK 추출
         AskChatbotCommand command = new AskChatbotCommand(userId, request.question());
+
         ChatbotAnswerResponse responseData = chatbotCommandUseCase.askToChatbot(command);
 
         if (!responseData.isSuccess()) {
-            return ResponseEntity.ok(ApiResponse.success("CHATBOT_FILTERED", "도메인 외 질문으로 필터링되었습니다.", responseData));
+            return ResponseEntity.ok(ApiResponse.success("CHATBOT_FILTERED", "도메인 외 질문 차단됨", responseData));
         }
-        return ResponseEntity.ok(ApiResponse.success("CHATBOT_ANSWERED", "챗봇 답변이 완료되었습니다.", responseData));
-    }
-
-    // 4. 사용자 1:1 직접 문의 작성하기 (POST)
-    @PostMapping("/inquiries")
-    @Operation(summary = "1:1 직접 문의 작성", description = "AI로 해결되지 않은 문제를 사용자가 직접 문의하여 PENDING 상태로 저장합니다.")
-    public ResponseEntity<ApiResponse<Void>> createInquiry(
-            @Valid @RequestBody CreateInquiryRequest request
-    ) {
-        Long userId = 1L; // (임시)
-        chatbotCommandUseCase.createManualInquiry(userId, request.question());
-
-        return ResponseEntity.ok(ApiResponse.success("INQUIRY_CREATED", "성공적으로 1:1 문의가 접수되었습니다. (상태: PENDING)", null));
+        return ResponseEntity.ok(ApiResponse.success("CHATBOT_ANSWERED", "챗봇 답변 완료", responseData));
     }
 }
