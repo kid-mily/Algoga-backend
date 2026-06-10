@@ -52,4 +52,17 @@ public class Calendar {
     public void markDDayAlertSent() {
         this.isDDayAlertSent = true;
     }
+
+    // Calendar.java 도메인 모델에 추가
+    public boolean isLecture() {
+        return this.type == CalendarType.LECTURE;
+    }
+
+    public boolean isTrip() {
+        return this.type == CalendarType.TRIP;
+    }
+
+    public boolean isFlight() {
+        return this.type == CalendarType.FLIGHT;
+    }
 }

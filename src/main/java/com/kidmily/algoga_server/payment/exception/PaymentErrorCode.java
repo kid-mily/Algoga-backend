@@ -21,7 +21,8 @@ public enum PaymentErrorCode implements BaseErrorCode {
     COUPON_ALREADY_USED(HttpStatus.BAD_REQUEST, "PAY_010", "이미 사용된 쿠폰입니다."),
     COUPON_EXPIRED(HttpStatus.BAD_REQUEST, "PAY_011", "만료된 쿠폰입니다."),
     COUPON_NOT_OWNED(HttpStatus.FORBIDDEN, "PAY_012", "본인의 쿠폰이 아닙니다."),
-    INSUFFICIENT_MILEAGE(HttpStatus.BAD_REQUEST, "PAY_013", "마일리지 잔액이 부족합니다.");
+    INSUFFICIENT_MILEAGE(HttpStatus.BAD_REQUEST, "PAY_013", "마일리지 잔액이 부족합니다."),
+    PORTONE_CIRCUIT_OPEN(HttpStatus.SERVICE_UNAVAILABLE, "PAY_014", "결제 서비스가 일시적으로 중단되었습니다. 잠시 후 다시 시도해주세요.");
 
     private final HttpStatus status;
     private final String code;

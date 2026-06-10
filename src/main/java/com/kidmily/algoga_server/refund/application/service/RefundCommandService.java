@@ -28,7 +28,6 @@ import java.util.List;
 
 @Slf4j
 @Service
-@Transactional
 @RequiredArgsConstructor
 public class RefundCommandService implements RefundCommandUseCase {
 
@@ -39,6 +38,7 @@ public class RefundCommandService implements RefundCommandUseCase {
     private final ApplicationEventPublisher eventPublisher; // 🌟승재 추가
 
     @Override
+    @Transactional
     public Long handle(CreateRefundCommand command) {
         log.info("[RefundCommandService] 환불 요청 - bookingId: {}, userId: {}",
                 command.bookingId(), command.userId());
@@ -83,6 +83,7 @@ public class RefundCommandService implements RefundCommandUseCase {
     }
 
     @Override
+    @Transactional
     public Long convertToRefund(Long bookingId) {
         log.info("[RefundCommandService] CS 환불 전환 - bookingId: {}", bookingId);
 
@@ -132,6 +133,7 @@ public class RefundCommandService implements RefundCommandUseCase {
     }
 
     @Override
+    @Transactional
     public void approve(Long refundId) {
         log.info("[RefundCommandService] 환불 승인 - refundId: {}", refundId);
 
@@ -148,6 +150,7 @@ public class RefundCommandService implements RefundCommandUseCase {
     }
 
     @Override
+    @Transactional
     public void reject(Long refundId, String rejectReason) {
         log.info("[RefundCommandService] 환불 반려 - refundId: {}", refundId);
 
@@ -194,40 +197,42 @@ public class RefundCommandService implements RefundCommandUseCase {
         Payment payment = paymentRepository.findById(refundRequest.getPaymentId())
                 .orElseThrow(() -> new BusinessException(RefundErrorCode.PAYMENT_NOT_FOUND));
 
-        // 2. PortOne 실제 환불 API 호출
+        // 2. PortOne 실제 환불 API 호출 — 트랜잭션 밖에서 수행 (DB 커넥션 점유 방지)
         portOneClient.cancelPayment(
                 payment.getPortonePaymentId(),
                 refundRequest.getAmount(),
                 refundRequest.getReason()
         );
+        log.info("[RefundCommandService] PortOne 환불 API 호출 완료 - portonePaymentId: {}", payment.getPortonePaymentId());
 
-        // 3. Payment 상태 → REFUNDED
+        // 3. PortOne 환불 성공 후 DB 상태 업데이트
+        completeRefundInTransaction(refundRequest, payment);
+    }
+
+    @Transactional
+    public void completeRefundInTransaction(RefundRequest refundRequest, Payment payment) {
+        // Payment 상태 → REFUNDED
         payment.markRefunded();
         paymentRepository.save(payment);
 
-        // 4. Booking 상태 → REFUNDED
+        // Booking 상태 → REFUNDED
         bookingRepository.updateStatus(refundRequest.getBookingId(), BookingStatus.REFUNDED);
 
-        // 이벤트를 만들기 위해 Booking 엔티티 정보를 명확히 조회해옵니다.
-        // (bookingRepository 명세에 맞게 findById 등으로 유저 ID와 숙소 ID를 수집합니다.)
         Booking booking = bookingRepository.findById(refundRequest.getBookingId())
                 .orElseThrow(() -> new BusinessException(RefundErrorCode.BOOKING_NOT_FOUND));
 
-        // 5. RefundRequest 상태 → COMPLETED
+        // RefundRequest 상태 → COMPLETED
         refundRequest.complete();
         refundRepository.save(refundRequest);
 
         log.info("[RefundCommandService] 환불 완료 - refundId: {}, portonePaymentId: {}",
-                refundId, payment.getPortonePaymentId());
+                refundRequest.getId(), payment.getPortonePaymentId());
 
-
-
-        // 모든 DB 저장이 완벽히 성공한 이 시점에 캘린더 연동 벨을 울립니다
         RefundApprovedEvent event;
         if (payment.getCourseId() != null) {
             event = RefundApprovedEvent.ofLecture(booking.getUserId(), payment.getCourseId());
         } else {
-            event = RefundApprovedEvent.ofTrip(booking.getUserId(), booking.getAccommodationId(), booking.getId() );
+            event = RefundApprovedEvent.ofTrip(booking.getUserId(), booking.getAccommodationId(), booking.getId());
         }
         eventPublisher.publishEvent(event);
 

@@ -57,7 +57,7 @@ public class CalendarQueryService implements CalendarQueryUseCase {
     }
 
     private List<ScheduleResponse> toScheduleResponses(Calendar calendar, Long userId) {
-        if (calendar.getType() == CalendarType.LECTURE) {
+        if (calendar.isLecture()) {
             String title = calendarSchedulePolicy.resolveLectureName(calendar.getReferenceId());
             LocalDate startDate = calendarSchedulePolicy.resolveLectureStartDate(calendar.getReferenceId(), userId);
             LocalDate endDate = calendarSchedulePolicy.resolveLectureEndDate(calendar.getReferenceId(), userId);
@@ -77,10 +77,10 @@ public class CalendarQueryService implements CalendarQueryUseCase {
     }
 
     private String resolveTitle(Calendar calendar) {
-        if (calendar.getType() == CalendarType.TRIP) {
+        if (calendar.isTrip()) {
             return calendarSchedulePolicy.resolveAccommodationName(calendar.getReferenceId());
         }
-        if (calendar.getType() == CalendarType.FLIGHT) {
+        if (calendar.isFlight()) {
             return calendarSchedulePolicy.resolveFlightName(calendar.getReferenceId());
         }
         return "D-day";
