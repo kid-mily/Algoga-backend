@@ -13,6 +13,8 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
@@ -121,6 +123,13 @@ public class AuthController {
     public ApiResponse<Void> verifyEmailCode(@RequestBody @Valid VerifyEmailCodeRequest request) {
         authService.verifyEmailCode(request);
         return ApiResponse.success("AUTH_VERIFY_CODE_SUCCESS", "이메일 인증이 완료되었습니다.");
+    }
+
+    // 🌟 [추가] 소셜 추가정보 회원가입 API
+    @PostMapping("/social/signup")
+    public ResponseEntity<Void> socialSignup(@Valid @RequestBody AuthSocialSignupRequest request) {
+        authService.socialSignup(request);
+        return ResponseEntity.status(HttpStatus.CREATED).build();
     }
 
 

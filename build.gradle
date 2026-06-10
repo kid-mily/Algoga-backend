@@ -47,6 +47,8 @@ dependencies {
     // Redis 의존성 추가
     implementation 'org.springframework.boot:spring-boot-starter-data-redis'
 
+    // OAuth2 소셜 로그인 라이브러리
+    implementation 'org.springframework.boot:spring-boot-starter-oauth2-client'
     // Resilience4j 서킷브레이커
     implementation 'io.github.resilience4j:resilience4j-spring-boot3:2.2.0'
 
