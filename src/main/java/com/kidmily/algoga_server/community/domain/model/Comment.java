@@ -86,4 +86,11 @@ public class Comment {
             throw new CommentException(PostErrorCode.COMMENT_DEPTH_EXCEEDED);
         }
     }
+
+    // 부모 댓글이 해당 게시글 소속인지 검증
+    public void validateBelongsToPost(Long postId) {
+        if (!this.postId.equals(postId)) {
+            throw new CommentException(PostErrorCode.COMMENT_NOT_FOUND);
+        }
+    }
 }

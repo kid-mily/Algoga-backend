@@ -48,6 +48,7 @@ public class CommentCommandService implements CommentCommandUseCase {
             Comment parentComment = commentRepository.findById(command.parentId())
                     .orElseThrow(() -> new CommentException(PostErrorCode.COMMENT_NOT_FOUND));
 
+            parentComment.validateBelongsToPost(command.postId());
             Comment.validateDepth(parentComment.getParentId());
 
             parentCommentAuthorId = parentComment.getUserId();
