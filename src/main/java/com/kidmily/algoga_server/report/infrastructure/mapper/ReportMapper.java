@@ -1,7 +1,7 @@
-package com.kidmily.algoga_server.community.infrastructure.mapper;
+package com.kidmily.algoga_server.report.infrastructure.mapper;
 
-import com.kidmily.algoga_server.community.domain.model.Report;
-import com.kidmily.algoga_server.community.infrastructure.persistence.entity.ReportJpaEntity;
+import com.kidmily.algoga_server.report.domain.model.Report;
+import com.kidmily.algoga_server.report.infrastructure.persistence.entity.ReportJpaEntity;
 import org.mapstruct.Mapper;
 import org.mapstruct.MappingConstants;
 

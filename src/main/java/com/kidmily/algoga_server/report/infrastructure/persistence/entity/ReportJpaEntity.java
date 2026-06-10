@@ -1,7 +1,7 @@
-package com.kidmily.algoga_server.community.infrastructure.persistence.entity;
+package com.kidmily.algoga_server.report.infrastructure.persistence.entity;
 
-import com.kidmily.algoga_server.community.domain.model.ReasonType;
-import com.kidmily.algoga_server.community.domain.model.TargetType;
+import com.kidmily.algoga_server.report.domain.model.ReasonType;
+import com.kidmily.algoga_server.report.domain.model.TargetType;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -23,7 +23,7 @@ public class ReportJpaEntity {
     @Column(name = "user_id", nullable = false)
     private Long userId;
 
-    @Column(name = "reported_user_id")  // ← 추가
+    @Column(name = "reported_user_id")
     private Long reportedUserId;
 
     @Column(name = "target_id", nullable = false)

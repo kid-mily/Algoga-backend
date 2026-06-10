@@ -1,4 +1,4 @@
-package com.kidmily.algoga_server.community.presentation.api.response;
+package com.kidmily.algoga_server.report.presentation.api.response;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 

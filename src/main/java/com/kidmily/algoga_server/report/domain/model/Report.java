@@ -1,7 +1,7 @@
-package com.kidmily.algoga_server.community.domain.model;
+package com.kidmily.algoga_server.report.domain.model;
 
-import com.kidmily.algoga_server.community.exception.PostErrorCode;
-import com.kidmily.algoga_server.community.exception.ReportException;
+import com.kidmily.algoga_server.report.exception.ReportErrorCode;
+import com.kidmily.algoga_server.report.exception.ReportException;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -26,7 +26,6 @@ public class Report {
     private Report(Long userId, Long reportedUserId, Long targetId, TargetType targetType,
                    ReasonType reasonType, String detail) {
         validateDetail(detail);
-
         this.userId = userId;
         this.reportedUserId = reportedUserId;
         this.targetId = targetId;
@@ -49,7 +48,13 @@ public class Report {
     }
 
     public static Report create(Long userId, Long reportedUserId, Long targetId, TargetType targetType,
-                                ReasonType reasonType, String detail) {
+                                ReasonType reasonType, String detail, boolean isDuplicated) {
+        if (userId.equals(reportedUserId)) {
+            throw new ReportException(ReportErrorCode.REPORT_SELF_NOT_ALLOWED);
+        }
+        if (isDuplicated) {
+            throw new ReportException(ReportErrorCode.REPORT_DUPLICATED);
+        }
         return new Report(userId, reportedUserId, targetId, targetType, reasonType, detail);
     }
 
@@ -61,7 +66,7 @@ public class Report {
 
     private void validateDetail(String detail) {
         if (detail != null && detail.length() > MAX_DETAIL_LENGTH) {
-            throw new ReportException(PostErrorCode.REPORT_DETAIL_TOO_LONG);
+            throw new ReportException(ReportErrorCode.REPORT_DETAIL_TOO_LONG);
         }
     }
 }

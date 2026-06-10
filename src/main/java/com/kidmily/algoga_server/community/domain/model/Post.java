@@ -158,6 +158,11 @@ public class Post {
             if (distinctCount != freeTags.size()) {
                 throw new PostException(PostErrorCode.POST_FREE_TAG_DUPLICATED);
             }
+            // 태그 길이 검증 추가
+            boolean hasLongTag = freeTags.stream().anyMatch(tag -> tag.length() > 10);
+            if (hasLongTag) {
+                throw new PostException(PostErrorCode.POST_FREE_TAG_TOO_LONG);
+            }
         }
     }
 

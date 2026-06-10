@@ -1,10 +1,10 @@
-package com.kidmily.algoga_server.community.infrastructure.persistence;
+package com.kidmily.algoga_server.report.infrastructure.persistence;
 
-import com.kidmily.algoga_server.community.domain.model.Report;
-import com.kidmily.algoga_server.community.domain.model.TargetType;
-import com.kidmily.algoga_server.community.domain.repository.ReportRepository;
-import com.kidmily.algoga_server.community.infrastructure.mapper.ReportMapper;
-import com.kidmily.algoga_server.community.infrastructure.persistence.repository.SpringDataReportRepository;
+import com.kidmily.algoga_server.report.domain.model.Report;
+import com.kidmily.algoga_server.report.domain.model.TargetType;
+import com.kidmily.algoga_server.report.domain.repository.ReportRepository;
+import com.kidmily.algoga_server.report.infrastructure.mapper.ReportMapper;
+import com.kidmily.algoga_server.report.infrastructure.persistence.repository.SpringDataReportRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 

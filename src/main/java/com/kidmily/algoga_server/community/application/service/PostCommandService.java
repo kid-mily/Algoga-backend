@@ -4,7 +4,9 @@ import com.kidmily.algoga_server.community.application.command.CreatePostCommand
 import com.kidmily.algoga_server.community.application.command.DeletePostCommand;
 import com.kidmily.algoga_server.community.application.command.UpdatePostCommand;
 import com.kidmily.algoga_server.community.application.usecase.PostCommandUseCase;
+import com.kidmily.algoga_server.community.domain.model.Comment;
 import com.kidmily.algoga_server.community.domain.model.Post;
+import com.kidmily.algoga_server.community.domain.repository.CommentRepository;
 import com.kidmily.algoga_server.community.domain.repository.PostRepository;
 import com.kidmily.algoga_server.community.exception.PostErrorCode;
 import com.kidmily.algoga_server.community.exception.PostException;
@@ -27,6 +29,7 @@ public class PostCommandService implements PostCommandUseCase {
     private final PostRepository postRepository;
     private final FileStoragePort fileStoragePort;
     private final CommunityStorageSettings storageSettings;
+    private final CommentRepository commentRepository;
 
 
 
@@ -128,6 +131,10 @@ public class PostCommandService implements PostCommandUseCase {
 
         Post post = postRepository.findById(command.postId())
                 .orElseThrow(() -> new PostException(PostErrorCode.POST_NOT_FOUND));
+
+        // 연관 댓글 및 대댓글 소프트 딜리트
+        List<Comment> comments = commentRepository.findAllByPostId(command.postId());
+        commentRepository.softDeleteAll(comments);
 
         post.delete(command.requesterId());
         postRepository.delete(post);

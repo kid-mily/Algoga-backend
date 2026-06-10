@@ -1,4 +1,4 @@
-package com.kidmily.algoga_server.community.domain.model;
+package com.kidmily.algoga_server.report.domain.model;
 
 public enum ReasonType {
     SPAM,           // 스팸/광고
