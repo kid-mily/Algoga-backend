@@ -133,6 +133,13 @@ public class AuthService implements SocialLoginProcessor{
         log.info("신규 회원가입 완료 [아이디: {}, 이메일: {}]", user.getUsername(), user.getEmail());
     }
 
+    // 아이디 중복 확인 로직
+    public boolean isUsernameAvailable(String username) {
+        // existsByUsername이 true면 중복(사용 불가)이므로,
+        // 반대인 !를 붙여서 없으면 true(사용 가능)를 반환하도록 합니다.
+        return !userRepository.existsByUsername(username);
+    }
+
     // 4. 로그인
     public AuthTokenResponse login(AuthLoginRequest request) {
         User user = userRepository.findByUsername(request.username())

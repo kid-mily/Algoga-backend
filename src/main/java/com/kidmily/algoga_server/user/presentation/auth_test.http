@@ -88,6 +88,18 @@ Accept: application/json
 
 ### ------------------------------------------------------------------------
 
+### 1. 아이디 중복 확인 (사용 가능한 아이디 테스트)
+# DB에 없는 아무 아이디나 입력해서 data가 true로 나오는지 확인합니다.
+GET http://localhost:15000/api/v1/auth/username/check?username=test_new_user123
+Content-Type: application/json
+
+
+### 2. 아이디 중복 확인 (이미 사용 중인 아이디 테스트)
+# DB에 이미 가입되어 있는 아이디를 입력해서 data가 false로 나오는지 확인합니다.
+GET http://localhost:15000/api/v1/auth/username/check?username=lhy12345lhy
+Content-Type: application/json
+
+
 ### 3. 일반 로그인 (POST /api/v1/auth/login)
 # - 1번에서 가입한 정보로 로그인을 시도합니다.
 # - 로그인이 성공하면 발급받은 accessToken과 refreshToken을 변수에 자동 저장합니다.
