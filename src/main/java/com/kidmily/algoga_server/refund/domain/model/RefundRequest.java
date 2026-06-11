@@ -54,6 +54,11 @@ public class RefundRequest {
         return refundRequest;
     }
 
+    public void markUnderReview() {
+        this.status = RefundStatus.UNDER_REVIEW;
+        this.updatedAt = LocalDateTime.now();
+    }
+
     public void approve() {
         this.status = RefundStatus.APPROVED;
         this.updatedAt = LocalDateTime.now();

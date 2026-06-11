@@ -2,6 +2,7 @@ package com.kidmily.algoga_server.payment.presentation;
 
 import com.kidmily.algoga_server.global.common.api.response.ApiResponse;
 import com.kidmily.algoga_server.payment.application.usecase.PaymentQueryUseCase;
+import com.kidmily.algoga_server.payment.presentation.api.response.PaymentMonthlyDetailResponse;
 import com.kidmily.algoga_server.payment.presentation.api.response.PaymentResponse;
 import com.kidmily.algoga_server.payment.presentation.api.response.PaymentStatsResponse;
 import io.swagger.v3.oas.annotations.Operation;
@@ -52,9 +53,22 @@ public class AdminPaymentController {
     }
 
     @GetMapping("/stats")
-    @Operation(summary = "[어드민] 월별 수익 통계", description = "월별 결제 합계와 건수 통계를 반환합니다.")
-    public ResponseEntity<ApiResponse<List<PaymentStatsResponse>>> getAdminPaymentStats() {
-        List<PaymentStatsResponse> response = paymentQueryUseCase.getAdminPaymentStats();
+    @Operation(summary = "[어드민] 월별 수익 통계", description = "월별 결제 합계와 건수 통계를 반환합니다. year 파라미터로 연도 필터 가능.")
+    public ResponseEntity<ApiResponse<List<PaymentStatsResponse>>> getAdminPaymentStats(
+            @Parameter(description = "연도 필터 (없으면 전체)", example = "2026")
+            @RequestParam(required = false) Integer year
+    ) {
+        List<PaymentStatsResponse> response = paymentQueryUseCase.getAdminPaymentStats(year);
         return ResponseEntity.ok(ApiResponse.success("PAYMENT_STATS", "월별 수익 통계 조회에 성공했습니다.", response));
+    }
+
+    @GetMapping("/stats/{year}/{month}")
+    @Operation(summary = "[어드민] 월별 수익 상세", description = "특정 월의 일별 매출/환불/순수익 breakdown을 반환합니다.")
+    public ResponseEntity<ApiResponse<PaymentMonthlyDetailResponse>> getAdminPaymentStatsByMonth(
+            @Parameter(description = "연도", example = "2026") @PathVariable int year,
+            @Parameter(description = "월", example = "6") @PathVariable int month
+    ) {
+        PaymentMonthlyDetailResponse response = paymentQueryUseCase.getAdminPaymentStatsByMonth(year, month);
+        return ResponseEntity.ok(ApiResponse.success("PAYMENT_MONTHLY_STATS", "월별 수익 상세 조회에 성공했습니다.", response));
     }
 }

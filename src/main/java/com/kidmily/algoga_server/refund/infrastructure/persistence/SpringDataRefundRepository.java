@@ -8,5 +8,7 @@ import java.util.List;
 public interface SpringDataRefundRepository extends JpaRepository<RefundJpaEntity, Long> {
     List<RefundJpaEntity> findAllByUserId(Long userId);
     List<RefundJpaEntity> findAllByStatus(RefundStatus status);
+    List<RefundJpaEntity> findAllByStatusIn(List<RefundStatus> statuses);
     boolean existsByBookingId(Long bookingId);
+    boolean existsByUserIdAndStatusIn(Long userId, List<RefundStatus> statuses);
 }

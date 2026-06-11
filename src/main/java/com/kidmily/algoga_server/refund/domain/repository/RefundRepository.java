@@ -12,5 +12,7 @@ public interface RefundRepository {
     List<RefundRequest> findAllByUserId(Long userId);
     List<RefundRequest> findAll();
     List<RefundRequest> findAllByStatus(RefundStatus status);
+    List<RefundRequest> findAllByStatusIn(List<RefundStatus> statuses);
     boolean existsByBookingId(Long bookingId);
+    boolean existsByUserIdAndStatusIn(Long userId, List<RefundStatus> statuses);
 }

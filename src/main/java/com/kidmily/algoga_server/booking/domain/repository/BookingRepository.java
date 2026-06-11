@@ -15,4 +15,6 @@ public interface BookingRepository {
     List<Booking> findByUserId(Long userId);
 
     Booking updateStatus(Long bookingId, BookingStatus status);
+
+    boolean existsByUserIdAndStatusIn(Long userId, List<BookingStatus> statuses);
 }
