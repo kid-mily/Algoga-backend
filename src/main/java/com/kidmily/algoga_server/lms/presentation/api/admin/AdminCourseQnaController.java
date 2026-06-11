@@ -7,8 +7,6 @@ import com.kidmily.algoga_server.global.exception.GlobalErrorCode;
 import com.kidmily.algoga_server.lms.application.command.AnswerCourseQnaCommand;
 import com.kidmily.algoga_server.lms.application.command.CreateCourseQnaCommentCommand;
 import com.kidmily.algoga_server.lms.application.usecase.CourseUseCase;
-import com.kidmily.algoga_server.lms.domain.model.CourseQna;
-import com.kidmily.algoga_server.lms.domain.model.CourseQnaComment;
 import com.kidmily.algoga_server.lms.exception.LmsErrorCode;
 import com.kidmily.algoga_server.lms.presentation.request.AnswerCourseQnaRequest;
 import com.kidmily.algoga_server.lms.presentation.request.CreateCourseQnaCommentRequest;
@@ -62,7 +60,7 @@ public class AdminCourseQnaController {
                 request.answer()
         );
 
-        CourseQna qna = courseUseCase.answerQna(command);
+        var qna = courseUseCase.answerQna(command);
 
         return ResponseEntity.ok(
                 ApiResponse.success(
@@ -103,7 +101,7 @@ public class AdminCourseQnaController {
                 request.content()
         );
 
-        CourseQnaComment comment = courseUseCase.createComment(command);
+        var comment = courseUseCase.createComment(command);
 
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(ApiResponse.created(

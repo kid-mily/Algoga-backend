@@ -1,6 +1,6 @@
 package com.kidmily.algoga_server.lms.presentation.response;
 
-import com.kidmily.algoga_server.lms.domain.model.CourseFile;
+import com.kidmily.algoga_server.lms.application.result.CourseFileResult;
 import io.swagger.v3.oas.annotations.media.Schema;
 
 @Schema(description = "강의 자료 파일 응답")
@@ -16,15 +16,15 @@ public record CourseFileResponse(
         int fileOrder
 ) {
 
-    public static CourseFileResponse from(CourseFile courseFile) {
-        String originalFileName = courseFile.getOriginalFileName();
+    public static CourseFileResponse from(CourseFileResult courseFile) {
+        String originalFileName = courseFile.originalFileName();
 
         return new CourseFileResponse(
-                courseFile.getFileUrl(),
+                courseFile.fileUrl(),
                 originalFileName == null || originalFileName.isBlank()
-                        ? extractFileName(courseFile.getFileUrl())
+                        ? extractFileName(courseFile.fileUrl())
                         : originalFileName,
-                courseFile.getFileOrder()
+                courseFile.fileOrder()
         );
     }
 

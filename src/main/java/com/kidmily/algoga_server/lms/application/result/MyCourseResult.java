@@ -20,6 +20,7 @@ public record MyCourseResult(
         boolean certificateAvailable,
         String certificateCode,
         String certificateDownloadUrl,
+        LocalDateTime accessExpiresAt,
         LocalDateTime completedAt
 ) {
 }

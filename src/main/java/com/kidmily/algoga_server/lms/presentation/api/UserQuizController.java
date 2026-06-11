@@ -11,7 +11,7 @@ import com.kidmily.algoga_server.lms.exception.LmsErrorCode;
 import com.kidmily.algoga_server.lms.presentation.request.SubmitQuizRequest;
 import com.kidmily.algoga_server.lms.presentation.response.QuizSubmitResponse;
 import com.kidmily.algoga_server.lms.presentation.response.UserQuizResponse;
-import com.kidmily.algoga_server.user.settings.CustomUserDetails;
+import com.kidmily.algoga_server.lms.presentation.support.CurrentUserIdResolver;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -48,9 +48,9 @@ public class UserQuizController {
             @Parameter(description = "강의 ID", example = "3")
             @PathVariable Long courseId,
 
-            @AuthenticationPrincipal CustomUserDetails userDetails
+            @AuthenticationPrincipal Object userDetails
     ) {
-        Long currentUserId = userDetails.getUser().getId();
+        Long currentUserId = CurrentUserIdResolver.resolveNullable(userDetails);
 
         List<UserQuizResponse> response = quizUseCase.getQuizzes(
                         currentUserId,
@@ -90,9 +90,9 @@ public class UserQuizController {
 
             @Valid @RequestBody SubmitQuizRequest request,
 
-            @AuthenticationPrincipal CustomUserDetails userDetails
+            @AuthenticationPrincipal Object userDetails
     ) {
-        Long currentUserId = userDetails.getUser().getId();
+        Long currentUserId = CurrentUserIdResolver.resolveNullable(userDetails);
 
         List<SubmitQuizAnswerCommand> answers = request.answers()
                 .stream()

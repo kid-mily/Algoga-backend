@@ -1,7 +1,6 @@
 package com.kidmily.algoga_server.lms.presentation.response;
 
-import com.kidmily.algoga_server.lms.domain.model.Course;
-import com.kidmily.algoga_server.lms.domain.model.CourseLevel;
+import com.kidmily.algoga_server.lms.application.result.CourseResult;
 
 import java.util.List;
 
@@ -21,38 +20,32 @@ public record CourseListResponse(
         boolean paid
 ) {
 
-    public static CourseListResponse from(Course course) {
+    public static CourseListResponse from(CourseResult course) {
         return from(course, false, false);
     }
 
     public static CourseListResponse from(
-            Course course,
+            CourseResult course,
             boolean enrolled,
             boolean paid
     ) {
         return new CourseListResponse(
-                course.getId(),
-                course.getCountryId(),
-                course.getTitle(),
-                course.getDescription(),
-                course.getPrice(),
-                course.getThumbnailUrl(),
-                course.getFileUrls(),
-                course.getCourseFiles()
+                course.courseId(),
+                course.countryId(),
+                course.title(),
+                course.description(),
+                course.price(),
+                course.thumbnailUrl(),
+                course.fileUrls(),
+                course.files()
                         .stream()
                         .map(CourseFileResponse::from)
                         .toList(),
-                course.getLevel(),
-                toLevelName(course.getLevel()),
-                course.getStatus(),
+                course.level(),
+                course.levelName(),
+                course.status(),
                 enrolled,
                 paid
         );
-    }
-
-    private static String toLevelName(String level) {
-        return CourseLevel.find(level)
-                .map(CourseLevel::displayName)
-                .orElse("");
     }
 }

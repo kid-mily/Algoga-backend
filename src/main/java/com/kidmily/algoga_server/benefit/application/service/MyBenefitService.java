@@ -53,9 +53,11 @@ public class MyBenefitService implements MyBenefitUseCase {
                 .stream()
                 .sorted(Comparator.comparing(MileageHistory::getCreatedAt).reversed())
                 .toList();
+        LocalDateTime now = LocalDateTime.now();
 
         int totalEarnedMileage = histories.stream()
                 .filter(this::isEarnType)
+                .filter(history -> history.isAvailableAt(now))
                 .mapToInt(MileageHistory::getAmount)
                 .sum();
 
@@ -64,7 +66,7 @@ public class MyBenefitService implements MyBenefitUseCase {
                 .mapToInt(MileageHistory::getAmount)
                 .sum();
 
-        int totalMileage = totalEarnedMileage - totalUsedMileage;
+        int totalMileage = Math.max(0, totalEarnedMileage - totalUsedMileage);
 
         List<MyMileageHistoryResult> historyResults = histories.stream()
                 .map(this::toMyMileageHistoryResult)
@@ -116,7 +118,8 @@ public class MyBenefitService implements MyBenefitUseCase {
                 mileageHistory.getAmount(),
                 mileageHistory.getType(),
                 mileageHistory.getReason(),
-                mileageHistory.getCreatedAt()
+                mileageHistory.getCreatedAt(),
+                mileageHistory.getExpiredAt()
         );
     }
 

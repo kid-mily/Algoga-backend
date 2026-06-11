@@ -8,7 +8,6 @@ import com.kidmily.algoga_server.global.exception.GlobalErrorCode;
 import com.kidmily.algoga_server.lms.application.command.CreateCourseCommand;
 import com.kidmily.algoga_server.lms.application.command.UpdateCourseCommand;
 import com.kidmily.algoga_server.lms.application.usecase.CourseUseCase;
-import com.kidmily.algoga_server.lms.domain.model.Course;
 import com.kidmily.algoga_server.lms.exception.LmsErrorCode;
 import com.kidmily.algoga_server.lms.presentation.request.admin.CreateCourseRequest;
 import com.kidmily.algoga_server.lms.presentation.request.admin.UpdateCourseRequest;
@@ -120,7 +119,7 @@ public class AdminCourseController {
             @Parameter(description = "강의 ID", example = "1")
             @PathVariable Long courseId
     ) {
-        Course course = courseUseCase.getCourse(courseId);
+        var course = courseUseCase.getCourse(courseId);
 
         return ResponseEntity.ok(
                 ApiResponse.success(
@@ -168,7 +167,7 @@ public class AdminCourseController {
                 attachedFiles
         );
 
-        Course updatedCourse = courseUseCase.updateCourse(courseId, command);
+        var updatedCourse = courseUseCase.updateCourse(courseId, command);
 
         return ResponseEntity.ok(
                 ApiResponse.success(

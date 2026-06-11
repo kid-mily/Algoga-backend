@@ -1,5 +1,6 @@
 package com.kidmily.algoga_server.lms.application.service;
 
+import com.kidmily.algoga_server.lms.application.result.CountryResult;
 import com.kidmily.algoga_server.lms.application.usecase.MapUseCase;
 import com.kidmily.algoga_server.lms.domain.model.Country;
 import com.kidmily.algoga_server.lms.domain.repository.MapRepository;
@@ -31,12 +32,14 @@ public class MapService implements MapUseCase {
     private final MapRepository mapRepository;
 
     @Override
-    public List<Country> getActiveCountries() {
-        return mapRepository.findActiveCountries();
+    public List<CountryResult> getActiveCountries() {
+        return mapRepository.findActiveCountries().stream()
+                .map(CountryResult::from)
+                .toList();
     }
 
     @Override
-    public List<Country> getCountriesByContinentCode(String continentCode) {
+    public List<CountryResult> getCountriesByContinentCode(String continentCode) {
         String normalizedContinentCode = normalizeContinentCode(continentCode);
 
         if (!VALID_CONTINENT_CODES.contains(normalizedContinentCode)) {
@@ -49,12 +52,15 @@ public class MapService implements MapUseCase {
             throw new LmsException(LmsErrorCode.CONTINENT_NOT_FOUND);
         }
 
-        return countries;
+        return countries.stream()
+                .map(CountryResult::from)
+                .toList();
     }
 
     @Override
-    public Country getActiveCountry(Long countryId) {
+    public CountryResult getActiveCountry(Long countryId) {
         return mapRepository.findActiveCountryById(countryId)
+                .map(CountryResult::from)
                 .orElseThrow(() -> new LmsException(LmsErrorCode.COUNTRY_NOT_FOUND));
     }
 

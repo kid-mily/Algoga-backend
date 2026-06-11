@@ -7,15 +7,13 @@ import com.kidmily.algoga_server.lms.application.command.CreateCourseQnaCommand;
 import com.kidmily.algoga_server.lms.application.command.CreateCourseQnaCommentCommand;
 import com.kidmily.algoga_server.lms.application.result.CourseQnaDetailResult;
 import com.kidmily.algoga_server.lms.application.usecase.CourseUseCase;
-import com.kidmily.algoga_server.lms.domain.model.CourseQna;
-import com.kidmily.algoga_server.lms.domain.model.CourseQnaComment;
 import com.kidmily.algoga_server.lms.exception.LmsErrorCode;
 import com.kidmily.algoga_server.lms.presentation.request.CreateCourseQnaCommentRequest;
 import com.kidmily.algoga_server.lms.presentation.request.CreateCourseQnaRequest;
 import com.kidmily.algoga_server.lms.presentation.response.CourseQnaCommentResponse;
 import com.kidmily.algoga_server.lms.presentation.response.CourseQnaDetailResponse;
 import com.kidmily.algoga_server.lms.presentation.response.CourseQnaResponse;
-import com.kidmily.algoga_server.user.settings.CustomUserDetails;
+import com.kidmily.algoga_server.lms.presentation.support.CurrentUserIdResolver;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -49,9 +47,9 @@ public class CourseQnaController {
 
             @Valid @RequestBody CreateCourseQnaRequest request,
 
-            @AuthenticationPrincipal CustomUserDetails userDetails
+            @AuthenticationPrincipal Object userDetails
     ) {
-        Long currentUserId = userDetails.getUser().getId();
+        Long currentUserId = CurrentUserIdResolver.resolveNullable(userDetails);
 
         CreateCourseQnaCommand command = new CreateCourseQnaCommand(
                 courseId,
@@ -60,7 +58,7 @@ public class CourseQnaController {
                 request.question()
         );
 
-        CourseQna qna = courseUseCase.createQna(command);
+        var qna = courseUseCase.createQna(command);
 
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(ApiResponse.created(
@@ -140,9 +138,9 @@ public class CourseQnaController {
 
             @Valid @RequestBody CreateCourseQnaCommentRequest request,
 
-            @AuthenticationPrincipal CustomUserDetails userDetails
+            @AuthenticationPrincipal Object userDetails
     ) {
-        Long currentUserId = userDetails.getUser().getId();
+        Long currentUserId = CurrentUserIdResolver.resolveNullable(userDetails);
 
         CreateCourseQnaCommentCommand command = new CreateCourseQnaCommentCommand(
                 courseId,
@@ -152,7 +150,7 @@ public class CourseQnaController {
                 request.content()
         );
 
-        CourseQnaComment comment = courseUseCase.createComment(command);
+        var comment = courseUseCase.createComment(command);
 
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(ApiResponse.created(

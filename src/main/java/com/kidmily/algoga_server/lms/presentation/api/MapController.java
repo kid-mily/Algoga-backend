@@ -1,9 +1,9 @@
 package com.kidmily.algoga_server.lms.presentation.api;
 
 import com.kidmily.algoga_server.global.common.api.response.ApiResponse;
+import com.kidmily.algoga_server.lms.application.result.CountryResult;
 import com.kidmily.algoga_server.lms.application.usecase.CourseUseCase;
 import com.kidmily.algoga_server.lms.application.usecase.MapUseCase;
-import com.kidmily.algoga_server.lms.domain.model.Country;
 import com.kidmily.algoga_server.lms.presentation.response.ContinentResponse;
 import com.kidmily.algoga_server.lms.presentation.response.CountryResponse;
 import lombok.RequiredArgsConstructor;
@@ -25,17 +25,17 @@ public class MapController {
 
     @GetMapping("/continents")
     public ResponseEntity<ApiResponse<List<ContinentResponse>>> getContinents() {
-        List<Country> countries = mapUseCase.getActiveCountries();
+        List<CountryResult> countries = mapUseCase.getActiveCountries();
 
         List<Long> countryIds = countries.stream()
-                .map(Country::getId)
+                .map(CountryResult::countryId)
                 .toList();
 
         Map<Long, Long> courseCountMap = courseUseCase.countPublishedCoursesByCountryIds(countryIds);
 
-        Map<String, List<Country>> groupedByContinent = countries.stream()
+        Map<String, List<CountryResult>> groupedByContinent = countries.stream()
                 .collect(Collectors.groupingBy(
-                        Country::getContinentCode,
+                        CountryResult::continentCode,
                         LinkedHashMap::new,
                         Collectors.toList()
                 ));
@@ -43,12 +43,12 @@ public class MapController {
         List<ContinentResponse> response = groupedByContinent.entrySet()
                 .stream()
                 .map(entry -> {
-                    List<Country> continentCountries = entry.getValue();
+                    List<CountryResult> continentCountries = entry.getValue();
                     String continentCode = entry.getKey();
-                    String continentName = continentCountries.get(0).getContinentName();
+                    String continentName = continentCountries.get(0).continentName();
 
                     long courseCount = continentCountries.stream()
-                            .mapToLong(country -> courseCountMap.getOrDefault(country.getId(), 0L))
+                            .mapToLong(country -> courseCountMap.getOrDefault(country.countryId(), 0L))
                             .sum();
 
                     return new ContinentResponse(
@@ -73,23 +73,23 @@ public class MapController {
     public ResponseEntity<ApiResponse<List<CountryResponse>>> getCountriesByContinent(
             @PathVariable String continentCode
     ) {
-        List<Country> countries = mapUseCase.getCountriesByContinentCode(continentCode);
+        List<CountryResult> countries = mapUseCase.getCountriesByContinentCode(continentCode);
 
         List<Long> countryIds = countries.stream()
-                .map(Country::getId)
+                .map(CountryResult::countryId)
                 .toList();
 
         Map<Long, Long> courseCountMap = courseUseCase.countPublishedCoursesByCountryIds(countryIds);
 
         List<CountryResponse> response = countries.stream()
                 .map(country -> new CountryResponse(
-                        country.getId(),
-                        country.getCountryCode(),
-                        country.getName(),
-                        country.getContinentCode(),
-                        country.getContinentName(),
-                        country.isActive(),
-                        courseCountMap.getOrDefault(country.getId(), 0L)
+                        country.countryId(),
+                        country.countryCode(),
+                        country.countryName(),
+                        country.continentCode(),
+                        country.continentName(),
+                        country.active(),
+                        courseCountMap.getOrDefault(country.countryId(), 0L)
                 ))
                 .toList();
 

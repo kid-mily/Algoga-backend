@@ -18,8 +18,8 @@ Content-Type: application/json
 Accept: application/json
 
 {
-  "username": "test",
-  "password": "password12345"
+  "username": "test1",
+  "password": "test1234"
 }
 
 > {%

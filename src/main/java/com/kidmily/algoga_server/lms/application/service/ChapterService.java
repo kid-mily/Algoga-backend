@@ -3,6 +3,7 @@ package com.kidmily.algoga_server.lms.application.service;
 import com.kidmily.algoga_server.global.port.out.FileStoragePort;
 import com.kidmily.algoga_server.lms.application.command.CreateChapterCommand;
 import com.kidmily.algoga_server.lms.application.command.UpdateChapterCommand;
+import com.kidmily.algoga_server.lms.application.result.ChapterResult;
 import com.kidmily.algoga_server.lms.application.usecase.ChapterUseCase;
 import com.kidmily.algoga_server.lms.domain.model.Chapter;
 import com.kidmily.algoga_server.lms.domain.repository.ChapterRepository;
@@ -30,13 +31,15 @@ public class ChapterService implements ChapterUseCase {
 
     @Override
     @Transactional(readOnly = true)
-    public List<Chapter> getChapters(Long courseId) {
+    public List<ChapterResult> getChapters(Long courseId) {
         validateCourse(courseId);
-        return chapterRepository.findByCourseId(courseId);
+        return chapterRepository.findByCourseId(courseId).stream()
+                .map(ChapterResult::from)
+                .toList();
     }
 
     @Override
-    public Chapter createChapter(CreateChapterCommand command) {
+    public ChapterResult createChapter(CreateChapterCommand command) {
         validateCourse(command.courseId());
         validateChapterOrder(command.chapterOrder());
         validateChapterLimit(command.courseId());
@@ -52,17 +55,19 @@ public class ChapterService implements ChapterUseCase {
                 storageSettings.getChapterVideoDirectory()
         );
 
-        return chapterRepository.save(Chapter.create(
+        Chapter savedChapter = chapterRepository.save(Chapter.create(
                 command.courseId(),
                 command.title(),
                 videoUrl,
                 command.durationSeconds(),
                 command.chapterOrder()
         ));
+
+        return ChapterResult.from(savedChapter);
     }
 
     @Override
-    public Chapter updateChapter(Long courseId, Long chapterId, UpdateChapterCommand command) {
+    public ChapterResult updateChapter(Long courseId, Long chapterId, UpdateChapterCommand command) {
         validateCourse(courseId);
         validateChapterOrder(command.chapterOrder());
         validateDuplicatedChapterOrderForUpdate(courseId, command.chapterOrder(), chapterId);
@@ -84,7 +89,7 @@ public class ChapterService implements ChapterUseCase {
             );
         }
 
-        return chapterRepository.updateBasicInfo(
+        Chapter updatedChapter = chapterRepository.updateBasicInfo(
                 chapterId,
                 courseId,
                 command.title(),
@@ -92,6 +97,8 @@ public class ChapterService implements ChapterUseCase {
                 command.durationSeconds(),
                 command.chapterOrder()
         ).orElseThrow(() -> new LmsException(LmsErrorCode.CHAPTER_NOT_FOUND));
+
+        return ChapterResult.from(updatedChapter);
     }
 
     @Override

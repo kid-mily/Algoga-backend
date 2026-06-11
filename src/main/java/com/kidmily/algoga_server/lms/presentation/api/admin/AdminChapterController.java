@@ -6,9 +6,7 @@ import com.kidmily.algoga_server.global.exception.GlobalErrorCode;
 import com.kidmily.algoga_server.lms.application.command.CreateChapterCommand;
 import com.kidmily.algoga_server.lms.application.command.UpdateChapterCommand;
 import com.kidmily.algoga_server.lms.application.usecase.ChapterUseCase;
-import com.kidmily.algoga_server.lms.domain.model.Chapter;
 import com.kidmily.algoga_server.lms.exception.LmsErrorCode;
-import com.kidmily.algoga_server.lms.infrastructure.document.LocalFileStorageManager;
 import com.kidmily.algoga_server.lms.presentation.request.admin.CreateChapterRequest;
 import com.kidmily.algoga_server.lms.presentation.request.admin.UpdateChapterRequest;
 import com.kidmily.algoga_server.lms.presentation.response.AdminChapterResponse;
@@ -35,7 +33,7 @@ import java.util.List;
 public class AdminChapterController {
 
     private final ChapterUseCase chapterUseCase;
-    private final LocalFileStorageManager fileStorageManager;
+
     @Operation(
             summary = "챕터 목록 조회",
             description = "특정 강의에 등록된 챕터 목록을 조회합니다."
@@ -96,7 +94,7 @@ public class AdminChapterController {
                 request.chapterOrder()
         );
 
-        Chapter savedChapter = chapterUseCase.createChapter(command);
+        var savedChapter = chapterUseCase.createChapter(command);
 
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(ApiResponse.created(
@@ -143,7 +141,7 @@ public class AdminChapterController {
                 request.chapterOrder()
         );
 
-        Chapter updatedChapter = chapterUseCase.updateChapter(courseId, chapterId, command);
+        var updatedChapter = chapterUseCase.updateChapter(courseId, chapterId, command);
 
         return ResponseEntity.ok(
                 ApiResponse.success(

@@ -17,6 +17,7 @@ public class LmsCourseAdapter implements LmsCoursePort {
     private static final String COURSE_REPOSITORY = "com.kidmily.algoga_server.lms.domain.repository.CourseRepository";
     private static final String COURSE_COMPLETION_REPOSITORY = "com.kidmily.algoga_server.lms.domain.repository.CourseCompletionRepository";
     private static final String QUIZ_SUBMISSION_REPOSITORY = "com.kidmily.algoga_server.lms.domain.repository.QuizSubmissionRepository";
+    private static final String ENROLLMENT_REPOSITORY = "com.kidmily.algoga_server.lms.domain.repository.EnrollmentRepository";
     private static final String MAP_REPOSITORY = "com.kidmily.algoga_server.lms.domain.repository.MapRepository";
 
     private final ApplicationContext applicationContext;
@@ -56,10 +57,22 @@ public class LmsCourseAdapter implements LmsCoursePort {
         Object submission = quizSubmission
                 .orElseThrow(() -> new BenefitException(BenefitErrorCode.QUIZ_NOT_SUBMITTED));
 
+        Optional<Object> enrollment = invoke(
+                bean(ENROLLMENT_REPOSITORY),
+                "findByUserIdAndCourseId",
+                new Class<?>[]{Long.class, Long.class},
+                userId,
+                courseId
+        );
+
+        Object enrolledCourse = enrollment
+                .orElseThrow(() -> new BenefitException(BenefitErrorCode.COURSE_COMPLETION_NOT_FOUND));
+
         return new CourseRewardInfo(
                 invokeNoArg(course, "getId"),
                 invokeNoArg(course, "getPrice"),
-                invokeNoArg(submission, "getCorrectCount")
+                invokeNoArg(submission, "getCorrectCount"),
+                invokeNoArg(enrolledCourse, "getEnrolledAt")
         );
     }
 

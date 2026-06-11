@@ -15,6 +15,8 @@ public class CouponPolicy {
     private final LocalDateTime createdAt;
     private final LocalDateTime updatedAt;
 
+    private static final int DEFAULT_VALID_DAYS = 30;
+
     private CouponPolicy(
             Long id,
             Long courseId,
@@ -56,7 +58,7 @@ public class CouponPolicy {
                 couponName,
                 discountType,
                 discountValue,
-                validDays,
+                DEFAULT_VALID_DAYS,
                 true,
                 now,
                 now
@@ -86,6 +88,21 @@ public class CouponPolicy {
                 active,
                 createdAt,
                 updatedAt
+        );
+    }
+
+    public CouponPolicy deactivate() {
+        return new CouponPolicy(
+                id,
+                courseId,
+                managerId,
+                couponName,
+                discountType,
+                discountValue,
+                validDays,
+                false,
+                createdAt,
+                LocalDateTime.now()
         );
     }
 

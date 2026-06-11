@@ -16,6 +16,8 @@ public class UserCoupon {
     private final LocalDateTime expiredAt;
     private final LocalDateTime usedAt;
 
+    private static final int COUPON_VALID_MONTHS = 1;
+
     private UserCoupon(
             Long id,
             Long userId,
@@ -58,7 +60,7 @@ public class UserCoupon {
                 couponPolicy.getDiscountValue(),
                 "ISSUED",
                 now,
-                now.plusDays(couponPolicy.getValidDays()),
+                now.plusMonths(COUPON_VALID_MONTHS),
                 null
         );
     }
@@ -76,7 +78,7 @@ public class UserCoupon {
                 10,
                 "ISSUED",
                 now,
-                now.plusDays(30),
+                now.plusMonths(COUPON_VALID_MONTHS),
                 null
         );
     }

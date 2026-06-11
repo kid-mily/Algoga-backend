@@ -1,6 +1,7 @@
 package com.kidmily.algoga_server.lms.application.service;
 
 import com.kidmily.algoga_server.lms.application.command.UpdateLearningProgressCommand;
+import com.kidmily.algoga_server.lms.application.result.LearningProgressResult;
 import com.kidmily.algoga_server.lms.application.usecase.LearningProgressUseCase;
 import com.kidmily.algoga_server.lms.domain.model.Chapter;
 import com.kidmily.algoga_server.lms.domain.model.LearningProgress;
@@ -15,6 +16,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.Comparator;
 import java.util.List;
 
@@ -30,7 +32,7 @@ public class LearningProgressService implements LearningProgressUseCase {
     private final EnrollmentRepository enrollmentRepository;
 
     @Override
-    public LearningProgress updateProgress(UpdateLearningProgressCommand command) {
+    public LearningProgressResult updateProgress(UpdateLearningProgressCommand command) {
         log.info("[Learning Progress Command] 챕터 진도율 업데이트 요청. userId={}, courseId={}, chapterId={}, watchedSeconds={}",
                 command.userId(), command.courseId(), command.chapterId(), command.watchedSeconds());
 
@@ -72,11 +74,15 @@ public class LearningProgressService implements LearningProgressUseCase {
                 savedProgress.getProgressRate(),
                 savedProgress.isCompleted());
 
-        return savedProgress;
+        return LearningProgressResult.from(savedProgress);
     }
 
     private void validateEnrollment(Long userId, Long courseId) {
-        if (!enrollmentRepository.existsByUserIdAndCourseId(userId, courseId)) {
+        boolean accessible = enrollmentRepository.findByUserIdAndCourseId(userId, courseId)
+                .map(enrollment -> enrollment.isAccessibleAt(LocalDateTime.now()))
+                .orElse(false);
+
+        if (!accessible) {
             log.warn("[Learning Progress Command] 진도율 업데이트 실패. 수강 등록되지 않은 강의입니다. userId={}, courseId={}",
                     userId, courseId);
             throw new LmsException(LmsErrorCode.NOT_ENROLLED);

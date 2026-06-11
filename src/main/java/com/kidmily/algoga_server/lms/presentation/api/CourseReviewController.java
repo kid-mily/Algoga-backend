@@ -6,12 +6,11 @@ import com.kidmily.algoga_server.global.exception.GlobalErrorCode;
 import com.kidmily.algoga_server.lms.application.command.CreateCourseReviewCommand;
 import com.kidmily.algoga_server.lms.application.result.CourseReviewSummaryResult;
 import com.kidmily.algoga_server.lms.application.usecase.CourseReviewUseCase;
-import com.kidmily.algoga_server.lms.domain.model.CourseReview;
 import com.kidmily.algoga_server.lms.exception.LmsErrorCode;
 import com.kidmily.algoga_server.lms.presentation.request.CreateCourseReviewRequest;
 import com.kidmily.algoga_server.lms.presentation.response.CourseReviewResponse;
 import com.kidmily.algoga_server.lms.presentation.response.CourseReviewSummaryResponse;
-import com.kidmily.algoga_server.user.settings.CustomUserDetails;
+import com.kidmily.algoga_server.lms.presentation.support.CurrentUserIdResolver;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -50,9 +49,9 @@ public class CourseReviewController {
 
             @Valid @RequestBody CreateCourseReviewRequest request,
 
-            @AuthenticationPrincipal CustomUserDetails userDetails
+            @AuthenticationPrincipal Object userDetails
     ) {
-        Long currentUserId = userDetails.getUser().getId();
+        Long currentUserId = CurrentUserIdResolver.resolveNullable(userDetails);
 
         CreateCourseReviewCommand command = new CreateCourseReviewCommand(
                 courseId,
@@ -61,7 +60,7 @@ public class CourseReviewController {
                 request.content()
         );
 
-        CourseReview review = courseReviewUseCase.createReview(command);
+        var review = courseReviewUseCase.createReview(command);
 
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(ApiResponse.created(

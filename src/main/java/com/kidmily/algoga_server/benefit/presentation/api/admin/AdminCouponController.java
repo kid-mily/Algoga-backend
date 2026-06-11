@@ -6,7 +6,6 @@ import com.kidmily.algoga_server.global.common.api.response.ApiResponse;
 import com.kidmily.algoga_server.global.exception.GlobalErrorCode;
 import com.kidmily.algoga_server.benefit.application.command.CreateCouponPolicyCommand;
 import com.kidmily.algoga_server.benefit.application.usecase.CouponPolicyUseCase;
-import com.kidmily.algoga_server.benefit.domain.model.CouponPolicy;
 import com.kidmily.algoga_server.benefit.exception.BenefitErrorCode;
 import com.kidmily.algoga_server.benefit.presentation.request.CreateCouponPolicyRequest;
 import com.kidmily.algoga_server.benefit.presentation.response.CouponPolicyResponse;
@@ -61,7 +60,7 @@ public class AdminCouponController {
                 request.validDays()
         );
 
-        CouponPolicy couponPolicy = couponPolicyUseCase.createCouponPolicy(command);
+        var couponPolicy = couponPolicyUseCase.createCouponPolicy(command);
 
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(ApiResponse.created(
@@ -92,6 +91,30 @@ public class AdminCouponController {
                         "COUPON_POLICIES_FOUND",
                         "강의별 쿠폰 정책 목록 조회에 성공했습니다.",
                         response
+                )
+        );
+    }
+
+    @Operation(
+            summary = "강의별 쿠폰 정책 삭제",
+            description = "특정 강의의 쿠폰 정책을 실제 삭제하지 않고 비활성화합니다."
+    )
+    @ApiErrorCodeExample(domain = BenefitErrorCode.class, value = {"COURSE_NOT_FOUND", "COUPON_POLICY_NOT_FOUND"})
+    @PreAuthorize("hasAnyAuthority('CONTENT_MANAGER', 'ROLE_CONTENT_MANAGER', 'SUPER_ADMIN', 'ROLE_SUPER_ADMIN')")
+    @DeleteMapping("/{couponPolicyId}")
+    public ResponseEntity<ApiResponse<Void>> deleteCouponPolicy(
+            @Parameter(description = "강의 ID", example = "3")
+            @PathVariable Long courseId,
+
+            @Parameter(description = "쿠폰 정책 ID", example = "12")
+            @PathVariable Long couponPolicyId
+    ) {
+        couponPolicyUseCase.deleteCouponPolicy(courseId, couponPolicyId);
+
+        return ResponseEntity.ok(
+                ApiResponse.success(
+                        "COUPON_POLICY_DELETED",
+                        "쿠폰 정책 삭제에 성공했습니다."
                 )
         );
     }

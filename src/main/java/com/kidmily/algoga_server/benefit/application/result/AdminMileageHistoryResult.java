@@ -15,6 +15,7 @@ public record AdminMileageHistoryResult(
         int signedAmount,
         String type,
         String reason,
-        LocalDateTime createdAt
+        LocalDateTime createdAt,
+        LocalDateTime expiredAt
 ) {
 }

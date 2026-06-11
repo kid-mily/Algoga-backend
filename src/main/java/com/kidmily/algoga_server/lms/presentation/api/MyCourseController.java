@@ -3,7 +3,7 @@ package com.kidmily.algoga_server.lms.presentation.api;
 import com.kidmily.algoga_server.global.common.api.response.ApiResponse;
 import com.kidmily.algoga_server.lms.application.usecase.CourseUseCase;
 import com.kidmily.algoga_server.lms.presentation.response.MyCourseResponse;
-import com.kidmily.algoga_server.user.settings.CustomUserDetails;
+import com.kidmily.algoga_server.lms.presentation.support.CurrentUserIdResolver;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
@@ -30,9 +30,9 @@ public class MyCourseController {
     )
     @GetMapping
     public ResponseEntity<ApiResponse<List<MyCourseResponse>>> getMyCourses(
-            @AuthenticationPrincipal CustomUserDetails userDetails
+            @AuthenticationPrincipal Object userDetails
     ) {
-        Long currentUserId = userDetails.getUser().getId();
+        Long currentUserId = CurrentUserIdResolver.resolveNullable(userDetails);
 
         List<MyCourseResponse> response = courseUseCase.getMyCourses(currentUserId)
                 .stream()

@@ -43,18 +43,23 @@ public class EnrollmentJpaEntity {
     @Column(name = "completed_at")
     private LocalDateTime completedAt;
 
+    @Column(name = "access_expires_at", nullable = false)
+    private LocalDateTime accessExpiresAt;
+
     public EnrollmentJpaEntity(
             Long userId,
             Long courseId,
             EnrollmentStatus status,
             LocalDateTime enrolledAt,
-            LocalDateTime completedAt
+            LocalDateTime completedAt,
+            LocalDateTime accessExpiresAt
     ) {
         this.userId = userId;
         this.courseId = courseId;
         this.status = status;
         this.enrolledAt = enrolledAt;
         this.completedAt = completedAt;
+        this.accessExpiresAt = accessExpiresAt;
     }
 
     public void updateStatus(EnrollmentStatus status, LocalDateTime completedAt) {

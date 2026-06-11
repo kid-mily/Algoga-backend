@@ -4,6 +4,7 @@ import com.kidmily.algoga_server.lms.application.command.CreateQuizCommand;
 import com.kidmily.algoga_server.lms.application.command.SubmitQuizAnswerCommand;
 import com.kidmily.algoga_server.lms.application.command.SubmitQuizCommand;
 import com.kidmily.algoga_server.lms.application.command.UpdateQuizCommand;
+import com.kidmily.algoga_server.lms.application.result.QuizResult;
 import com.kidmily.algoga_server.lms.application.result.QuizSubmitResult;
 import com.kidmily.algoga_server.lms.application.result.WrongQuizAnswerResult;
 import com.kidmily.algoga_server.lms.application.usecase.QuizUseCase;
@@ -42,14 +43,16 @@ public class QuizService implements QuizUseCase {
 
     @Override
     @Transactional(readOnly = true)
-    public List<Quiz> getQuizzes(Long courseId) {
+    public List<QuizResult> getQuizzes(Long courseId) {
         validateCourse(courseId);
-        return quizRepository.findByCourseId(courseId);
+        return quizRepository.findByCourseId(courseId).stream()
+                .map(QuizResult::from)
+                .toList();
     }
 
     @Override
     @Transactional(readOnly = true)
-    public List<Quiz> getQuizzes(Long userId, Long courseId) {
+    public List<QuizResult> getQuizzes(Long userId, Long courseId) {
         validateCourse(courseId);
         validateAllChaptersCompleted(userId, courseId);
 
@@ -58,16 +61,18 @@ public class QuizService implements QuizUseCase {
             throw new LmsException(LmsErrorCode.QUIZ_NOT_FOUND);
         }
 
-        return quizzes;
+        return quizzes.stream()
+                .map(QuizResult::from)
+                .toList();
     }
 
     @Override
-    public Quiz createQuiz(CreateQuizCommand command) {
+    public QuizResult createQuiz(CreateQuizCommand command) {
         validateCourse(command.courseId());
         validateOptions(command.option1(), command.option2(), command.option3(), command.option4());
         validateCorrectOption(command.correctOption());
 
-        return quizRepository.save(Quiz.create(
+        Quiz savedQuiz = quizRepository.save(Quiz.create(
                 command.courseId(),
                 command.question(),
                 command.option1(),
@@ -77,15 +82,17 @@ public class QuizService implements QuizUseCase {
                 command.correctOption(),
                 command.explanation()
         ));
+
+        return QuizResult.from(savedQuiz);
     }
 
     @Override
-    public Quiz updateQuiz(Long courseId, Long quizId, UpdateQuizCommand command) {
+    public QuizResult updateQuiz(Long courseId, Long quizId, UpdateQuizCommand command) {
         validateCourse(courseId);
         validateOptions(command.option1(), command.option2(), command.option3(), command.option4());
         validateCorrectOption(command.correctOption());
 
-        return quizRepository.updateBasicInfo(
+        Quiz updatedQuiz = quizRepository.updateBasicInfo(
                 quizId,
                 courseId,
                 command.question(),
@@ -96,13 +103,15 @@ public class QuizService implements QuizUseCase {
                 command.correctOption(),
                 command.explanation()
         ).orElseThrow(() -> new LmsException(LmsErrorCode.QUIZ_NOT_FOUND));
+
+        return QuizResult.from(updatedQuiz);
     }
 
     @Override
     public void deleteQuiz(Long courseId, Long quizId) {
         validateCourse(courseId);
 
-        if (!quizRepository.softDelete(quizId, courseId)) {
+        if (!quizRepository.delete(quizId, courseId)) {
             throw new LmsException(LmsErrorCode.QUIZ_NOT_FOUND);
         }
     }

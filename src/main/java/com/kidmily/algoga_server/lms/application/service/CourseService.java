@@ -7,9 +7,9 @@ import com.kidmily.algoga_server.lms.application.command.CreateCourseCommand;
 import com.kidmily.algoga_server.lms.application.command.CreateCourseQnaCommand;
 import com.kidmily.algoga_server.lms.application.command.CreateCourseQnaCommentCommand;
 import com.kidmily.algoga_server.lms.application.command.UpdateCourseCommand;
-import com.kidmily.algoga_server.lms.application.result.CourseQnaDetailResult;
-import com.kidmily.algoga_server.lms.application.result.CourseStudentResult;
-import com.kidmily.algoga_server.lms.application.result.MyCourseResult;
+import com.kidmily.algoga_server.lms.application.port.PaymentPort;
+import com.kidmily.algoga_server.lms.application.port.UserProfilePort;
+import com.kidmily.algoga_server.lms.application.result.*;
 import com.kidmily.algoga_server.lms.application.usecase.CourseUseCase;
 import com.kidmily.algoga_server.lms.domain.model.Chapter;
 import com.kidmily.algoga_server.lms.domain.model.Country;
@@ -35,12 +35,6 @@ import com.kidmily.algoga_server.lms.domain.repository.QuizSubmissionRepository;
 import com.kidmily.algoga_server.lms.exception.LmsErrorCode;
 import com.kidmily.algoga_server.lms.exception.LmsException;
 import com.kidmily.algoga_server.lms.settings.LmsStorageSettings;
-import com.kidmily.algoga_server.payment.domain.model.Payment;
-import com.kidmily.algoga_server.payment.domain.model.PaymentStatus;
-import com.kidmily.algoga_server.payment.domain.model.PaymentType;
-import com.kidmily.algoga_server.payment.domain.repository.PaymentRepository;
-import com.kidmily.algoga_server.user.domain.User;
-import com.kidmily.algoga_server.user.domain.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -49,6 +43,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.time.LocalDateTime;
 import java.util.Comparator;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -72,8 +67,8 @@ public class CourseService implements CourseUseCase {
     private final CourseQnaCommentRepository courseQnaCommentRepository;
     private final MapRepository mapRepository;
     private final EnrollmentRepository enrollmentRepository;
-    private final PaymentRepository paymentRepository;
-    private final UserRepository userRepository;
+    private final PaymentPort paymentPort;
+    private final UserProfilePort userProfilePort;
     private final FileStoragePort fileStoragePort;
     private final LmsStorageSettings storageSettings;
 
@@ -110,20 +105,19 @@ public class CourseService implements CourseUseCase {
 
     @Override
     @Transactional(readOnly = true)
-    public Page<Course> getCourses(Pageable pageable) {
-        return courseRepository.findAllByDeletedFalse(pageable);
+    public Page<CourseResult> getCourses(Pageable pageable) {
+        return courseRepository.findAllByDeletedFalse(pageable).map(CourseResult::from);
     }
 
     @Override
     @Transactional(readOnly = true)
-    public Course getCourse(Long courseId) {
-        return courseRepository.findByIdAndDeletedFalse(courseId)
-                .orElseThrow(() -> new LmsException(LmsErrorCode.COURSE_NOT_FOUND));
+    public CourseResult getCourse(Long courseId) {
+        return CourseResult.from(findCourse(courseId));
     }
 
     @Override
-    public Course updateCourse(Long courseId, UpdateCourseCommand command) {
-        Course course = getCourse(courseId);
+    public CourseResult updateCourse(Long courseId, UpdateCourseCommand command) {
+        Course course = findCourse(courseId);
 
         String targetThumbnailUrl = course.getThumbnailUrl();
         String targetFileUrl = course.getFileUrl();
@@ -148,7 +142,7 @@ public class CourseService implements CourseUseCase {
             targetFileUrl = targetCourseFiles.isEmpty() ? null : targetCourseFiles.get(0).getFileUrl();
         }
 
-        return courseRepository.updateBasicInfo(
+        Course updatedCourse = courseRepository.updateBasicInfo(
                 courseId,
                 command.title(),
                 command.description(),
@@ -159,11 +153,13 @@ public class CourseService implements CourseUseCase {
                 command.level(),
                 normalizeCourseStatus(command.status(), course.getStatus())
         ).orElseThrow(() -> new LmsException(LmsErrorCode.COURSE_NOT_FOUND));
+
+        return CourseResult.from(updatedCourse);
     }
 
     @Override
     public void deleteCourse(Long courseId) {
-        Course course = getCourse(courseId);
+        Course course = findCourse(courseId);
 
         if (course.getThumbnailUrl() != null && !course.getThumbnailUrl().isBlank()) {
             fileStoragePort.deleteFile(storageSettings.getBucketName(), course.getThumbnailUrl());
@@ -177,8 +173,8 @@ public class CourseService implements CourseUseCase {
     }
 
     @Override
-    public CourseCompletion completeCourse(CompleteCourseCommand command) {
-        getCourse(command.courseId());
+    public CourseCompletionResult completeCourse(CompleteCourseCommand command) {
+        findCourse(command.courseId());
         validateNotCompleted(command.userId(), command.courseId());
         validateAllChaptersCompleted(command.userId(), command.courseId());
         validateQuizSubmitted(command.userId(), command.courseId());
@@ -188,13 +184,13 @@ public class CourseService implements CourseUseCase {
                 command.courseId()
         );
 
-        return courseCompletionRepository.save(courseCompletion);
+        return CourseCompletionResult.from(courseCompletionRepository.save(courseCompletion));
     }
 
     @Override
     @Transactional(readOnly = true)
     public List<CourseStudentResult> getCourseStudents(Long courseId) {
-        Course course = getCourse(courseId);
+        Course course = findCourse(courseId);
         List<Chapter> chapters = chapterRepository.findByCourseId(courseId);
         List<LearningProgress> courseProgresses = learningProgressRepository.findByCourseId(courseId);
 
@@ -214,18 +210,9 @@ public class CourseService implements CourseUseCase {
     @Override
     @Transactional(readOnly = true)
     public List<MyCourseResult> getMyCourses(Long userId) {
-        List<Payment> lecturePayments = paymentRepository
-                .findByUserIdAndPaymentTypeAndStatusAndCourseIdIsNotNull(
-                        userId,
-                        PaymentType.LECTURE_ONLY,
-                        PaymentStatus.SUCCESS
-                );
-
         Set<Long> courseIds = new LinkedHashSet<>();
 
-        for (Payment payment : lecturePayments) {
-            courseIds.add(payment.getCourseId());
-        }
+        courseIds.addAll(paymentPort.findPaidCourseIds(userId));
 
         return courseIds.stream()
                 .map(courseId -> createMyCourseResult(userId, courseId))
@@ -234,8 +221,8 @@ public class CourseService implements CourseUseCase {
     }
 
     @Override
-    public CourseQna createQna(CreateCourseQnaCommand command) {
-        getCourse(command.courseId());
+    public CourseQnaResult createQna(CreateCourseQnaCommand command) {
+        findCourse(command.courseId());
 
         CourseQna courseQna = CourseQna.create(
                 command.courseId(),
@@ -244,20 +231,22 @@ public class CourseService implements CourseUseCase {
                 command.question()
         );
 
-        return courseQnaRepository.save(courseQna);
+        return CourseQnaResult.from(courseQnaRepository.save(courseQna));
     }
 
     @Override
     @Transactional(readOnly = true)
-    public List<CourseQna> getQnas(Long courseId) {
-        getCourse(courseId);
-        return courseQnaRepository.findByCourseId(courseId);
+    public List<CourseQnaResult> getQnas(Long courseId) {
+        findCourse(courseId);
+        return courseQnaRepository.findByCourseId(courseId).stream()
+                .map(CourseQnaResult::from)
+                .toList();
     }
 
     @Override
     @Transactional(readOnly = true)
     public CourseQnaDetailResult getQnaDetail(Long courseId, Long qnaId) {
-        getCourse(courseId);
+        findCourse(courseId);
 
         CourseQna qna = findQna(courseId, qnaId);
         List<CourseQnaComment> comments = courseQnaCommentRepository.findByQnaId(qnaId);
@@ -273,13 +262,13 @@ public class CourseService implements CourseUseCase {
                 qna.getStatus(),
                 qna.getCreatedAt(),
                 qna.getAnsweredAt(),
-                comments
+                comments.stream().map(CourseQnaCommentResult::from).toList()
         );
     }
 
     @Override
-    public CourseQna answerQna(AnswerCourseQnaCommand command) {
-        getCourse(command.courseId());
+    public CourseQnaResult answerQna(AnswerCourseQnaCommand command) {
+        findCourse(command.courseId());
 
         CourseQna qna = findQna(command.courseId(), command.qnaId());
 
@@ -288,12 +277,12 @@ public class CourseService implements CourseUseCase {
         }
 
         CourseQna answeredQna = qna.answer(command.managerId(), command.answer());
-        return courseQnaRepository.save(answeredQna);
+        return CourseQnaResult.from(courseQnaRepository.save(answeredQna));
     }
 
     @Override
-    public CourseQnaComment createComment(CreateCourseQnaCommentCommand command) {
-        getCourse(command.courseId());
+    public CourseQnaCommentResult createComment(CreateCourseQnaCommentCommand command) {
+        findCourse(command.courseId());
         findQna(command.courseId(), command.qnaId());
 
         CourseQnaComment comment = "MANAGER".equals(command.writerType())
@@ -308,19 +297,21 @@ public class CourseService implements CourseUseCase {
                 command.content()
         );
 
-        return courseQnaCommentRepository.save(comment);
+        return CourseQnaCommentResult.from(courseQnaCommentRepository.save(comment));
     }
 
     @Override
     @Transactional(readOnly = true)
-    public List<Course> getPublishedCoursesByCountry(Long countryId) {
+    public List<CourseResult> getPublishedCoursesByCountry(Long countryId) {
         validateCountry(countryId);
-        return courseRepository.findPublishedByCountryId(countryId);
+        return courseRepository.findPublishedByCountryId(countryId).stream()
+                .map(CourseResult::from)
+                .toList();
     }
 
     @Override
     @Transactional(readOnly = true)
-    public Course getPublishedCourse(Long courseId) {
+    public CourseResult getPublishedCourse(Long courseId) {
         Course course = courseRepository.findByIdAndDeletedFalse(courseId)
                 .orElseThrow(() -> new LmsException(LmsErrorCode.COURSE_NOT_FOUND));
 
@@ -328,7 +319,7 @@ public class CourseService implements CourseUseCase {
             throw new LmsException(LmsErrorCode.COURSE_NOT_FOUND);
         }
 
-        return course;
+        return CourseResult.from(course);
     }
 
     @Override
@@ -338,7 +329,9 @@ public class CourseService implements CourseUseCase {
             return false;
         }
 
-        return enrollmentRepository.existsByUserIdAndCourseId(userId, courseId);
+        return enrollmentRepository.findByUserIdAndCourseId(userId, courseId)
+                .map(enrollment -> enrollment.isAccessibleAt(LocalDateTime.now()))
+                .orElse(false);
     }
 
     @Override
@@ -348,23 +341,20 @@ public class CourseService implements CourseUseCase {
             return false;
         }
 
-        return paymentRepository.findByUserIdAndPaymentTypeAndStatusAndCourseIdIsNotNull(
-                        userId,
-                        PaymentType.LECTURE_ONLY,
-                        PaymentStatus.SUCCESS
-                )
+        return paymentPort.findPaidCourseIds(userId)
                 .stream()
-                .map(Payment::getCourseId)
                 .anyMatch(courseId::equals);
     }
 
     @Override
     @Transactional(readOnly = true)
-    public List<Course> getRecommendedCoursesByCountryAndLevel(Long countryId, String level) {
+    public List<CourseResult> getRecommendedCoursesByCountryAndLevel(Long countryId, String level) {
         validateCountry(countryId);
         validateCourseLevel(level);
 
-        return courseRepository.findPublishedByCountryIdAndLevel(countryId, level);
+        return courseRepository.findPublishedByCountryIdAndLevel(countryId, level).stream()
+                .map(CourseResult::from)
+                .toList();
     }
 
     @Override
@@ -379,7 +369,10 @@ public class CourseService implements CourseUseCase {
     public Map<Long, Long> countPublishedCoursesByCountryIds(List<Long> countryIds) {
         return courseRepository.countPublishedByCountryIds(countryIds);
     }
-
+    private Course findCourse(Long courseId) {
+        return courseRepository.findByIdAndDeletedFalse(courseId)
+                .orElseThrow(() -> new LmsException(LmsErrorCode.COURSE_NOT_FOUND));
+    }
     private void validateCountry(Long countryId) {
         mapRepository.findActiveCountryById(countryId)
                 .orElseThrow(() -> new LmsException(LmsErrorCode.COUNTRY_NOT_FOUND));
@@ -428,13 +421,13 @@ public class CourseService implements CourseUseCase {
             Course course,
             List<Chapter> chapters
     ) {
-        Optional<User> optionalUser = userRepository.findById(userId);
+        Optional<UserProfilePort.UserProfile> optionalUser = userProfilePort.findProfile(userId);
 
         if (optionalUser.isEmpty()) {
             return Optional.empty();
         }
 
-        User user = optionalUser.get();
+        UserProfilePort.UserProfile user = optionalUser.get();
 
         List<LearningProgress> progresses = learningProgressRepository.findByUserIdAndCourseId(
                 userId,
@@ -460,10 +453,14 @@ public class CourseService implements CourseUseCase {
                 .map(CourseCompletion::getCompletedAt)
                 .orElse(null);
 
+        var accessExpiresAt = enrollmentRepository.findByUserIdAndCourseId(userId, course.getId())
+                .map(enrollment -> enrollment.getAccessExpiresAt())
+                .orElse(null);
+
         return Optional.of(new CourseStudentResult(
-                user.getId(),
-                user.getName(),
-                user.getEmail(),
+                user.userId(),
+                user.name(),
+                user.email(),
                 course.getId(),
                 course.getTitle(),
                 progressRate,
@@ -472,6 +469,7 @@ public class CourseService implements CourseUseCase {
                 learningStatus,
                 quizSubmitted,
                 reviewWritten,
+                accessExpiresAt,
                 completedAt
         ));
     }
@@ -493,11 +491,7 @@ public class CourseService implements CourseUseCase {
         int progressRate = calculateCourseProgressRate(chapters, progresses);
         int totalDurationSeconds = calculateTotalDurationSeconds(chapters);
 
-        long studentCount = paymentRepository.countByCourseIdAndPaymentTypeAndStatus(
-                courseId,
-                PaymentType.LECTURE_ONLY,
-                PaymentStatus.SUCCESS
-        );
+        long studentCount = paymentPort.countPaidUsersByCourse(courseId);
 
         double averageRating = calculateAverageRating(courseReviewRepository.findByCourseId(courseId));
         Optional<CourseCompletion> optionalCompletion = courseCompletionRepository.findByUserIdAndCourseId(userId, courseId);
@@ -513,6 +507,10 @@ public class CourseService implements CourseUseCase {
 
         var completedAt = optionalCompletion
                 .map(CourseCompletion::getCompletedAt)
+                .orElse(null);
+
+        var accessExpiresAt = enrollmentRepository.findByUserIdAndCourseId(userId, courseId)
+                .map(enrollment -> enrollment.getAccessExpiresAt())
                 .orElse(null);
 
         String certificateDownloadUrl = completed
@@ -541,6 +539,7 @@ public class CourseService implements CourseUseCase {
                 completed,
                 certificateCode,
                 certificateDownloadUrl,
+                accessExpiresAt,
                 completedAt
         ));
     }

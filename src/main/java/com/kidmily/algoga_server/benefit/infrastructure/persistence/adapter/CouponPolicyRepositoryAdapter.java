@@ -64,6 +64,18 @@ public class CouponPolicyRepositoryAdapter implements CouponPolicyRepository {
     }
 
     @Override
+    public Optional<CouponPolicy> findActiveByIdAndCourseId(Long couponPolicyId, Long courseId) {
+        return springDataCouponPolicyRepository.findByIdAndCourseIdAndActiveTrue(couponPolicyId, courseId)
+                .map(this::toDomain);
+    }
+
+    @Override
+    public void deactivate(CouponPolicy couponPolicy) {
+        springDataCouponPolicyRepository.findById(couponPolicy.getId())
+                .ifPresent(CouponPolicyJpaEntity::deactivate);
+    }
+
+    @Override
     public boolean existsActiveByCourseId(Long courseId) {
         return springDataCouponPolicyRepository.existsByCourseIdAndActiveTrue(courseId);
     }

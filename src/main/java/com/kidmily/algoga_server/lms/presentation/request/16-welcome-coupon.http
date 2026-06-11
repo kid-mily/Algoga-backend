@@ -1,32 +1,60 @@
 ### 회원가입
 POST http://localhost:15000/api/v1/auth/signup
 Content-Type: application/json
+Accept: application/json
 
 {
-  "username": "welcomeuser01",
-  "email": "welcomeuser01@test.com",
-  "password": "password123",
-  "name": "웰컴유저",
-  "phone": "010-1134-2222",
-  "birthDate": "2000-01-01",
-  "gender": "MALE",
-  "nickname": "welcome01",
-  "referralCode": null,
-  "signupPath": "DIRECT",
+  "username": "welcomecoupontest3",
+  "email": "welcomecoupontest3@naver.com",
+  "password": "test1234",
+  "name": "새가입3",
+  "phone": "010-3443-9090",
+  "birthDate": "2000-03-02",
+  "gender": "FEMALE",
+  "nickname": "가입시쿠폰",
+  "referralCode": "REF008",
+  "signupPath": "인스타그램",
   "termsServiceAgreed": true,
   "termsPrivacyAgreed": true,
   "termsMarketingAgreed": false
 }
+
+> {%
+    client.test("회원가입 성공 여부 확인", function() {
+        client.assert(response.status === 201, "상태 코드가 201이 아닙니다.");
+        client.log("응답 메시지: " + response.body.message);
+    });
+%}
 
 ### 로그인
 POST http://localhost:15000/api/v1/auth/login
 Content-Type: application/json
 
 {
-  "username": "welcomeuser01",
-  "password": "Password123!"
+  "username": "welcomecoupontest3",
+  "password": "test1234"
 }
+
+> {%
+    client.test("로그인 성공 및 토큰 저장", function() {
+        client.assert(response.status === 200, "상태 코드가 200이 아닙니다.");
+        client.global.set("userAccessToken", response.body.data.accessToken);
+        client.global.set("userRefreshToken", response.body.data.refreshToken);
+        client.log("User Access Token 저장 완료: " + client.global.get("userAccessToken"));
+    });
+%}
 
 ### 내 쿠폰 조회
 GET http://localhost:15000/api/v1/my/benefits/coupons
-Authorization: Bearer {{accessToken}}
+Authorization: Bearer {{userAccessToken}}
+
+### 내 마일리지 조회
+GET http://localhost:15000/api/v1/my/benefits/mileages
+Authorization: Bearer {{userAccessToken}}
+Accept: application/json
+
+
+### 쿠폰 삭제
+DELETE http://localhost:15000/api/v1/admin/courses/3/coupon-policies/12
+Authorization: Bearer {{managerAccessToken}}
+Accept: application/json

@@ -4,7 +4,7 @@ import com.kidmily.algoga_server.global.common.api.response.ApiResponse;
 import com.kidmily.algoga_server.benefit.application.usecase.MyBenefitUseCase;
 import com.kidmily.algoga_server.benefit.presentation.response.MyCouponResponse;
 import com.kidmily.algoga_server.benefit.presentation.response.MyMileageResponse;
-import com.kidmily.algoga_server.user.settings.CustomUserDetails;
+import com.kidmily.algoga_server.benefit.presentation.support.CurrentUserIdResolver;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
@@ -26,11 +26,11 @@ public class MyBenefitController {
             summary = "내 쿠폰함 조회",
             description = "로그인한 사용자가 보유한 쿠폰 목록을 조회합니다."
     )
-    @GetMapping("/coupons")
+    @GetMapping({"/coupons", "/benefits/coupons"})
     public ResponseEntity<ApiResponse<List<MyCouponResponse>>> getMyCoupons(
-            @AuthenticationPrincipal CustomUserDetails userDetails
+            @AuthenticationPrincipal Object userDetails
     ) {
-        Long currentUserId = userDetails.getUser().getId();
+        Long currentUserId = CurrentUserIdResolver.resolveRequired(userDetails);
 
         List<MyCouponResponse> response = myBenefitUseCase.getMyCoupons(currentUserId)
                 .stream()
@@ -50,11 +50,11 @@ public class MyBenefitController {
             summary = "내 마일리지 내역 조회",
             description = "로그인한 사용자의 현재 보유 마일리지와 마일리지 적립/사용 내역을 조회합니다."
     )
-    @GetMapping("/mileages")
+    @GetMapping({"/mileages", "/benefits/mileages"})
     public ResponseEntity<ApiResponse<MyMileageResponse>> getMyMileages(
-            @AuthenticationPrincipal CustomUserDetails userDetails
+            @AuthenticationPrincipal Object userDetails
     ) {
-        Long currentUserId = userDetails.getUser().getId();
+        Long currentUserId = CurrentUserIdResolver.resolveRequired(userDetails);
 
         MyMileageResponse response = MyMileageResponse.from(
                 myBenefitUseCase.getMyMileages(currentUserId)
@@ -68,4 +68,5 @@ public class MyBenefitController {
                 )
         );
     }
+
 }

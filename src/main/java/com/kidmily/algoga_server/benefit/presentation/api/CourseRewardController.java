@@ -3,10 +3,10 @@ package com.kidmily.algoga_server.benefit.presentation.api;
 import com.kidmily.algoga_server.global.annotation.swagger.ApiErrorCodeExample;
 import com.kidmily.algoga_server.global.common.api.response.ApiResponse;
 import com.kidmily.algoga_server.benefit.application.command.RewardCourseCommand;
-import com.kidmily.algoga_server.benefit.application.service.CourseRewardService;
+import com.kidmily.algoga_server.benefit.application.usecase.CourseRewardUseCase;
 import com.kidmily.algoga_server.benefit.exception.BenefitErrorCode;
 import com.kidmily.algoga_server.benefit.presentation.response.CourseRewardResponse;
-import com.kidmily.algoga_server.user.settings.CustomUserDetails;
+import com.kidmily.algoga_server.benefit.presentation.support.CurrentUserIdResolver;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -22,7 +22,7 @@ import org.springframework.web.bind.annotation.*;
 @RequiredArgsConstructor
 public class CourseRewardController {
 
-    private final CourseRewardService courseRewardService;
+    private final CourseRewardUseCase courseRewardUseCase;
 
     @Operation(
             summary = "쿠폰 및 마일리지 지급",
@@ -45,27 +45,22 @@ public class CourseRewardController {
             @Parameter(description = "강의 ID", example = "3")
             @PathVariable Long courseId,
 
-            @AuthenticationPrincipal CustomUserDetails userDetails
+            @AuthenticationPrincipal Object userDetails
     ) {
-        Long currentUserId = userDetails.getUser().getId();
+        Long currentUserId = CurrentUserIdResolver.resolveRequired(userDetails);
 
         RewardCourseCommand command = new RewardCourseCommand(
                 currentUserId,
                 courseId
         );
 
-        CourseRewardService.CourseRewardResult result = courseRewardService.rewardCourseWithDetails(command);
+        var result = courseRewardUseCase.rewardCourseWithDetails(command);
 
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(ApiResponse.created(
                         "COURSE_REWARD_GRANTED",
                         "쿠폰 및 마일리지 지급에 성공했습니다.",
-                        CourseRewardResponse.from(
-                                result.courseReward(),
-                                result.issuedCoupons(),
-                                result.mileageHistory(),
-                                result.mileageRate()
-                        )
+                        CourseRewardResponse.from(result)
                 ));
     }
 }

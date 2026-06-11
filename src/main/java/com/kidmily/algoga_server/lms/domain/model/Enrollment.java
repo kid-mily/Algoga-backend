@@ -10,6 +10,7 @@ public class Enrollment {
     private EnrollmentStatus status;
     private final LocalDateTime enrolledAt;
     private LocalDateTime completedAt;
+    private final LocalDateTime accessExpiresAt;
 
     private Enrollment(
             Long id,
@@ -17,7 +18,8 @@ public class Enrollment {
             Long courseId,
             EnrollmentStatus status,
             LocalDateTime enrolledAt,
-            LocalDateTime completedAt
+            LocalDateTime completedAt,
+            LocalDateTime accessExpiresAt
     ) {
         this.id = id;
         this.userId = userId;
@@ -25,10 +27,12 @@ public class Enrollment {
         this.status = status;
         this.enrolledAt = enrolledAt;
         this.completedAt = completedAt;
+        this.accessExpiresAt = accessExpiresAt;
     }
 
     public static Enrollment create(Long userId, Long courseId) {
-        return new Enrollment(null, userId, courseId, EnrollmentStatus.ENROLLED, LocalDateTime.now(), null);
+        LocalDateTime enrolledAt = LocalDateTime.now();
+        return new Enrollment(null, userId, courseId, EnrollmentStatus.ENROLLED, enrolledAt, null, enrolledAt.plusMonths(6));
     }
 
     public static Enrollment withId(
@@ -37,9 +41,10 @@ public class Enrollment {
             Long courseId,
             EnrollmentStatus status,
             LocalDateTime enrolledAt,
-            LocalDateTime completedAt
+            LocalDateTime completedAt,
+            LocalDateTime accessExpiresAt
     ) {
-        return new Enrollment(id, userId, courseId, status, enrolledAt, completedAt);
+        return new Enrollment(id, userId, courseId, status, enrolledAt, completedAt, accessExpiresAt);
     }
 
     public void complete() {
@@ -53,4 +58,9 @@ public class Enrollment {
     public EnrollmentStatus getStatus() { return status; }
     public LocalDateTime getEnrolledAt() { return enrolledAt; }
     public LocalDateTime getCompletedAt() { return completedAt; }
+    public LocalDateTime getAccessExpiresAt() { return accessExpiresAt; }
+
+    public boolean isAccessibleAt(LocalDateTime now) {
+        return accessExpiresAt == null || !accessExpiresAt.isBefore(now);
+    }
 }

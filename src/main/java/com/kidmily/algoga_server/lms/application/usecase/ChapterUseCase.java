@@ -2,17 +2,17 @@ package com.kidmily.algoga_server.lms.application.usecase;
 
 import com.kidmily.algoga_server.lms.application.command.CreateChapterCommand;
 import com.kidmily.algoga_server.lms.application.command.UpdateChapterCommand;
-import com.kidmily.algoga_server.lms.domain.model.Chapter;
+import com.kidmily.algoga_server.lms.application.result.ChapterResult;
 
 import java.util.List;
 
 public interface ChapterUseCase {
 
-    List<Chapter> getChapters(Long courseId);
+    List<ChapterResult> getChapters(Long courseId);
 
-    Chapter createChapter(CreateChapterCommand command);
+    ChapterResult createChapter(CreateChapterCommand command);
 
-    Chapter updateChapter(Long courseId, Long chapterId, UpdateChapterCommand command);
+    ChapterResult updateChapter(Long courseId, Long chapterId, UpdateChapterCommand command);
 
     void deleteChapter(Long courseId, Long chapterId);
 }

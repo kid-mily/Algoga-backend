@@ -2,6 +2,7 @@ package com.kidmily.algoga_server.benefit.application.service;
 
 import com.kidmily.algoga_server.benefit.application.command.RewardCourseCommand;
 import com.kidmily.algoga_server.benefit.application.port.LmsCoursePort;
+import com.kidmily.algoga_server.benefit.application.result.CourseRewardResult;
 import com.kidmily.algoga_server.benefit.application.usecase.CourseRewardUseCase;
 import com.kidmily.algoga_server.benefit.domain.model.CouponPolicy;
 import com.kidmily.algoga_server.benefit.domain.model.CourseReward;
@@ -18,6 +19,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -34,10 +36,11 @@ public class CourseRewardService implements CourseRewardUseCase {
     private final LmsCoursePort lmsCoursePort;
 
     @Override
-    public CourseReward rewardCourse(RewardCourseCommand command) {
-        return rewardCourseWithDetails(command).courseReward();
+    public CourseRewardResult rewardCourse(RewardCourseCommand command) {
+        return rewardCourseWithDetails(command);
     }
 
+    @Override
     public CourseRewardResult rewardCourseWithDetails(RewardCourseCommand command) {
         log.info("[Course Reward Command] 강의 보상 지급 요청. userId={}, courseId={}",
                 command.userId(), command.courseId());
@@ -48,6 +51,7 @@ public class CourseRewardService implements CourseRewardUseCase {
         );
 
         validateRewardNotGranted(command.userId(), command.courseId());
+        validateRewardPeriod(courseRewardInfo.enrolledAt());
 
         List<CouponPolicy> couponPolicies = couponPolicyRepository.findActiveByCourseId(command.courseId());
 
@@ -88,7 +92,7 @@ public class CourseRewardService implements CourseRewardUseCase {
                 mileageRate,
                 savedMileageHistory.getAmount());
 
-        return new CourseRewardResult(
+        return CourseRewardResult.from(
                 savedCourseReward,
                 issuedCoupons,
                 savedMileageHistory,
@@ -104,6 +108,12 @@ public class CourseRewardService implements CourseRewardUseCase {
             log.warn("[Course Reward Command] 보상 지급 실패. 이미 보상이 지급되었습니다. userId={}, courseId={}",
                     userId, courseId);
             throw new BenefitException(BenefitErrorCode.COURSE_REWARD_ALREADY_GRANTED);
+        }
+    }
+
+    private void validateRewardPeriod(LocalDateTime enrolledAt) {
+        if (enrolledAt != null && LocalDateTime.now().isAfter(enrolledAt.plusMonths(1))) {
+            throw new BenefitException(BenefitErrorCode.COURSE_REWARD_PERIOD_EXPIRED);
         }
     }
 
@@ -149,11 +159,4 @@ public class CourseRewardService implements CourseRewardUseCase {
         return (int) Math.floor(price * (mileageRate / 100.0));
     }
 
-    public record CourseRewardResult(
-            CourseReward courseReward,
-            List<UserCoupon> issuedCoupons,
-            MileageHistory mileageHistory,
-            int mileageRate
-    ) {
-    }
 }

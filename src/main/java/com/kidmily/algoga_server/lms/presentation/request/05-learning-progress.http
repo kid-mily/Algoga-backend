@@ -105,7 +105,7 @@ Accept: application/json
 ### ------------------------------------------------
 ### 챕터 목록 조회 - 4번 강의에 속한 chapterId 확인
 ### 여기서 chapterOrder가 1인 챕터의 chapterId 확인
-GET http://localhost:15000/api/v1/admin/courses/4/chapters
+GET http://localhost:15000/api/v1/admin/courses/1/chapters
 Authorization: Bearer {{managerAccessToken}}
 Accept: application/json
 

@@ -57,7 +57,7 @@ Authorization: Bearer {{adminToken}}
 
 {
   "loginId": "content_manager_01",
-  "password": "password123!",
+  "password": "password123",
   "name": "콘텐츠매니저",
   "phone": "010-9999-9999",
   "email": "content_manager_01@algoga.com",
@@ -72,7 +72,7 @@ Accept: application/json
 
 {
   "loginId": "content_manager_01",
-  "password": "password123!"
+  "password": "password123"
 }
 
 > {%
@@ -89,8 +89,8 @@ Content-Type: application/json
 Accept: application/json
 
 {
-  "username": "test",
-  "password": "password12345"
+  "username": "test1",
+  "password": "test1234"
 }
 
 > {%

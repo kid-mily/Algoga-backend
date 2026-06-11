@@ -6,7 +6,6 @@ import com.kidmily.algoga_server.global.exception.GlobalErrorCode;
 import com.kidmily.algoga_server.lms.application.command.CreateQuizCommand;
 import com.kidmily.algoga_server.lms.application.command.UpdateQuizCommand;
 import com.kidmily.algoga_server.lms.application.usecase.QuizUseCase;
-import com.kidmily.algoga_server.lms.domain.model.Quiz;
 import com.kidmily.algoga_server.lms.exception.LmsErrorCode;
 import com.kidmily.algoga_server.lms.presentation.request.admin.CreateQuizRequest;
 import com.kidmily.algoga_server.lms.presentation.request.admin.UpdateQuizRequest;
@@ -81,7 +80,7 @@ public class AdminQuizController {
                 request.explanation()
         );
 
-        Quiz savedQuiz = quizUseCase.createQuiz(command);
+        var savedQuiz = quizUseCase.createQuiz(command);
 
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(ApiResponse.created(
@@ -118,7 +117,7 @@ public class AdminQuizController {
                 request.explanation()
         );
 
-        Quiz updatedQuiz = quizUseCase.updateQuiz(courseId, quizId, command);
+        var updatedQuiz = quizUseCase.updateQuiz(courseId, quizId, command);
 
         return ResponseEntity.ok(
                 ApiResponse.success(

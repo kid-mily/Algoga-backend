@@ -4,9 +4,9 @@
 ### 자동 변수 안 될 때 쓰는 수동 토큰 버전
 ### ==========================================================
 
-@managerAccessToken = 여기에_매니저_accessToken_붙여넣기
-@courseId = 3
-@quizId = 여기에_등록_응답의_quizId_붙여넣기
+@managerAccessToken = eyJhbGciOiJIUzM4NCJ9.eyJzdWIiOiJjb250ZW50X21hbmFnZXJfMDEiLCJ0eXBlIjoiQURNSU4iLCJpZCI6Mywicm9sZSI6IlJPTEVfQ09OVEVOVF9NQU5BR0VSIiwiaWF0IjoxNzgxMDgxODIxLCJleHAiOjE3ODEwODM2MjF9.JuePgFxxdNG1gzCL2AQbu21jrxq8hIs3IEq2hz6-ntNK-Jnbs9plbIX_rRAknjg0
+@courseId = 1
+@quizId = 9
 
 
 ### 콘텐츠 매니저 로그인
@@ -17,7 +17,7 @@ Accept: application/json
 
 {
   "loginId": "content_manager_01",
-  "password": "password123!"
+  "password": "password123"
 }
 
 

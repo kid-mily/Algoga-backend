@@ -1,4 +1,4 @@
-package com.kidmily.algoga_server.lms.tdd;
+package com.kidmily.algoga_server.lms.infrastructure.persistence.repository;
 
 import com.kidmily.algoga_server.lms.infrastructure.persistence.entity.CourseJpaEntity;
 import org.springframework.data.domain.Page;

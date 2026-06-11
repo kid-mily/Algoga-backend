@@ -2,14 +2,17 @@ package com.kidmily.algoga_server.lms.presentation.api;
 
 import com.kidmily.algoga_server.global.annotation.swagger.ApiErrorCodeExample;
 import com.kidmily.algoga_server.global.common.api.response.ApiResponse;
-import com.kidmily.algoga_server.lms.application.service.DiagnosisService;
+import com.kidmily.algoga_server.lms.application.command.SubmitDiagnosisAnswerCommand;
+import com.kidmily.algoga_server.lms.application.command.SubmitDiagnosisCommand;
 import com.kidmily.algoga_server.lms.application.usecase.CourseUseCase;
+import com.kidmily.algoga_server.lms.application.usecase.DiagnosisUseCase;
 import com.kidmily.algoga_server.lms.exception.LmsErrorCode;
+import com.kidmily.algoga_server.lms.presentation.request.DiagnosisAnswerRequest;
 import com.kidmily.algoga_server.lms.presentation.request.DiagnosisSubmitRequest;
 import com.kidmily.algoga_server.lms.presentation.response.CourseListResponse;
 import com.kidmily.algoga_server.lms.presentation.response.DiagnosisQuestionResponse;
 import com.kidmily.algoga_server.lms.presentation.response.DiagnosisResultResponse;
-import com.kidmily.algoga_server.user.settings.CustomUserDetails;
+import com.kidmily.algoga_server.lms.presentation.support.CurrentUserIdResolver;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
@@ -27,7 +30,7 @@ import java.util.List;
 public class DiagnosisController {
 
     private final CourseUseCase courseUseCase;
-    private final DiagnosisService diagnosisService;
+    private final DiagnosisUseCase diagnosisUseCase;
 
     @Operation(summary = "진단평가 문제 목록 조회")
     @ApiErrorCodeExample(domain = LmsErrorCode.class, value = {
@@ -42,7 +45,10 @@ public class DiagnosisController {
                 ApiResponse.success(
                         "DIAGNOSIS_QUESTIONS_FOUND",
                         "진단평가 문제 목록 조회에 성공했습니다.",
-                        diagnosisService.getQuestions(countryId)
+                        diagnosisUseCase.getQuestions(countryId)
+                                .stream()
+                                .map(DiagnosisQuestionResponse::from)
+                                .toList()
                 )
         );
     }
@@ -81,12 +87,21 @@ public class DiagnosisController {
     })
     @PostMapping("/result")
     public ResponseEntity<ApiResponse<DiagnosisResultResponse>> submitDiagnosisResult(
-            @AuthenticationPrincipal CustomUserDetails userDetails,
+            @AuthenticationPrincipal Object userDetails,
             @Valid @RequestBody DiagnosisSubmitRequest request
     ) {
-        Long currentUserId = userDetails.getUser().getId();
+        Long currentUserId = CurrentUserIdResolver.resolveNullable(userDetails);
 
-        DiagnosisResultResponse response = diagnosisService.submitResult(currentUserId, request);
+        SubmitDiagnosisCommand command = new SubmitDiagnosisCommand(
+                currentUserId,
+                request.countryId(),
+                request.answers()
+                        .stream()
+                        .map(this::toCommand)
+                        .toList()
+        );
+
+        DiagnosisResultResponse response = DiagnosisResultResponse.from(diagnosisUseCase.submitResult(command));
 
         return ResponseEntity.ok(
                 ApiResponse.success(
@@ -103,16 +118,23 @@ public class DiagnosisController {
     })
     @GetMapping("/me/latest")
     public ResponseEntity<ApiResponse<DiagnosisResultResponse>> getMyLatestDiagnosisResult(
-            @AuthenticationPrincipal CustomUserDetails userDetails
+            @AuthenticationPrincipal Object userDetails
     ) {
-        Long currentUserId = userDetails.getUser().getId();
+        Long currentUserId = CurrentUserIdResolver.resolveNullable(userDetails);
 
         return ResponseEntity.ok(
                 ApiResponse.success(
                         "MY_DIAGNOSIS_RESULT_FOUND",
                         "내 최신 진단평가 결과 조회에 성공했습니다.",
-                        diagnosisService.getLatestResult(currentUserId)
+                        DiagnosisResultResponse.from(diagnosisUseCase.getLatestResult(currentUserId))
                 )
+        );
+    }
+
+    private SubmitDiagnosisAnswerCommand toCommand(DiagnosisAnswerRequest request) {
+        return new SubmitDiagnosisAnswerCommand(
+                request.questionId(),
+                request.selectedOption()
         );
     }
 }
