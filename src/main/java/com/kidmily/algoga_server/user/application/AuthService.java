@@ -1,6 +1,5 @@
 package com.kidmily.algoga_server.user.application;
 
-import com.kidmily.algoga_server.global.event.UserSignedUpEvent;
 import com.kidmily.algoga_server.global.infrastructure.mail.EmailSender;
 import com.kidmily.algoga_server.global.security.GlobalJwtProvider;
 import com.kidmily.algoga_server.global.security.port.SocialLoginProcessor;
@@ -17,7 +16,6 @@ import com.kidmily.algoga_server.user.presentation.response.AuthTokenResponse;
 import com.kidmily.algoga_server.user.presentation.response.FindIdResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -39,7 +37,6 @@ public class AuthService implements SocialLoginProcessor{
     private final GlobalJwtProvider globalJwtProvider;
     private final EmailSender emailSender;
     private final RedisTemplate<String, String> redisTemplate; // Redis 도구 주입!
-    private final ApplicationEventPublisher eventPublisher;
 
     // 이메일 인증번호 발송
     public void sendVerificationCode(SendEmailCodeRequest request) {
@@ -128,8 +125,7 @@ public class AuthService implements SocialLoginProcessor{
                 .termsPrivacyAgreed(request.termsPrivacyAgreed())
                 .termsMarketingAgreed(request.termsMarketingAgreed())
                 .build();
-        User savedUser = userRepository.save(user);
-        eventPublisher.publishEvent(new UserSignedUpEvent(savedUser.getId()));
+        userRepository.save(user);
 
         // 가입이 성공적으로 끝났으니, "인증 완료" 포스트잇도 떼서 버립니다! (청소)
         redisTemplate.delete("AUTH_SUCCESS:" + email);
@@ -251,9 +247,6 @@ public class AuthService implements SocialLoginProcessor{
 
         return globalJwtProvider.createUserAccessToken(email);
     }
-<<<<<<< HEAD
-}
-=======
 
     // 소셜로그인
     @Override
@@ -333,4 +326,3 @@ public class AuthService implements SocialLoginProcessor{
                 user.getUsername(), user.getSocialType());
     }
 }
->>>>>>> 9e394e2220795389f2b87882ee1f5f7586ebffc6
