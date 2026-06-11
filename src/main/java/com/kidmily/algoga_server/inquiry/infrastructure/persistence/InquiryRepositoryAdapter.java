@@ -2,6 +2,7 @@ package com.kidmily.algoga_server.inquiry.infrastructure.persistence;
 
 import com.kidmily.algoga_server.inquiry.domain.model.Inquiry;
 import com.kidmily.algoga_server.inquiry.domain.model.InquiryCategory;
+import com.kidmily.algoga_server.inquiry.domain.model.InquiryStatus;
 import com.kidmily.algoga_server.inquiry.domain.repository.InquiryRepository;
 import com.kidmily.algoga_server.inquiry.infrastructure.mapper.InquiryMapper;
 import com.kidmily.algoga_server.inquiry.infrastructure.persistence.repository.JpaInquiryRepository;
@@ -42,12 +43,25 @@ public class InquiryRepositoryAdapter implements InquiryRepository {
         return jpaInquiryRepository.countByUserIdAndCreatedAtBetween(userId, start, end);
     }
 
-    // 🌟 어드민 페이징 조회 구현체
+    // 🌟 어드민 교차 페이징 조회 동적 분기 구현
     @Override
-    public Page<Inquiry> findInquiriesForAdmin(InquiryCategory category, Pageable pageable) {
-        if (category == null) {
+    public Page<Inquiry> findInquiriesForAdmin(InquiryCategory category, InquiryStatus status, Pageable pageable) {
+        // Case 1: 둘 다 조건 없음 (ALL / ALL)
+        if (category == null && status == null) {
             return jpaInquiryRepository.findAllByOrderByCreatedAtDesc(pageable).map(inquiryMapper::toDomain);
         }
-        return jpaInquiryRepository.findByCategoryOrderByCreatedAtDesc(category, pageable).map(inquiryMapper::toDomain);
+        
+        // Case 2: 카테고리만 조건 지정 (특정 태그 / ALL)
+        if (category != null && status == null) {
+            return jpaInquiryRepository.findByCategoryOrderByCreatedAtDesc(category, pageable).map(inquiryMapper::toDomain);
+        }
+        
+        // Case 3: 답변 상태만 조건 지정 (ALL / 특정 상태)
+        if (category == null && status != null) {
+            return jpaInquiryRepository.findByStatusOrderByCreatedAtDesc(status, pageable).map(inquiryMapper::toDomain);
+        }
+        
+        // Case 4: 둘 다 조건 지정 (특정 태그 / 특정 상태)
+        return jpaInquiryRepository.findByCategoryAndStatusOrderByCreatedAtDesc(category, status, pageable).map(inquiryMapper::toDomain);
     }
 }

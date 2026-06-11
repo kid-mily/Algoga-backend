@@ -4,6 +4,7 @@ import com.kidmily.algoga_server.global.common.api.response.PageResponse;
 import com.kidmily.algoga_server.inquiry.application.dto.InquiryAdminDto;
 import com.kidmily.algoga_server.inquiry.application.usecase.InquiryAdminQueryUseCase;
 import com.kidmily.algoga_server.inquiry.domain.model.InquiryCategory;
+import com.kidmily.algoga_server.inquiry.domain.model.InquiryStatus;
 import com.kidmily.algoga_server.inquiry.domain.repository.InquiryRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -20,11 +21,11 @@ public class InquiryAdminQueryService implements InquiryAdminQueryUseCase {
     private final InquiryRepository inquiryRepository;
 
     @Override
-    public PageResponse<InquiryAdminDto> getAdminInquiries(InquiryCategory category, int page) {
-        // 🌟 요구사항: 한 페이지에 8개씩 (최신순 정렬은 어댑터/레포지토리에서 처리)
+    public PageResponse<InquiryAdminDto> getAdminInquiries(InquiryCategory category, InquiryStatus status, int page) {
         Pageable pageable = PageRequest.of(page, 8);
         
-        Page<InquiryAdminDto> dtoPage = inquiryRepository.findInquiriesForAdmin(category, pageable)
+        // 🌟 도메인 레포지토리에 status 조건 함께 전달
+        Page<InquiryAdminDto> dtoPage = inquiryRepository.findInquiriesForAdmin(category, status, pageable)
                 .map(inq -> new InquiryAdminDto(
                         inq.getInquiryId(), inq.getUserId(), inq.getCategory(), 
                         inq.getTitle(), inq.getContent(), inq.getAnswer(), 

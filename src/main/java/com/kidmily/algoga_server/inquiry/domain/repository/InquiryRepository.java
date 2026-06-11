@@ -2,6 +2,7 @@ package com.kidmily.algoga_server.inquiry.domain.repository;
 
 import com.kidmily.algoga_server.inquiry.domain.model.Inquiry;
 import com.kidmily.algoga_server.inquiry.domain.model.InquiryCategory;
+import com.kidmily.algoga_server.inquiry.domain.model.InquiryStatus;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
@@ -15,6 +16,6 @@ public interface InquiryRepository {
     List<Inquiry> findByUserId(Long userId);
     int countByUserIdAndCreatedAtBetween(Long userId, Instant start, Instant end);
     
-    // 🌟 관리자용: 카테고리 필터링 및 페이징 조회 포트 추가
-    Page<Inquiry> findInquiriesForAdmin(InquiryCategory category, Pageable pageable);
+    // 🌟 상태 필터링 조회를 지원하도록 포트 아웃풋 확장
+    Page<Inquiry> findInquiriesForAdmin(InquiryCategory category, InquiryStatus status, Pageable pageable);
 }
