@@ -155,10 +155,3 @@ resilience4j:
         timeout-duration: 10s
         cancel-running-future: true
 
-#엑추에이터 설정
-management:
-  endpoints:
-    web:
-      exposure:
-        # shop 은 custom endpoint 이다.
-        include: "health,info,metrics,prometheus"
