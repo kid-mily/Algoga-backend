@@ -25,7 +25,7 @@ Content-Type: application/json
 
 {
   "email": "lhy2004lhy@gmail.com",
-  "code": "205846"
+  "code": "131793"
 }
 
 > {%
@@ -41,11 +41,11 @@ POST http://localhost:15000/api/v1/auth/signup
 Content-Type: application/json
 
 {
-  "username": "algoga_new_user",
+  "username": "lhy12345lhy",
   "email": "lhy2004lhy@gmail.com",
-  "password": "Password123",
+  "password": "test0302",
   "name": "김알고가",
-  "phone": "010-1234-5678",
+  "phone": "010-5136-9852",
   "birthDate": "2000-01-01",
   "gender": "MALE",
   "nickname": "알고가조아",

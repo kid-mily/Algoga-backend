@@ -125,7 +125,7 @@ public class AuthController {
         return ApiResponse.success("AUTH_VERIFY_CODE_SUCCESS", "이메일 인증이 완료되었습니다.");
     }
 
-    // 🌟 [추가] 소셜 추가정보 회원가입 API
+    // 소셜 추가정보 회원가입 API
     @PostMapping("/social/signup")
     public ResponseEntity<Void> socialSignup(@Valid @RequestBody AuthSocialSignupRequest request) {
         authService.socialSignup(request);
