@@ -50,6 +50,10 @@ dependencies {
     // Resilience4j 서킷브레이커
     implementation 'io.github.resilience4j:resilience4j-spring-boot3:2.2.0'
 
+    // Spring Actuator + Prometheus 메트릭
+    implementation 'org.springframework.boot:spring-boot-starter-actuator'
+    implementation 'io.micrometer:micrometer-registry-prometheus'
+
     compileOnly 'org.projectlombok:lombok'
     developmentOnly 'org.springframework.boot:spring-boot-devtools'
     runtimeOnly 'com.mysql:mysql-connector-j'
