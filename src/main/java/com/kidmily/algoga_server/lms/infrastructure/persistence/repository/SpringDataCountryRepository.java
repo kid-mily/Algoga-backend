@@ -7,4 +7,5 @@ import java.util.List;
 
 public interface SpringDataCountryRepository extends JpaRepository<CountryJpaEntity, Long> {
     List<CountryJpaEntity> findByActiveTrue();
+    List<CountryJpaEntity> findAllByIdIn(List<Long> ids);
 }

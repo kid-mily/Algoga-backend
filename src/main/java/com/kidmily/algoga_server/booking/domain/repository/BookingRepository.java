@@ -24,4 +24,6 @@ public interface BookingRepository {
     long countByAccommodationIdAndStatusAndCreatedAtBetween(Long accommodationId, BookingStatus status, LocalDateTime from, LocalDateTime to);
 
     List<Long> findDistinctAccommodationIdsByStatusAndCreatedAtBetween(BookingStatus status, LocalDateTime from, LocalDateTime to);
+
+    List<Booking> findByCreatedAtBetween(LocalDateTime from, LocalDateTime to);
 }

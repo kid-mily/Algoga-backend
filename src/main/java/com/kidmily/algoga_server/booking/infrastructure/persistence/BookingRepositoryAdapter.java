@@ -66,4 +66,12 @@ public class BookingRepositoryAdapter implements BookingRepository {
     public List<Long> findDistinctAccommodationIdsByStatusAndCreatedAtBetween(BookingStatus status, LocalDateTime from, LocalDateTime to) {
         return springDataBookingRepository.findDistinctAccommodationIdsByStatusAndCreatedAtBetween(status, from, to);
     }
+
+    @Override
+    public List<Booking> findByCreatedAtBetween(LocalDateTime from, LocalDateTime to) {
+        return springDataBookingRepository.findByCreatedAtBetween(from, to)
+                .stream()
+                .map(bookingMapper::toDomain)
+                .toList();
+    }
 }

@@ -29,4 +29,6 @@ public interface PaymentRepository {
             PaymentType paymentType,
             PaymentStatus status
     );
+
+    List<Payment> findByBookingIdInAndStatus(List<Long> bookingIds, PaymentStatus status);
 }

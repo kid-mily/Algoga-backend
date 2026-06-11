@@ -20,4 +20,6 @@ public interface SpringDataBookingRepository extends JpaRepository<BookingJpaEnt
 
     @Query("SELECT DISTINCT e.accommodationId FROM BookingJpaEntity e WHERE e.status = :status AND e.createdAt BETWEEN :from AND :to")
     List<Long> findDistinctAccommodationIdsByStatusAndCreatedAtBetween(@Param("status") BookingStatus status, @Param("from") LocalDateTime from, @Param("to") LocalDateTime to);
+
+    List<BookingJpaEntity> findByCreatedAtBetween(LocalDateTime from, LocalDateTime to);
 }
