@@ -59,6 +59,9 @@ public record MyCourseResponse(
         @Schema(description = "수료증 PDF 다운로드 API URL", example = "/api/v1/courses/3/certificate")
         String certificateDownloadUrl,
 
+        @Schema(description = "수강 가능 만료 일시", example = "2026-12-10T15:30:00")
+        LocalDateTime accessExpiresAt,
+
         @Schema(description = "수료 일시", example = "2026-05-26T15:30:00")
         LocalDateTime completedAt
 ) {
@@ -82,6 +85,7 @@ public record MyCourseResponse(
                 result.certificateAvailable(),
                 result.certificateCode(),
                 result.certificateDownloadUrl(),
+                result.accessExpiresAt(),
                 result.completedAt()
         );
     }

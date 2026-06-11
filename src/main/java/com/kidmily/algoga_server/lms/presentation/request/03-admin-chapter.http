@@ -6,13 +6,13 @@
 
 
 ### 챕터 관리 - 챕터 목록 조회
-GET http://localhost:15000/api/v1/admin/courses/3/chapters
+GET http://localhost:15000/api/v1/admin/courses/76/chapters
 Authorization: Bearer {{managerAccessToken}}
 
 
 ### 챕터 관리 - 챕터 등록
 ### 응답의 data.chapterId를 수정/삭제 테스트에 사용
-POST http://localhost:15000/api/v1/admin/courses/17/chapters
+POST http://localhost:15000/api/v1/admin/courses/76/chapters
 Authorization: Bearer {{managerAccessToken}}
 Content-Type: multipart/form-data; boundary=boundary
 
@@ -23,7 +23,8 @@ Content-Type: application/json
 {
   "title": "s3강. 여행 전 필수 준비",
   "durationSeconds": 700,
-  "chapterOrder": 2
+  "chapterOrder": 4
+
 }
 
 --boundary
@@ -36,13 +37,13 @@ Content-Type: video/mp4
 
 
 ### 챕터 관리 - 챕터 등록 후 목록 조회
-GET http://localhost:15000/api/v1/admin/courses/11/chapters
+GET http://localhost:15000/api/v1/admin/courses/76/chapters
 Authorization: Bearer {{managerAccessToken}}
 
 
 ### 챕터 관리 - 챕터 수정
 ### 아래 chapterId를 실제 챕터 ID로 변경
-PUT http://localhost:15000/api/v1/admin/courses/3/chapters/5
+PUT http://localhost:15000/api/v1/admin/courses/76/chapters/1
 Authorization: Bearer {{managerAccessToken}}
 Content-Type: multipart/form-data; boundary=boundary
 
@@ -53,7 +54,7 @@ Content-Type: application/json
 {
   "title": "1강. 여행 전 필수 준비 수정본",
   "durationSeconds": 720,
-  "chapterOrder": 1
+  "chapterOrder": 4
 }
 
 --boundary
@@ -67,10 +68,10 @@ Content-Type: video/mp4
 
 ### 챕터 관리 - 챕터 삭제
 ### 삭제 테스트가 필요할 때만 실행
-DELETE http://localhost:15000/api/v1/admin/courses/3/chapters/8
+DELETE http://localhost:15000/api/v1/admin/courses/76/chapters/1
 Authorization: Bearer {{managerAccessToken}}
 
 
 ### 챕터 관리 - 삭제 후 목록 조회
-GET http://localhost:15000/api/v1/admin/courses/3/chapters
+GET http://localhost:15000/api/v1/admin/courses/76/chapters
 Authorization: Bearer {{managerAccessToken}}

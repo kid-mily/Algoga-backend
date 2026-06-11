@@ -2,17 +2,17 @@ package com.kidmily.algoga_server.benefit.application.usecase;
 
 import com.kidmily.algoga_server.benefit.application.command.CreateCouponPolicyCommand;
 import com.kidmily.algoga_server.benefit.application.command.UpdateCouponPolicyCommand;
-import com.kidmily.algoga_server.benefit.domain.model.CouponPolicy;
+import com.kidmily.algoga_server.benefit.application.result.CouponPolicyResult;
 
 import java.util.List;
 
 public interface CouponPolicyUseCase {
 
-    CouponPolicy createCouponPolicy(CreateCouponPolicyCommand command);
+    CouponPolicyResult createCouponPolicy(CreateCouponPolicyCommand command);
 
-    List<CouponPolicy> getCouponPolicies(Long courseId);
+    List<CouponPolicyResult> getCouponPolicies(Long courseId);
 
-    CouponPolicy updateCouponPolicy(UpdateCouponPolicyCommand command);
+    CouponPolicyResult updateCouponPolicy(UpdateCouponPolicyCommand command);
 
     void deactivateCouponPolicy(Long courseId, Long couponPolicyId);
 }

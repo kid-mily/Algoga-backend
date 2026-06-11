@@ -3,7 +3,7 @@ package com.kidmily.algoga_server.lms.infrastructure.persistence.adapter;
 import com.kidmily.algoga_server.lms.domain.model.Quiz;
 import com.kidmily.algoga_server.lms.domain.repository.QuizRepository;
 import com.kidmily.algoga_server.lms.infrastructure.persistence.entity.QuizJpaEntity;
-import com.kidmily.algoga_server.lms.tdd.SpringDataQuizRepository;
+import com.kidmily.algoga_server.lms.infrastructure.persistence.repository.SpringDataQuizRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 
@@ -77,10 +77,10 @@ public class QuizRepositoryAdapter implements QuizRepository {
     }
 
     @Override
-    public boolean softDelete(Long quizId, Long courseId) {
+    public boolean delete(Long quizId, Long courseId) {
         return springDataQuizRepository.findByIdAndCourseIdAndDeletedFalse(quizId, courseId)
                 .map(entity -> {
-                    entity.softDelete();
+                    springDataQuizRepository.delete(entity);
                     return true;
                 })
                 .orElse(false);

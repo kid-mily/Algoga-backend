@@ -5,11 +5,10 @@ import com.kidmily.algoga_server.global.common.api.response.ApiResponse;
 import com.kidmily.algoga_server.global.exception.GlobalErrorCode;
 import com.kidmily.algoga_server.lms.application.command.UpdateLearningProgressCommand;
 import com.kidmily.algoga_server.lms.application.usecase.LearningProgressUseCase;
-import com.kidmily.algoga_server.lms.domain.model.LearningProgress;
 import com.kidmily.algoga_server.lms.exception.LmsErrorCode;
 import com.kidmily.algoga_server.lms.presentation.request.UpdateLearningProgressRequest;
 import com.kidmily.algoga_server.lms.presentation.response.LearningProgressResponse;
-import com.kidmily.algoga_server.user.settings.CustomUserDetails;
+import com.kidmily.algoga_server.lms.presentation.support.CurrentUserIdResolver;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -52,9 +51,9 @@ public class LearningProgressController {
 
             @Valid @RequestBody UpdateLearningProgressRequest request,
 
-            @AuthenticationPrincipal CustomUserDetails userDetails
+            @AuthenticationPrincipal Object userDetails
     ) {
-        Long currentUserId = userDetails.getUser().getId();
+        Long currentUserId = CurrentUserIdResolver.resolveNullable(userDetails);
 
         UpdateLearningProgressCommand command = new UpdateLearningProgressCommand(
                 currentUserId,
@@ -63,7 +62,7 @@ public class LearningProgressController {
                 request.watchedSeconds()
         );
 
-        LearningProgress learningProgress = learningProgressUseCase.updateProgress(command);
+        var learningProgress = learningProgressUseCase.updateProgress(command);
 
         return ResponseEntity.ok(
                 ApiResponse.success(

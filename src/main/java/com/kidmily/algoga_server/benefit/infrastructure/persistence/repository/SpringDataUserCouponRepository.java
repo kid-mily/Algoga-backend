@@ -17,6 +17,8 @@ public interface SpringDataUserCouponRepository extends JpaRepository<UserCoupon
 
     boolean existsByUserIdAndCouponPolicyId(Long userId, Long couponPolicyId);
 
+    boolean existsByUserIdAndCouponName(Long userId, String couponName);
+
     @Modifying
     @Query("UPDATE UserCouponJpaEntity u SET u.status = 'USED', u.usedAt = :usedAt WHERE u.id = :id")
     void markUsed(@Param("id") Long id, @Param("usedAt") LocalDateTime usedAt);

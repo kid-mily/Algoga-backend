@@ -72,6 +72,11 @@ public class UserCouponRepositoryAdapter implements UserCouponRepository {
         return springDataUserCouponRepository.existsByUserIdAndCouponPolicyId(userId, couponPolicyId);
     }
 
+    @Override
+    public boolean existsByUserIdAndCouponName(Long userId, String couponName) {
+        return springDataUserCouponRepository.existsByUserIdAndCouponName(userId, couponName);
+    }
+
     private UserCoupon toDomain(UserCouponJpaEntity entity) {
         return UserCoupon.withId(
                 entity.getId(),

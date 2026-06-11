@@ -1,5 +1,6 @@
 package com.kidmily.algoga_server.benefit.application.port;
 
+import java.time.LocalDateTime;
 import java.util.Optional;
 
 public interface LmsCoursePort {
@@ -15,7 +16,8 @@ public interface LmsCoursePort {
     record CourseRewardInfo(
             Long courseId,
             Integer coursePrice,
-            int correctCount
+            int correctCount,
+            LocalDateTime enrolledAt
     ) {
     }
 

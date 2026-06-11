@@ -1,6 +1,7 @@
 package com.kidmily.algoga_server.lms.application.service;
 
 import com.kidmily.algoga_server.lms.application.command.CreateCourseReviewCommand;
+import com.kidmily.algoga_server.lms.application.result.CourseReviewResult;
 import com.kidmily.algoga_server.lms.application.result.CourseReviewSummaryResult;
 import com.kidmily.algoga_server.lms.application.usecase.CourseReviewUseCase;
 import com.kidmily.algoga_server.lms.domain.model.CourseReview;
@@ -28,7 +29,7 @@ public class CourseReviewService implements CourseReviewUseCase {
 
     @Override
     @Transactional
-    public CourseReview createReview(CreateCourseReviewCommand command) {
+    public CourseReviewResult createReview(CreateCourseReviewCommand command) {
         log.info("[Course Review Command] 리뷰 등록 요청. courseId={}, userId={}, rating={}",
                 command.courseId(), command.userId(), command.rating());
 
@@ -57,11 +58,11 @@ public class CourseReviewService implements CourseReviewUseCase {
         log.info("[Course Review Command] 리뷰 등록 완료. reviewId={}, courseId={}, userId={}",
                 savedReview.getId(), savedReview.getCourseId(), savedReview.getUserId());
 
-        return savedReview;
+        return CourseReviewResult.from(savedReview);
     }
 
     @Override
-    public List<CourseReview> getReviews(Long courseId) {
+    public List<CourseReviewResult> getReviews(Long courseId) {
         log.info("[Course Review Query] 리뷰 목록 조회 요청. courseId={}", courseId);
 
         validateCourse(courseId);
@@ -71,7 +72,9 @@ public class CourseReviewService implements CourseReviewUseCase {
         log.info("[Course Review Query] 리뷰 목록 조회 완료. courseId={}, count={}",
                 courseId, reviews.size());
 
-        return reviews;
+        return reviews.stream()
+                .map(CourseReviewResult::from)
+                .toList();
     }
 
     @Override

@@ -5,7 +5,7 @@ import com.kidmily.algoga_server.lms.domain.model.CourseFile;
 import com.kidmily.algoga_server.lms.domain.repository.CourseRepository;
 import com.kidmily.algoga_server.lms.infrastructure.mapper.CourseMapper;
 import com.kidmily.algoga_server.lms.infrastructure.persistence.entity.CourseJpaEntity;
-import com.kidmily.algoga_server.lms.tdd.SpringDataCourseRepository;
+import com.kidmily.algoga_server.lms.infrastructure.persistence.repository.SpringDataCourseRepository;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Repository;

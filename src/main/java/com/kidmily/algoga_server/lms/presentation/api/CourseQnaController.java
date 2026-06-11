@@ -6,16 +6,14 @@ import com.kidmily.algoga_server.global.exception.GlobalErrorCode;
 import com.kidmily.algoga_server.lms.application.command.CreateCourseQnaCommand;
 import com.kidmily.algoga_server.lms.application.command.CreateCourseQnaCommentCommand;
 import com.kidmily.algoga_server.lms.application.result.CourseQnaDetailResult;
-import com.kidmily.algoga_server.lms.application.usecase.CourseQnaUseCase;
-import com.kidmily.algoga_server.lms.domain.model.CourseQna;
-import com.kidmily.algoga_server.lms.domain.model.CourseQnaComment;
+import com.kidmily.algoga_server.lms.application.usecase.CourseUseCase;
 import com.kidmily.algoga_server.lms.exception.LmsErrorCode;
 import com.kidmily.algoga_server.lms.presentation.request.CreateCourseQnaCommentRequest;
 import com.kidmily.algoga_server.lms.presentation.request.CreateCourseQnaRequest;
 import com.kidmily.algoga_server.lms.presentation.response.CourseQnaCommentResponse;
 import com.kidmily.algoga_server.lms.presentation.response.CourseQnaDetailResponse;
 import com.kidmily.algoga_server.lms.presentation.response.CourseQnaResponse;
-import com.kidmily.algoga_server.user.settings.CustomUserDetails;
+import com.kidmily.algoga_server.lms.presentation.support.CurrentUserIdResolver;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -34,7 +32,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class CourseQnaController {
 
-    private final CourseQnaUseCase courseQnaUseCase;
+    private final CourseUseCase courseUseCase;
 
     @Operation(
             summary = "강의 Q&A 등록",
@@ -49,9 +47,9 @@ public class CourseQnaController {
 
             @Valid @RequestBody CreateCourseQnaRequest request,
 
-            @AuthenticationPrincipal CustomUserDetails userDetails
+            @AuthenticationPrincipal Object userDetails
     ) {
-        Long currentUserId = userDetails.getUser().getId();
+        Long currentUserId = CurrentUserIdResolver.resolveNullable(userDetails);
 
         CreateCourseQnaCommand command = new CreateCourseQnaCommand(
                 courseId,
@@ -60,7 +58,7 @@ public class CourseQnaController {
                 request.question()
         );
 
-        CourseQna qna = courseQnaUseCase.createQna(command);
+        var qna = courseUseCase.createQna(command);
 
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(ApiResponse.created(
@@ -80,7 +78,7 @@ public class CourseQnaController {
             @Parameter(description = "강의 ID", example = "3")
             @PathVariable Long courseId
     ) {
-        List<CourseQnaResponse> response = courseQnaUseCase.getQnas(courseId)
+        List<CourseQnaResponse> response = courseUseCase.getQnas(courseId)
                 .stream()
                 .map(CourseQnaResponse::from)
                 .toList();
@@ -110,7 +108,7 @@ public class CourseQnaController {
             @Parameter(description = "Q&A ID", example = "1")
             @PathVariable Long qnaId
     ) {
-        CourseQnaDetailResult result = courseQnaUseCase.getQnaDetail(courseId, qnaId);
+        CourseQnaDetailResult result = courseUseCase.getQnaDetail(courseId, qnaId);
 
         return ResponseEntity.ok(
                 ApiResponse.success(
@@ -140,9 +138,9 @@ public class CourseQnaController {
 
             @Valid @RequestBody CreateCourseQnaCommentRequest request,
 
-            @AuthenticationPrincipal CustomUserDetails userDetails
+            @AuthenticationPrincipal Object userDetails
     ) {
-        Long currentUserId = userDetails.getUser().getId();
+        Long currentUserId = CurrentUserIdResolver.resolveNullable(userDetails);
 
         CreateCourseQnaCommentCommand command = new CreateCourseQnaCommentCommand(
                 courseId,
@@ -152,7 +150,7 @@ public class CourseQnaController {
                 request.content()
         );
 
-        CourseQnaComment comment = courseQnaUseCase.createComment(command);
+        var comment = courseUseCase.createComment(command);
 
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(ApiResponse.created(

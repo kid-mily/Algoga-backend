@@ -3,6 +3,7 @@ package com.kidmily.algoga_server.benefit.application.service;
 import com.kidmily.algoga_server.benefit.application.command.CreateCouponPolicyCommand;
 import com.kidmily.algoga_server.benefit.application.command.UpdateCouponPolicyCommand;
 import com.kidmily.algoga_server.benefit.application.port.LmsCoursePort;
+import com.kidmily.algoga_server.benefit.application.result.CouponPolicyResult;
 import com.kidmily.algoga_server.benefit.application.usecase.CouponPolicyUseCase;
 import com.kidmily.algoga_server.benefit.domain.model.CouponPolicy;
 import com.kidmily.algoga_server.benefit.domain.repository.CouponPolicyRepository;
@@ -26,7 +27,7 @@ public class CouponPolicyService implements CouponPolicyUseCase {
 
     @Override
     @Transactional
-    public CouponPolicy createCouponPolicy(CreateCouponPolicyCommand command) {
+    public CouponPolicyResult createCouponPolicy(CreateCouponPolicyCommand command) {
         log.info("[Coupon Policy Command] 쿠폰 정책 등록 요청. courseId={}, managerId={}, couponName={}",
                 command.courseId(), command.managerId(), command.couponName());
 
@@ -54,26 +55,28 @@ public class CouponPolicyService implements CouponPolicyUseCase {
                 savedCouponPolicy.getCourseId(),
                 savedCouponPolicy.getCouponName());
 
-        return savedCouponPolicy;
+        return CouponPolicyResult.from(savedCouponPolicy);
     }
 
     @Override
-    public List<CouponPolicy> getCouponPolicies(Long courseId) {
+    public List<CouponPolicyResult> getCouponPolicies(Long courseId) {
         log.info("[Coupon Policy Query] 강의별 쿠폰 정책 목록 조회 요청. courseId={}", courseId);
 
         validateCourse(courseId);
 
-        List<CouponPolicy> couponPolicies = couponPolicyRepository.findByCourseId(courseId);
+        List<CouponPolicy> couponPolicies = couponPolicyRepository.findActiveByCourseId(courseId);
 
         log.info("[Coupon Policy Query] 강의별 쿠폰 정책 목록 조회 완료. courseId={}, count={}",
                 courseId, couponPolicies.size());
 
-        return couponPolicies;
+        return couponPolicies.stream()
+                .map(CouponPolicyResult::from)
+                .toList();
     }
 
     @Override
     @Transactional
-    public CouponPolicy updateCouponPolicy(UpdateCouponPolicyCommand command) {
+    public CouponPolicyResult updateCouponPolicy(UpdateCouponPolicyCommand command) {
         log.info("[Coupon Policy Command] 쿠폰 정책 수정 요청. courseId={}, couponPolicyId={}, couponName={}",
                 command.courseId(), command.couponPolicyId(), command.couponName());
 
@@ -107,7 +110,7 @@ public class CouponPolicyService implements CouponPolicyUseCase {
                 updatedCouponPolicy.getCourseId(),
                 updatedCouponPolicy.getCouponName());
 
-        return updatedCouponPolicy;
+        return CouponPolicyResult.from(updatedCouponPolicy);
     }
 
     @Override

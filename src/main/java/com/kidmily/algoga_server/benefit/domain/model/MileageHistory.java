@@ -12,6 +12,9 @@ public class MileageHistory {
     private final String type;
     private final String reason;
     private final LocalDateTime createdAt;
+    private final LocalDateTime expiredAt;
+
+    private static final int MILEAGE_VALID_YEARS = 1;
 
     private MileageHistory(
             Long id,
@@ -21,7 +24,8 @@ public class MileageHistory {
             int amount,
             String type,
             String reason,
-            LocalDateTime createdAt
+            LocalDateTime createdAt,
+            LocalDateTime expiredAt
     ) {
         this.id = id;
         this.userId = userId;
@@ -31,6 +35,7 @@ public class MileageHistory {
         this.type = type;
         this.reason = reason;
         this.createdAt = createdAt;
+        this.expiredAt = expiredAt;
     }
 
     public static MileageHistory create(
@@ -40,6 +45,8 @@ public class MileageHistory {
             String type,
             String reason
     ) {
+        LocalDateTime createdAt = LocalDateTime.now();
+
         return new MileageHistory(
                 null,
                 userId,
@@ -48,7 +55,8 @@ public class MileageHistory {
                 amount,
                 type,
                 reason,
-                LocalDateTime.now()
+                createdAt,
+                expiresAt(type, createdAt)
         );
     }
 
@@ -76,6 +84,8 @@ public class MileageHistory {
             int amount,
             String reason
     ) {
+        LocalDateTime createdAt = LocalDateTime.now();
+
         return new MileageHistory(
                 null,
                 userId,
@@ -84,7 +94,8 @@ public class MileageHistory {
                 amount,
                 "EARN",
                 reason,
-                LocalDateTime.now()
+                createdAt,
+                expiresAt("EARN", createdAt)
         );
     }
 
@@ -94,6 +105,8 @@ public class MileageHistory {
             int amount,
             String reason
     ) {
+        LocalDateTime createdAt = LocalDateTime.now();
+
         return new MileageHistory(
                 null,
                 userId,
@@ -102,7 +115,8 @@ public class MileageHistory {
                 amount,
                 "USE",
                 reason,
-                LocalDateTime.now()
+                createdAt,
+                expiresAt("USE", createdAt)
         );
     }
 
@@ -114,7 +128,8 @@ public class MileageHistory {
             int amount,
             String type,
             String reason,
-            LocalDateTime createdAt
+            LocalDateTime createdAt,
+            LocalDateTime expiredAt
     ) {
         return new MileageHistory(
                 id,
@@ -124,8 +139,21 @@ public class MileageHistory {
                 amount,
                 type,
                 reason,
-                createdAt
+                createdAt,
+                expiredAt
         );
+    }
+
+    private static LocalDateTime expiresAt(String type, LocalDateTime createdAt) {
+        if ("EARN".equalsIgnoreCase(type)) {
+            return createdAt.plusYears(MILEAGE_VALID_YEARS);
+        }
+
+        return null;
+    }
+
+    public boolean isAvailableAt(LocalDateTime now) {
+        return !"EARN".equalsIgnoreCase(type) || expiredAt == null || !expiredAt.isBefore(now);
     }
 
     public Long getId() {
@@ -158,5 +186,9 @@ public class MileageHistory {
 
     public LocalDateTime getCreatedAt() {
         return createdAt;
+    }
+
+    public LocalDateTime getExpiredAt() {
+        return expiredAt;
     }
 }
