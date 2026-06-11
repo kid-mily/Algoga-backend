@@ -50,7 +50,6 @@ dependencies {
     // 1. Spring AI 모듈 버전 관리를 위한 BOM 추가
     implementation platform('org.springframework.ai:spring-ai-bom:1.1.7')
 
-    // 2. Ollama와 연동하기 위한 Spring AI Starter 의존성 추가
     implementation 'org.springframework.ai:spring-ai-starter-model-ollama'
 
     compileOnly 'org.projectlombok:lombok'

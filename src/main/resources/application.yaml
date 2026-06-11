@@ -45,7 +45,7 @@ spring:
 
   ai:
     openai:
-      base-url: https://api.groq.com/openai/v1
+      base-url: https://api.groq.com/openai
       api-key: ${LLM_KEY}
       chat:
         options:
