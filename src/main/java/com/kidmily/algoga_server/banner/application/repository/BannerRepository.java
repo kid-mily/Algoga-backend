@@ -1,4 +1,4 @@
-package com.kidmily.algoga_server.banner.domain.repository;
+package com.kidmily.algoga_server.banner.application.repository;
 
 import com.kidmily.algoga_server.banner.domain.model.Banner;
 import java.util.List;
