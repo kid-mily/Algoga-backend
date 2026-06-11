@@ -31,4 +31,12 @@ public class CountryRepositoryAdapter implements CountryRepository {
                 .map(countryMapper::toDomain);
     }
 
+    @Override
+    public List<Country> findAllByIdIn(List<Long> ids) {
+        return springDataRepository.findAllByIdIn(ids)
+                .stream()
+                .map(countryMapper::toDomain)
+                .toList();
+    }
+
 }
