@@ -11,6 +11,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
+
 @Repository
 @RequiredArgsConstructor
 public class BookingRepositoryAdapter implements BookingRepository {
@@ -49,5 +50,20 @@ public class BookingRepositoryAdapter implements BookingRepository {
     @Override
     public boolean existsByUserIdAndStatusIn(Long userId, List<BookingStatus> statuses) {
         return springDataBookingRepository.existsByUserIdAndStatusIn(userId, statuses);
+    }
+
+    @Override
+    public long countByStatusAndCreatedAtBetween(BookingStatus status, LocalDateTime from, LocalDateTime to) {
+        return springDataBookingRepository.countByStatusAndCreatedAtBetween(status, from, to);
+    }
+
+    @Override
+    public long countByAccommodationIdAndStatusAndCreatedAtBetween(Long accommodationId, BookingStatus status, LocalDateTime from, LocalDateTime to) {
+        return springDataBookingRepository.countByAccommodationIdAndStatusAndCreatedAtBetween(accommodationId, status, from, to);
+    }
+
+    @Override
+    public List<Long> findDistinctAccommodationIdsByStatusAndCreatedAtBetween(BookingStatus status, LocalDateTime from, LocalDateTime to) {
+        return springDataBookingRepository.findDistinctAccommodationIdsByStatusAndCreatedAtBetween(status, from, to);
     }
 }
