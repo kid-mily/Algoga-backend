@@ -13,7 +13,9 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
@@ -44,6 +46,33 @@ public class AuthController {
                 "회원가입이 완료되었습니다.",
                 null
         );
+    }
+
+    // 아이디 중복 확인 API
+    @Operation(summary = "아이디 중복 확인", description = "회원가입 시 아이디(username)가 사용 가능한지 확인합니다.")
+    @io.swagger.v3.oas.annotations.responses.ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "200",
+                    description = "정상 처리 (data가 true면 사용 가능, false면 이미 사용 중인 중복 아이디)"
+            )
+    })
+    @GetMapping("/username/check")
+    public ApiResponse<Boolean> checkUsername(@RequestParam("username") String username) {
+        boolean isAvailable = authService.isUsernameAvailable(username);
+
+        if (isAvailable) {
+            return ApiResponse.success(
+                    "SUCCESS",
+                    "사용 가능한 아이디입니다.",
+                    true
+            );
+        } else {
+            return ApiResponse.success(
+                    "USERNAME_DUPLICATED",
+                    "이미 사용 중인 아이디입니다.",
+                    false
+            );
+        }
     }
 
     // 일반 로그인
