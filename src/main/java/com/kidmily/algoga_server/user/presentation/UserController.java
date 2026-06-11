@@ -46,7 +46,7 @@ public class UserController {
 
     // 프로필 정보 업데이트
     @Operation(summary = "내 프로필 정보 업데이트", description = "프로필 사진, 닉네임, 전화번호, 이메일을 수정합니다.")
-    // 🌟 파일을 안전하게 처리하기 위해 consumes 속성 추가 및 @ModelAttribute 적용
+    // 파일을 안전하게 처리하기 위해 consumes 속성 추가 및 @ModelAttribute 적용
     @PatchMapping(value = "/me", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ApiResponse<AuthTokenResponse> updateProfile(
             @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails,

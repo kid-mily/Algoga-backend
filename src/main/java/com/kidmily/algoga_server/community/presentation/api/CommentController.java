@@ -9,12 +9,14 @@ import com.kidmily.algoga_server.community.presentation.api.request.UpdateCommen
 import com.kidmily.algoga_server.community.presentation.api.response.UpdateCommentResponse;
 import com.kidmily.algoga_server.global.annotation.swagger.ApiErrorCodeExample;
 import com.kidmily.algoga_server.global.common.api.response.ApiResponse;
+import com.kidmily.algoga_server.user.settings.CustomUserDetails;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -30,14 +32,15 @@ public class CommentController {
     @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "댓글 수정에 성공했습니다.")
     @ApiErrorCodeExample(domain = PostErrorCode.class, value = {
             "COMMENT_NOT_FOUND",
-            "COMMENT_UNAUTHORIZED",
             "COMMENT_UPDATE_FORBIDDEN"
     })
     public ResponseEntity<ApiResponse<UpdateCommentResponse>> updateComment(
             @Parameter(description = "댓글 ID", example = "1") @PathVariable Long commentId,
-            @Valid @RequestBody UpdateCommentRequest request
+            @Valid @RequestBody UpdateCommentRequest request,
+            @AuthenticationPrincipal CustomUserDetails userDetails
     ) {
-        Long currentUserId = 1L;
+        Long currentUserId = userDetails.getUser().getId();
+
 
         UpdateCommentCommand command = new UpdateCommentCommand(commentId, currentUserId, request.content());
         Comment updatedComment = commentCommandUseCase.handle(command);
@@ -55,9 +58,11 @@ public class CommentController {
             "COMMENT_DELETE_FORBIDDEN"
     })
     public ResponseEntity<Void> deleteComment(
-            @Parameter(description = "댓글 ID", example = "1") @PathVariable Long commentId
+            @Parameter(description = "댓글 ID", example = "1") @PathVariable Long commentId,
+            @AuthenticationPrincipal CustomUserDetails userDetails
     ) {
-        Long currentUserId = 1L;
+        Long currentUserId = userDetails.getUser().getId();
+
 
         DeleteCommentCommand command = new DeleteCommentCommand(commentId, currentUserId);
         commentCommandUseCase.handle(command);

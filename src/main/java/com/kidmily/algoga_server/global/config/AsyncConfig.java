@@ -22,7 +22,7 @@ public class AsyncConfig {
         executor.setMaxPoolSize(10);  // 최대 스레드 수
         executor.setQueueCapacity(500); // 큐 대기 용량
 
-        // 요청하신 대로 스레드 이름 접두사를 'async-'로 설정
+        // 스레드 이름 접두사를 'async-'로 설정
         executor.setThreadNamePrefix("async-");
 
         executor.initialize();

@@ -22,4 +22,22 @@ public interface CouponPolicyRepository {
     void deactivate(CouponPolicy couponPolicy);
 
     boolean existsActiveByCourseId(Long courseId);
+<<<<<<< HEAD
+=======
+
+    boolean existsByCourseIdAndCouponName(Long courseId, String couponName);
+
+    boolean existsByCourseIdAndCouponNameAndIdNot(Long courseId, String couponName, Long couponPolicyId);
+
+    Optional<CouponPolicy> updateBasicInfo(
+            Long couponPolicyId,
+            Long courseId,
+            String couponName,
+            String discountType,
+            int discountValue,
+            int validDays
+    );
+
+    boolean deactivate(Long couponPolicyId, Long courseId);
+>>>>>>> 9e394e2220795389f2b87882ee1f5f7586ebffc6
 }

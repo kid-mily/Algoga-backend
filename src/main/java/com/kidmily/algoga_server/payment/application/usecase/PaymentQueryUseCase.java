@@ -1,5 +1,6 @@
 package com.kidmily.algoga_server.payment.application.usecase;
 
+import com.kidmily.algoga_server.payment.presentation.api.response.PaymentMonthlyDetailResponse;
 import com.kidmily.algoga_server.payment.presentation.api.response.PaymentResponse;
 import com.kidmily.algoga_server.payment.presentation.api.response.PaymentStatsResponse;
 
@@ -12,5 +13,7 @@ public interface PaymentQueryUseCase {
     List<PaymentResponse> getMyPayments(Long userId);
     List<PaymentResponse> getAdminPayments(LocalDate from, LocalDate to);
     byte[] getAdminPaymentsExcel(LocalDate from, LocalDate to);
-    List<PaymentStatsResponse> getAdminPaymentStats();
+    List<PaymentStatsResponse> getAdminPaymentStats(Integer year);
+    PaymentMonthlyDetailResponse getAdminPaymentStatsByMonth(int year, int month);
+    int calculateLectureAmount(Long courseId, int usedMileage, Long usedCouponId, Long userId);
 }

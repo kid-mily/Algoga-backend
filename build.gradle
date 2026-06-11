@@ -45,8 +45,17 @@ dependencies {
 // 이메일
     implementation 'org.springframework.boot:spring-boot-starter-mail'
 
-    // Redis 의존성 추가
+    // Redis 의존성
     implementation 'org.springframework.boot:spring-boot-starter-data-redis'
+
+    // OAuth2 소셜 로그인 라이브러리
+    implementation 'org.springframework.boot:spring-boot-starter-oauth2-client'
+    // Resilience4j 서킷브레이커
+    implementation 'io.github.resilience4j:resilience4j-spring-boot3:2.2.0'
+
+    // Spring Actuator + Prometheus 메트릭
+    implementation 'org.springframework.boot:spring-boot-starter-actuator'
+    implementation 'io.micrometer:micrometer-registry-prometheus'
 
     compileOnly 'org.projectlombok:lombok'
     developmentOnly 'org.springframework.boot:spring-boot-devtools'
@@ -62,6 +71,7 @@ dependencies {
     annotationProcessor 'org.mapstruct:mapstruct-processor:1.5.5.Final'
 
     annotationProcessor "org.projectlombok:lombok-mapstruct-binding:0.2.0"
+   
 }
 
 tasks.named('test') {

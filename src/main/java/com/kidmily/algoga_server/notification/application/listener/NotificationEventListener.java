@@ -10,13 +10,17 @@ import com.kidmily.algoga_server.notification.domain.model.NotificationType;
 import com.kidmily.algoga_server.notification.domain.repository.NotificationRepository;
 import com.kidmily.algoga_server.notification.domain.repository.NotificationSettingRepository;
 import com.kidmily.algoga_server.payment.domain.event.PaymentCompletedEvent;
+import com.kidmily.algoga_server.refund.domain.event.RefundApprovedEvent;
+import com.kidmily.algoga_server.refund.domain.event.RefundRejectedEvent;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.event.EventListener;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
-
+import org.springframework.transaction.event.TransactionPhase;
+import org.springframework.transaction.event.TransactionalEventListener;
 
 
 @Slf4j
@@ -29,10 +33,10 @@ public class NotificationEventListener {
     private final CoursePort coursePort;
 
 
-
+    // 댓글 알림
     @Async
-    @EventListener
-    @Transactional
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void handleNotificationEvent(NotificationEvent event) {
         log.info("[NotificationEventListener] 알림 이벤트 수신 - type: {}, receiverId: {}",
                 event.getType(), event.getReceiverId());
@@ -83,8 +87,8 @@ public class NotificationEventListener {
 
     // 결제 알림
     @Async
-    @EventListener
-    @Transactional
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void handlePaymentCompletedEvent(
             PaymentCompletedEvent event) {
 
@@ -112,10 +116,49 @@ public class NotificationEventListener {
             return courseName + " 강의가 결제 완료되었습니다";
         }
         return switch (event.paymentType()) {
-            case DEPOSIT -> event.bookingNumber() + " 숙소 계약금 결제가 완료되었습니다";
-            case BALANCE -> event.bookingNumber() + " 숙소 잔금 결제가 완료되었습니다";
-            case FULL -> event.bookingNumber() + " 숙소 결제가 완료되었습니다";
+            case DEPOSIT -> event.bookingNumber() + " 패키지 계약금 결제가 완료되었습니다";
+            case BALANCE -> event.bookingNumber() + " 패키지 잔금 결제가 완료되었습니다";
+            case FULL -> event.bookingNumber() + " 패키지 결제가 완료되었습니다";
             default -> event.bookingNumber() + " 결제가 완료되었습니다";
         };
     }
+
+    // 환불 승인 알림
+    @Async
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public void handleRefundApproved(RefundApprovedEvent event) {
+        log.info("[NotificationEventListener] 환불 승인 이벤트 수신 - userId: {}", event.userId());
+
+        Notification notification = Notification.create(
+                event.userId(),
+                NotificationType.REFUND_APPROVED,
+                "환불이 승인되었습니다.",
+                null,
+                null
+        );
+
+        notificationRepository.save(notification);
+        log.info("[NotificationEventListener] 환불 승인 알림 저장 완료 - userId: {}", event.userId());
+    }
+
+    // 환불 거절 알림
+    @Async
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public void handleRefundRejected(RefundRejectedEvent event) {
+        log.info("[NotificationEventListener] 환불 거절 이벤트 수신 - userId: {}", event.userId());
+
+        Notification notification = Notification.create(
+                event.userId(),
+                NotificationType.REFUND_REJECTED,
+                "환불이 거절되었습니다.",
+                null,
+                null
+        );
+
+        notificationRepository.save(notification);
+        log.info("[NotificationEventListener] 환불 거절 알림 저장 완료 - userId: {}", event.userId());
+    }
+
 }

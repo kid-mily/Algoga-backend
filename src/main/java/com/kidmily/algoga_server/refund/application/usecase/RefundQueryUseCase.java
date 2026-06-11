@@ -7,5 +7,8 @@ import java.util.List;
 
 public interface RefundQueryUseCase {
     List<RefundResponse> getMyRefunds(Long userId);
-    List<RefundResponse> getAllRefunds(RefundStatus status);
+    List<RefundResponse> getAllRefunds(RefundStatus status, String userName, String bookingNumber, String productName);
+    RefundResponse getRefund(Long refundId);
+    boolean hasActiveRefund(Long userId);
+    byte[] getRefundExcel(RefundStatus status);
 }

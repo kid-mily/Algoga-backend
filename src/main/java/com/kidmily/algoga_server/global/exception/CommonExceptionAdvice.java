@@ -6,19 +6,26 @@ import jakarta.servlet.http.HttpServletRequest;
 import org.slf4j.Logger;
 import org.slf4j.MDC;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
+import org.springframework.web.servlet.NoHandlerFoundException;
+import org.springframework.web.servlet.resource.NoResourceFoundException; // 🔥 추가된 import
 
 import java.time.Instant;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 public interface CommonExceptionAdvice {
 
-    // 구현체(클래스)의 @Slf4j 로거를 인터페이스로 가져오기 위한 추상 메서드
     Logger getLogger();
 
+    // 1. 비즈니스 로직 에러
     @ExceptionHandler(BusinessException.class)
     default ResponseEntity<ErrorResponse> handleBusinessException(BusinessException e) {
         String traceId = getOrCreateTraceId();
@@ -38,12 +45,15 @@ public interface CommonExceptionAdvice {
         return ResponseEntity.status(errorCode.getStatus()).body(response);
     }
 
+    // 2. @Valid 어노테이션 유효성 검사 실패
     @ExceptionHandler(MethodArgumentNotValidException.class)
     default ResponseEntity<ErrorResponse> handleMethodArgumentNotValidException(MethodArgumentNotValidException e) {
         String traceId = getOrCreateTraceId();
         GlobalErrorCode errorCode = GlobalErrorCode.INVALID_REQUEST;
 
-        String errorMessage = e.getBindingResult().getFieldErrors().get(0).getDefaultMessage();
+        String errorMessage = e.getBindingResult().getFieldErrors().stream()
+                .map(error -> error.getField() + ": " + error.getDefaultMessage())
+                .collect(Collectors.joining(", "));
 
         getLogger().warn("[ValidationException] traceId: {}, message: {}", traceId, errorMessage);
 
@@ -51,13 +61,84 @@ public interface CommonExceptionAdvice {
                 Instant.now(),
                 errorCode.getStatus().value(),
                 errorCode.getCode(),
-                errorMessage != null ? errorMessage : errorCode.getMessage(),
+                errorMessage.isEmpty() ? errorCode.getMessage() : errorMessage,
                 traceId
         );
 
         return ResponseEntity.status(errorCode.getStatus()).body(response);
     }
 
+    // 3. API는 존재하지만 파라미터 타입이 안 맞거나, 값이 누락되거나, JSON 구조가 잘못된 경우
+    @ExceptionHandler({
+            MethodArgumentTypeMismatchException.class,
+            HttpMessageNotReadableException.class,
+            MissingServletRequestParameterException.class
+    })
+    default ResponseEntity<ErrorResponse> handleBadRequestExceptions(Exception e) {
+        String traceId = getOrCreateTraceId();
+        GlobalErrorCode errorCode = GlobalErrorCode.INVALID_REQUEST;
+        String errorMessage = errorCode.getMessage();
+
+        if (e instanceof MethodArgumentTypeMismatchException mismatchException) {
+            errorMessage = String.format("파라미터 '%s'의 타입이 올바르지 않습니다. (요청 값: %s)", mismatchException.getName(), mismatchException.getValue());
+        } else if (e instanceof MissingServletRequestParameterException missingException) {
+            errorMessage = String.format("필수 쿼리 파라미터 '%s'가 누락되었습니다.", missingException.getParameterName());
+        } else if (e instanceof HttpMessageNotReadableException) {
+            errorMessage = "요청 본문(Body)의 JSON 형식이 올바르지 않거나 데이터 타입이 일치하지 않습니다.";
+        }
+
+        getLogger().warn("[BadRequestException] traceId: {}, message: {}", traceId, errorMessage);
+
+        ErrorResponse response = new ErrorResponse(
+                Instant.now(),
+                errorCode.getStatus().value(),
+                errorCode.getCode(),
+                errorMessage,
+                traceId
+        );
+
+        return ResponseEntity.status(errorCode.getStatus()).body(response);
+    }
+
+    // 4. API 경로는 일치하지만 HTTP 메서드(GET, POST 등)가 잘못된 경우
+    @ExceptionHandler(HttpRequestMethodNotSupportedException.class)
+    default ResponseEntity<ErrorResponse> handleHttpRequestMethodNotSupportedException(HttpRequestMethodNotSupportedException e) {
+        String traceId = getOrCreateTraceId();
+        GlobalErrorCode errorCode = GlobalErrorCode.METHOD_NOT_ALLOWED;
+
+        getLogger().warn("[HttpRequestMethodNotSupportedException] traceId: {}, message: {}", traceId, e.getMessage());
+
+        ErrorResponse response = new ErrorResponse(
+                Instant.now(),
+                errorCode.getStatus().value(),
+                errorCode.getCode(),
+                errorCode.getMessage(),
+                traceId
+        );
+
+        return ResponseEntity.status(errorCode.getStatus()).body(response);
+    }
+
+    // 5. 요청한 API 경로가 아예 존재하지 않는 경우 (404) - 🔥 NoResourceFoundException 추가
+    @ExceptionHandler({NoHandlerFoundException.class, NoResourceFoundException.class})
+    default ResponseEntity<ErrorResponse> handleNotFoundException(Exception e) {
+        String traceId = getOrCreateTraceId();
+        GlobalErrorCode errorCode = GlobalErrorCode.API_NOT_FOUND;
+
+        getLogger().warn("[NotFoundException] traceId: {}, message: {}", traceId, e.getMessage());
+
+        ErrorResponse response = new ErrorResponse(
+                Instant.now(),
+                errorCode.getStatus().value(),
+                errorCode.getCode(),
+                errorCode.getMessage(),
+                traceId
+        );
+
+        return ResponseEntity.status(errorCode.getStatus()).body(response);
+    }
+
+    // 6. 그 외 예상치 못한 서버 에러 최후의 보루
     @ExceptionHandler(Exception.class)
     default ResponseEntity<ErrorResponse> handleException(Exception e) {
         String traceId = getOrCreateTraceId();
@@ -77,13 +158,11 @@ public interface CommonExceptionAdvice {
     }
 
     default String getOrCreateTraceId() {
-        // 1. 현재 스레드의 MDC에서 가져오기
         String traceId = MDC.get(TraceIdFilter.TRACE_ID_KEY);
         if (traceId != null) {
             return traceId;
         }
 
-        // 2. Request 객체 내부에서 꺼내오기
         ServletRequestAttributes attributes = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
         if (attributes != null) {
             HttpServletRequest request = attributes.getRequest();
@@ -93,7 +172,6 @@ public interface CommonExceptionAdvice {
             }
         }
 
-        // 3. 새로 생성
         return UUID.randomUUID().toString().substring(0, 8);
     }
 }

@@ -1,5 +1,6 @@
 package com.kidmily.algoga_server.community.application.service;
 
+import com.kidmily.algoga_server.community.application.policy.CommunityQueryPolicy;
 import com.kidmily.algoga_server.community.application.port.CountryPort;
 import com.kidmily.algoga_server.community.application.port.CoursePort;
 import com.kidmily.algoga_server.community.application.port.UserPort;
@@ -32,9 +33,7 @@ public class PostQueryService implements PostQueryUseCase {
     private final CommentRepository commentRepository;
     private final LikeDislikeRepository likeDislikeRepository;
     private static final int PAGE_SIZE = 10;
-    private final UserPort userPort;
-    private final CountryPort countryPort;  // ← 추가
-    private final CoursePort coursePort;
+    private final CommunityQueryPolicy communityQueryPolicy;
 
     @Override
     @Transactional
@@ -70,8 +69,8 @@ public class PostQueryService implements PostQueryUseCase {
         return new PostResponse(
                 post.getId(),
                 post.getAuthorId(),
-                userPort.getNickname(post.getAuthorId()),           // ← 추가
-                userPort.getProfileImageUrl(post.getAuthorId()),    // ← 추가
+                communityQueryPolicy.resolveNickname(post.getAuthorId()),
+                communityQueryPolicy.resolveProfileImageUrl(post.getAuthorId()),
                 tags,
                 post.getTitle(),
                 post.getContent(),
@@ -140,9 +139,9 @@ public class PostQueryService implements PostQueryUseCase {
         Long dislikeCount = likeDislikeRepository.countDislikes(TargetType.POST, post.getId());
         Long commentCount = (long) commentRepository.findActiveCommentsByPostId(post.getId()).size();
 
-        String nickname = userPort.getNickname(post.getAuthorId());
-        String profileImageUrl = userPort.getProfileImageUrl(post.getAuthorId());
-        String countryName = countryPort.getCountryName(post.getCountryId());  // ← 추가
+        String nickname = communityQueryPolicy.resolveNickname(post.getAuthorId());
+        String profileImageUrl = communityQueryPolicy.resolveProfileImageUrl(post.getAuthorId());
+        String countryName = communityQueryPolicy.resolveCountryName(post.getCountryId());
 
         Stream<TagResponse> countryStream = countryName != null ?
                 Stream.of(TagResponse.fromCountry(countryName)) : Stream.empty();
@@ -182,8 +181,8 @@ public class PostQueryService implements PostQueryUseCase {
                 .map(c -> new CommentResponse(
                         c.getCommentId(),
                         c.getUserId(),
-                        userPort.getNickname(c.getUserId()),
-                        userPort.getProfileImageUrl(c.getUserId()),
+                        communityQueryPolicy.resolveNickname(c.getUserId()),        // 변경
+                        communityQueryPolicy.resolveProfileImageUrl(c.getUserId()),
                         c.getContent(),
                         c.getCreatedAt(),
                         // 해당 댓글의 대댓글 붙이기
@@ -192,8 +191,8 @@ public class PostQueryService implements PostQueryUseCase {
                                 .map(r -> new CommentResponse(
                                         r.getCommentId(),
                                         r.getUserId(),
-                                        userPort.getNickname(r.getUserId()),
-                                        userPort.getProfileImageUrl(c.getUserId()),
+                                        communityQueryPolicy.resolveNickname(r.getUserId()),        // 변경
+                                        communityQueryPolicy.resolveProfileImageUrl(r.getUserId()), // 변경
                                         r.getContent(),
                                         r.getCreatedAt(),
                                         List.of()

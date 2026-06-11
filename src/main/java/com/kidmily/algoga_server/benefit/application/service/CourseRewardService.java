@@ -55,13 +55,9 @@ public class CourseRewardService implements CourseRewardUseCase {
 
         List<CouponPolicy> couponPolicies = couponPolicyRepository.findActiveByCourseId(command.courseId());
 
-        if (couponPolicies.isEmpty()) {
-            log.warn("[Course Reward Command] 보상 지급 실패. 등록된 활성 쿠폰 정책이 없습니다. courseId={}",
-                    command.courseId());
-            throw new BenefitException(BenefitErrorCode.COUPON_POLICY_NOT_FOUND);
-        }
-
-        List<UserCoupon> issuedCoupons = issueCoupons(command.userId(), couponPolicies);
+        List<UserCoupon> issuedCoupons = couponPolicies.isEmpty()
+                ? List.of()
+                : issueCoupons(command.userId(), couponPolicies);
 
         int mileageRate = calculateMileageRate(courseRewardInfo.correctCount());
         int mileageAmount = calculateMileageAmount(courseRewardInfo.coursePrice(), mileageRate);
@@ -159,4 +155,14 @@ public class CourseRewardService implements CourseRewardUseCase {
         return (int) Math.floor(price * (mileageRate / 100.0));
     }
 
+<<<<<<< HEAD
+=======
+    public record CourseRewardResult(
+            CourseReward courseReward,
+            List<UserCoupon> issuedCoupons,
+            MileageHistory mileageHistory,
+            int mileageRate
+    ) {
+    }
+>>>>>>> 9e394e2220795389f2b87882ee1f5f7586ebffc6
 }

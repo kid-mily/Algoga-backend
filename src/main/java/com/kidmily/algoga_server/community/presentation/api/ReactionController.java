@@ -13,7 +13,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -33,10 +33,11 @@ public class ReactionController {
             "COMMENT_NOT_FOUND"
     })
     public ResponseEntity<ApiResponse<ToggleReactionResponse>> toggleReaction(
-            @Valid @RequestBody ToggleReactionRequest request
+            @Valid @RequestBody ToggleReactionRequest request,
+            @AuthenticationPrincipal CustomUserDetails userDetails
     ) {
-        Long currentUserId = ((CustomUserDetails) SecurityContextHolder.getContext()
-                .getAuthentication().getPrincipal()).getUser().getId();
+        Long currentUserId = userDetails.getUser().getId();
+
 
         ToggleReactionCommand command = new ToggleReactionCommand(
                 currentUserId,

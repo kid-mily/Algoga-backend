@@ -35,9 +35,23 @@ jobs:
             # 5. 새롭게 빌드된 jar 파일 경로 찾기 (-plain.jar는 제외하는 정규식)
             JAR_PATH=$(ls build/libs/*.jar | grep -v 'plain' | tail -n 1)
             
-            # 6. kidmily 라는 이름의 새 tmux 세션을 백그라운드(-d)로 생성
+            # 6. .env 파일의 줄바꿈 문자를 리눅스(LF) 형식으로 안전하게 변환
+            dos2unix /home/ubuntu/kidmily/.env
+            
+            # 7. kidmily 라는 이름의 새 tmux 세션을 백그라운드(-d)로 생성
             tmux new-session -d -s kidmily
             
-            # 7. 생성된 tmux 세션 안으로 java 실행 명령어와 엔터키(C-m)를 전송
-            echo "새 애플리케이션을 kidmily tmux 세션에서 실행합니다: $JAR_PATH"
+            # 8. 생성된 tmux 세션 안으로 환경변수 로드 및 java 실행 명령어 전송
+            echo "환경변수를 로드하고 새 애플리케이션을 kidmily tmux 세션에서 실행합니다: $JAR_PATH"
+            
+            # 환경변수 자동 export 활성화
+            tmux send-keys -t kidmily "set -a" C-m
+            
+            # .env 파일 로드
+            tmux send-keys -t kidmily "source /home/ubuntu/kidmily/.env" C-m
+            
+            # 환경변수 자동 export 비활성화
+            tmux send-keys -t kidmily "set +a" C-m
+            
+            # Spring Boot 애플리케이션 실행
             tmux send-keys -t kidmily "java -jar $JAR_PATH" C-m

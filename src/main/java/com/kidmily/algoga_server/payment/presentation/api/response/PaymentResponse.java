@@ -17,7 +17,11 @@ public record PaymentResponse(
         Long usedCouponId,
         PaymentStatus status,
         String portonePaymentId,
-        LocalDateTime createdAt
+        LocalDateTime createdAt,
+        // 어드민 상세 필드 (null 가능)
+        String userName,
+        String productName,
+        String paymentMethod
 ) {
     public static PaymentResponse from(Payment payment) {
         return new PaymentResponse(
@@ -31,7 +35,27 @@ public record PaymentResponse(
                 payment.getUsedCouponId(),
                 payment.getStatus(),
                 payment.getPortonePaymentId(),
-                payment.getCreatedAt()
+                payment.getCreatedAt(),
+                null, null, null
+        );
+    }
+
+    public static PaymentResponse fromWithDetail(Payment payment, String userName, String productName, String paymentMethod) {
+        return new PaymentResponse(
+                payment.getId(),
+                payment.getBookingId(),
+                payment.getCourseId(),
+                payment.getUserId(),
+                payment.getPaymentType(),
+                payment.getAmount(),
+                payment.getUsedMileage(),
+                payment.getUsedCouponId(),
+                payment.getStatus(),
+                payment.getPortonePaymentId(),
+                payment.getCreatedAt(),
+                userName,
+                productName,
+                paymentMethod
         );
     }
 }

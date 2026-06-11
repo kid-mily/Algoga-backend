@@ -4,13 +4,9 @@
 ### 관리자 API라서 매니저 토큰 필요
 ### ==========================================================
 
-@managerAccessToken = 여기에_매니저_accessToken_붙여넣기
-@userId = 1
-
 
 ### 콘텐츠 매니저 로그인
-### 실행 후 응답의 data.accessToken을 복사해서 위 managerAccessToken에 붙여넣기
-POST http://localhost:15000/api/v1/admin/auth/login
+POST http://localhost:15000/api/v1/auth/admin/login
 Content-Type: application/json
 Accept: application/json
 
@@ -18,6 +14,14 @@ Accept: application/json
   "loginId": "content_manager_01",
   "password": "password123!"
 }
+
+> {%
+    if (response.status === 200) {
+        client.global.set("managerAccessToken", response.body.data.accessToken);
+        client.log("managerAccessToken 저장 완료");
+        client.log(client.global.get("managerAccessToken"));
+    }
+%}
 
 
 ### 관리자 - 마일리지 목록 조회
@@ -27,13 +31,13 @@ Accept: application/json
 
 
 ### 관리자 - 사용자 마일리지 상세 내역 조회
-GET http://localhost:15000/api/v1/admin/mileages/users/{{userId}}/histories
+GET http://localhost:15000/api/v1/admin/mileages/users/1/histories
 Authorization: Bearer {{managerAccessToken}}
 Accept: application/json
 
 
 ### 관리자 - 마일리지 지급
-POST http://localhost:15000/api/v1/admin/mileages/users/{{userId}}/earn
+POST http://localhost:15000/api/v1/admin/mileages/users/1/earn
 Authorization: Bearer {{managerAccessToken}}
 Content-Type: application/json
 Accept: application/json
@@ -45,7 +49,7 @@ Accept: application/json
 
 
 ### 관리자 - 마일리지 회수
-POST http://localhost:15000/api/v1/admin/mileages/users/{{userId}}/use
+POST http://localhost:15000/api/v1/admin/mileages/users/1/use
 Authorization: Bearer {{managerAccessToken}}
 Content-Type: application/json
 Accept: application/json
@@ -63,6 +67,6 @@ Accept: application/json
 
 
 ### 관리자 - 지급/회수 후 사용자 마일리지 상세 내역 조회
-GET http://localhost:15000/api/v1/admin/mileages/users/{{userId}}/histories
+GET http://localhost:15000/api/v1/admin/mileages/users/3/histories
 Authorization: Bearer {{managerAccessToken}}
 Accept: application/json

@@ -46,6 +46,7 @@ public class FriendCommandService implements FriendCommandUseCase {
             if (status == RelationStatus.BLOCKED) throw new FriendException(FriendErrorCode.ALREADY_BLOCKED);
         }
 
+        // 친구를 요청하기 직전에 내 친구가 100명인지 DB에 count를 날려 확인
         if (friendRepository.countAcceptedFriends(myId) >= 100) {
             throw new FriendException(FriendErrorCode.FRIEND_LIMIT_EXCEEDED);
         }
@@ -67,6 +68,8 @@ public class FriendCommandService implements FriendCommandUseCase {
             throw new FriendException(FriendErrorCode.REQUEST_NOT_FOUND);
         }
 
+        // 요청을 수락하기 직전에 나와 상대방 중 한 명이라도 친구가 100명이 넘는지
+        // 확인하기 위해 DB에 count 쿼리를 2번이나 날리고 있음
         if (friendRepository.countAcceptedFriends(myId) >= 100 || friendRepository.countAcceptedFriends(relation.getRequesterId()) >= 100) {
             throw new FriendException(FriendErrorCode.FRIEND_LIMIT_EXCEEDED);
         }

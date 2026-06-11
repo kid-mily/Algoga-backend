@@ -15,4 +15,11 @@ public interface SpringDataCouponPolicyRepository extends JpaRepository<CouponPo
     Optional<CouponPolicyJpaEntity> findByIdAndCourseIdAndActiveTrue(Long id, Long courseId);
 
     boolean existsByCourseIdAndActiveTrue(Long courseId);
+<<<<<<< HEAD
+=======
+
+    boolean existsByCourseIdAndCouponName(Long courseId, String couponName);
+
+    boolean existsByCourseIdAndCouponNameAndIdNot(Long courseId, String couponName, Long id);
+>>>>>>> 9e394e2220795389f2b87882ee1f5f7586ebffc6
 }

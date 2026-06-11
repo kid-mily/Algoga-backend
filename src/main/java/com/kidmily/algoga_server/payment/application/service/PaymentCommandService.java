@@ -14,6 +14,7 @@ import com.kidmily.algoga_server.lms.domain.repository.CourseRepository;
 import com.kidmily.algoga_server.payment.application.command.CreateLecturePaymentCommand;
 import com.kidmily.algoga_server.payment.application.command.CreatePaymentCommand;
 import com.kidmily.algoga_server.payment.application.usecase.PaymentCommandUseCase;
+import com.kidmily.algoga_server.payment.domain.event.PackagePaymentCompletedEvent;
 import com.kidmily.algoga_server.payment.domain.event.PaymentCompletedEvent;
 import com.kidmily.algoga_server.payment.domain.model.Payment;
 import com.kidmily.algoga_server.payment.domain.model.PaymentStatus;
@@ -24,8 +25,12 @@ import com.kidmily.algoga_server.payment.infrastructure.portone.PortOneClient;
 import com.kidmily.algoga_server.user.domain.User;
 import com.kidmily.algoga_server.user.domain.UserRepository;
 import com.kidmily.algoga_server.user.exception.UserErrorCode;
+import io.micrometer.core.instrument.Counter;
+import io.micrometer.core.instrument.Timer;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Caching;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -35,7 +40,6 @@ import java.util.List;
 
 @Slf4j
 @Service
-@Transactional
 @RequiredArgsConstructor
 public class PaymentCommandService implements PaymentCommandUseCase {
 
@@ -47,12 +51,43 @@ public class PaymentCommandService implements PaymentCommandUseCase {
     private final CourseRepository courseRepository;
     private final UserCouponRepository userCouponRepository;
     private final MileageHistoryRepository mileageHistoryRepository;
+    private final Timer paymentDurationSeconds;
+    private final Counter paymentSuccessTotal;
+    private final Counter paymentFailedTotal;
+    private final Timer portoneApiDurationSeconds;
 
     @Override
     public Long handle(CreatePaymentCommand command) {
         log.info("[PaymentCommandService] 결제 요청 - bookingId: {}, type: {}, amount: {}",
                 command.bookingId(), command.paymentType(), command.amount());
 
+        return paymentDurationSeconds.record(() -> {
+            // PortOne API 호출 시간 측정
+            JsonNode portoneResult = portoneApiDurationSeconds.record(
+                    () -> portOneClient.getPayment(command.portonePaymentId())
+            );
+            String portoneStatus = portoneResult.path("status").asText();
+            int paidAmount = portoneResult.path("amount").path("total").asInt();
+            log.info("[PaymentCommandService] PortOne 검증 결과 - status: {}, amount: {}", portoneStatus, paidAmount);
+
+            Long paymentId = savePayment(command, portoneStatus, paidAmount);
+
+            if ("PAID".equals(portoneStatus)) {
+                paymentSuccessTotal.increment();
+            } else {
+                paymentFailedTotal.increment();
+            }
+
+            return paymentId;
+        });
+    }
+
+    @Caching(evict = {
+            @CacheEvict(value = "myPayments", key = "#command.userId()"),
+            @CacheEvict(value = "adminPaymentStats", key = "'all'")
+    })
+    @Transactional
+    public Long savePayment(CreatePaymentCommand command, String portoneStatus, int paidAmount) {
         Booking booking = bookingRepository.findById(command.bookingId())
                 .orElseThrow(() -> {
                     log.warn("[PaymentCommandService] 예약을 찾을 수 없음 - bookingId: {}", command.bookingId());
@@ -81,11 +116,6 @@ public class PaymentCommandService implements PaymentCommandUseCase {
         }
 
         validateAmount(booking, command.paymentType(), command.amount(), couponDiscount, command.usedMileage());
-
-        JsonNode portoneResult = portOneClient.getPayment(command.portonePaymentId());
-        String portoneStatus = portoneResult.path("status").asText();
-        int paidAmount = portoneResult.path("amount").path("total").asInt();
-        log.info("[PaymentCommandService] PortOne 검증 결과 - status: {}, amount: {}", portoneStatus, paidAmount);
 
         if (paidAmount != command.amount()) {
             log.warn("[PaymentCommandService] 결제 금액 불일치 - 요청: {}, PortOne: {}", command.amount(), paidAmount);
@@ -137,6 +167,18 @@ public class PaymentCommandService implements PaymentCommandUseCase {
                     command.amount(),
                     LocalDateTime.now()
             ));
+            // 캘린더용 패키지 이벤트 발행 승재 추가
+            if (command.paymentType() == PaymentType.DEPOSIT || command.paymentType() == PaymentType.FULL) {
+                eventPublisher.publishEvent(new PackagePaymentCompletedEvent(
+                        user.getId(),
+                        booking.getAccommodationId(),
+                        booking.getId(),
+                        booking.getCheckInDate()
+                ));
+                log.info("[PaymentCommandService] 패키지 캘린더 이벤트 발행 - userId: {}, accommodationId: {}",
+                        user.getId(), booking.getAccommodationId());
+            }
+
         } else {
             payment.markFailed();
             log.warn("[PaymentCommandService] 결제 실패 - portoneStatus: {}", portoneStatus);
@@ -152,7 +194,18 @@ public class PaymentCommandService implements PaymentCommandUseCase {
         log.info("[PaymentCommandService] 강의 단독 결제 요청 - courseId: {}, userId: {}, amount: {}",
                 command.courseId(), command.userId(), command.amount());
 
-        Course course = courseRepository.findByIdAndDeletedFalse(command.courseId())
+        // PortOne API 호출을 트랜잭션 밖에서 먼저 수행
+        JsonNode portoneResult = portOneClient.getPayment(command.portonePaymentId());
+        String portoneStatus = portoneResult.path("status").asText();
+        int paidAmount = portoneResult.path("amount").path("total").asInt();
+        log.info("[PaymentCommandService] PortOne 검증 결과 - status: {}, amount: {}", portoneStatus, paidAmount);
+
+        return saveLecturePayment(command, portoneStatus, paidAmount);
+    }
+
+    @Transactional
+    public Long saveLecturePayment(CreateLecturePaymentCommand command, String portoneStatus, int paidAmount) {
+        courseRepository.findByIdAndDeletedFalse(command.courseId())
                 .orElseThrow(() -> {
                     log.warn("[PaymentCommandService] 강의를 찾을 수 없음 - courseId: {}", command.courseId());
                     return new BusinessException(PaymentErrorCode.COURSE_NOT_FOUND);
@@ -167,7 +220,7 @@ public class PaymentCommandService implements PaymentCommandUseCase {
         });
 
         if (command.usedCouponId() != null) {
-            UserCoupon userCoupon = validateCoupon(command.usedCouponId(), command.userId());
+            validateCoupon(command.usedCouponId(), command.userId());
             log.info("[PaymentCommandService] 강의 쿠폰 적용 - userCouponId: {}", command.usedCouponId());
         }
 
@@ -175,11 +228,6 @@ public class PaymentCommandService implements PaymentCommandUseCase {
             validateMileageBalance(command.userId(), command.usedMileage());
             log.info("[PaymentCommandService] 강의 마일리지 적용 - userId: {}, 마일리지: {}", command.userId(), command.usedMileage());
         }
-
-        JsonNode portoneResult = portOneClient.getPayment(command.portonePaymentId());
-        String portoneStatus = portoneResult.path("status").asText();
-        int paidAmount = portoneResult.path("amount").path("total").asInt();
-        log.info("[PaymentCommandService] PortOne 검증 결과 - status: {}, amount: {}", portoneStatus, paidAmount);
 
         if (paidAmount != command.amount()) {
             log.warn("[PaymentCommandService] 강의 결제 금액 불일치 - 요청: {}, PortOne: {}", command.amount(), paidAmount);
@@ -243,9 +291,15 @@ public class PaymentCommandService implements PaymentCommandUseCase {
     public void handleWebhook(String portonePaymentId) {
         log.info("[PaymentCommandService] 웹훅 수신 - portonePaymentId: {}", portonePaymentId);
 
+        // PortOne API 호출을 트랜잭션 밖에서 먼저 수행
         JsonNode portoneResult = portOneClient.getPayment(portonePaymentId);
         String portoneStatus = portoneResult.path("status").asText();
 
+        processWebhook(portonePaymentId, portoneStatus);
+    }
+
+    @Transactional
+    public void processWebhook(String portonePaymentId, String portoneStatus) {
         paymentRepository.findByPortonePaymentId(portonePaymentId).ifPresent(payment -> {
             if (payment.getStatus() == PaymentStatus.SUCCESS) {
                 log.info("[PaymentCommandService] 웹훅 - 이미 SUCCESS 처리된 결제, 스킵 - portonePaymentId: {}", portonePaymentId);

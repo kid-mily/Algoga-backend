@@ -6,13 +6,20 @@ import com.kidmily.algoga_server.benefit.application.command.RewardCourseCommand
 import com.kidmily.algoga_server.benefit.application.usecase.CourseRewardUseCase;
 import com.kidmily.algoga_server.benefit.exception.BenefitErrorCode;
 import com.kidmily.algoga_server.benefit.presentation.response.CourseRewardResponse;
+<<<<<<< HEAD
 import com.kidmily.algoga_server.benefit.presentation.support.CurrentUserIdResolver;
+=======
+import com.kidmily.algoga_server.user.exception.AuthErrorCode;
+import com.kidmily.algoga_server.user.exception.AuthException;
+import com.kidmily.algoga_server.user.settings.CustomUserDetails;
+>>>>>>> 9e394e2220795389f2b87882ee1f5f7586ebffc6
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
@@ -37,9 +44,9 @@ public class CourseRewardController {
             "COURSE_NOT_FOUND",
             "COURSE_COMPLETION_NOT_FOUND",
             "QUIZ_NOT_SUBMITTED",
-            "COUPON_POLICY_NOT_FOUND",
             "COURSE_REWARD_ALREADY_GRANTED"
     })
+    @PreAuthorize("isAuthenticated()")
     @PostMapping
     public ResponseEntity<ApiResponse<CourseRewardResponse>> rewardCourse(
             @Parameter(description = "강의 ID", example = "3")
@@ -47,7 +54,15 @@ public class CourseRewardController {
 
             @AuthenticationPrincipal Object userDetails
     ) {
+<<<<<<< HEAD
         Long currentUserId = CurrentUserIdResolver.resolveRequired(userDetails);
+=======
+        if (userDetails == null) {
+            throw new AuthException(AuthErrorCode.INVALID_TOKEN);
+        }
+
+        Long currentUserId = userDetails.getUser().getId();
+>>>>>>> 9e394e2220795389f2b87882ee1f5f7586ebffc6
 
         RewardCourseCommand command = new RewardCourseCommand(
                 currentUserId,

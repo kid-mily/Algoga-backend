@@ -13,6 +13,7 @@ import com.kidmily.algoga_server.booking.exception.BookingErrorCode;
 import com.kidmily.algoga_server.global.exception.BusinessException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -32,6 +33,7 @@ public class BookingCommandService implements BookingCommandUseCase {
     private final AccommodationRepository accommodationRepository;
     private final ApplicationEventPublisher eventPublisher;
 
+    @CacheEvict(value = "myBookings", key = "#command.userId()")
     @Override
     public Long handle(CreateBookingCommand command) {
         log.info("[BookingCommandService] 예약 생성 요청 - accommodationId: {}, userId: {}",
@@ -77,6 +79,7 @@ public class BookingCommandService implements BookingCommandUseCase {
         return savedBooking.getId();
     }
 
+    @CacheEvict(value = "myBookings", key = "#userId")
     @Override
     public void cancel(Long bookingId, Long userId) {
         log.info("[BookingCommandService] 예약 취소 요청 - bookingId: {}, userId: {}", bookingId, userId);
@@ -101,7 +104,7 @@ public class BookingCommandService implements BookingCommandUseCase {
 
         bookingRepository.updateStatus(bookingId, BookingStatus.CANCEL_REQUESTED);
 
-        eventPublisher.publishEvent(new BookingCanceledEvent(booking.getAccommodationId()));
+        eventPublisher.publishEvent(new BookingCanceledEvent(booking.getUserId(), booking.getAccommodationId(),  booking.getId()));
 
         log.info("[BookingCommandService] 예약 취소 완료 - bookingId: {}", bookingId);
     }

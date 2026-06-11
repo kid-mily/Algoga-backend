@@ -4,5 +4,8 @@ public record PaymentStatsResponse(
         int year,
         int month,
         int totalAmount,
-        long count
+        long count,
+        int refundAmount,
+        int netAmount,
+        Double growthRate
 ) {}
