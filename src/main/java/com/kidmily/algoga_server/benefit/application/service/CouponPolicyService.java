@@ -76,24 +76,7 @@ public class CouponPolicyService implements CouponPolicyUseCase {
 
     @Override
     @Transactional
-    public void deleteCouponPolicy(Long courseId, Long couponPolicyId) {
-        log.info("[Coupon Policy Command] 쿠폰 정책 삭제 요청. courseId={}, couponPolicyId={}",
-                courseId, couponPolicyId);
-
-        validateCourse(courseId);
-
-        CouponPolicy couponPolicy = couponPolicyRepository.findActiveByIdAndCourseId(couponPolicyId, courseId)
-                .orElseThrow(() -> new BenefitException(BenefitErrorCode.COUPON_POLICY_NOT_FOUND));
-
-        couponPolicyRepository.deactivate(couponPolicy.deactivate());
-
-        log.info("[Coupon Policy Command] 쿠폰 정책 삭제 완료. courseId={}, couponPolicyId={}",
-                courseId, couponPolicyId);
-    }
-
-    @Override
-    @Transactional
-    public CouponPolicy updateCouponPolicy(UpdateCouponPolicyCommand command) {
+    public CouponPolicyResult updateCouponPolicy(UpdateCouponPolicyCommand command) {
         log.info("[Coupon Policy Command] 쿠폰 정책 수정 요청. courseId={}, couponPolicyId={}, couponName={}",
                 command.courseId(), command.couponPolicyId(), command.couponName());
 
@@ -127,7 +110,7 @@ public class CouponPolicyService implements CouponPolicyUseCase {
                 updatedCouponPolicy.getCourseId(),
                 updatedCouponPolicy.getCouponName());
 
-        return updatedCouponPolicy;
+        return CouponPolicyResult.from(updatedCouponPolicy);
     }
 
     @Override

@@ -22,8 +22,6 @@ public interface CouponPolicyRepository {
     void deactivate(CouponPolicy couponPolicy);
 
     boolean existsActiveByCourseId(Long courseId);
-<<<<<<< HEAD
-=======
 
     boolean existsByCourseIdAndCouponName(Long courseId, String couponName);
 
@@ -39,5 +37,4 @@ public interface CouponPolicyRepository {
     );
 
     boolean deactivate(Long couponPolicyId, Long courseId);
->>>>>>> 9e394e2220795389f2b87882ee1f5f7586ebffc6
 }

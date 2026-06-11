@@ -78,8 +78,6 @@ public class CouponPolicyJpaEntity {
     public void deactivate() {
         this.active = false;
     }
-<<<<<<< HEAD
-=======
 
     public void updateBasicInfo(
             String couponName,
@@ -92,5 +90,4 @@ public class CouponPolicyJpaEntity {
         this.discountValue = discountValue;
         this.validDays = validDays;
     }
->>>>>>> 9e394e2220795389f2b87882ee1f5f7586ebffc6
 }

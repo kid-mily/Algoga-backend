@@ -155,14 +155,4 @@ public class CourseRewardService implements CourseRewardUseCase {
         return (int) Math.floor(price * (mileageRate / 100.0));
     }
 
-<<<<<<< HEAD
-=======
-    public record CourseRewardResult(
-            CourseReward courseReward,
-            List<UserCoupon> issuedCoupons,
-            MileageHistory mileageHistory,
-            int mileageRate
-    ) {
-    }
->>>>>>> 9e394e2220795389f2b87882ee1f5f7586ebffc6
 }
