@@ -7,15 +7,34 @@ import java.time.LocalDateTime;
 
 @Schema(description = "Coupon policy response")
 public record CouponPolicyResponse(
+        @Schema(description = "쿠폰 정책 ID", example = "12")
         Long couponPolicyId,
+
+        @Schema(description = "강의 ID", example = "57")
         Long courseId,
+
+        @Schema(description = "쿠폰을 등록한 관리자 ID", example = "3")
         Long managerId,
+
+        @Schema(description = "쿠폰명", example = "웰컴쿠폰")
         String couponName,
+
+        @Schema(description = "할인 타입", example = "RATE")
         String discountType,
+
+        @Schema(description = "할인 값", example = "10")
         int discountValue,
+
+        @Schema(description = "유효 기간 일수", example = "30")
         int validDays,
+
+        @Schema(description = "활성 여부", example = "true")
         boolean active,
+
+        @Schema(description = "생성일시", example = "2026-06-11T10:00:00")
         LocalDateTime createdAt,
+
+        @Schema(description = "수정일시", example = "2026-06-11T10:30:00")
         LocalDateTime updatedAt
 ) {
     public static CouponPolicyResponse from(CouponPolicyResult couponPolicy) {
