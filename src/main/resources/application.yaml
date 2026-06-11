@@ -135,3 +135,11 @@ resilience4j:
         # 항공편 API 타임아웃: 10초 (공공데이터 API라 느릴 수 있음)
         timeout-duration: 10s
         cancel-running-future: true
+
+#엑추에이터 설정
+management:
+  endpoints:
+    web:
+      exposure:
+        # shop 은 custom endpoint 이다.
+        include: "health,info,metrics,prometheus"

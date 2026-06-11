@@ -1,0 +1,19 @@
+server:
+  http_listen_port: 9080
+  grpc_listen_port: 0
+
+positions:
+  filename: /tmp/positions.yaml
+
+clients:
+  - url: http://loki:3100/loki/api/v1/push
+
+scrape_configs:
+  - job_name: algoga-server-logs
+    static_configs:
+      - targets:
+          - localhost
+        labels:
+          job: algoga-server
+          # 로그백 설정에 맞춰 algoga_server 로 시작하는 모든 로그(.log)를 수집합니다.
+          __path__: /var/log/app_logs/algoga_server*.log
