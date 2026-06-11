@@ -139,12 +139,29 @@ public class RefundCommandService implements RefundCommandUseCase {
 
     @Override
     @Transactional
+    public void markUnderReview(Long refundId) {
+        log.info("[RefundCommandService] 환불 검토 요청 - refundId: {}", refundId);
+
+        RefundRequest refundRequest = findRefundOrThrow(refundId);
+
+        if (refundRequest.getStatus() != RefundStatus.REQUESTED) {
+            log.warn("[RefundCommandService] 검토 요청 불가 상태 - status: {}", refundRequest.getStatus());
+            throw new BusinessException(RefundErrorCode.INVALID_REFUND_STATUS);
+        }
+
+        refundRequest.markUnderReview();
+        refundRepository.save(refundRequest);
+        log.info("[RefundCommandService] 환불 검토 요청 완료 - refundId: {}", refundId);
+    }
+
+    @Override
+    @Transactional
     public void approve(Long refundId) {
         log.info("[RefundCommandService] 환불 승인 - refundId: {}", refundId);
 
         RefundRequest refundRequest = findRefundOrThrow(refundId);
 
-        if (refundRequest.getStatus() != RefundStatus.REQUESTED) {
+        if (refundRequest.getStatus() != RefundStatus.UNDER_REVIEW) {
             log.warn("[RefundCommandService] 승인 불가 상태 - status: {}", refundRequest.getStatus());
             throw new BusinessException(RefundErrorCode.INVALID_REFUND_STATUS);
         }
@@ -162,7 +179,8 @@ public class RefundCommandService implements RefundCommandUseCase {
 
         RefundRequest refundRequest = findRefundOrThrow(refundId);
 
-        if (refundRequest.getStatus() != RefundStatus.REQUESTED) {
+        if (refundRequest.getStatus() != RefundStatus.REQUESTED
+                && refundRequest.getStatus() != RefundStatus.UNDER_REVIEW) {
             log.warn("[RefundCommandService] 반려 불가 상태 - status: {}", refundRequest.getStatus());
             throw new BusinessException(RefundErrorCode.INVALID_REFUND_STATUS);
         }

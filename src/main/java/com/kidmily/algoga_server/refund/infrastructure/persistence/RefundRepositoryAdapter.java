@@ -54,7 +54,20 @@ public class RefundRepositoryAdapter implements RefundRepository {
     }
 
     @Override
+    public List<RefundRequest> findAllByStatusIn(List<RefundStatus> statuses) {
+        return springDataRefundRepository.findAllByStatusIn(statuses)
+                .stream()
+                .map(refundMapper::toDomain)
+                .toList();
+    }
+
+    @Override
     public boolean existsByBookingId(Long bookingId) {
         return springDataRefundRepository.existsByBookingId(bookingId);
+    }
+
+    @Override
+    public boolean existsByUserIdAndStatusIn(Long userId, List<RefundStatus> statuses) {
+        return springDataRefundRepository.existsByUserIdAndStatusIn(userId, statuses);
     }
 }

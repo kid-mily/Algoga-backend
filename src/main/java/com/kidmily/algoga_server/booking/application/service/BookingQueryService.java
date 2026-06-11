@@ -2,6 +2,7 @@ package com.kidmily.algoga_server.booking.application.service;
 
 import com.kidmily.algoga_server.booking.application.usecase.BookingQueryUseCase;
 import com.kidmily.algoga_server.booking.domain.model.Booking;
+import com.kidmily.algoga_server.booking.domain.model.BookingStatus;
 import com.kidmily.algoga_server.booking.domain.repository.BookingRepository;
 import com.kidmily.algoga_server.booking.exception.BookingErrorCode;
 import com.kidmily.algoga_server.booking.presentation.api.response.BookingResponse;
@@ -40,6 +41,13 @@ public class BookingQueryService implements BookingQueryUseCase {
                 .stream()
                 .map(this::toResponse)
                 .toList();
+    }
+
+    @Override
+    public boolean hasActiveBooking(Long userId) {
+        return bookingRepository.existsByUserIdAndStatusIn(
+                userId,
+                List.of(BookingStatus.PENDING, BookingStatus.DEPOSIT_PAID, BookingStatus.FULL_PAID));
     }
 
     private BookingResponse toResponse(Booking booking) {

@@ -45,4 +45,9 @@ public class BookingRepositoryAdapter implements BookingRepository {
         entity.updateStatus(status, LocalDateTime.now());
         return bookingMapper.toDomain(springDataBookingRepository.save(entity));
     }
+
+    @Override
+    public boolean existsByUserIdAndStatusIn(Long userId, List<BookingStatus> statuses) {
+        return springDataBookingRepository.existsByUserIdAndStatusIn(userId, statuses);
+    }
 }
