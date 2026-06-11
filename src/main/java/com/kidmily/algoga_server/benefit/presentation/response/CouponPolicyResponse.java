@@ -5,7 +5,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.time.LocalDateTime;
 
-@Schema(description = "Coupon policy response")
+@Schema(description = "쿠폰 정책 응답")
 public record CouponPolicyResponse(
         @Schema(description = "쿠폰 정책 ID", example = "12")
         Long couponPolicyId,

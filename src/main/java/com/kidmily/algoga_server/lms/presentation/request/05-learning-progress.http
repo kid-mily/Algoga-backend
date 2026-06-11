@@ -42,8 +42,8 @@ Content-Type: application/json
 Accept: application/json
 
 {
-  "username": "test",
-  "password": "password12345"
+  "username": "test1",
+  "password": "test1234"
 }
 
 > {%
@@ -81,12 +81,12 @@ Content-Type: application/json
 Accept: application/json
 
 {
-  "courseId": 4,
-  "userId": 1,
+  "courseId": 76,
+  "userId": 2,
   "amount": 100000,
   "usedMileage": 0,
   "usedCouponId": null,
-  "portonePaymentId": "여기에_PortOne_결제ID"
+  "portonePaymentId": "1"
 }
 
 

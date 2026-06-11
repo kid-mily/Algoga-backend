@@ -4,9 +4,9 @@
 ### 자동 변수 안 될 때 쓰는 수동 토큰 버전
 ### ==========================================================
 
-@managerAccessToken = eyJhbGciOiJIUzM4NCJ9.eyJzdWIiOiJjb250ZW50X21hbmFnZXJfMDEiLCJ0eXBlIjoiQURNSU4iLCJpZCI6Mywicm9sZSI6IlJPTEVfQ09OVEVOVF9NQU5BR0VSIiwiaWF0IjoxNzgxMDgxODIxLCJleHAiOjE3ODEwODM2MjF9.JuePgFxxdNG1gzCL2AQbu21jrxq8hIs3IEq2hz6-ntNK-Jnbs9plbIX_rRAknjg0
-@courseId = 1
-@quizId = 9
+@managerAccessToken = eyJhbGciOiJIUzM4NCJ9.eyJzdWIiOiJjb250ZW50X21hbmFnZXJfMDEiLCJ0eXBlIjoiQURNSU4iLCJpZCI6Mywicm9sZSI6IlJPTEVfQ09OVEVOVF9NQU5BR0VSIiwiaWF0IjoxNzgxMTg3MTQyLCJleHAiOjE3ODExODg5NDJ9.zSH74QQLKKojFp0baZRu3P96AQwJ9r38IJDsn2oLaU21aywMKCd6_ylXaAt-SsVV
+@courseId = 76
+@quizId = 23
 
 
 ### 콘텐츠 매니저 로그인

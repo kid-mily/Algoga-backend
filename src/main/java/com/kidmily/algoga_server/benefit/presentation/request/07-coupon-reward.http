@@ -9,8 +9,8 @@
 ### ==========================================================
 
 @host = http://localhost:15000
-@courseId = 4
-@couponPolicyId = 12
+@courseId = 76
+@couponPolicyId = 14
 
 
 ### Content manager login
@@ -57,7 +57,7 @@ Content-Type: application/json
 Accept: application/json
 
 {
-  "couponName": "Course completion discount coupon",
+  "couponName": "Course completion discount coupon22",
   "discountType": "RATE",
   "discountValue": 10,
   "validDays": 30

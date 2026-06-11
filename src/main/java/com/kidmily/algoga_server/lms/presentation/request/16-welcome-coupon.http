@@ -1,14 +1,51 @@
-### 회원가입
+### =========================================
+### 🌟 [이메일 인증 테스트]
+### =========================================
+
+### 1. 이메일 인증번호 발송 요청
+# 메일을 확인할 수 있는 '진짜 이메일'을 적어주세요!
+POST http://localhost:15000/api/v1/auth/email/send-code
+Content-Type: application/json
+
+{
+  "email": "mac0616@naver.com"
+}
+
+> {%
+    client.test("Request executed successfully", function() {
+        client.assert(response.status === 200, "Response status is not 200");
+    });
+%}
+
+
+### 2. 이메일 인증번호 확인
+# 💡 위 API를 실행하고 실제 메일함으로 날아온 6자리 숫자를 "code"에 적고 실행하세요!
+POST http://localhost:15000/api/v1/auth/email/verify-code
+Content-Type: application/json
+
+{
+  "email": "mac0616@naver.com",
+  "code": "576302"
+}
+
+> {%
+    client.test("Request executed successfully", function() {
+        client.assert(response.status === 200, "Response status is not 200");
+    });
+%}
+
+
+### 3. 회원가입 (이메일 인증 완료 후 진행)
 POST http://localhost:15000/api/v1/auth/signup
 Content-Type: application/json
 Accept: application/json
 
 {
-  "username": "welcomecoupontest3",
-  "email": "welcomecoupontest3@naver.com",
+  "username": "welcomecoupontest4",
+  "email": "mac0616@naver.com",
   "password": "test1234",
-  "name": "새가입3",
-  "phone": "010-3443-9090",
+  "name": "새가입4",
+  "phone": "010-3444-9090",
   "birthDate": "2000-03-02",
   "gender": "FEMALE",
   "nickname": "가입시쿠폰",
@@ -31,7 +68,7 @@ POST http://localhost:15000/api/v1/auth/login
 Content-Type: application/json
 
 {
-  "username": "welcomecoupontest3",
+  "username": "welcomecoupontest4",
   "password": "test1234"
 }
 
