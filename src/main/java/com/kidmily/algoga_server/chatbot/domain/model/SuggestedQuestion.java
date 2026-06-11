@@ -1,23 +1,34 @@
+// chatbot/domain/model/SuggestedQuestion.java
 package com.kidmily.algoga_server.chatbot.domain.model;
 
 import lombok.Builder;
 import lombok.Getter;
-import java.time.Instant;
 
 @Getter
 public class SuggestedQuestion {
-    private Long suggestedQuestionId;
-    private Long managerId;
+    private final Long suggestedQuestionId;
+    
+    // 🌟 값이 수정될 수 있도록 final 제거
     private String question;
     private String answer;
-    private Instant createdAt;
 
     @Builder
-    public SuggestedQuestion(Long suggestedQuestionId, Long managerId, String question, String answer, Instant createdAt) {
+    private SuggestedQuestion(Long suggestedQuestionId, String question, String answer) {
         this.suggestedQuestionId = suggestedQuestionId;
-        this.managerId = managerId;
         this.question = question;
         this.answer = answer;
-        this.createdAt = createdAt;
+    }
+
+    public static SuggestedQuestion create(String question, String answer) {
+        return SuggestedQuestion.builder()
+                .question(question)
+                .answer(answer)
+                .build();
+    }
+
+    // 🌟 상태 변경 비즈니스 로직
+    public void update(String question, String answer) {
+        this.question = question;
+        this.answer = answer;
     }
 }

@@ -5,5 +5,5 @@ import java.util.List;
 
 public interface ChatLogRepository {
     ChatLog save(ChatLog chatLog);
-    List<ChatLog> findByUserId(Long userId);
+    List<ChatLog> findByUserId(Long userId, Long beforeChatLogId, int limit);
 }

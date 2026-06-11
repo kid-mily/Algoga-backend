@@ -3,9 +3,7 @@
 ### 로그인 후 발급받은 실제 JWT 토큰을 아래 주입해 주세요.
 ### =========================================
 @host = http://localhost:15000
-@userToken = eyJhbGciOiJIUzM4NCJ9.eyJzdWIiOiJ0ZXN0QGFsZ29nYS5jb20iLCJ0eXBlIjoiVVNFUiIsImlhdCI6MTc4MTEwMDA2NywiZXhwIjoxNzgxMTAxODY3fQ.3iFAfrCjl1XjzZSnPtolj-a0934NwHycXkLwo0a8_gi8RIBii85Fczkf9TCW_daz
-
-### -----------------------------------------------------------
+@userToken = eyJhbGciOiJIUzM4NCJ9.eyJzdWIiOiJ0ZXN0QGFsZ29nYS5jb20iLCJ0eXBlIjoiVVNFUiIsImlhdCI6MTc4MTE1NTU3MSwiZXhwIjoxNzgxMTU3MzcxfQ.ZAO2qsgjpSAVnmPlE6PkDTl_aZDNs_b4uc4fsoqdc32n35KIpPj9C-pozVYwADaN
 ### 시나리오 [1] 사용자의 실제 질문 테스트
 ### -----------------------------------------------------------
 ### 1. "결제가 중복으로 됬습니다" 질문 요청

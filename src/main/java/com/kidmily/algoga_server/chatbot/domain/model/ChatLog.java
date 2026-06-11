@@ -6,12 +6,12 @@ import java.time.Instant;
 
 @Getter
 public class ChatLog {
-    private Long chatLogId;
-    private Long userId;
-    private String question;
-    private String answer;
-    private boolean isFiltered;
-    private Instant createdAt;
+    private final Long chatLogId;
+    private final Long userId;
+    private final String question;
+    private final String answer;
+    private final boolean isFiltered;
+    private final Instant createdAt;
 
     @Builder
     private ChatLog(Long chatLogId, Long userId, String question, String answer, boolean isFiltered, Instant createdAt) {
@@ -24,14 +24,33 @@ public class ChatLog {
     }
 
     public static ChatLog createNormal(Long userId, String question, String answer) {
-        return ChatLog.builder().userId(userId).question(question).answer(answer).isFiltered(false).createdAt(Instant.now()).build();
+        return ChatLog.builder()
+                .userId(userId)
+                .question(question)
+                .answer(answer)
+                .isFiltered(false)
+                .createdAt(Instant.now())
+                .build();
     }
 
     public static ChatLog createFiltered(Long userId, String question, String rejectMessage) {
-        return ChatLog.builder().userId(userId).question(question).answer(rejectMessage).isFiltered(true).createdAt(Instant.now()).build();
+        return ChatLog.builder()
+                .userId(userId)
+                .question(question)
+                .answer(rejectMessage)
+                .isFiltered(true)
+                .createdAt(Instant.now())
+                .build();
     }
 
     public static ChatLog reconstitute(Long chatLogId, Long userId, String question, String answer, boolean isFiltered, Instant createdAt) {
-        return ChatLog.builder().chatLogId(chatLogId).userId(userId).question(question).answer(answer).isFiltered(isFiltered).createdAt(createdAt).build();
+        return ChatLog.builder()
+                .chatLogId(chatLogId)
+                .userId(userId)
+                .question(question)
+                .answer(answer)
+                .isFiltered(isFiltered)
+                .createdAt(createdAt)
+                .build();
     }
 }

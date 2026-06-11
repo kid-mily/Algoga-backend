@@ -1,3 +1,4 @@
+// global/ratelimit/RedisRateLimitConfig.java
 package com.kidmily.algoga_server.global.ratelimit;
 
 import io.github.bucket4j.distributed.ExpirationAfterWriteStrategy;
@@ -40,11 +41,11 @@ public class RedisRateLimitConfig {
             }
 
             RedisClient redisClient = RedisClient.create(uriBuilder.build());
-            // 🌟 여기서 Redis 연결을 시도합니다. (꺼져있으면 예외 발생)
             StatefulRedisConnection<byte[], byte[]> connection = redisClient.connect(ByteArrayCodec.INSTANCE);
 
+            // 🌟 수정됨: 도메인별 최대 제한 시간(1시간)보다 넉넉하게 2시간으로 TTL 연장
             ClientSideConfig clientSideConfig = ClientSideConfig.getDefault()
-                    .withExpirationAfterWriteStrategy(ExpirationAfterWriteStrategy.fixedTimeToLive(Duration.ofMinutes(10)));
+                    .withExpirationAfterWriteStrategy(ExpirationAfterWriteStrategy.fixedTimeToLive(Duration.ofHours(2)));
 
             log.info("[Bucket4j] Redis Proxy Manager가 성공적으로 연결되었습니다. (Host: {})", redisHost);
             return LettuceBasedProxyManager.builderFor(connection)
@@ -53,7 +54,6 @@ public class RedisRateLimitConfig {
 
         } catch (Exception e) {
             log.error("[Bucket4j] Redis 연결 또는 ProxyManager 생성 실패! 원인: {}", e.getMessage());
-            // Redis가 꺼져있어 연결 실패 시, 스프링이 터지지 않도록 null 반환 (실제 API 호출 시점에 에러가 남)
             throw new IllegalStateException("Redis 연동 실패. Redis 서버가 켜져있는지 확인하세요.", e);
         }
     }

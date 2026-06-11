@@ -1,7 +1,5 @@
-// chatbot/presentation/api/request/UpdateJudgmentQuestionRequest.java
 package com.kidmily.algoga_server.chatbot.presentation.api.request;
 
-import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 

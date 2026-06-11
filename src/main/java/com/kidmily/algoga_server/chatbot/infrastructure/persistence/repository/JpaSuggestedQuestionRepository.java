@@ -1,4 +1,3 @@
-// chatbot/infrastructure/persistence/repository/JpaSuggestedQuestionRepository.java
 package com.kidmily.algoga_server.chatbot.infrastructure.persistence.repository;
 
 import com.kidmily.algoga_server.chatbot.infrastructure.persistence.entity.SuggestedQuestionEntity;

@@ -12,16 +12,29 @@ import java.time.Instant;
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class JudgmentQuestionEntity {
-    @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long judgmentQuestionId;
 
-    @Column(nullable = false) private Long managerId;
-    @Column(nullable = false, columnDefinition = "TEXT") private String question;
-    @Column(nullable = false, columnDefinition = "TEXT") private String answer;
-    @Column(nullable = false, updatable = false) private Instant createdAt;
+    @Column(nullable = false)
+    private Long managerId;
+
+    @Column(nullable = false, columnDefinition = "TEXT")
+    private String question;
+
+    @Column(nullable = false, columnDefinition = "TEXT")
+    private String answer;
+
+    @Column(nullable = false, updatable = false)
+    private Instant createdAt;
 
     @Builder
     public JudgmentQuestionEntity(Long judgmentQuestionId, Long managerId, String question, String answer, Instant createdAt) {
-        this.judgmentQuestionId = judgmentQuestionId; this.managerId = managerId; this.question = question; this.answer = answer; this.createdAt = createdAt;
+        this.judgmentQuestionId = judgmentQuestionId;
+        this.managerId = managerId;
+        this.question = question;
+        this.answer = answer;
+        this.createdAt = createdAt;
     }
 }

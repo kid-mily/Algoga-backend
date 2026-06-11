@@ -1,4 +1,3 @@
-// chatbot/application/usecase/ChatbotCommandUseCase.java
 package com.kidmily.algoga_server.chatbot.application.usecase;
 
 import com.kidmily.algoga_server.chatbot.application.command.AskChatbotCommand;

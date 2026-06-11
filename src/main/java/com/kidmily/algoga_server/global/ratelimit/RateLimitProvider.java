@@ -14,11 +14,12 @@ public class RateLimitProvider {
 
     private final ProxyManager<byte[]> proxyManager;
 
-    public Bucket getBucket(RateLimitPolicy policy, Long userId) {
-        String key = "rate_limit:" + policy.getDomainPrefix() + ":" + userId;
+    // 🌟 수정됨: Long userId 대신 String identifier를 받아 범용적으로 사용
+    public Bucket getBucket(RateLimitPolicy policy, String identifier) {
+        String key = "rate_limit:" + policy.getDomainPrefix() + ":" + identifier;
         byte[] keyBytes = key.getBytes(StandardCharsets.UTF_8);
-
-        // 도메인이 만든 섬세한 BucketConfiguration을 그대로 사용!
+        
+        // 캐시에 존재하면 가져오고, 없으면 BucketConfiguration에 따라 새로 생성
         return proxyManager.builder().build(keyBytes, policy::getBucketConfiguration);
     }
 }

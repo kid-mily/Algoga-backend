@@ -2,6 +2,7 @@ package com.kidmily.algoga_server.inquiry.application.service;
 
 import com.kidmily.algoga_server.inquiry.application.usecase.InquiryCommandUseCase;
 import com.kidmily.algoga_server.inquiry.domain.model.Inquiry;
+import com.kidmily.algoga_server.inquiry.domain.model.InquiryCategory;
 import com.kidmily.algoga_server.inquiry.domain.repository.InquiryRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -15,8 +16,8 @@ public class InquiryCommandService implements InquiryCommandUseCase {
 
     @Override
     @Transactional
-    public void createInquiry(Long userId, String question) {
-        Inquiry manualInquiry = Inquiry.createPending(userId, question);
+    public void createInquiry(Long userId, InquiryCategory category, String title, String content) {
+        Inquiry manualInquiry = Inquiry.createPending(userId, category, title, content);
         inquiryRepository.save(manualInquiry);
     }
 }

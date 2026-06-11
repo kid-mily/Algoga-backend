@@ -2,11 +2,10 @@ package com.kidmily.algoga_server.chatbot.infrastructure.persistence;
 
 import com.kidmily.algoga_server.chatbot.domain.model.SuggestedQuestion;
 import com.kidmily.algoga_server.chatbot.domain.repository.SuggestedQuestionRepository;
-import com.kidmily.algoga_server.chatbot.infrastructure.persistence.entity.SuggestedQuestionEntity;
+import com.kidmily.algoga_server.chatbot.infrastructure.mapper.SuggestedQuestionMapper;
 import com.kidmily.algoga_server.chatbot.infrastructure.persistence.repository.JpaSuggestedQuestionRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
-
 import java.util.List;
 import java.util.Optional;
 
@@ -14,29 +13,26 @@ import java.util.Optional;
 @RequiredArgsConstructor
 public class SuggestedQuestionRepositoryAdapter implements SuggestedQuestionRepository {
 
-    private final JpaSuggestedQuestionRepository jpaRepository;
+    private final JpaSuggestedQuestionRepository repo;
+    private final SuggestedQuestionMapper mapper;
 
     @Override
     public Optional<SuggestedQuestion> findById(Long suggestedQuestionId) {
-        return jpaRepository.findById(suggestedQuestionId)
-                .map(this::toDomain);
+        return repo.findById(suggestedQuestionId).map(mapper::toDomain);
     }
 
     @Override
     public List<SuggestedQuestion> findAll() {
-        return jpaRepository.findAll().stream()
-                .map(this::toDomain)
-                .toList();
+        return repo.findAll().stream().map(mapper::toDomain).toList();
     }
 
-    // MapStruct를 사용해도 되고, 직접 매퍼 메서드를 작성해도 됩니다.
-    private SuggestedQuestion toDomain(SuggestedQuestionEntity entity) {
-        return SuggestedQuestion.builder()
-                .suggestedQuestionId(entity.getSuggestedQuestionId())
-                .managerId(entity.getManagerId())
-                .question(entity.getQuestion())
-                .answer(entity.getAnswer())
-                .createdAt(entity.getCreatedAt())
-                .build();
+    @Override
+    public SuggestedQuestion save(SuggestedQuestion domain) {
+        return mapper.toDomain(repo.save(mapper.toJpaEntity(domain)));
+    }
+
+    @Override
+    public void deleteById(Long suggestedQuestionId) {
+        repo.deleteById(suggestedQuestionId);
     }
 }

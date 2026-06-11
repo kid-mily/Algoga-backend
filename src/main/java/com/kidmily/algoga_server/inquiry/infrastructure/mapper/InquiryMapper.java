@@ -9,12 +9,12 @@ import org.mapstruct.MappingConstants;
 public interface InquiryMapper {
     InquiryEntity toJpaEntity(Inquiry inquiry);
 
-    default Inquiry toDomain(InquiryEntity jpaEntity) {
-        if (jpaEntity == null) return null;
+    default Inquiry toDomain(InquiryEntity entity) {
+        if (entity == null) return null;
         return Inquiry.reconstitute(
-                jpaEntity.getInquiryId(), jpaEntity.getUserId(), jpaEntity.getManagerId(),
-                jpaEntity.getQuestion(), jpaEntity.getAnswer(), jpaEntity.getStatus(),
-                jpaEntity.getCreatedAt(), jpaEntity.getAnsweredAt()
+                entity.getInquiryId(), entity.getUserId(), entity.getManagerId(),
+                entity.getCategory(), entity.getTitle(), entity.getContent(),
+                entity.getAnswer(), entity.getStatus(), entity.getCreatedAt(), entity.getAnsweredAt()
         );
     }
 }
