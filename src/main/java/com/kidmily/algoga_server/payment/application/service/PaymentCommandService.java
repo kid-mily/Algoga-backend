@@ -25,6 +25,8 @@ import com.kidmily.algoga_server.payment.infrastructure.portone.PortOneClient;
 import com.kidmily.algoga_server.user.domain.User;
 import com.kidmily.algoga_server.user.domain.UserRepository;
 import com.kidmily.algoga_server.user.exception.UserErrorCode;
+import io.micrometer.core.instrument.Counter;
+import io.micrometer.core.instrument.Timer;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.CacheEvict;
@@ -49,19 +51,35 @@ public class PaymentCommandService implements PaymentCommandUseCase {
     private final CourseRepository courseRepository;
     private final UserCouponRepository userCouponRepository;
     private final MileageHistoryRepository mileageHistoryRepository;
+    private final Timer paymentDurationSeconds;
+    private final Counter paymentSuccessTotal;
+    private final Counter paymentFailedTotal;
+    private final Timer portoneApiDurationSeconds;
 
     @Override
     public Long handle(CreatePaymentCommand command) {
         log.info("[PaymentCommandService] 결제 요청 - bookingId: {}, type: {}, amount: {}",
                 command.bookingId(), command.paymentType(), command.amount());
 
-        // PortOne API 호출을 트랜잭션 밖에서 먼저 수행
-        JsonNode portoneResult = portOneClient.getPayment(command.portonePaymentId());
-        String portoneStatus = portoneResult.path("status").asText();
-        int paidAmount = portoneResult.path("amount").path("total").asInt();
-        log.info("[PaymentCommandService] PortOne 검증 결과 - status: {}, amount: {}", portoneStatus, paidAmount);
+        return paymentDurationSeconds.record(() -> {
+            // PortOne API 호출 시간 측정
+            JsonNode portoneResult = portoneApiDurationSeconds.record(
+                    () -> portOneClient.getPayment(command.portonePaymentId())
+            );
+            String portoneStatus = portoneResult.path("status").asText();
+            int paidAmount = portoneResult.path("amount").path("total").asInt();
+            log.info("[PaymentCommandService] PortOne 검증 결과 - status: {}, amount: {}", portoneStatus, paidAmount);
 
-        return savePayment(command, portoneStatus, paidAmount);
+            Long paymentId = savePayment(command, portoneStatus, paidAmount);
+
+            if ("PAID".equals(portoneStatus)) {
+                paymentSuccessTotal.increment();
+            } else {
+                paymentFailedTotal.increment();
+            }
+
+            return paymentId;
+        });
     }
 
     @Caching(evict = {

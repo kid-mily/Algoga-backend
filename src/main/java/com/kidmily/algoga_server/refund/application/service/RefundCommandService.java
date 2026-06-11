@@ -16,6 +16,7 @@ import com.kidmily.algoga_server.refund.domain.model.RefundRequest;
 import com.kidmily.algoga_server.refund.domain.model.RefundStatus;
 import com.kidmily.algoga_server.refund.domain.repository.RefundRepository;
 import com.kidmily.algoga_server.refund.exception.RefundErrorCode;
+import io.micrometer.core.instrument.Counter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
@@ -34,8 +35,11 @@ public class RefundCommandService implements RefundCommandUseCase {
     private final RefundRepository refundRepository;
     private final BookingRepository bookingRepository;
     private final PaymentRepository paymentRepository;
-    private final PortOneClient portOneClient; // 추가
-    private final ApplicationEventPublisher eventPublisher; // 🌟승재 추가
+    private final PortOneClient portOneClient;
+    private final ApplicationEventPublisher eventPublisher;
+    private final Counter refundRequestedTotal;
+    private final Counter refundApprovedTotal;
+    private final Counter refundRejectedTotal;
 
     @Override
     @Transactional
@@ -79,6 +83,7 @@ public class RefundCommandService implements RefundCommandUseCase {
         log.info("[RefundCommandService] 환불 요청 완료 - refundId: {}, amount: {}",
                 saved.getId(), saved.getAmount());
 
+        refundRequestedTotal.increment();
         return saved.getId();
     }
 
@@ -147,6 +152,7 @@ public class RefundCommandService implements RefundCommandUseCase {
         refundRequest.approve();
         refundRepository.save(refundRequest);
         log.info("[RefundCommandService] 환불 승인 완료 - refundId: {}", refundId);
+        refundApprovedTotal.increment();
     }
 
     @Override
@@ -164,6 +170,7 @@ public class RefundCommandService implements RefundCommandUseCase {
         refundRequest.reject(rejectReason);
         refundRepository.save(refundRequest);
         log.info("[RefundCommandService] 환불 반려 완료 - refundId: {}", refundId);
+        refundRejectedTotal.increment();
 
         // payment 조회해서 강의/패키지 구분 승재 추가
         Payment payment = paymentRepository.findById(refundRequest.getPaymentId())
