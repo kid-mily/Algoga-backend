@@ -32,6 +32,9 @@ public record PostResponse(
         @Schema(description = "나라 ID", example = "1")
         Long countryId,
 
+        @Schema(description = "나라 이름", example = "일본")
+        String countryName,
+
         @Schema(description = "수강 강의 ID", example = "3")
         Long lectureId,
 

@@ -47,6 +47,9 @@ public record PostListItemResponse(
         @Schema(description = "댓글 수", example = "45")
         Long commentCount,
 
+        @Schema(description = "조회수", example = "234")
+        Integer viewCount,
+
         @Schema(description = "작성일시")
         LocalDateTime createdAt
 ) {}

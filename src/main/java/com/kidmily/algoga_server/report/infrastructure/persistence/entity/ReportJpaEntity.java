@@ -1,6 +1,7 @@
 package com.kidmily.algoga_server.report.infrastructure.persistence.entity;
 
 import com.kidmily.algoga_server.report.domain.model.ReasonType;
+import com.kidmily.algoga_server.report.domain.model.ReportStatus;
 import com.kidmily.algoga_server.report.domain.model.TargetType;
 import jakarta.persistence.*;
 import lombok.*;
@@ -39,6 +40,11 @@ public class ReportJpaEntity {
 
     @Column(name = "detail", length = 255)
     private String detail;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "status", nullable = false, columnDefinition = "VARCHAR(20) NOT NULL DEFAULT 'RECEIVED'")
+    @Builder.Default
+    private ReportStatus status = ReportStatus.RECEIVED;
 
     @Column(name = "created_at")
     private LocalDateTime createdAt;

@@ -171,4 +171,9 @@ public class Post {
             throw new PostException(PostErrorCode.POST_IMAGE_COUNT_EXCEEDED);
         }
     }
+
+    // 관리자에 의한 게시글 삭제 (작성자 권한 검증 없음)
+    public void deleteByAdmin() {
+        this.isDeleted = true;
+    }
 }

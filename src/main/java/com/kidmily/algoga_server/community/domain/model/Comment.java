@@ -93,4 +93,9 @@ public class Comment {
             throw new CommentException(PostErrorCode.COMMENT_NOT_FOUND);
         }
     }
+
+    // 관리자에 의한 댓글 삭제 (작성자 권한 검증 없음)
+    public void deleteByAdmin() {
+        this.deleted = true;
+    }
 }

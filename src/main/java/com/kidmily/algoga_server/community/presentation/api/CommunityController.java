@@ -1,5 +1,6 @@
 package com.kidmily.algoga_server.community.presentation.api;
 
+import com.kidmily.algoga_server.admin.settings.annotation.CurrentManager;
 import com.kidmily.algoga_server.community.application.command.*;
 import com.kidmily.algoga_server.community.application.port.UserPort;
 import com.kidmily.algoga_server.community.application.usecase.CommentCommandUseCase;
@@ -8,6 +9,7 @@ import com.kidmily.algoga_server.community.application.usecase.PostQueryUseCase;
 import com.kidmily.algoga_server.community.domain.model.Comment;
 import com.kidmily.algoga_server.community.exception.PostErrorCode;
 import com.kidmily.algoga_server.community.domain.model.PostTagType;
+import com.kidmily.algoga_server.community.exception.PostException;
 import com.kidmily.algoga_server.community.presentation.api.request.*;
 import com.kidmily.algoga_server.community.presentation.api.response.*;
 import com.kidmily.algoga_server.global.annotation.swagger.ApiErrorCodeExample;
@@ -21,6 +23,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
@@ -49,12 +52,15 @@ public class CommunityController {
             "POST_COURSE_TAG_LIMIT_EXCEEDED",
             "POST_IMAGE_COUNT_EXCEEDED",
             "POST_IMAGE_SIZE_EXCEEDED",
-            "POST_UNAUTHORIZED"
+            "ACCOUNT_TYPE_FORBIDDEN"
     })
     public ResponseEntity<ApiResponse<CreatePostResponse>> createPost(
             @Valid @ModelAttribute CreatePostRequest request,
-            @AuthenticationPrincipal CustomUserDetails userDetails
+            @AuthenticationPrincipal Object principal
     ) {
+        if (!(principal instanceof CustomUserDetails userDetails)) {
+            throw new PostException(PostErrorCode.ACCOUNT_TYPE_FORBIDDEN);
+        }
         Long currentUserId = userDetails.getUser().getId();
 
         CreatePostCommand command = new CreatePostCommand(
@@ -85,16 +91,28 @@ public class CommunityController {
         return ResponseEntity.ok(ApiResponse.success("CATEGORIES_FOUND", "카테고리 목록 조회에 성공했습니다.", responseData));
     }
 
+    @GetMapping("/filters")
+    @Operation(summary = "게시글 목록 필터 태그 조회",
+            description = "게시글 목록 화면에서 사용하는 카테고리 태그 + 인기 나라 태그(게시글 수 상위 5개)를 함께 조회합니다.")
+    public ResponseEntity<ApiResponse<List<TagResponse>>> getPostFilterTags() {
+        List<TagResponse> responseData = postQueryUseCase.getPostFilterTags();
+        return ResponseEntity.ok(ApiResponse.success("POST_FILTER_TAGS_FOUND", "필터 태그 목록 조회에 성공했습니다.", responseData));
+    }
+
     @GetMapping
-    @Operation(summary = "게시글 목록 조회", description = "무한 스크롤 방식으로 게시글 목록을 조회합니다. 카테고리 필터링 가능 (다중 선택 가능).")
+    @Operation(summary = "게시글 목록 조회",
+            description = "무한 스크롤 방식으로 게시글 목록을 조회합니다. 카테고리(다중 선택)와 나라 필터링이 가능하며, 두 조건은 AND로 결합됩니다.")
     public ResponseEntity<ApiResponse<PostListResponse>> getPosts(
             @Parameter(description = "마지막 게시글 ID (첫 페이지는 생략)", example = "420")
             @RequestParam(required = false) Long lastPostId,
 
             @Parameter(description = "필터링할 카테고리 (다중 선택 가능, 생략 시 전체)", example = "QUESTION,TRAVEL_REVIEW")
-            @RequestParam(required = false) List<PostTagType> categories
+            @RequestParam(required = false) List<PostTagType> categories,
+
+            @Parameter(description = "필터링할 나라 ID (인기 나라 태그 클릭 시 사용)", example = "1")
+            @RequestParam(required = false) Long countryId
     ) {
-        PostListResponse responseData = postQueryUseCase.getPosts(lastPostId, categories);
+        PostListResponse responseData = postQueryUseCase.getPosts(lastPostId, categories, countryId);
         return ResponseEntity.ok(ApiResponse.success("POSTS_FOUND", "게시글 목록 조회에 성공했습니다.", responseData));
     }
 
@@ -105,14 +123,18 @@ public class CommunityController {
             "POST_NOT_FOUND",
             "POST_UPDATE_FORBIDDEN",
             "POST_CATEGORY_INVALID",
-            "POST_FREE_TAG_LIMIT_EXCEEDED"
+            "POST_FREE_TAG_LIMIT_EXCEEDED",
+            "ACCOUNT_TYPE_FORBIDDEN"
     })
     public ResponseEntity<ApiResponse<UpdatePostResponse>> updatePost(
             @Parameter(description = "게시글 ID", example = "1")
             @PathVariable Long postId,
             @Valid @ModelAttribute UpdatePostRequest request,
-            @AuthenticationPrincipal CustomUserDetails userDetails
+            @AuthenticationPrincipal Object principal
     ) {
+        if (!(principal instanceof CustomUserDetails userDetails)) {
+            throw new PostException(PostErrorCode.ACCOUNT_TYPE_FORBIDDEN);
+        }
         Long currentUserId = userDetails.getUser().getId();
 
         UpdatePostCommand command = new UpdatePostCommand(
@@ -137,14 +159,18 @@ public class CommunityController {
     @Operation(summary = "게시글 삭제", description = "본인 게시글을 Soft Delete 처리합니다. 연관 댓글도 함께 삭제됩니다.")
     @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "204", description = "게시글이 성공적으로 삭제되었습니다. (반환 바디 없음)")
     @ApiErrorCodeExample(domain = PostErrorCode.class, value = {
-            "POST_NOT_FOUND",          // 404 Not Found (스웨거 명세에 확실하게 추가 완료)
+            "POST_NOT_FOUND",          // 404 Not Found
             "POST_DELETE_FORBIDDEN",   // 403 Forbidden (본인 글이 아닐 때)
+            "ACCOUNT_TYPE_FORBIDDEN"
     })
     public ResponseEntity<Void> deletePost(
             @Parameter(description = "게시글 ID", example = "1")
             @PathVariable Long postId,
-            @AuthenticationPrincipal CustomUserDetails userDetails
+            @AuthenticationPrincipal Object principal
     ) {
+        if (!(principal instanceof CustomUserDetails userDetails)) {
+            throw new PostException(PostErrorCode.ACCOUNT_TYPE_FORBIDDEN);
+        }
         Long currentUserId = userDetails.getUser().getId();
 
 
@@ -172,14 +198,17 @@ public class CommunityController {
     @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "201", description = "댓글 작성에 성공했습니다.")
     @ApiErrorCodeExample(domain = PostErrorCode.class, value = {
             "POST_NOT_FOUND",       // 404 존재하지 않는 게시글
-            "COMMENT_UNAUTHORIZED"     // 401 비로그인
+            "ACCOUNT_TYPE_FORBIDDEN"    // 403
     })
     public ResponseEntity<ApiResponse<CreateCommentResponse>> createComment(
             @Parameter(description = "게시글 ID", example = "1")
             @PathVariable Long postId,
             @RequestBody @Valid CreateCommentRequest request,
-            @AuthenticationPrincipal CustomUserDetails userDetails
+            @AuthenticationPrincipal Object principal
     ) {
+        if (!(principal instanceof CustomUserDetails userDetails)) {
+            throw new PostException(PostErrorCode.ACCOUNT_TYPE_FORBIDDEN);
+        }
         Long currentUserId = userDetails.getUser().getId();
 
 
@@ -204,6 +233,49 @@ public class CommunityController {
 
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(ApiResponse.created("COMMENT_CREATED", "댓글 작성에 성공했습니다.", responseData));
+    }
+
+
+    // 관리자의 유저별 게시글 목록 조회 페이징 방식
+    @PreAuthorize("hasAnyRole('CS_MANAGER', 'SUPER_ADMIN')")
+    @GetMapping("/admin/users/{userId}")
+    @Operation(summary = "유저별 게시글 목록 조회 (관리자용)", description = "CS 관리자가 특정 유저가 작성한 게시글 목록을 페이지 번호 기반으로 조회합니다.")
+    public ResponseEntity<ApiResponse<AdminPostListResponse>> getUserPosts(
+            @PathVariable Long userId,
+            @Parameter(description = "페이지 번호 (1부터 시작)", example = "1")
+            @RequestParam(defaultValue = "1") Integer index,
+            @CurrentManager Long managerId
+    ) {
+        AdminPostListResponse responseData = postQueryUseCase.getMyPostsByPage(userId, index, null);
+        return ResponseEntity.ok(ApiResponse.success("ADMIN_USER_POSTS_FOUND", "유저별 게시글 목록 조회에 성공했습니다.", responseData));
+    }
+
+    // 관리자의 유저별 게시글 상세 조회(조회수 증가 없음)
+    @PreAuthorize("hasAnyRole('CS_MANAGER', 'SUPER_ADMIN')")
+    @GetMapping("/admin/{postId}")
+    @Operation(summary = "게시글 상세 조회 (관리자용)", description = "CS 관리자가 게시글 상세 내용을 조회합니다. 조회수는 증가하지 않습니다.")
+    @ApiErrorCodeExample(domain = PostErrorCode.class, value = {"POST_NOT_FOUND"})
+    public ResponseEntity<ApiResponse<PostResponse>> getPostForAdmin(
+            @PathVariable Long postId,
+            @CurrentManager Long managerId
+    ) {
+        PostResponse responseData = postQueryUseCase.getPostForAdmin(postId);
+        return ResponseEntity.ok(ApiResponse.success("ADMIN_POST_FOUND", "게시글 상세 조회에 성공했습니다.", responseData));
+    }
+
+    // 관리자의 게시글 삭제 (소프트 딜리트)
+    @PreAuthorize("hasAnyRole('CS_MANAGER', 'SUPER_ADMIN')")
+    @DeleteMapping("/admin/{postId}")
+    @Operation(summary = "게시글 삭제 (관리자용)", description = "CS 관리자가 부적절한 게시글을 Soft Delete 처리합니다. 연관 댓글도 함께 삭제됩니다.")
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "204", description = "게시글이 성공적으로 삭제되었습니다. (반환 바디 없음)")
+    @ApiErrorCodeExample(domain = PostErrorCode.class, value = {"POST_NOT_FOUND"})
+    public ResponseEntity<Void> deletePostByAdmin(
+            @Parameter(description = "게시글 ID", example = "1")
+            @PathVariable Long postId,
+            @CurrentManager Long managerId
+    ) {
+        postCommandUseCase.handle(new AdminDeletePostCommand(postId));
+        return ResponseEntity.noContent().build();
     }
 
 }

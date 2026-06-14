@@ -22,6 +22,7 @@ public class Report {
     private ReasonType reasonType;
     private String detail;
     private LocalDateTime createdAt;
+    private ReportStatus status;
 
     private Report(Long userId, Long reportedUserId, Long targetId, TargetType targetType,
                    ReasonType reasonType, String detail) {
@@ -32,11 +33,12 @@ public class Report {
         this.targetType = targetType;
         this.reasonType = reasonType;
         this.detail = detail;
+        this.status = ReportStatus.RECEIVED;
         this.createdAt = LocalDateTime.now();
     }
 
     private Report(Long reportId, Long userId, Long reportedUserId, Long targetId, TargetType targetType,
-                   ReasonType reasonType, String detail, LocalDateTime createdAt) {
+                   ReasonType reasonType, String detail, ReportStatus status, LocalDateTime createdAt) {
         this.reportId = reportId;
         this.userId = userId;
         this.reportedUserId = reportedUserId;
@@ -44,6 +46,7 @@ public class Report {
         this.targetType = targetType;
         this.reasonType = reasonType;
         this.detail = detail;
+        this.status = status;
         this.createdAt = createdAt;
     }
 
@@ -60,13 +63,18 @@ public class Report {
 
     public static Report reconstitute(Long reportId, Long userId, Long reportedUserId, Long targetId,
                                       TargetType targetType, ReasonType reasonType,
-                                      String detail, LocalDateTime createdAt) {
-        return new Report(reportId, userId, reportedUserId, targetId, targetType, reasonType, detail, createdAt);
+                                      String detail, ReportStatus status, LocalDateTime createdAt) {
+        return new Report(reportId, userId, reportedUserId, targetId, targetType, reasonType, detail, status, createdAt);
     }
 
     private void validateDetail(String detail) {
         if (detail != null && detail.length() > MAX_DETAIL_LENGTH) {
             throw new ReportException(ReportErrorCode.REPORT_DETAIL_TOO_LONG);
         }
+    }
+
+    // 어드민이 신고 처리 상태를 변경할 때 사용 (반려/처리완료)
+    public void updateStatus(ReportStatus status) {
+        this.status = status;
     }
 }

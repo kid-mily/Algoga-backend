@@ -21,10 +21,10 @@ public class CommunityReportTargetAdapter implements ReportTargetPort {
     public Optional<ReportTargetInfo> findTargetInfo(TargetType targetType, Long targetId) {
         if (targetType == TargetType.POST) {
             return postRepository.findById(targetId)
-                    .map(post -> new ReportTargetInfo(post.getAuthorId()));
+                    .map(post -> new ReportTargetInfo(post.getAuthorId(), post.getTitle(), post.getContent()));
         } else {
             return commentRepository.findById(targetId)
-                    .map(comment -> new ReportTargetInfo(comment.getUserId()));
+                    .map(comment -> new ReportTargetInfo(comment.getUserId(), null, comment.getContent()));
         }
     }
 }

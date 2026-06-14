@@ -1,9 +1,6 @@
 package com.kidmily.algoga_server.community.application.service;
 
 import com.kidmily.algoga_server.community.application.policy.CommunityQueryPolicy;
-import com.kidmily.algoga_server.community.application.port.CountryPort;
-import com.kidmily.algoga_server.community.application.port.CoursePort;
-import com.kidmily.algoga_server.community.application.port.UserPort;
 import com.kidmily.algoga_server.community.application.usecase.PostQueryUseCase;
 import com.kidmily.algoga_server.community.domain.model.Comment;
 import com.kidmily.algoga_server.community.domain.model.Post;
@@ -21,6 +18,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Stream;
 
 @Slf4j
@@ -33,6 +31,7 @@ public class PostQueryService implements PostQueryUseCase {
     private final CommentRepository commentRepository;
     private final LikeDislikeRepository likeDislikeRepository;
     private static final int PAGE_SIZE = 10;
+    private static final int POPULAR_COUNTRY_TAG_LIMIT = 5;
     private final CommunityQueryPolicy communityQueryPolicy;
 
     @Override
@@ -57,14 +56,20 @@ public class PostQueryService implements PostQueryUseCase {
                 commentRepository.findActiveCommentsByPostId(postId)
         );
 
-        // 💡 [수정] 태그 변환 로직을 메서드 안쪽으로 이동시켰습니다.
+
+        String countryName = communityQueryPolicy.resolveCountryName(post.getCountryId());
+
+        Stream<TagResponse> countryStream = countryName != null ?
+                Stream.of(TagResponse.fromCountry(post.getCountryId(), countryName)) : Stream.empty();
+
         Stream<TagResponse> categoryStream = post.getCategory() != null ?
                 Stream.of(TagResponse.fromCategory(post.getCategory())) : Stream.empty();
 
         Stream<TagResponse> freeTagStream = post.getFreeTags() != null ?
                 post.getFreeTags().stream().map(TagResponse::fromFreeTag) : Stream.empty();
 
-        List<TagResponse> tags = Stream.concat(categoryStream, freeTagStream).toList();
+        List<TagResponse> tags = Stream.concat(countryStream,
+                Stream.concat(categoryStream, freeTagStream)).toList();
 
         return new PostResponse(
                 post.getId(),
@@ -75,6 +80,7 @@ public class PostQueryService implements PostQueryUseCase {
                 post.getTitle(),
                 post.getContent(),
                 post.getCountryId(),
+                countryName,
                 post.getLectureId(),
                 post.getImageUrls(),
                 post.getViewCount(),
@@ -99,11 +105,11 @@ public class PostQueryService implements PostQueryUseCase {
     }
 
     @Override
-    public PostListResponse getPosts(Long lastPostId, List<PostTagType> categories) {
-        log.info("[PostQueryService] 게시글 목록 조회 요청 - lastPostId: {}, categories: {}",
-                lastPostId, categories);
+    public PostListResponse getPosts(Long lastPostId, List<PostTagType> categories, Long countryId) {
+        log.info("[PostQueryService] 게시글 목록 조회 요청 - lastPostId: {}, categories: {}, countryId: {}",
+                lastPostId, categories, countryId);
 
-        List<Post> posts = postRepository.findPostsByCursor(lastPostId, PAGE_SIZE, categories);
+        List<Post> posts = postRepository.findPostsByCursor(lastPostId, PAGE_SIZE, categories, countryId);
 
         List<PostListItemResponse> items = posts.stream()
                 .map(this::toListItem)
@@ -114,6 +120,26 @@ public class PostQueryService implements PostQueryUseCase {
 
         return new PostListResponse(items, hasNext, nextLastPostId);
     }
+
+    @Override
+    public List<TagResponse> getPostFilterTags() {
+        List<TagResponse> categoryTags = getCategories().stream()
+                .filter(category -> category != PostTagType.FREE)
+                .map(TagResponse::fromCategory)
+                .toList();
+
+        List<TagResponse> countryTags = postRepository.findTopCountryTags(POPULAR_COUNTRY_TAG_LIMIT)
+                .stream()
+                .map(count -> {
+                    String countryName = communityQueryPolicy.resolveCountryName(count.countryId());
+                    return countryName != null ? TagResponse.fromCountry(count.countryId(), countryName) : null;
+                })
+                .filter(Objects::nonNull)
+                .toList();
+
+        return Stream.concat(categoryTags.stream(), countryTags.stream()).toList();
+    }
+
 
     // 내가 쓴 글 목록 조회
     @Override
@@ -144,13 +170,13 @@ public class PostQueryService implements PostQueryUseCase {
         String countryName = communityQueryPolicy.resolveCountryName(post.getCountryId());
 
         Stream<TagResponse> countryStream = countryName != null ?
-                Stream.of(TagResponse.fromCountry(countryName)) : Stream.empty();
+                Stream.of(TagResponse.fromCountry(post.getCountryId(), countryName)) : Stream.empty();
 
         Stream<TagResponse> categoryStream = post.getCategory() != null ?
                 Stream.of(TagResponse.fromCategory(post.getCategory())) : Stream.empty();
         Stream<TagResponse> freeTagStream = post.getFreeTags() != null ?
                 post.getFreeTags().stream().map(TagResponse::fromFreeTag) : Stream.empty();
-        List<TagResponse> tags = Stream.concat(categoryStream, freeTagStream).toList();
+        List<TagResponse> tags = Stream.concat(countryStream, Stream.concat(categoryStream, freeTagStream)).toList();
 
         String thumbnailUrl = (post.getImageUrls() != null && !post.getImageUrls().isEmpty())
                 ? post.getImageUrls().get(0)
@@ -170,6 +196,7 @@ public class PostQueryService implements PostQueryUseCase {
                 likeCount,
                 dislikeCount,
                 commentCount,
+                post.getViewCount(),
                 post.getCreatedAt()
         );
     }
@@ -181,7 +208,7 @@ public class PostQueryService implements PostQueryUseCase {
                 .map(c -> new CommentResponse(
                         c.getCommentId(),
                         c.getUserId(),
-                        communityQueryPolicy.resolveNickname(c.getUserId()),        // 변경
+                        communityQueryPolicy.resolveNickname(c.getUserId()),
                         communityQueryPolicy.resolveProfileImageUrl(c.getUserId()),
                         c.getContent(),
                         c.getCreatedAt(),
@@ -191,8 +218,8 @@ public class PostQueryService implements PostQueryUseCase {
                                 .map(r -> new CommentResponse(
                                         r.getCommentId(),
                                         r.getUserId(),
-                                        communityQueryPolicy.resolveNickname(r.getUserId()),        // 변경
-                                        communityQueryPolicy.resolveProfileImageUrl(r.getUserId()), // 변경
+                                        communityQueryPolicy.resolveNickname(r.getUserId()),
+                                        communityQueryPolicy.resolveProfileImageUrl(r.getUserId()),
                                         r.getContent(),
                                         r.getCreatedAt(),
                                         List.of()
@@ -203,5 +230,77 @@ public class PostQueryService implements PostQueryUseCase {
         return roots;
     }
 
+    // 관리자용 유저별 게시글 목록 조회 페이징 방식
+    @Override
+    public AdminPostListResponse getMyPostsByPage(Long userId, Integer index, List<PostTagType> categories) {
+        int pageIndex = Math.max(0, index - 1);
+
+        List<Post> posts = postRepository.findMyPostsByPage(userId, pageIndex, PAGE_SIZE, categories);
+        long totalElements = postRepository.countMyPosts(userId, categories);
+        int totalPages = (int) Math.ceil((double) totalElements / PAGE_SIZE);
+
+        List<PostListItemResponse> items = posts.stream()
+                .map(this::toListItem)
+                .toList();
+
+        return new AdminPostListResponse(items, totalElements, totalPages, index);
+    }
+
+    // 관리자용 유저 게시글 상세 조회 (조회수 증가 없음)
+    @Override
+    public PostResponse getPostForAdmin(Long postId) {
+        log.info("[PostQueryService] 게시글 단건 조회 요청 (관리자) - postId: {}", postId);
+
+        Post post = findPostById(postId);
+
+        return buildPostResponse(post);
+    }
+
+    private Post findPostById(Long postId) {
+        return postRepository.findById(postId)
+                .orElseThrow(() -> new PostException(PostErrorCode.POST_NOT_FOUND));
+    }
+
+
+    private PostResponse buildPostResponse(Post post) {
+        Long likeCount = likeDislikeRepository.countLikes(TargetType.POST, post.getId());
+        Long dislikeCount = likeDislikeRepository.countDislikes(TargetType.POST, post.getId());
+
+        List<CommentResponse> comments = toCommentTree(
+                commentRepository.findActiveCommentsByPostId(post.getId())
+        );
+
+        String countryName = communityQueryPolicy.resolveCountryName(post.getCountryId());
+
+        Stream<TagResponse> countryStream = countryName != null ?
+                Stream.of(TagResponse.fromCountry(post.getCountryId(), countryName)) : Stream.empty();
+        Stream<TagResponse> categoryStream = post.getCategory() != null ?
+                Stream.of(TagResponse.fromCategory(post.getCategory())) : Stream.empty();
+        Stream<TagResponse> freeTagStream = post.getFreeTags() != null ?
+                post.getFreeTags().stream().map(TagResponse::fromFreeTag) : Stream.empty();
+
+        List<TagResponse> tags = Stream.concat(countryStream,
+                Stream.concat(categoryStream, freeTagStream)).toList();
+
+        return new PostResponse(
+                post.getId(),
+                post.getAuthorId(),
+                communityQueryPolicy.resolveNickname(post.getAuthorId()),
+                communityQueryPolicy.resolveProfileImageUrl(post.getAuthorId()),
+                tags,
+                post.getTitle(),
+                post.getContent(),
+                post.getCountryId(),
+                countryName,
+                post.getLectureId(),
+                post.getImageUrls(),
+                post.getViewCount(),
+                likeCount,
+                dislikeCount,
+                (long) comments.size(),
+                comments,
+                post.getCreatedAt()
+        );
+    }
 
 }
