@@ -13,7 +13,8 @@ public enum ReportErrorCode implements BaseErrorCode {
     REPORT_UNAUTHORIZED(HttpStatus.UNAUTHORIZED, "REPORT_002", "신고 권한이 없습니다."),
     REPORT_DUPLICATED(HttpStatus.CONFLICT, "REPORT_003", "이미 신고한 대상입니다."),
     REPORT_TARGET_NOT_FOUND(HttpStatus.NOT_FOUND, "REPORT_004", "신고 대상을 찾을 수 없습니다."),
-    REPORT_SELF_NOT_ALLOWED(HttpStatus.BAD_REQUEST, "REPORT_005", "본인을 신고할 수 없습니다.");
+    REPORT_SELF_NOT_ALLOWED(HttpStatus.BAD_REQUEST, "REPORT_005", "본인을 신고할 수 없습니다."),
+    REPORT_NOT_FOUND(HttpStatus.NOT_FOUND, "REPORT_006", "신고 내역을 찾을 수 없습니다.");
 
     private final HttpStatus status;
     private final String code;

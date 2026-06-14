@@ -1,6 +1,7 @@
 package com.kidmily.algoga_server.report.application.service;
 
 import com.kidmily.algoga_server.report.application.command.CreateReportCommand;
+import com.kidmily.algoga_server.report.application.command.UpdateReportStatusCommand;
 import com.kidmily.algoga_server.report.application.port.ReportTargetInfo;
 import com.kidmily.algoga_server.report.application.port.ReportTargetPort;
 import com.kidmily.algoga_server.report.application.usecase.ReportCommandUseCase;
@@ -21,6 +22,7 @@ public class ReportCommandService implements ReportCommandUseCase {
 
     private final ReportRepository reportRepository;
     private final ReportTargetPort reportTargetPort;
+
 
     @Override
     public Long handle(CreateReportCommand command) {
@@ -48,5 +50,14 @@ public class ReportCommandService implements ReportCommandUseCase {
         log.info("[ReportCommandService] 신고 완료 - reportId: {}", savedReport.getReportId());
 
         return savedReport.getReportId();
+    }
+
+    @Override
+    public void updateStatus(UpdateReportStatusCommand command) {
+        Report report = reportRepository.findById(command.reportId())
+                .orElseThrow(() -> new ReportException(ReportErrorCode.REPORT_NOT_FOUND));
+
+        report.updateStatus(command.status());
+        reportRepository.save(report);
     }
 }

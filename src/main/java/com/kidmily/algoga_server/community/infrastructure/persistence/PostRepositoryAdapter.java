@@ -1,6 +1,7 @@
 package com.kidmily.algoga_server.community.infrastructure.persistence;
 
 import com.kidmily.algoga_server.community.domain.model.Post;
+import com.kidmily.algoga_server.community.domain.repository.CountryTagCount;
 import com.kidmily.algoga_server.community.domain.repository.PostRepository;
 import com.kidmily.algoga_server.community.infrastructure.mapper.PostMapper;
 import com.kidmily.algoga_server.community.infrastructure.persistence.entity.PostImage;
@@ -103,17 +104,24 @@ public class PostRepositoryAdapter implements PostRepository {
 
     // 게시글 전체 조회
     @Override
-    public List<Post> findPostsByCursor(Long lastPostId, int size, List<PostTagType> categories) {
+    public List<Post> findPostsByCursor(Long lastPostId, int size, List<PostTagType> categories, Long countryId) {
         Pageable pageable = PageRequest.of(0, size);
-
-        // 빈 리스트면 null로 처리해서 전체 조회
         List<PostTagType> categoriesParam = (categories == null || categories.isEmpty()) ? null : categories;
 
         List<PostJpaEntity> entities = springDataRepository.findPostsByCursor(
-                lastPostId, categoriesParam, pageable);
+                lastPostId, categoriesParam, countryId, pageable);
 
         return entities.stream()
                 .map(postMapper::toDomain)
+                .toList();
+    }
+
+
+    @Override
+    public List<CountryTagCount> findTopCountryTags(int limit) {
+        return springDataRepository.findTopCountryTags(PageRequest.of(0, limit))
+                .stream()
+                .map(p -> new CountryTagCount(p.getCountryId(), p.getPostCount()))
                 .toList();
     }
 
@@ -131,5 +139,23 @@ public class PostRepositoryAdapter implements PostRepository {
         return entities.stream()
                 .map(postMapper::toDomain)
                 .toList();
+    }
+
+    @Override
+    public List<Post> findMyPostsByPage(Long userId, int page, int size, List<PostTagType> categories) {
+        Pageable pageable = PageRequest.of(page, size);
+        List<PostTagType> categoriesParam = (categories == null || categories.isEmpty()) ? null : categories;
+
+        List<PostJpaEntity> entities = springDataRepository.findMyPostsByPage(userId, categoriesParam, pageable);
+
+        return entities.stream()
+                .map(postMapper::toDomain)
+                .toList();
+    }
+
+    @Override
+    public long countMyPosts(Long userId, List<PostTagType> categories) {
+        List<PostTagType> categoriesParam = (categories == null || categories.isEmpty()) ? null : categories;
+        return springDataRepository.countMyPosts(userId, categoriesParam);
     }
 }

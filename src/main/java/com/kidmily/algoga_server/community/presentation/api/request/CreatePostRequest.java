@@ -15,7 +15,7 @@ public record CreatePostRequest(
 
 
         @Schema(description = "카테고리 태그", example = "TRAVEL_REVIEW",
-                allowableValues = {"TRAVEL_REVIEW", "TIP_INFO", "QUESTION", "COMPANION", "COUNTRY", "LECTURE", "FREE"})
+                allowableValues = {"TRAVEL_REVIEW", "TIP_INFO", "QUESTION", "COMPANION", "LECTURE", "FREE"})
         @NotNull(message = "카테고리는 필수입니다.")
         PostTagType category,
 

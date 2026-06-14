@@ -1,5 +1,6 @@
 package com.kidmily.algoga_server.community.application.service;
 
+import com.kidmily.algoga_server.community.application.command.AdminDeleteCommentCommand;
 import com.kidmily.algoga_server.community.application.command.CreateCommentCommand;
 import com.kidmily.algoga_server.community.application.command.DeleteCommentCommand;
 import com.kidmily.algoga_server.community.application.command.UpdateCommentCommand;
@@ -124,5 +125,18 @@ public class CommentCommandService implements CommentCommandUseCase {
         deleteCommentPolicy.execute(comment, command.userId());
 
         log.info("[CommentCommandService] 댓글 삭제 완료 - commentId: {}", command.commentId());
+    }
+
+    // 관리자의 댓글 삭제
+    @Override
+    public void handle(AdminDeleteCommentCommand command) {
+        log.info("[CommentCommandService] 댓글 삭제 요청 수신 (관리자) - commentId: {}", command.commentId());
+
+        Comment comment = commentRepository.findById(command.commentId())
+                .orElseThrow(() -> new CommentException(PostErrorCode.COMMENT_NOT_FOUND));
+
+        deleteCommentPolicy.executeByAdmin(comment);
+
+        log.info("[CommentCommandService] 댓글 삭제 완료 (관리자) - commentId: {}", command.commentId());
     }
 }

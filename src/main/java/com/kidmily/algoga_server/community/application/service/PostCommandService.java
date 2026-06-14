@@ -1,5 +1,6 @@
 package com.kidmily.algoga_server.community.application.service;
 
+import com.kidmily.algoga_server.community.application.command.AdminDeletePostCommand;
 import com.kidmily.algoga_server.community.application.command.CreatePostCommand;
 import com.kidmily.algoga_server.community.application.command.DeletePostCommand;
 import com.kidmily.algoga_server.community.application.command.UpdatePostCommand;
@@ -140,5 +141,21 @@ public class PostCommandService implements PostCommandUseCase {
         postRepository.delete(post);
 
         log.info("[PostCommandService] 게시글 삭제 완료 - postId: {}", command.postId());
+    }
+
+    @Override
+    public void handle(AdminDeletePostCommand command) {
+        log.info("[PostCommandService] 게시글 삭제 요청 수신 (관리자) - postId: {}", command.postId());
+
+        Post post = postRepository.findById(command.postId())
+                .orElseThrow(() -> new PostException(PostErrorCode.POST_NOT_FOUND));
+
+        List<Comment> comments = commentRepository.findAllByPostId(command.postId());
+        commentRepository.softDeleteAll(comments);
+
+        post.deleteByAdmin();
+        postRepository.delete(post);
+
+        log.info("[PostCommandService] 게시글 삭제 완료 (관리자) - postId: {}", command.postId());
     }
 }

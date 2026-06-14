@@ -13,7 +13,14 @@ public interface PostRepository {
     Post update(Post post);
     void delete(Post post);
     // 전체 리스트 조회
-    List<Post> findPostsByCursor(Long lastPostId, int size, List<PostTagType> categories);
+    List<Post> findPostsByCursor(Long lastPostId, int size, List<PostTagType> categories, Long countryId);
     // 내가 쓴 글 리스트 조회
     List<Post> findMyPostsByCursor(Long userId, Long lastPostId, int size, List<PostTagType> categories);
+
+    // 관리자 유저 게시글 리스트 조회
+    List<Post> findMyPostsByPage(Long userId, int page, int size, List<PostTagType> categories);
+    long countMyPosts(Long userId, List<PostTagType> categories);
+
+    // 신규: 인기 나라 태그 (게시글 수 상위 N개)
+    List<CountryTagCount> findTopCountryTags(int limit);
 }

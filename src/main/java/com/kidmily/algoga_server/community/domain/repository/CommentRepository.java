@@ -14,4 +14,6 @@ public interface CommentRepository {
     List<Comment> findActiveRepliesByParentId(Long parentId);
     List<Comment> findAllByPostId(Long postId);
     void softDeleteAll(List<Comment> comments);
+    List<Comment> findMyCommentsByPage(Long userId, int page, int size);
+    long countMyComments(Long userId);
 }
