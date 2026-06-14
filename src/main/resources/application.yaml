@@ -54,6 +54,23 @@ spring:
           starttls:
             enable: true
 
+  ai:
+    openai:
+      base-url: https://api.groq.com/openai
+      api-key: ${LLM_KEY}
+      chat:
+        options:
+          model: openai/gpt-oss-20b # 챗봇 답변용 모델
+          temperature: 0.7
+
+    ollama:
+      base-url: http://localhost:11434
+      chat:
+        enabled: false
+      embedding:
+        options:
+          model: bge-m3 # 벡터 필터링용 모델
+
 server:
   port: 15000
   forward-headers-strategy: native
@@ -121,7 +138,17 @@ management:
 
 resilience4j:
   circuitbreaker:
+    configs:
+      default:
+        registerHealthIndicator: true
+        slidingWindowSize: 10 # 10번의 호출을 기준으로 통계 산출
+        minimumNumberOfCalls: 5 # 최소 5번 호출 후부터 실패율 계산
+        permittedNumberOfCallsInHalfOpenState: 3 # 반열림 상태에서 허용할 테스트 호출 수
+        waitDurationInOpenState: 10s # 서킷이 열린 후 10초 대기 후 반열림 상태로 전환
+        failureRateThreshold: 50 # 실패율 50% 이상이면 서킷 오픈 (호출 차단)
     instances:
+      groqLlmApi:
+        baseConfig: default
       portone:
         # CLOSED → OPEN: 10번 호출 중 50% 이상 실패 시
         sliding-window-type: COUNT_BASED
@@ -154,4 +181,3 @@ resilience4j:
         # 항공편 API 타임아웃: 10초 (공공데이터 API라 느릴 수 있음)
         timeout-duration: 10s
         cancel-running-future: true
-
