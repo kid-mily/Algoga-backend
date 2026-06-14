@@ -1,0 +1,38 @@
+### 소셜 전용 추가정보 회원가입 테스트 (아이디 없음)
+POST http://localhost:15000/api/v1/auth/social/signup
+Content-Type: application/json
+
+{
+  "email": "wndmsld12@gmail.com",
+  "name": "구글테스터",
+  "phone": "010-5363-4908",
+  "birthDate": "1995-05-05",
+  "gender": "MALE",
+  "nickname": "구글유저닉네임",
+  "socialType": "GOOGLE",
+  "referralCode": "",
+  "signupPath": "검색",
+  "termsServiceAgreed": true,
+  "termsPrivacyAgreed": true,
+  "termsMarketingAgreed": false
+}
+
+
+### 소셜 전용 추가정보 회원가입 테스트 (아이디 없음)
+POST http://localhost:15000/api/v1/auth/social/signup
+Content-Type: application/json
+
+{
+  "email": "eulji_2331@g.eulji.ac.kr",
+  "name": "이하연임",
+  "phone": "010-0127-1476",
+  "birthDate": "2004-05-05",
+  "gender": "MALE",
+  "nickname": "구글유저닉네임",
+  "socialType": "GOOGLE",
+  "referralCode": "",
+  "signupPath": "검색",
+  "termsServiceAgreed": true,
+  "termsPrivacyAgreed": true,
+  "termsMarketingAgreed": false
+}

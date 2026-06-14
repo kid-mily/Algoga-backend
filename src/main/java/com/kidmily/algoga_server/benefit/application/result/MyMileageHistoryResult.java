@@ -9,6 +9,7 @@ public record MyMileageHistoryResult(
         int amount,
         String type,
         String reason,
-        LocalDateTime createdAt
+        LocalDateTime createdAt,
+        LocalDateTime expiredAt
 ) {
 }

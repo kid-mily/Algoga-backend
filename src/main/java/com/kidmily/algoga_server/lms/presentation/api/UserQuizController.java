@@ -6,12 +6,12 @@ import com.kidmily.algoga_server.global.exception.GlobalErrorCode;
 import com.kidmily.algoga_server.lms.application.command.SubmitQuizAnswerCommand;
 import com.kidmily.algoga_server.lms.application.command.SubmitQuizCommand;
 import com.kidmily.algoga_server.lms.application.result.QuizSubmitResult;
-import com.kidmily.algoga_server.lms.application.usecase.UserQuizUseCase;
+import com.kidmily.algoga_server.lms.application.usecase.QuizUseCase;
 import com.kidmily.algoga_server.lms.exception.LmsErrorCode;
 import com.kidmily.algoga_server.lms.presentation.request.SubmitQuizRequest;
 import com.kidmily.algoga_server.lms.presentation.response.QuizSubmitResponse;
 import com.kidmily.algoga_server.lms.presentation.response.UserQuizResponse;
-import com.kidmily.algoga_server.user.settings.CustomUserDetails;
+import com.kidmily.algoga_server.lms.presentation.support.CurrentUserIdResolver;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -29,7 +29,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class UserQuizController {
 
-    private final UserQuizUseCase userQuizUseCase;
+    private final QuizUseCase quizUseCase;
 
     @Operation(
             summary = "사용자 퀴즈 조회",
@@ -48,11 +48,11 @@ public class UserQuizController {
             @Parameter(description = "강의 ID", example = "3")
             @PathVariable Long courseId,
 
-            @AuthenticationPrincipal CustomUserDetails userDetails
+            @AuthenticationPrincipal Object userDetails
     ) {
-        Long currentUserId = userDetails.getUser().getId();
+        Long currentUserId = CurrentUserIdResolver.resolveNullable(userDetails);
 
-        List<UserQuizResponse> response = userQuizUseCase.getQuizzes(
+        List<UserQuizResponse> response = quizUseCase.getQuizzes(
                         currentUserId,
                         courseId
                 )
@@ -90,9 +90,9 @@ public class UserQuizController {
 
             @Valid @RequestBody SubmitQuizRequest request,
 
-            @AuthenticationPrincipal CustomUserDetails userDetails
+            @AuthenticationPrincipal Object userDetails
     ) {
-        Long currentUserId = userDetails.getUser().getId();
+        Long currentUserId = CurrentUserIdResolver.resolveNullable(userDetails);
 
         List<SubmitQuizAnswerCommand> answers = request.answers()
                 .stream()
@@ -108,7 +108,7 @@ public class UserQuizController {
                 answers
         );
 
-        QuizSubmitResult result = userQuizUseCase.submitQuiz(command);
+        QuizSubmitResult result = quizUseCase.submitQuiz(command);
 
         return ResponseEntity.ok(
                 ApiResponse.success(

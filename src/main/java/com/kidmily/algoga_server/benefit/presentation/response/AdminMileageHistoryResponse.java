@@ -45,7 +45,10 @@ public record AdminMileageHistoryResponse(
         String reason,
 
         @Schema(description = "처리 일시", example = "2026-05-27T10:30:00")
-        LocalDateTime createdAt
+        LocalDateTime createdAt,
+
+        @Schema(description = "마일리지 만료 일시", example = "2027-05-27T10:30:00")
+        LocalDateTime expiredAt
 ) {
 
     public static AdminMileageHistoryResponse from(AdminMileageHistoryResult result) {
@@ -62,7 +65,8 @@ public record AdminMileageHistoryResponse(
                 result.signedAmount(),
                 result.type(),
                 result.reason(),
-                result.createdAt()
+                result.createdAt(),
+                result.expiredAt()
         );
     }
 }

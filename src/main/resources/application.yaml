@@ -2,6 +2,17 @@ spring:
   application:
     name: algoga_server
 
+  security:
+    oauth2:
+      client:
+        registration:
+          google:
+            client-id: ${GOOGLE_CLIENT_ID}
+            client-secret: ${GOOGLE_CLIENT_SECRET}
+            scope:
+              - profile
+              - email
+
   data:
     redis:
       host: ${REDIS_HOST}
@@ -106,6 +117,25 @@ user:
     bucket: algoga-banner
     directory: profiles
 
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health, info, prometheus, metrics, circuitbreakers
+  endpoint:
+    health:
+      show-details: always
+    prometheus:
+      enabled: true
+  metrics:
+    tags:
+      application: algoga-server
+    distribution:
+      percentiles-histogram:
+        http.server.requests: true
+      percentiles:
+        http.server.requests: 0.5, 0.9, 0.95, 0.99
+
 resilience4j:
   circuitbreaker:
     configs:
@@ -119,3 +149,35 @@ resilience4j:
     instances:
       groqLlmApi:
         baseConfig: default
+      portone:
+        # CLOSED → OPEN: 10번 호출 중 50% 이상 실패 시
+        sliding-window-type: COUNT_BASED
+        sliding-window-size: 10
+        failure-rate-threshold: 50
+        # OPEN 상태 유지 시간 (10초 후 HALF_OPEN 전환)
+        wait-duration-in-open-state: 10s
+        # HALF_OPEN 상태에서 허용할 테스트 호출 수
+        permitted-number-of-calls-in-half-open-state: 3
+        # 예외 기록 대상: BusinessException은 제외 (PortOne이 정상 응답한 것)
+        ignore-exceptions:
+          - com.kidmily.algoga_server.global.exception.BusinessException
+        register-health-indicator: true
+      flight:
+        sliding-window-type: COUNT_BASED
+        sliding-window-size: 10
+        failure-rate-threshold: 50
+        wait-duration-in-open-state: 30s  # 공공 API라 복구 시간 더 여유있게
+        permitted-number-of-calls-in-half-open-state: 3
+        ignore-exceptions:
+          - com.kidmily.algoga_server.global.exception.BusinessException
+        register-health-indicator: true
+  timelimiter:
+    instances:
+      portone:
+        # PortOne API 타임아웃: 5초
+        timeout-duration: 5s
+        cancel-running-future: true
+      flight:
+        # 항공편 API 타임아웃: 10초 (공공데이터 API라 느릴 수 있음)
+        timeout-duration: 10s
+        cancel-running-future: true

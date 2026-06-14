@@ -1,9 +1,11 @@
 package com.kidmily.algoga_server.benefit.application.usecase;
 
 import com.kidmily.algoga_server.benefit.application.command.RewardCourseCommand;
-import com.kidmily.algoga_server.benefit.domain.model.CourseReward;
+import com.kidmily.algoga_server.benefit.application.result.CourseRewardResult;
 
 public interface CourseRewardUseCase {
 
-    CourseReward rewardCourse(RewardCourseCommand command);
+    CourseRewardResult rewardCourse(RewardCourseCommand command);
+
+    CourseRewardResult rewardCourseWithDetails(RewardCourseCommand command);
 }

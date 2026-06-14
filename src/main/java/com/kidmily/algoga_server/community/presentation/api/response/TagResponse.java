@@ -5,20 +5,20 @@ import io.swagger.v3.oas.annotations.media.Schema;
 
 @Schema(description = "태그 응답")
 public record TagResponse(
-        @Schema(description = "태그 타입", example = "TRAVEL_REVIEW")
         PostTagType tagType,
-        @Schema(description = "태그 이름", example = "여행후기")
-        String tagName
+        String tagName,
+        @Schema(description = "나라 ID (tagType=COUNTRY일 때만 값 존재, 게시글 목록 조회시 countryId 파라미터로 사용)")
+        Long countryId
 ) {
-        // getDescription()을 사용해 한글명이 매핑되도록 교정!
         public static TagResponse fromCategory(PostTagType category) {
-                return new TagResponse(category, category.getDescription());
+                return new TagResponse(category, category.getDescription(), null);
         }
-        public static TagResponse fromCountry(String countryName) {
-                return new TagResponse(PostTagType.COUNTRY, countryName);
+
+        public static TagResponse fromCountry(Long countryId, String countryName) {
+                return new TagResponse(PostTagType.COUNTRY, countryName, countryId);
         }
 
         public static TagResponse fromFreeTag(String freeTag) {
-                return new TagResponse(PostTagType.FREE, freeTag);
+                return new TagResponse(PostTagType.FREE, freeTag, null);
         }
 }

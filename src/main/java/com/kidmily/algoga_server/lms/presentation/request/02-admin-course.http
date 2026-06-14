@@ -49,13 +49,13 @@ Authorization: Bearer {{managerAccessToken}}
 
 ### 어드민 - 강의 상세 조회
 ### courseId를 실제 강의 ID로 변경
-GET http://localhost:15000/api/v1/admin/courses/3
+GET http://localhost:15000/api/v1/admin/courses/76
 Authorization: Bearer {{managerAccessToken}}
 
 
 z### 어드민 - 강의 수정
 ### courseId를 실제 강의 ID로 변경
-PUT http://localhost:15000/api/v1/admin/courses/3
+PUT http://localhost:15000/api/v1/admin/courses/76
 Authorization: Bearer {{managerAccessToken}}
 Content-Type: multipart/form-data; boundary=boundary
 
@@ -93,12 +93,12 @@ Content-Type: application/pdf
 
 ### 어드민 - 강의 삭제
 ### 삭제 테스트가 필요할 때만 실행
-DELETE http://localhost:15000/api/v1/admin/courses/14
+DELETE http://localhost:15000/api/v1/admin/courses/75
 Authorization: Bearer {{managerAccessToken}}
 
 
 ### ----------------------------------------------------------
 ### 관리자 - 강의 수강생 목록 조회
 ### 관리자/매니저 토큰 필요
-GET http://localhost:15000/api/v1/admin/courses/3/students
+GET http://localhost:15000/api/v1/admin/courses/76/students
 Authorization: Bearer {{managerAccessToken}}

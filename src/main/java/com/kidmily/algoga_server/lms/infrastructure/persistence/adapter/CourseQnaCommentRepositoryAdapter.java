@@ -3,7 +3,7 @@ package com.kidmily.algoga_server.lms.infrastructure.persistence.adapter;
 import com.kidmily.algoga_server.lms.domain.model.CourseQnaComment;
 import com.kidmily.algoga_server.lms.domain.repository.CourseQnaCommentRepository;
 import com.kidmily.algoga_server.lms.infrastructure.persistence.entity.CourseQnaCommentJpaEntity;
-import com.kidmily.algoga_server.lms.tdd.SpringDataCourseQnaCommentRepository;
+import com.kidmily.algoga_server.lms.infrastructure.persistence.repository.SpringDataCourseQnaCommentRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 

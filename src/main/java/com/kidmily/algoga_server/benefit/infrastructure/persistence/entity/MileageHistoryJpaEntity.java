@@ -39,6 +39,9 @@ public class MileageHistoryJpaEntity {
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
 
+    @Column(name = "expired_at")
+    private LocalDateTime expiredAt;
+
     public MileageHistoryJpaEntity(
             Long userId,
             Long courseId,
@@ -46,7 +49,8 @@ public class MileageHistoryJpaEntity {
             int amount,
             String type,
             String reason,
-            LocalDateTime createdAt
+            LocalDateTime createdAt,
+            LocalDateTime expiredAt
     ) {
         this.userId = userId;
         this.courseId = courseId;
@@ -55,5 +59,6 @@ public class MileageHistoryJpaEntity {
         this.type = type;
         this.reason = reason;
         this.createdAt = createdAt;
+        this.expiredAt = expiredAt;
     }
 }

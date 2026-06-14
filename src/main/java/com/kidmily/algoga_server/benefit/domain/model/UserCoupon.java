@@ -16,6 +16,8 @@ public class UserCoupon {
     private final LocalDateTime expiredAt;
     private final LocalDateTime usedAt;
 
+    private static final int COUPON_VALID_MONTHS = 1;
+
     private UserCoupon(
             Long id,
             Long userId,
@@ -58,7 +60,25 @@ public class UserCoupon {
                 couponPolicy.getDiscountValue(),
                 "ISSUED",
                 now,
-                now.plusDays(couponPolicy.getValidDays()),
+                now.plusMonths(COUPON_VALID_MONTHS),
+                null
+        );
+    }
+
+    public static UserCoupon issueWelcome(Long userId) {
+        LocalDateTime now = LocalDateTime.now();
+
+        return new UserCoupon(
+                null,
+                userId,
+                null,
+                null,
+                "웰컴쿠폰",
+                "RATE",
+                10,
+                "ISSUED",
+                now,
+                now.plusMonths(COUPON_VALID_MONTHS),
                 null
         );
     }

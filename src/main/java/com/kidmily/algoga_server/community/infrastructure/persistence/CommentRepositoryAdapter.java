@@ -8,6 +8,8 @@ import com.kidmily.algoga_server.community.infrastructure.mapper.CommentMapper; 
 import com.kidmily.algoga_server.community.infrastructure.persistence.entity.CommentJpaEntity;
 import com.kidmily.algoga_server.community.infrastructure.persistence.repository.SpringDataCommentRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
@@ -63,5 +65,36 @@ public class CommentRepositoryAdapter implements CommentRepository {
                 .stream()
                 .map(commentMapper::toDomain)
                 .toList();
+    }
+
+    @Override
+    public List<Comment> findAllByPostId(Long postId) {
+        return springDataRepository.findByPostId(postId)
+                .stream()
+                .map(commentMapper::toDomain)
+                .toList();
+    }
+
+    @Override
+    public void softDeleteAll(List<Comment> comments) {
+        comments.forEach(comment -> {
+            CommentJpaEntity entity = springDataRepository.findById(comment.getCommentId())
+                    .orElseThrow();
+            entity.softDelete();
+        });
+    }
+
+    @Override
+    public List<Comment> findMyCommentsByPage(Long userId, int page, int size) {
+        Pageable pageable = PageRequest.of(page, size);
+        return springDataRepository.findMyCommentsByPage(userId, pageable)
+                .stream()
+                .map(commentMapper::toDomain)
+                .toList();
+    }
+
+    @Override
+    public long countMyComments(Long userId) {
+        return springDataRepository.countMyComments(userId);
     }
 }

@@ -1,7 +1,9 @@
 package com.kidmily.algoga_server.user.application;
 
+import com.kidmily.algoga_server.global.event.UserSignedUpEvent;
 import com.kidmily.algoga_server.global.infrastructure.mail.EmailSender;
 import com.kidmily.algoga_server.global.security.GlobalJwtProvider;
+import com.kidmily.algoga_server.global.security.port.SocialLoginProcessor;
 import com.kidmily.algoga_server.user.domain.Gender;
 import com.kidmily.algoga_server.user.domain.SocialType;
 import com.kidmily.algoga_server.user.domain.User;
@@ -15,10 +17,12 @@ import com.kidmily.algoga_server.user.presentation.response.AuthTokenResponse;
 import com.kidmily.algoga_server.user.presentation.response.FindIdResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.util.UriComponentsBuilder;
 
 import java.time.LocalDateTime;
 import java.util.UUID;
@@ -28,13 +32,14 @@ import java.util.concurrent.TimeUnit;
 @Service
 @RequiredArgsConstructor
 @Transactional
-public class AuthService {
+public class AuthService implements SocialLoginProcessor{
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final GlobalJwtProvider globalJwtProvider;
     private final EmailSender emailSender;
     private final RedisTemplate<String, String> redisTemplate; // Redis 도구 주입!
+    private final ApplicationEventPublisher eventPublisher;
 
     // 이메일 인증번호 발송
     public void sendVerificationCode(SendEmailCodeRequest request) {
@@ -95,12 +100,12 @@ public class AuthService {
             throw new AuthException(AuthErrorCode.DUPLICATE_USERNAME);
         }
 
-        // 이메일 인증은 2차로 넘김.
-//        // 가입 직전에 Redis에 "인증 완료" 포스트잇이 있는지 확인!
-//        String isVerified = redisTemplate.opsForValue().get("AUTH_SUCCESS:" + email);
-//        if (isVerified == null || !isVerified.equals("true")) {
-//            throw new AuthException(AuthErrorCode.EMAIL_NOT_VERIFIED);
-//        }
+        // 이메일 인증
+        // 가입 직전에 Redis에 "인증 완료" 포스트잇이 있는지 확인!
+        String isVerified = redisTemplate.opsForValue().get("AUTH_SUCCESS:" + email);
+        if (isVerified == null || !isVerified.equals("true")) {
+            throw new AuthException(AuthErrorCode.EMAIL_NOT_VERIFIED);
+        }
 
         User user = User.builder()
                 .username(request.username())
@@ -123,13 +128,20 @@ public class AuthService {
                 .termsPrivacyAgreed(request.termsPrivacyAgreed())
                 .termsMarketingAgreed(request.termsMarketingAgreed())
                 .build();
-        userRepository.save(user);
+        User savedUser = userRepository.save(user);
+        eventPublisher.publishEvent(new UserSignedUpEvent(savedUser.getId()));
 
-        // 이메일 인증은 2차
-//        // 가입이 성공적으로 끝났으니, "인증 완료" 포스트잇도 떼서 버립니다! (청소)
-//        redisTemplate.delete("AUTH_SUCCESS:" + email);
+        // 가입이 성공적으로 끝났으니, "인증 완료" 포스트잇도 떼서 버립니다! (청소)
+        redisTemplate.delete("AUTH_SUCCESS:" + email);
 
         log.info("신규 회원가입 완료 [아이디: {}, 이메일: {}]", user.getUsername(), user.getEmail());
+    }
+
+    // 아이디 중복 확인 로직
+    public boolean isUsernameAvailable(String username) {
+        // existsByUsername이 true면 중복(사용 불가)이므로,
+        // 반대인 !를 붙여서 없으면 true(사용 가능)를 반환하도록 합니다.
+        return !userRepository.existsByUsername(username);
     }
 
     // 4. 로그인
@@ -245,5 +257,84 @@ public class AuthService {
         }
 
         return globalJwtProvider.createUserAccessToken(email);
+    }
+
+    // 소셜로그인
+    @Override
+    public String processLoginAndGetRedirectUrl(String email, String name) {
+        // 1. 이미 가입된 유저인지 DB 확인
+        // (주의: UserRepository에 findByEmailAndIsDeletedFalse 가 정의되어 있어야 합니다!)
+        boolean isExistingUser = userRepository.findByEmailAndIsDeletedFalse(email).isPresent();
+
+        if (isExistingUser) {
+            // [기존 유저] JWT 토큰 발급 및 Redis 저장
+            String accessToken = globalJwtProvider.createUserAccessToken(email);
+            String refreshToken = globalJwtProvider.createUserRefreshToken(email);
+
+            // 기존 일반 로그인과 똑같이 7일간 Redis에 저장
+            redisTemplate.opsForValue().set("RT:" + email, refreshToken, 604800000, TimeUnit.MILLISECONDS);
+
+            log.info("소셜 로그인 성공 (기존 유저) [이메일: {}]", email);
+
+            // 프론트엔드의 콜백 페이지로 토큰을 들고 이동
+            return UriComponentsBuilder.fromUriString("http://localhost:17000/auth/oauth-callback")
+                    .queryParam("accessToken", accessToken)
+                    .queryParam("refreshToken", refreshToken)
+                    .build().toUriString();
+        } else {
+            // [신규 유저] 프론트엔드의 회원가입 페이지로 이동 (이메일, 이름 넘겨줌)
+            log.info("소셜 로그인 (신규 유저 발견, 회원가입 유도) [이메일: {}]", email);
+
+            return UriComponentsBuilder.fromUriString("http://localhost:17000/auth/register")
+                    .queryParam("email", email)
+                    .queryParam("name", name)
+                    .queryParam("socialType", "GOOGLE")
+                    .build().toUriString();
+        }
+    }
+
+    // 소셜 전용 추가정보 회원가입
+    public void socialSignup(AuthSocialSignupRequest request) {
+        String email = request.email().toLowerCase();
+
+        // 1. 이메일 중복 검사 (명세서: 이미 일반 가입된 이메일인 경우 방지)
+        if (userRepository.existsByEmail(email)) {
+            throw new AuthException(AuthErrorCode.DUPLICATE_EMAIL); // "이미 사용 중인 이메일입니다"
+        }
+
+        // 2. 요구사항 명세 반영: 아이디(username)는 이메일로 대체
+        String username = email;
+
+        // 3. 요구사항 명세 반영: 소셜 유저용 더미(랜덤) 비밀번호 생성
+        String dummyPassword = UUID.randomUUID().toString();
+
+        // 4. 유저 엔티티 생성 및 저장
+        User user = User.builder()
+                .username(username)
+                .email(email)
+                .password(passwordEncoder.encode(dummyPassword)) // 난수 암호화 저장
+                .name(request.name())
+                .phone(request.phone())
+                .birthDate(request.birthDate())
+                .gender(Gender.valueOf(request.gender().toUpperCase()))
+                .nickname(request.nickname())
+                .socialType(SocialType.valueOf(request.socialType().toUpperCase()))
+                .personalCode(UUID.randomUUID().toString())
+                .loginFailCount(0)
+                .isDeleted(false)
+                .referralCode(request.referralCode())
+                .signupPath(request.signupPath())
+                .createdAt(LocalDateTime.now())
+                .requiresPasswordChange(false)
+                .termsServiceAgreed(request.termsServiceAgreed())
+                .termsPrivacyAgreed(request.termsPrivacyAgreed())
+                .termsMarketingAgreed(request.termsMarketingAgreed())
+                .build();
+
+        User savedUser = userRepository.save(user);
+        eventPublisher.publishEvent(new UserSignedUpEvent(savedUser.getId()));
+
+        log.info("소셜 신규 회원가입 완료 [아이디(이메일): {}, 소셜: {}]",
+                user.getUsername(), user.getSocialType());
     }
 }

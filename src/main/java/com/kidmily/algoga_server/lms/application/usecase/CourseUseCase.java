@@ -1,17 +1,55 @@
 package com.kidmily.algoga_server.lms.application.usecase;
 
-import com.kidmily.algoga_server.lms.domain.model.Course;
+import com.kidmily.algoga_server.lms.application.command.AnswerCourseQnaCommand;
+import com.kidmily.algoga_server.lms.application.command.CompleteCourseCommand;
+import com.kidmily.algoga_server.lms.application.command.CreateCourseCommand;
+import com.kidmily.algoga_server.lms.application.command.CreateCourseQnaCommand;
+import com.kidmily.algoga_server.lms.application.command.CreateCourseQnaCommentCommand;
+import com.kidmily.algoga_server.lms.application.command.UpdateCourseCommand;
+import com.kidmily.algoga_server.lms.application.result.*;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 import java.util.List;
 import java.util.Map;
 
 public interface CourseUseCase {
 
-    List<Course> getPublishedCoursesByCountry(Long countryId);
+    Long createCourse(CreateCourseCommand command);
 
-    Course getPublishedCourse(Long courseId);
+    Page<CourseResult> getCourses(Pageable pageable);
 
-    List<Course> getRecommendedCoursesByCountryAndLevel(Long countryId, String level);
+    CourseResult getCourse(Long courseId);
+
+    CourseResult updateCourse(Long courseId, UpdateCourseCommand command);
+
+    void deleteCourse(Long courseId);
+
+    CourseCompletionResult completeCourse(CompleteCourseCommand command);
+
+    List<CourseStudentResult> getCourseStudents(Long courseId);
+
+    List<MyCourseResult> getMyCourses(Long userId);
+
+    CourseQnaResult createQna(CreateCourseQnaCommand command);
+
+    List<CourseQnaResult> getQnas(Long courseId);
+
+    CourseQnaDetailResult getQnaDetail(Long courseId, Long qnaId);
+
+    CourseQnaResult answerQna(AnswerCourseQnaCommand command);
+
+    CourseQnaCommentResult createComment(CreateCourseQnaCommentCommand command);
+
+    List<CourseResult> getPublishedCoursesByCountry(Long countryId);
+
+    CourseResult getPublishedCourse(Long courseId);
+
+    boolean isEnrolled(Long userId, Long courseId);
+
+    boolean isPaid(Long userId, Long courseId);
+
+    List<CourseResult> getRecommendedCoursesByCountryAndLevel(Long countryId, String level);
 
     long countPublishedCoursesByCountry(Long countryId);
 

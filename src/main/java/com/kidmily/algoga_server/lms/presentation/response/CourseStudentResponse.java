@@ -41,6 +41,9 @@ public record CourseStudentResponse(
         @Schema(description = "리뷰 작성 여부", example = "false")
         boolean reviewWritten,
 
+        @Schema(description = "수강 가능 만료 일시", example = "2026-12-10T15:30:00")
+        LocalDateTime accessExpiresAt,
+
         @Schema(description = "수료 일시", example = "2026-05-26T15:30:00")
         LocalDateTime completedAt
 ) {
@@ -58,6 +61,7 @@ public record CourseStudentResponse(
                 result.learningStatus(),
                 result.quizSubmitted(),
                 result.reviewWritten(),
+                result.accessExpiresAt(),
                 result.completedAt()
         );
     }

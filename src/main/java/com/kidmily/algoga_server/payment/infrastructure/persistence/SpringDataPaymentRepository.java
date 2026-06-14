@@ -26,4 +26,6 @@ public interface SpringDataPaymentRepository extends JpaRepository<PaymentJpaEnt
             PaymentType paymentType,
             PaymentStatus status
     );
+
+    List<PaymentJpaEntity> findByBookingIdInAndStatus(List<Long> bookingIds, PaymentStatus status);
 }

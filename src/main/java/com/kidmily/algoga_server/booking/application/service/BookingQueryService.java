@@ -2,12 +2,14 @@ package com.kidmily.algoga_server.booking.application.service;
 
 import com.kidmily.algoga_server.booking.application.usecase.BookingQueryUseCase;
 import com.kidmily.algoga_server.booking.domain.model.Booking;
+import com.kidmily.algoga_server.booking.domain.model.BookingStatus;
 import com.kidmily.algoga_server.booking.domain.repository.BookingRepository;
 import com.kidmily.algoga_server.booking.exception.BookingErrorCode;
 import com.kidmily.algoga_server.booking.presentation.api.response.BookingResponse;
 import com.kidmily.algoga_server.global.exception.BusinessException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -31,6 +33,7 @@ public class BookingQueryService implements BookingQueryUseCase {
         return toResponse(booking);
     }
 
+    @Cacheable(value = "myBookings", key = "#userId")
     @Override
     public List<BookingResponse> getMyBookings(Long userId) {
         log.info("[BookingQueryService] 내 예약 목록 조회 - userId: {}", userId);
@@ -38,6 +41,13 @@ public class BookingQueryService implements BookingQueryUseCase {
                 .stream()
                 .map(this::toResponse)
                 .toList();
+    }
+
+    @Override
+    public boolean hasActiveBooking(Long userId) {
+        return bookingRepository.existsByUserIdAndStatusIn(
+                userId,
+                List.of(BookingStatus.PENDING, BookingStatus.DEPOSIT_PAID, BookingStatus.FULL_PAID));
     }
 
     private BookingResponse toResponse(Booking booking) {

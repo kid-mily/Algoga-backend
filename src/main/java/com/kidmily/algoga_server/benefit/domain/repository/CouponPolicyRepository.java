@@ -17,6 +17,10 @@ public interface CouponPolicyRepository {
 
     Optional<CouponPolicy> findById(Long couponPolicyId);
 
+    Optional<CouponPolicy> findActiveByIdAndCourseId(Long couponPolicyId, Long courseId);
+
+    void deactivate(CouponPolicy couponPolicy);
+
     boolean existsActiveByCourseId(Long courseId);
 
     boolean existsByCourseIdAndCouponName(Long courseId, String couponName);

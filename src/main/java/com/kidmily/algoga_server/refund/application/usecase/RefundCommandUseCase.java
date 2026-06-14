@@ -7,5 +7,6 @@ public interface RefundCommandUseCase {
     Long convertToRefund(Long bookingId);
     void approve(Long refundId);
     void reject(Long refundId, String rejectReason);
+    void markUnderReview(Long refundId);
     void complete(Long refundId);
 }

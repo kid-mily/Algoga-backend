@@ -2,7 +2,7 @@ package com.kidmily.algoga_server.lms.presentation.api.admin;
 
 import com.kidmily.algoga_server.global.annotation.swagger.ApiErrorCodeExample;
 import com.kidmily.algoga_server.global.common.api.response.ApiResponse;
-import com.kidmily.algoga_server.lms.application.usecase.AdminCourseStudentUseCase;
+import com.kidmily.algoga_server.lms.application.usecase.CourseUseCase;
 import com.kidmily.algoga_server.lms.exception.LmsErrorCode;
 import com.kidmily.algoga_server.lms.presentation.response.CourseStudentResponse;
 import io.swagger.v3.oas.annotations.Operation;
@@ -21,7 +21,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class AdminCourseStudentController {
 
-    private final AdminCourseStudentUseCase adminCourseStudentUseCase;
+    private final CourseUseCase courseUseCase;
 
     @Operation(
             summary = "강의 수강생 목록 조회",
@@ -37,7 +37,7 @@ public class AdminCourseStudentController {
             @Parameter(description = "강의 ID", example = "3")
             @PathVariable Long courseId
     ) {
-        List<CourseStudentResponse> response = adminCourseStudentUseCase.getCourseStudents(courseId)
+        List<CourseStudentResponse> response = courseUseCase.getCourseStudents(courseId)
                 .stream()
                 .map(CourseStudentResponse::from)
                 .toList();

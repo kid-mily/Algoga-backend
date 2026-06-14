@@ -1,36 +1,38 @@
 package com.kidmily.algoga_server.lms.presentation.response;
 
-import com.kidmily.algoga_server.lms.domain.model.Course;
+import com.kidmily.algoga_server.lms.application.result.CourseResult;
 import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.util.List;
 
-@Schema(description = "어드민 강의 응답")
+@Schema(description = "관리자 강의 응답")
 public record AdminCourseResponse(
-
-        @Schema(description = "강의 ID", example = "1")
+        @Schema(description = "강의 ID", example = "57")
         Long courseId,
 
         @Schema(description = "국가 ID", example = "1")
         Long countryId,
 
-        @Schema(description = "콘텐츠 매니저 ID", example = "1")
+        @Schema(description = "담당 매니저 ID", example = "3")
         Long managerId,
 
         @Schema(description = "강의 제목", example = "오사카 여행 준비 마스터")
         String title,
 
-        @Schema(description = "강의 설명", example = "환전부터 교통패스까지 오사카 여행 준비에 필요한 내용을 학습합니다.")
+        @Schema(description = "강의 설명")
         String description,
 
-        @Schema(description = "강의 가격", example = "100000")
+        @Schema(description = "강의 가격", example = "15000")
         Integer price,
 
-        @Schema(description = "썸네일 URL")
+        @Schema(description = "강의 썸네일 URL")
         String thumbnailUrl,
 
-        @Schema(description = "첨부파일 경로 목록")
+        @Schema(description = "강의 자료 URL 목록")
         List<String> fileUrls,
+
+        @Schema(description = "원본 파일명을 포함한 강의 자료 목록")
+        List<CourseFileResponse> files,
 
         @Schema(description = "강의 난이도 코드", example = "BEGINNER")
         String level,
@@ -38,32 +40,23 @@ public record AdminCourseResponse(
         @Schema(description = "강의 난이도 이름", example = "초급")
         String levelName,
 
-        @Schema(description = "강의 상태", example = "DRAFT")
+        @Schema(description = "강의 상태", example = "PUBLISHED")
         String status
 ) {
-
-    public static AdminCourseResponse from(Course course) {
+    public static AdminCourseResponse from(CourseResult course) {
         return new AdminCourseResponse(
-                course.getId(),
-                course.getCountryId(),
-                course.getManagerId(),
-                course.getTitle(),
-                course.getDescription(),
-                course.getPrice(),
-                course.getThumbnailUrl(),
-                course.getFileUrls(),
-                course.getLevel(),
-                toLevelName(course.getLevel()),
-                course.getStatus()
+                course.courseId(),
+                course.countryId(),
+                course.managerId(),
+                course.title(),
+                course.description(),
+                course.price(),
+                course.thumbnailUrl(),
+                course.fileUrls(),
+                course.files().stream().map(CourseFileResponse::from).toList(),
+                course.level(),
+                course.levelName(),
+                course.status()
         );
-    }
-
-    private static String toLevelName(String level) {
-        return switch (level) {
-            case "BEGINNER" -> "초급";
-            case "INTERMEDIATE" -> "중급";
-            case "ADVANCED" -> "고급";
-            default -> "";
-        };
     }
 }

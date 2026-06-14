@@ -14,6 +14,7 @@ public record CourseStudentResult(
         String learningStatus,
         boolean quizSubmitted,
         boolean reviewWritten,
+        LocalDateTime accessExpiresAt,
         LocalDateTime completedAt
 ) {
 }

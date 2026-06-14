@@ -1,9 +1,9 @@
 package com.kidmily.algoga_server.lms.application.usecase;
 
 import com.kidmily.algoga_server.lms.application.command.UpdateLearningProgressCommand;
-import com.kidmily.algoga_server.lms.domain.model.LearningProgress;
+import com.kidmily.algoga_server.lms.application.result.LearningProgressResult;
 
 public interface LearningProgressUseCase {
 
-    LearningProgress updateProgress(UpdateLearningProgressCommand command);
+    LearningProgressResult updateProgress(UpdateLearningProgressCommand command);
 }

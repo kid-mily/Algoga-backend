@@ -1,6 +1,8 @@
 package com.kidmily.algoga_server.user.domain;
 
 import org.springframework.data.jpa.repository.JpaRepository;
+
+import java.util.List;
 import java.util.Optional;
 
 public interface UserRepository extends JpaRepository<User, Long> {
@@ -17,4 +19,7 @@ public interface UserRepository extends JpaRepository<User, Long> {
     Optional<User> findByPersonalCode(String personalCode);
 
     boolean existsByUsername(String username);
+
+    List<User> findByNicknameContaining(String keyword);
+    List<User> findByNameContaining(String keyword);
 }

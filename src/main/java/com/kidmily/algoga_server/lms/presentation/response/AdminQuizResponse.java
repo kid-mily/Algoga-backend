@@ -1,50 +1,48 @@
 package com.kidmily.algoga_server.lms.presentation.response;
 
-import com.kidmily.algoga_server.lms.domain.model.Quiz;
+import com.kidmily.algoga_server.lms.application.result.QuizResult;
 import io.swagger.v3.oas.annotations.media.Schema;
 
-@Schema(description = "퀴즈 응답")
+@Schema(description = "관리자 퀴즈 응답")
 public record AdminQuizResponse(
-
         @Schema(description = "퀴즈 ID", example = "1")
         Long quizId,
 
-        @Schema(description = "강의 ID", example = "3")
+        @Schema(description = "강의 ID", example = "57")
         Long courseId,
 
-        @Schema(description = "퀴즈 문제", example = "일본 오사카 여행 전 준비물로 가장 적절한 것은?")
+        @Schema(description = "퀴즈 문제")
         String question,
 
-        @Schema(description = "1번 보기", example = "여권")
+        @Schema(description = "1번 보기")
         String option1,
 
-        @Schema(description = "2번 보기", example = "두꺼운 겨울 패딩")
+        @Schema(description = "2번 보기")
         String option2,
 
-        @Schema(description = "3번 보기", example = "국제운전면허증만")
+        @Schema(description = "3번 보기")
         String option3,
 
-        @Schema(description = "4번 보기", example = "현지 주민등록증")
+        @Schema(description = "4번 보기")
         String option4,
 
         @Schema(description = "정답 보기 번호", example = "1")
         int correctOption,
 
-        @Schema(description = "해설", example = "해외여행 시 여권은 필수 준비물입니다.")
+        @Schema(description = "정답 해설")
         String explanation
 ) {
-
-    public static AdminQuizResponse from(Quiz quiz) {
+    public static AdminQuizResponse from(QuizResult quiz) {
         return new AdminQuizResponse(
-                quiz.getId(),
-                quiz.getCourseId(),
-                quiz.getQuestion(),
-                quiz.getOption1(),
-                quiz.getOption2(),
-                quiz.getOption3(),
-                quiz.getOption4(),
-                quiz.getCorrectOption(),
-                quiz.getExplanation()
+                quiz.quizId(),
+                quiz.courseId(),
+                quiz.question(),
+                quiz.option1(),
+                quiz.option2(),
+                quiz.option3(),
+                quiz.option4(),
+                quiz.correctOption(),
+                quiz.explanation()
         );
     }
 }

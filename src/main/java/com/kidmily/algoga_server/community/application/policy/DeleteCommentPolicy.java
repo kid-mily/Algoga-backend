@@ -23,4 +23,17 @@ public class DeleteCommentPolicy {
                     });
         }
     }
+
+    public void executeByAdmin(Comment comment) {
+        comment.deleteByAdmin();
+        commentRepository.delete(comment);
+
+        if (!comment.isReply()) {
+            commentRepository.findActiveRepliesByParentId(comment.getCommentId())
+                    .forEach(reply -> {
+                        reply.deleteByAdmin();
+                        commentRepository.delete(reply);
+                    });
+        }
+    }
 }

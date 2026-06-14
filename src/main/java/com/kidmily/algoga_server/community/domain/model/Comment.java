@@ -79,4 +79,23 @@ public class Comment {
     public boolean isDeleted() { return deleted; }
     public LocalDateTime getCreatedAt() { return createdAt; }
     public boolean isReply() { return parentId != null; }
+
+    // 대댓글의 대댓글 방지
+    public static void validateDepth(Long parentId) {
+        if (parentId != null) {
+            throw new CommentException(PostErrorCode.COMMENT_DEPTH_EXCEEDED);
+        }
+    }
+
+    // 부모 댓글이 해당 게시글 소속인지 검증
+    public void validateBelongsToPost(Long postId) {
+        if (!this.postId.equals(postId)) {
+            throw new CommentException(PostErrorCode.COMMENT_NOT_FOUND);
+        }
+    }
+
+    // 관리자에 의한 댓글 삭제 (작성자 권한 검증 없음)
+    public void deleteByAdmin() {
+        this.deleted = true;
+    }
 }
