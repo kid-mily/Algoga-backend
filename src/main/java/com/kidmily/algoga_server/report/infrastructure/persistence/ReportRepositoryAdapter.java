@@ -35,24 +35,24 @@ public class ReportRepositoryAdapter implements ReportRepository {
     }
 
     @Override
-    public List<Report> findReportsByPage(ReportStatus status, TargetType targetType,
+    public List<Report> findReportsByPage(ReportStatus status, TargetType targetType, Long reportedUserId,
                                           List<Long> searchedUserIds, int page, int size) {
         Pageable pageable = PageRequest.of(page, size);
         boolean hasKeyword = searchedUserIds != null;
         List<Long> userIds = searchedUserIds != null ? searchedUserIds : List.of();
 
-        return springDataRepository.findReportsByPage(status, targetType, hasKeyword, userIds, pageable)
+        return springDataRepository.findReportsByPage(status, targetType, reportedUserId, hasKeyword, userIds, pageable)
                 .stream()
                 .map(reportMapper::toDomain)
                 .toList();
     }
 
     @Override
-    public long countReports(ReportStatus status, TargetType targetType, List<Long> searchedUserIds) {
+    public long countReports(ReportStatus status, TargetType targetType, Long reportedUserId, List<Long> searchedUserIds) {
         boolean hasKeyword = searchedUserIds != null;
         List<Long> userIds = searchedUserIds != null ? searchedUserIds : List.of();
 
-        return springDataRepository.countReports(status, targetType, hasKeyword, userIds);
+        return springDataRepository.countReports(status, targetType, reportedUserId, hasKeyword, userIds);
     }
 
     @Override

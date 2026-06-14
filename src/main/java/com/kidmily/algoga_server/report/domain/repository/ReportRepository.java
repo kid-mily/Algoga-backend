@@ -11,9 +11,9 @@ public interface ReportRepository {
     Report save(Report report);
     boolean existsByUserAndTarget(Long userId, TargetType targetType, Long targetId);
 
-    List<Report> findReportsByPage(ReportStatus status, TargetType targetType,
+    List<Report> findReportsByPage(ReportStatus status, TargetType targetType, Long reportedUserId,
                                    List<Long> searchedUserIds, int page, int size);
-    long countReports(ReportStatus status, TargetType targetType, List<Long> searchedUserIds);
+    long countReports(ReportStatus status, TargetType targetType, Long reportedUserId, List<Long> searchedUserIds);
     Optional<Report> findById(Long reportId);
     long countByReportedUserIdAndStatus(Long reportedUserId, ReportStatus status);
     List<ReportCountByUser> findUsersWithCompletedReportCountAtLeast(long threshold);

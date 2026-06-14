@@ -19,11 +19,13 @@ public interface SpringDataReportRepository extends JpaRepository<ReportJpaEntit
     @Query("SELECT r FROM ReportJpaEntity r WHERE " +
             "(:status IS NULL OR r.status = :status) AND " +
             "(:targetType IS NULL OR r.targetType = :targetType) AND " +
+            "(:reportedUserId IS NULL OR r.reportedUserId = :reportedUserId) AND " +
             "(:hasKeyword = false OR r.userId IN :userIds OR r.reportedUserId IN :userIds) " +
             "ORDER BY r.reportId DESC")
     List<ReportJpaEntity> findReportsByPage(
             @Param("status") ReportStatus status,
             @Param("targetType") TargetType targetType,
+            @Param("reportedUserId") Long reportedUserId,
             @Param("hasKeyword") boolean hasKeyword,
             @Param("userIds") List<Long> userIds,
             Pageable pageable);
@@ -31,10 +33,12 @@ public interface SpringDataReportRepository extends JpaRepository<ReportJpaEntit
     @Query("SELECT COUNT(r) FROM ReportJpaEntity r WHERE " +
             "(:status IS NULL OR r.status = :status) AND " +
             "(:targetType IS NULL OR r.targetType = :targetType) AND " +
+            "(:reportedUserId IS NULL OR r.reportedUserId = :reportedUserId) AND " +
             "(:hasKeyword = false OR r.userId IN :userIds OR r.reportedUserId IN :userIds)")
     long countReports(
             @Param("status") ReportStatus status,
             @Param("targetType") TargetType targetType,
+            @Param("reportedUserId") Long reportedUserId,
             @Param("hasKeyword") boolean hasKeyword,
             @Param("userIds") List<Long> userIds);
 

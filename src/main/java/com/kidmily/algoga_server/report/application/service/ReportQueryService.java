@@ -36,17 +36,15 @@ public class ReportQueryService implements ReportQueryUseCase {
 
         List<Long> searchedUserIds = null;
 
-        if (reportedUserId != null) {
-            searchedUserIds = List.of(reportedUserId);
-        } else if (keyword != null && !keyword.isBlank()) {
+        if (keyword != null && !keyword.isBlank()) {
             searchedUserIds = reportUserPort.findUserIdsByNicknameContaining(keyword);
             if (searchedUserIds.isEmpty()) {
                 return new AdminReportListResponse(List.of(), 0, 0, index);
             }
         }
 
-        List<Report> reports = reportRepository.findReportsByPage(status, targetType, searchedUserIds, pageIndex, PAGE_SIZE);
-        long totalElements = reportRepository.countReports(status, targetType, searchedUserIds);
+        List<Report> reports = reportRepository.findReportsByPage(status, targetType, reportedUserId, searchedUserIds, pageIndex, PAGE_SIZE);
+        long totalElements = reportRepository.countReports(status, targetType, reportedUserId, searchedUserIds);
         int totalPages = (int) Math.ceil((double) totalElements / PAGE_SIZE);
 
         List<AdminReportListItemResponse> items = reports.stream()
