@@ -13,6 +13,7 @@ import com.kidmily.algoga_server.lms.domain.model.Quiz;
 import com.kidmily.algoga_server.lms.domain.model.QuizSubmission;
 import com.kidmily.algoga_server.lms.domain.repository.ChapterRepository;
 import com.kidmily.algoga_server.lms.domain.repository.CourseRepository;
+import com.kidmily.algoga_server.lms.domain.repository.EnrollmentRepository;
 import com.kidmily.algoga_server.lms.domain.repository.LearningProgressRepository;
 import com.kidmily.algoga_server.lms.domain.repository.QuizRepository;
 import com.kidmily.algoga_server.lms.domain.repository.QuizSubmissionRepository;
@@ -22,6 +23,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -38,6 +40,7 @@ public class QuizService implements QuizUseCase {
     private final CourseRepository courseRepository;
     private final ChapterRepository chapterRepository;
     private final LearningProgressRepository learningProgressRepository;
+    private final EnrollmentRepository enrollmentRepository;
     private final QuizRepository quizRepository;
     private final QuizSubmissionRepository quizSubmissionRepository;
 
@@ -54,6 +57,7 @@ public class QuizService implements QuizUseCase {
     @Transactional(readOnly = true)
     public List<QuizResult> getQuizzes(Long userId, Long courseId) {
         validateCourse(courseId);
+        validateEnrollment(userId, courseId);
         validateAllChaptersCompleted(userId, courseId);
 
         List<Quiz> quizzes = quizRepository.findByCourseId(courseId);
@@ -119,6 +123,7 @@ public class QuizService implements QuizUseCase {
     @Override
     public QuizSubmitResult submitQuiz(SubmitQuizCommand command) {
         validateCourse(command.courseId());
+        validateEnrollment(command.userId(), command.courseId());
         validateAllChaptersCompleted(command.userId(), command.courseId());
 
         List<Quiz> quizzes = quizRepository.findByCourseId(command.courseId());
@@ -174,6 +179,16 @@ public class QuizService implements QuizUseCase {
     private void validateCourse(Long courseId) {
         if (courseRepository.findByIdAndDeletedFalse(courseId).isEmpty()) {
             throw new LmsException(LmsErrorCode.COURSE_NOT_FOUND);
+        }
+    }
+
+    private void validateEnrollment(Long userId, Long courseId) {
+        boolean accessible = enrollmentRepository.findByUserIdAndCourseId(userId, courseId)
+                .map(enrollment -> enrollment.isAccessibleAt(LocalDateTime.now()))
+                .orElse(false);
+
+        if (!accessible) {
+            throw new LmsException(LmsErrorCode.NOT_ENROLLED);
         }
     }
 

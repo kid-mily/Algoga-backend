@@ -29,10 +29,10 @@ public class UserCouponJpaEntity {
     @Column(name = "user_id", nullable = false)
     private Long userId;
 
-    @Column(name = "lecture_id")
+    @Column(name = "lecture_id", nullable = false)
     private Long courseId;
 
-    @Column(name = "coupon_policy_id")
+    @Column(name = "coupon_policy_id", nullable = false)
     private Long couponPolicyId;
 
     @Column(name = "coupon_name", nullable = false, length = 100)

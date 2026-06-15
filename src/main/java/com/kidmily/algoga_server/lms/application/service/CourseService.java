@@ -221,6 +221,60 @@ public class CourseService implements CourseUseCase {
     }
 
     @Override
+    @Transactional(readOnly = true)
+    public CourseClassroomResult getCourseClassroom(Long userId, Long courseId) {
+        Course course = findCourse(courseId);
+
+        var enrollment = enrollmentRepository.findByUserIdAndCourseId(userId, courseId)
+                .filter(value -> value.isAccessibleAt(LocalDateTime.now()))
+                .orElseThrow(() -> new LmsException(LmsErrorCode.NOT_ENROLLED));
+
+        List<Chapter> chapters = chapterRepository.findByCourseId(courseId);
+        List<LearningProgress> progresses = learningProgressRepository.findByUserIdAndCourseId(userId, courseId);
+
+        Map<Long, LearningProgress> progressByChapterId = progresses.stream()
+                .collect(java.util.stream.Collectors.toMap(
+                        LearningProgress::getChapterId,
+                        progress -> progress,
+                        (first, second) -> first
+                ));
+
+        List<CourseClassroomChapterResult> chapterResults = new java.util.ArrayList<>();
+        boolean previousChaptersCompleted = true;
+
+        for (Chapter chapter : chapters) {
+            LearningProgress progress = progressByChapterId.get(chapter.getId());
+            boolean completed = progress != null && progress.isCompleted();
+            boolean locked = !previousChaptersCompleted;
+
+            chapterResults.add(new CourseClassroomChapterResult(
+                    chapter.getId(),
+                    chapter.getTitle(),
+                    locked ? null : chapter.getVideoUrl(),
+                    chapter.getDurationSeconds(),
+                    chapter.getChapterOrder(),
+                    progress == null ? 0 : progress.getWatchedSeconds(),
+                    progress == null ? 0 : progress.getProgressRate(),
+                    completed,
+                    locked
+            ));
+
+            previousChaptersCompleted = previousChaptersCompleted && completed;
+        }
+
+        boolean quizAvailable = !chapters.isEmpty()
+                && chapterResults.stream().allMatch(CourseClassroomChapterResult::completed);
+
+        return new CourseClassroomResult(
+                course.getId(),
+                course.getTitle(),
+                enrollment.getAccessExpiresAt(),
+                quizAvailable,
+                chapterResults
+        );
+    }
+
+    @Override
     public CourseQnaResult createQna(CreateCourseQnaCommand command) {
         findCourse(command.courseId());
 
