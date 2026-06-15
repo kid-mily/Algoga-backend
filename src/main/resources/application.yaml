@@ -99,3 +99,7 @@ user:
   storage:
     bucket: algoga-banner
     directory: profiles
+
+  app:
+    frontend:
+      base-url: ${FRONTEND_URL:http://localhost:17000}

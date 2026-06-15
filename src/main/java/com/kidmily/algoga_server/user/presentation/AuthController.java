@@ -11,6 +11,9 @@ import com.kidmily.algoga_server.user.presentation.response.FindIdResponse;
 import com.kidmily.algoga_server.user.settings.CustomUserDetails;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.servlet.http.Cookie;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpHeaders;
@@ -75,18 +78,23 @@ public class AuthController {
         }
     }
 
-    // 일반 로그인
+    // 🌟 일반 로그인 (토큰을 HttpOnly 쿠키로 세팅)
     @Operation(summary = "일반 로그인")
     @ApiErrorCodeExample(domain = UserErrorCode.class, value = {"NOT_FOUND_USER", "DELETED_USER", "ACCOUNT_LOCKED", "INVALID_PASSWORD"})
     @PostMapping("/login")
-    public ApiResponse<AuthTokenResponse> login(@RequestBody @Valid AuthLoginRequest request) {
-        AuthTokenResponse response = authService.login(request);
+    public ApiResponse<Void> login(@RequestBody @Valid AuthLoginRequest request, HttpServletResponse response) {
+        AuthTokenResponse tokenResponse = authService.login(request);
 
-        return ApiResponse.success(
-                "AUTH_LOGIN_SUCCESS",
-                "로그인에 성공했습니다.",
-                response
-        );
+        ResponseCookie accessCookie = ResponseCookie.from("accessToken", tokenResponse.accessToken())
+                .httpOnly(true).secure(false).path("/").maxAge(30 * 60).sameSite("Lax").build();
+
+        ResponseCookie refreshCookie = ResponseCookie.from("refreshToken", tokenResponse.refreshToken())
+                .httpOnly(true).secure(false).path("/").maxAge(7 * 24 * 60 * 60).sameSite("Lax").build();
+
+        response.addHeader(HttpHeaders.SET_COOKIE, accessCookie.toString());
+        response.addHeader(HttpHeaders.SET_COOKIE, refreshCookie.toString());
+
+        return ApiResponse.success("AUTH_LOGIN_SUCCESS", "로그인에 성공했습니다.", null);
     }
 
     // 아이디 찾기
@@ -120,18 +128,31 @@ public class AuthController {
         return ApiResponse.success("AUTH_RESET_PW_SUCCESS", "비밀번호 변경이 완료되었습니다. 다시 로그인해주세요.");
     }
 
-    // 로그아웃
-    @Operation(summary = "로그아웃", description = "Redis에서 Refresh Token을 삭제합니다.")
+    // 🌟 로그아웃 (쿠키를 읽어서 만료시킴)
+    @Operation(summary = "로그아웃", description = "쿠키를 삭제하고 Redis에서 Refresh Token을 지웁니다.")
     @PostMapping("/logout")
-    public ApiResponse<Void> logout(@RequestHeader("Authorization") String token) {
-        // 1. 헤더에서 토큰 추출 ("Bearer " 제거)
-        String jwt = token.replace("Bearer ", "");
+    public ApiResponse<Void> logout(HttpServletRequest request, HttpServletResponse response) {
+        String accessToken = null;
+        if (request.getCookies() != null) {
+            for (Cookie cookie : request.getCookies()) {
+                if ("accessToken".equals(cookie.getName())) {
+                    accessToken = cookie.getValue();
+                    break;
+                }
+            }
+        }
 
-        // 2. 토큰에서 이메일 추출 (globalJwtProvider를 사용)
-        String email = globalJwtProvider.getSubject(jwt);
+        if (accessToken != null && globalJwtProvider.validateToken(accessToken)) {
+            String email = globalJwtProvider.getSubject(accessToken);
+            authService.logout(email);
+        }
 
-        // 3. 서비스의 로그아웃 호출 (Redis 삭제 로직 실행)
-        authService.logout(email);
+        // 쿠키 만료시간을 0으로 만들어 브라우저에서 삭제되게 함
+        ResponseCookie deleteAccessCookie = ResponseCookie.from("accessToken", "").path("/").maxAge(0).build();
+        ResponseCookie deleteRefreshCookie = ResponseCookie.from("refreshToken", "").path("/").maxAge(0).build();
+
+        response.addHeader(HttpHeaders.SET_COOKIE, deleteAccessCookie.toString());
+        response.addHeader(HttpHeaders.SET_COOKIE, deleteRefreshCookie.toString());
 
         return ApiResponse.success("AUTH_LOGOUT_SUCCESS", "로그아웃이 완료되었습니다.");
     }
@@ -155,6 +176,12 @@ public class AuthController {
     }
 
     // 소셜 추가정보 회원가입 API
+    @Operation(summary = "소셜 추가정보 회원가입", description = "소셜 로그인 성공 후 최초 가입 시, 필수 추가 정보(전화번호, 성별, 닉네임 등)를 입력받아 회원가입을 완료합니다.")
+    @ApiErrorCodeExample(domain = UserErrorCode.class, value = {"ALREADY_EXISTS_EMAIL"})
+    @io.swagger.v3.oas.annotations.responses.ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "201", description = "소셜 회원가입 성공"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "입력값 유효성 검사 실패 또는 필수값 누락")
+    })
     @PostMapping("/social/signup")
     public ResponseEntity<Void> socialSignup(@Valid @RequestBody AuthSocialSignupRequest request) {
         authService.socialSignup(request);
