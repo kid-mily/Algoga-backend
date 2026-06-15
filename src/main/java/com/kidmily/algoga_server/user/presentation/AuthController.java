@@ -4,6 +4,8 @@ import com.kidmily.algoga_server.global.annotation.swagger.ApiErrorCodeExample;
 import com.kidmily.algoga_server.global.common.api.response.ApiResponse;
 import com.kidmily.algoga_server.global.security.GlobalJwtProvider;
 import com.kidmily.algoga_server.user.application.AuthService;
+import com.kidmily.algoga_server.user.exception.AuthErrorCode;
+import com.kidmily.algoga_server.user.exception.AuthException;
 import com.kidmily.algoga_server.user.exception.UserErrorCode;
 import com.kidmily.algoga_server.user.presentation.request.*;
 import com.kidmily.algoga_server.user.presentation.response.AuthTokenResponse;
@@ -188,5 +190,45 @@ public class AuthController {
         return ResponseEntity.status(HttpStatus.CREATED).build();
     }
 
+    // 토큰 재발급 API (이것도 응답은 쿠키로 줌)
+    @Operation(summary = "토큰 재발급", description = "만료된 Access Token을 수명이 남아있는 Refresh Token 쿠키를 이용해 자동으로 연장(재발급)합니다.")
+    @ApiErrorCodeExample(domain = AuthErrorCode.class, value = {"REFRESH_TOKEN_NOT_FOUND"}) // 유효하지 않거나 없을 때 에러 명시
+    @PostMapping("/refresh")
+    public ApiResponse<Void> refreshToken(HttpServletRequest request, HttpServletResponse response) {
+        String refreshToken = null;
+
+        // 1. 브라우저가 보낸 쿠키들 중에서 refreshToken을 찾습니다.
+        if (request.getCookies() != null) {
+            for (Cookie cookie : request.getCookies()) {
+                if ("refreshToken".equals(cookie.getName())) {
+                    refreshToken = cookie.getValue();
+                    break;
+                }
+            }
+        }
+
+        if (refreshToken == null) {
+            throw new AuthException(AuthErrorCode.REFRESH_TOKEN_NOT_FOUND);
+        }
+
+        // 2. 토큰에서 이메일을 뽑아냅니다.
+        String email = globalJwtProvider.getSubject(refreshToken);
+
+        // 3. 서비스에 가서 새 엑세스 토큰을 발급받아옵니다.
+        String newAccessToken = authService.refreshAccessToken(email, refreshToken);
+
+        // 4. 새로 발급받은 엑세스 토큰을 다시 HttpOnly 쿠키로 예쁘게 구워서 줍니다.
+        ResponseCookie accessCookie = ResponseCookie.from("accessToken", newAccessToken)
+                .httpOnly(true)
+                .secure(false) // HTTPS 적용 시 true
+                .path("/")
+                .maxAge(30 * 60) // 30분
+                .sameSite("Lax")
+                .build();
+
+        response.addHeader(HttpHeaders.SET_COOKIE, accessCookie.toString());
+
+        return ApiResponse.success("AUTH_REFRESH_SUCCESS", "토큰이 성공적으로 재발급되었습니다.", null);
+    }
 
 }
