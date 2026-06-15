@@ -308,7 +308,7 @@ public class AuthService implements SocialLoginProcessor {
 
     // 🌟 소셜로그인 리다이렉트 및 토큰 발급 (최신 쿠키 전용 버전)
     @Override
-    public SocialAuthResult processLoginAndGetRedirectUrl(String email, String name) {
+    public SocialAuthResult processLoginAndGetRedirectUrl(String email, String name, String socialType) {
         // 이미 가입된 유저인지 DB 확인
         boolean isExistingUser = userRepository.findByEmailAndIsDeletedFalse(email).isPresent();
 
@@ -329,7 +329,7 @@ public class AuthService implements SocialLoginProcessor {
             String redirectUrl = UriComponentsBuilder.fromUriString(frontendBaseUrl + "/auth/register")
                     .queryParam("email", email)
                     .queryParam("name", name)
-                    .queryParam("socialType", "GOOGLE")
+                    .queryParam("socialType", socialType)
                     .build().toUriString();
             return new SocialAuthResult(redirectUrl, null, null);
         }

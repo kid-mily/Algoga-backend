@@ -30,7 +30,13 @@ public class OAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
         String email = oAuth2User.getAttribute("email");
         String name = oAuth2User.getAttribute("name");
 
-        SocialAuthResult authResult = socialLoginProcessor.processLoginAndGetRedirectUrl(email, name);
+        // 🌟 1. 어떤 소셜(구글, 카카오)로 로그인했는지 추출!
+        org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken oauthToken =
+                (org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken) authentication;
+        String socialType = oauthToken.getAuthorizedClientRegistrationId().toUpperCase(); // "GOOGLE" 또는 "KAKAO"
+
+        // 🌟 2. 추출한 socialType을 같이 넘겨줍니다.
+        SocialAuthResult authResult = socialLoginProcessor.processLoginAndGetRedirectUrl(email, name, socialType);
 
         // 기존 유저여서 토큰이 발급된 경우 HttpOnly 쿠키 2개 생성
         if (authResult.accessToken() != null && authResult.refreshToken() != null) {
