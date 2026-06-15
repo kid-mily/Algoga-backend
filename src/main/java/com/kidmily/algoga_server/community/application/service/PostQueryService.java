@@ -124,7 +124,6 @@ public class PostQueryService implements PostQueryUseCase {
     @Override
     public List<TagResponse> getPostFilterTags() {
         List<TagResponse> categoryTags = getCategories().stream()
-                .filter(category -> category != PostTagType.FREE)
                 .map(TagResponse::fromCategory)
                 .toList();
 
