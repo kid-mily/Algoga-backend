@@ -15,7 +15,7 @@ public class CouponPolicy {
     private final LocalDateTime createdAt;
     private final LocalDateTime updatedAt;
 
-    private static final int DEFAULT_VALID_DAYS = 30;
+    public static final int DEFAULT_VALID_DAYS = 30;
 
     private CouponPolicy(
             Long id,
@@ -46,8 +46,7 @@ public class CouponPolicy {
             Long managerId,
             String couponName,
             String discountType,
-            int discountValue,
-            int validDays
+            int discountValue
     ) {
         LocalDateTime now = LocalDateTime.now();
 

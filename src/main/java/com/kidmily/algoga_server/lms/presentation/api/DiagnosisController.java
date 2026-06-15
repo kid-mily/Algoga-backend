@@ -34,6 +34,7 @@ public class DiagnosisController {
 
     @Operation(summary = "진단평가 문제 목록 조회")
     @ApiErrorCodeExample(domain = LmsErrorCode.class, value = {
+            "DIAGNOSIS_LOGIN_REQUIRED",
             "COUNTRY_NOT_FOUND",
             "DIAGNOSIS_QUESTION_NOT_FOUND"
     })
@@ -90,7 +91,7 @@ public class DiagnosisController {
             @AuthenticationPrincipal Object userDetails,
             @Valid @RequestBody DiagnosisSubmitRequest request
     ) {
-        Long currentUserId = CurrentUserIdResolver.resolveNullable(userDetails);
+        Long currentUserId = CurrentUserIdResolver.resolveRequired(userDetails);
 
         SubmitDiagnosisCommand command = new SubmitDiagnosisCommand(
                 currentUserId,
@@ -114,13 +115,14 @@ public class DiagnosisController {
 
     @Operation(summary = "내 최신 진단평가 결과 조회")
     @ApiErrorCodeExample(domain = LmsErrorCode.class, value = {
+            "DIAGNOSIS_LOGIN_REQUIRED",
             "DIAGNOSIS_RESULT_NOT_FOUND"
     })
     @GetMapping("/me/latest")
     public ResponseEntity<ApiResponse<DiagnosisResultResponse>> getMyLatestDiagnosisResult(
             @AuthenticationPrincipal Object userDetails
     ) {
-        Long currentUserId = CurrentUserIdResolver.resolveNullable(userDetails);
+        Long currentUserId = CurrentUserIdResolver.resolveRequired(userDetails);
 
         return ResponseEntity.ok(
                 ApiResponse.success(

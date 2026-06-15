@@ -9,16 +9,34 @@
 ### 4) quizId를 확인해서 퀴즈 제출
 ### 5) 강의 이수 완료
 ### ==========================================================
+### 일반 사용자 로그인
+POST http://localhost:15000/api/v1/auth/login
+Content-Type: application/json
+Accept: application/json
+
+{
+  "username": "test1",
+  "password": "test1234"
+}
+
+> {%
+    if (response.status === 200) {
+        client.global.set("userAccessToken", response.body.data.accessToken);
+        client.global.set("userRefreshToken", response.body.data.refreshToken);
+        client.log("User Access Token 저장 완료: " + client.global.get("userAccessToken"));
+    }
+%}
 
 
-### 1. 챕터 목록 조회
-GET http://localhost:15000/api/v1/courses/3/chapters
-Authorization: Bearer {{accessToken}}
+### 1. 수강생 강의실 상세 조회
+### chapters[].locked=false인 챕터만 videoUrl이 내려옴
+GET http://localhost:15000/api/v1/my/courses/54
+Authorization: Bearer {{userAccessToken}}
 
 
 ### 2-1. 챕터 5 완료 처리
-POST http://localhost:15000/api/v1/courses/3/chapters/5/progress
-Authorization: Bearer {{accessToken}}
+POST http://localhost:15000/api/v1/courses/54/chapters/42/progress
+Authorization: Bearer {{userAccessToken}}
 Content-Type: application/json
 
 {
@@ -27,8 +45,8 @@ Content-Type: application/json
 
 
 ### 2-2. 챕터 6 완료 처리
-POST http://localhost:15000/api/v1/courses/3/chapters/6/progress
-Authorization: Bearer {{accessToken}}
+POST http://localhost:15000/api/v1/courses/54/chapters/42/progress
+Authorization: Bearer {{userAccessToken}}
 Content-Type: application/json
 
 {
@@ -38,7 +56,7 @@ Content-Type: application/json
 
 ### 2-3. 챕터 7 완료 처리
 POST http://localhost:15000/api/v1/courses/3/chapters/7/progress
-Authorization: Bearer {{accessToken}}
+Authorization: Bearer {{userAccessToken}}
 Content-Type: application/json
 
 {
@@ -48,7 +66,7 @@ Content-Type: application/json
 
 ### 2-4. 챕터 8 완료 처리
 POST http://localhost:15000/api/v1/courses/3/chapters/8/progress
-Authorization: Bearer {{accessToken}}
+Authorization: Bearer {{userAccessToken}}
 Content-Type: application/json
 
 {
@@ -58,20 +76,20 @@ Content-Type: application/json
 
 ### 3. 사용자 퀴즈 조회
 ### 모든 챕터 완료 후 실행해야 함
-GET http://localhost:15000/api/v1/courses/3/quiz
-Authorization: Bearer {{accessToken}}
+GET http://localhost:15000/api/v1/courses/54/quiz
+Authorization: Bearer {{userAccessToken}}
 
 
 ### 4. 사용자 퀴즈 제출 및 채점
 ### quizId는 위 퀴즈 조회 응답의 data[].quizId 값으로 변경
-POST http://localhost:15000/api/v1/courses/3/quiz/submit
-Authorization: Bearer {{accessToken}}
+POST http://localhost:15000/api/v1/courses/54/quiz/submit
+Authorization: Bearer {{userAccessToken}}
 Content-Type: application/json
 
 {
   "answers": [
     {
-      "quizId": 3,
+      "quizId": 9,
       "selectedOption": 1
     }
   ]
@@ -82,7 +100,7 @@ Content-Type: application/json
 ### 조건:
 ### - 해당 강의의 모든 챕터 completed=true
 ### - 해당 강의 퀴즈 제출 내역이 quiz_submissions에 존재
-POST http://localhost:15000/api/v1/courses/3/complete
+POST http://localhost:15000/api/v1/courses/54/complete
 Authorization: Bearer {{userAccessToken}}
 
 
@@ -92,12 +110,18 @@ GET http://localhost:15000/api/v1/my/courses
 Authorization: Bearer {{userAccessToken}}
 
 
+### 6-1. 마이페이지 - 수강생 강의실 상세 재조회
+### 모든 챕터 완료 후 quizAvailable=true 확인
+GET http://localhost:15000/api/v1/my/courses/3
+Authorization: Bearer {{userAccessToken}}
+
+
 ### ----------------------------------------------------------
 ### 7. 마이페이지 - 내 쿠폰함 조회
-GET http://localhost:15000/api/v1/my/coupons
+GET http://localhost:15000/api/v1/my/benefits/coupons
 Authorization: Bearer {{userAccessToken}}
 
 
 ### 8. 마이페이지 - 내 마일리지 내역 조회
-GET http://localhost:15000/api/v1/my/mileages
-Authorization: Bearer {{accessToken}}
+GET http://localhost:15000/api/v1/my/benefits/mileages
+Authorization: Bearer {{userAccessToken}}

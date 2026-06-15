@@ -37,7 +37,6 @@ Accept: application/json
 ### ==========================================================
 
 GET http://localhost:15000/api/v1/diagnosis/questions?countryId=1
-Authorization: Bearer {{userAccessToken}}
 Accept: application/json
 
 
@@ -50,6 +49,25 @@ Accept: application/json
 ### 41~70점  -> INTERMEDIATE
 ### 71~100점 -> ADVANCED
 ### ==========================================================
+
+### 비로그인 제출 확인
+### 기대 결과: 401 / LMS_039
+POST http://localhost:15000/api/v1/diagnosis/result
+Content-Type: application/json
+Accept: application/json
+
+{
+  "countryId": 1,
+  "answers": [
+    {
+      "questionId": 1,
+      "selectedOption": 2
+    }
+  ]
+}
+
+
+### 로그인 후 결과 저장
 
 POST http://localhost:15000/api/v1/diagnosis/result
 Authorization: Bearer {{userAccessToken}}
@@ -99,7 +117,6 @@ Accept: application/json
 ### ==========================================================
 
 GET http://localhost:15000/api/v1/diagnosis/recommendations?countryId=1&level=BEGINNER
-Authorization: Bearer {{userAccessToken}}
 Accept: application/json
 
 
@@ -108,7 +125,6 @@ Accept: application/json
 ### ==========================================================
 
 GET http://localhost:15000/api/v1/diagnosis/recommendations?countryId=1&level=INTERMEDIATE
-Authorization: Bearer {{userAccessToken}}
 Accept: application/json
 
 
@@ -117,7 +133,6 @@ Accept: application/json
 ### ==========================================================
 
 GET http://localhost:15000/api/v1/diagnosis/recommendations?countryId=1&level=ADVANCED
-Authorization: Bearer {{userAccessToken}}
 Accept: application/json
 
 
@@ -165,4 +180,12 @@ Accept: application/json
 
 GET http://localhost:15000/api/v1/diagnosis/me/latest
 Authorization: Bearer {{userAccessToken}}
+Accept: application/json
+### ==========================================================
+### 관리자 진단평가 문제 즉시 삭제
+### 먼저 01-auth-map.http에서 콘텐츠 매니저 로그인을 실행하세요.
+### ==========================================================
+
+DELETE http://localhost:15000/api/v1/admin/diagnosis/questions/1
+Authorization: Bearer {{contentManagerAccessToken}}
 Accept: application/json

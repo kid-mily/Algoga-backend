@@ -2,6 +2,8 @@ package com.kidmily.algoga_server.lms.tdd;
 
 import com.kidmily.algoga_server.lms.infrastructure.persistence.entity.ChapterJpaEntity;
 import com.kidmily.algoga_server.lms.infrastructure.persistence.entity.CourseJpaEntity;
+import com.kidmily.algoga_server.lms.infrastructure.persistence.repository.SpringDataChapterRepository;
+import com.kidmily.algoga_server.lms.infrastructure.persistence.repository.SpringDataCourseRepository;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
