@@ -35,9 +35,6 @@ public record PostResponse(
         @Schema(description = "나라 이름", example = "일본")
         String countryName,
 
-        @Schema(description = "수강 강의 ID", example = "3")
-        Long lectureId,
-
         @Schema(description = "이미지 URL 목록")
         List<String> imageUrls,
 
