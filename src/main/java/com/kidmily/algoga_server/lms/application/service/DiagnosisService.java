@@ -118,6 +118,16 @@ public class DiagnosisService implements DiagnosisUseCase {
         return toResultView(result, List.of());
     }
 
+    @Override
+    public void deleteQuestion(Long questionId) {
+        if (!diagnosisQuestionRepository.existsById(questionId)) {
+            throw new LmsException(LmsErrorCode.DIAGNOSIS_QUESTION_NOT_FOUND);
+        }
+
+        diagnosisAnswerRepository.deleteByQuestionId(questionId);
+        diagnosisQuestionRepository.deleteById(questionId);
+    }
+
     private DiagnosisAnswerResult saveAndCreateAnswerResult(
             Long resultId,
             SubmitDiagnosisAnswerCommand answer,

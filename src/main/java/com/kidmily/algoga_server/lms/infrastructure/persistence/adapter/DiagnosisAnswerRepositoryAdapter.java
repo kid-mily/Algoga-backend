@@ -31,4 +31,9 @@ public class DiagnosisAnswerRepositoryAdapter implements DiagnosisAnswerReposito
                 savedEntity.isCorrect()
         );
     }
+
+    @Override
+    public void deleteByQuestionId(Long questionId) {
+        springDataDiagnosisAnswerRepository.deleteByQuestionId(questionId);
+    }
 }

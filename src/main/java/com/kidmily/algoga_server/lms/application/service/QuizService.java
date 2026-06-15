@@ -47,7 +47,7 @@ public class QuizService implements QuizUseCase {
     @Override
     @Transactional(readOnly = true)
     public List<QuizResult> getQuizzes(Long courseId) {
-        validateCourse(courseId);
+        validateActiveCourse(courseId);
         return quizRepository.findByCourseId(courseId).stream()
                 .map(QuizResult::from)
                 .toList();
@@ -56,8 +56,8 @@ public class QuizService implements QuizUseCase {
     @Override
     @Transactional(readOnly = true)
     public List<QuizResult> getQuizzes(Long userId, Long courseId) {
-        validateCourse(courseId);
         validateEnrollment(userId, courseId);
+        validateCourseExists(courseId);
         validateAllChaptersCompleted(userId, courseId);
 
         List<Quiz> quizzes = quizRepository.findByCourseId(courseId);
@@ -72,7 +72,7 @@ public class QuizService implements QuizUseCase {
 
     @Override
     public QuizResult createQuiz(CreateQuizCommand command) {
-        validateCourse(command.courseId());
+        validateActiveCourse(command.courseId());
         validateOptions(command.option1(), command.option2(), command.option3(), command.option4());
         validateCorrectOption(command.correctOption());
 
@@ -92,7 +92,7 @@ public class QuizService implements QuizUseCase {
 
     @Override
     public QuizResult updateQuiz(Long courseId, Long quizId, UpdateQuizCommand command) {
-        validateCourse(courseId);
+        validateActiveCourse(courseId);
         validateOptions(command.option1(), command.option2(), command.option3(), command.option4());
         validateCorrectOption(command.correctOption());
 
@@ -113,7 +113,7 @@ public class QuizService implements QuizUseCase {
 
     @Override
     public void deleteQuiz(Long courseId, Long quizId) {
-        validateCourse(courseId);
+        validateActiveCourse(courseId);
 
         if (!quizRepository.delete(quizId, courseId)) {
             throw new LmsException(LmsErrorCode.QUIZ_NOT_FOUND);
@@ -122,8 +122,8 @@ public class QuizService implements QuizUseCase {
 
     @Override
     public QuizSubmitResult submitQuiz(SubmitQuizCommand command) {
-        validateCourse(command.courseId());
         validateEnrollment(command.userId(), command.courseId());
+        validateCourseExists(command.courseId());
         validateAllChaptersCompleted(command.userId(), command.courseId());
 
         List<Quiz> quizzes = quizRepository.findByCourseId(command.courseId());
@@ -176,8 +176,14 @@ public class QuizService implements QuizUseCase {
         );
     }
 
-    private void validateCourse(Long courseId) {
+    private void validateActiveCourse(Long courseId) {
         if (courseRepository.findByIdAndDeletedFalse(courseId).isEmpty()) {
+            throw new LmsException(LmsErrorCode.COURSE_NOT_FOUND);
+        }
+    }
+
+    private void validateCourseExists(Long courseId) {
+        if (courseRepository.findById(courseId).isEmpty()) {
             throw new LmsException(LmsErrorCode.COURSE_NOT_FOUND);
         }
     }

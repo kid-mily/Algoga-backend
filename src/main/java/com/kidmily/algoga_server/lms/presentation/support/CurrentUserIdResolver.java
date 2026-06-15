@@ -1,10 +1,21 @@
 package com.kidmily.algoga_server.lms.presentation.support;
 
+import com.kidmily.algoga_server.lms.exception.LmsErrorCode;
+import com.kidmily.algoga_server.lms.exception.LmsException;
+
 import java.lang.reflect.Method;
 
 public final class CurrentUserIdResolver {
 
     private CurrentUserIdResolver() {
+    }
+
+    public static Long resolveRequired(Object principal) {
+        Long userId = resolveNullable(principal);
+        if (userId == null) {
+            throw new LmsException(LmsErrorCode.DIAGNOSIS_LOGIN_REQUIRED);
+        }
+        return userId;
     }
 
     public static Long resolveNullable(Object principal) {

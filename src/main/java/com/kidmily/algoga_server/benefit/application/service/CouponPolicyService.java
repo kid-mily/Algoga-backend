@@ -34,8 +34,7 @@ public class CouponPolicyService implements CouponPolicyUseCase {
         validateCourse(command.courseId());
         validateCouponPolicy(
                 command.discountType(),
-                command.discountValue(),
-                command.validDays()
+                command.discountValue()
         );
         validateCouponNameNotDuplicated(command.courseId(), command.couponName());
 
@@ -44,8 +43,7 @@ public class CouponPolicyService implements CouponPolicyUseCase {
                 command.managerId(),
                 command.couponName(),
                 command.discountType().toUpperCase(),
-                command.discountValue(),
-                command.validDays()
+                command.discountValue()
         );
 
         CouponPolicy savedCouponPolicy = couponPolicyRepository.save(couponPolicy);
@@ -83,8 +81,7 @@ public class CouponPolicyService implements CouponPolicyUseCase {
         validateCourse(command.courseId());
         validateCouponPolicy(
                 command.discountType(),
-                command.discountValue(),
-                command.validDays()
+                command.discountValue()
         );
         validateCouponNameNotDuplicated(
                 command.courseId(),
@@ -98,7 +95,7 @@ public class CouponPolicyService implements CouponPolicyUseCase {
                 command.couponName(),
                 command.discountType().toUpperCase(),
                 command.discountValue(),
-                command.validDays()
+                CouponPolicy.DEFAULT_VALID_DAYS
         ).orElseThrow(() -> {
             log.warn("[Coupon Policy Command] 쿠폰 정책 수정 실패. 존재하지 않거나 비활성화된 쿠폰 정책입니다. courseId={}, couponPolicyId={}",
                     command.courseId(), command.couponPolicyId());
@@ -162,8 +159,7 @@ public class CouponPolicyService implements CouponPolicyUseCase {
 
     private void validateCouponPolicy(
             String discountType,
-            int discountValue,
-            int validDays
+            int discountValue
     ) {
         if (discountType == null || discountType.isBlank()) {
             throw new BenefitException(BenefitErrorCode.INVALID_COUPON_POLICY);
@@ -189,10 +185,5 @@ public class CouponPolicyService implements CouponPolicyUseCase {
             throw new BenefitException(BenefitErrorCode.INVALID_COUPON_POLICY);
         }
 
-        if (validDays <= 0) {
-            log.warn("[Coupon Policy] 쿠폰 정책 검증 실패. 유효기간은 1일 이상이어야 합니다. validDays={}",
-                    validDays);
-            throw new BenefitException(BenefitErrorCode.INVALID_COUPON_POLICY);
-        }
     }
 }

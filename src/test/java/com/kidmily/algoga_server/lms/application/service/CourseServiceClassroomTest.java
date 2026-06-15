@@ -39,6 +39,8 @@ import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -66,7 +68,7 @@ class CourseServiceClassroomTest {
     private CourseService courseService;
 
     @Test
-    void 이전_챕터를_완료하지_않으면_다음_챕터가_잠긴다() {
+    void locksNextChapterUntilPreviousChapterIsCompleted() {
         Chapter first = chapter(1L, 1, "https://cdn.test/chapter-1.mp4");
         Chapter second = chapter(2L, 2, "https://cdn.test/chapter-2.mp4");
         mockClassroom(List.of(first, second), List.of());
@@ -81,7 +83,7 @@ class CourseServiceClassroomTest {
     }
 
     @Test
-    void 등록된_모든_챕터를_완료하면_퀴즈가_열린다() {
+    void opensQuizWhenAllRegisteredChaptersAreCompleted() {
         Chapter first = chapter(1L, 1, "https://cdn.test/chapter-1.mp4");
         Chapter second = chapter(2L, 2, "https://cdn.test/chapter-2.mp4");
         List<LearningProgress> progresses = List.of(
@@ -97,9 +99,7 @@ class CourseServiceClassroomTest {
     }
 
     @Test
-    void 수강_기간이_만료되면_강의실에_접근할_수_없다() {
-        Course course = mock(Course.class);
-        when(courseRepository.findByIdAndDeletedFalse(COURSE_ID)).thenReturn(Optional.of(course));
+    void rejectsClassroomAccessWhenEnrollmentExpired() {
         when(enrollmentRepository.findByUserIdAndCourseId(USER_ID, COURSE_ID))
                 .thenReturn(Optional.of(enrollment(LocalDateTime.now().minusSeconds(1))));
 
@@ -111,11 +111,34 @@ class CourseServiceClassroomTest {
         assertSame(LmsErrorCode.NOT_ENROLLED, exception.getErrorCode());
     }
 
+    @Test
+    void deletedCourseRemainsAvailableToEnrolledStudent() {
+        Chapter chapter = chapter(1L, 1, "https://cdn.test/chapter-1.mp4");
+        mockClassroom(List.of(chapter), List.of());
+
+        CourseClassroomResult result = courseService.getCourseClassroom(USER_ID, COURSE_ID);
+
+        assertEquals(COURSE_ID, result.courseId());
+        verify(courseRepository).findById(COURSE_ID);
+    }
+
+    @Test
+    void deletingCourseDoesNotDeleteStoredFiles() {
+        Course course = mock(Course.class);
+        when(courseRepository.findByIdAndDeletedFalse(COURSE_ID)).thenReturn(Optional.of(course));
+        when(courseRepository.softDelete(COURSE_ID)).thenReturn(true);
+
+        courseService.deleteCourse(COURSE_ID);
+
+        verify(courseRepository).softDelete(COURSE_ID);
+        verifyNoInteractions(fileStoragePort);
+    }
+
     private void mockClassroom(List<Chapter> chapters, List<LearningProgress> progresses) {
         Course course = mock(Course.class);
         when(course.getId()).thenReturn(COURSE_ID);
-        when(course.getTitle()).thenReturn("여행 준비 강의");
-        when(courseRepository.findByIdAndDeletedFalse(COURSE_ID)).thenReturn(Optional.of(course));
+        when(course.getTitle()).thenReturn("Travel course");
+        when(courseRepository.findById(COURSE_ID)).thenReturn(Optional.of(course));
         when(enrollmentRepository.findByUserIdAndCourseId(USER_ID, COURSE_ID))
                 .thenReturn(Optional.of(enrollment(LocalDateTime.now().plusMonths(6))));
         when(chapterRepository.findByCourseId(COURSE_ID)).thenReturn(chapters);
@@ -138,7 +161,7 @@ class CourseServiceClassroomTest {
         return Chapter.withId(
                 chapterId,
                 COURSE_ID,
-                chapterOrder + "강",
+                chapterOrder + " chapter",
                 videoUrl,
                 600,
                 chapterOrder,

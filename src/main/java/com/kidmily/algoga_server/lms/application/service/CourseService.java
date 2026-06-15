@@ -159,13 +159,7 @@ public class CourseService implements CourseUseCase {
 
     @Override
     public void deleteCourse(Long courseId) {
-        Course course = findCourse(courseId);
-
-        if (course.getThumbnailUrl() != null && !course.getThumbnailUrl().isBlank()) {
-            fileStoragePort.deleteFile(storageSettings.getBucketName(), course.getThumbnailUrl());
-        }
-
-        deleteCourseFiles(course.getFileUrls());
+        findCourse(courseId);
 
         if (!courseRepository.softDelete(courseId)) {
             throw new LmsException(LmsErrorCode.COURSE_NOT_FOUND);
@@ -174,7 +168,8 @@ public class CourseService implements CourseUseCase {
 
     @Override
     public CourseCompletionResult completeCourse(CompleteCourseCommand command) {
-        findCourse(command.courseId());
+        validateAccessibleEnrollment(command.userId(), command.courseId());
+        findCourseIncludingDeleted(command.courseId());
         validateNotCompleted(command.userId(), command.courseId());
         validateAllChaptersCompleted(command.userId(), command.courseId());
         validateQuizSubmitted(command.userId(), command.courseId());
@@ -223,11 +218,11 @@ public class CourseService implements CourseUseCase {
     @Override
     @Transactional(readOnly = true)
     public CourseClassroomResult getCourseClassroom(Long userId, Long courseId) {
-        Course course = findCourse(courseId);
-
         var enrollment = enrollmentRepository.findByUserIdAndCourseId(userId, courseId)
                 .filter(value -> value.isAccessibleAt(LocalDateTime.now()))
                 .orElseThrow(() -> new LmsException(LmsErrorCode.NOT_ENROLLED));
+
+        Course course = findCourseIncludingDeleted(courseId);
 
         List<Chapter> chapters = chapterRepository.findByCourseId(courseId);
         List<LearningProgress> progresses = learningProgressRepository.findByUserIdAndCourseId(userId, courseId);
@@ -427,6 +422,21 @@ public class CourseService implements CourseUseCase {
         return courseRepository.findByIdAndDeletedFalse(courseId)
                 .orElseThrow(() -> new LmsException(LmsErrorCode.COURSE_NOT_FOUND));
     }
+
+    private Course findCourseIncludingDeleted(Long courseId) {
+        return courseRepository.findById(courseId)
+                .orElseThrow(() -> new LmsException(LmsErrorCode.COURSE_NOT_FOUND));
+    }
+
+    private void validateAccessibleEnrollment(Long userId, Long courseId) {
+        boolean accessible = enrollmentRepository.findByUserIdAndCourseId(userId, courseId)
+                .map(enrollment -> enrollment.isAccessibleAt(LocalDateTime.now()))
+                .orElse(false);
+
+        if (!accessible) {
+            throw new LmsException(LmsErrorCode.NOT_ENROLLED);
+        }
+    }
     private void validateCountry(Long countryId) {
         mapRepository.findActiveCountryById(countryId)
                 .orElseThrow(() -> new LmsException(LmsErrorCode.COUNTRY_NOT_FOUND));
@@ -529,7 +539,7 @@ public class CourseService implements CourseUseCase {
     }
 
     private Optional<MyCourseResult> createMyCourseResult(Long userId, Long courseId) {
-        Optional<Course> optionalCourse = courseRepository.findByIdAndDeletedFalse(courseId);
+        Optional<Course> optionalCourse = courseRepository.findById(courseId);
 
         if (optionalCourse.isEmpty()) {
             return Optional.empty();

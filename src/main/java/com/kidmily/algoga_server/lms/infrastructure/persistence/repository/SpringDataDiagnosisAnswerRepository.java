@@ -8,4 +8,6 @@ import java.util.List;
 public interface SpringDataDiagnosisAnswerRepository extends JpaRepository<DiagnosisAnswerJpaEntity, Long> {
 
     List<DiagnosisAnswerJpaEntity> findByResultIdOrderByIdAsc(Long resultId);
+
+    void deleteByQuestionId(Long questionId);
 }
