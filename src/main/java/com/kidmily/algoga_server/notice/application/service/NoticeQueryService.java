@@ -1,5 +1,5 @@
 package com.kidmily.algoga_server.notice.application.service;
-
+import com.kidmily.algoga_server.global.common.api.response.PageResponse; // 🌟 추가
 import com.kidmily.algoga_server.notice.application.usecase.NoticeQueryUseCase;
 import com.kidmily.algoga_server.notice.domain.model.Notice;
 import com.kidmily.algoga_server.notice.domain.repository.NoticeRepository;
@@ -9,6 +9,7 @@ import com.kidmily.algoga_server.notice.presentation.NoticeTagType;
 import com.kidmily.algoga_server.notice.presentation.api.response.NoticeListResponse;
 import com.kidmily.algoga_server.notice.presentation.api.response.NoticeMainResponse;
 import com.kidmily.algoga_server.notice.presentation.api.response.NoticeResponse;
+import org.springframework.data.domain.Page; // 🌟 추가
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -23,7 +24,7 @@ import java.util.stream.Collectors;
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
-public class NoticeQueryService implements NoticeQueryUseCase {
+public class    NoticeQueryService implements NoticeQueryUseCase {
 
     private final NoticeRepository noticeRepository;
     private static final int PAGE_SIZE = 10;
@@ -46,30 +47,31 @@ public class NoticeQueryService implements NoticeQueryUseCase {
     }
 
     @Override
-    public List<NoticeListResponse> getNotices(String tag, Integer index) {
-        List<Notice> notices;
+    public PageResponse<NoticeListResponse> getNotices(String tag, Integer index) {
+        Page<Notice> noticePage;
         int pageIndex = Math.max(0, index - 1);
 
         try {
             if ("ALL".equalsIgnoreCase(tag)) {
-                notices = noticeRepository.findAll(pageIndex, PAGE_SIZE);
+                noticePage = noticeRepository.findAll(pageIndex, PAGE_SIZE);
             } else {
                 NoticeTagType tagType = NoticeTagType.valueOf(tag.toUpperCase());
-                notices = noticeRepository.findByType(tagType, pageIndex, PAGE_SIZE);
+                noticePage = noticeRepository.findByType(tagType, pageIndex, PAGE_SIZE);
             }
         } catch (IllegalArgumentException e) {
-            // 태그 파싱 에러 등을 잡아서 NoticeException으로 변환
             throw new NoticeException(NoticeErrorCode.INVALID_TAG_OR_INDEX);
         }
 
-        return notices.stream()
-                .map(notice -> new NoticeListResponse(
-                        notice.getNoticeId(),
-                        notice.getType(),
-                        notice.getTitle(),
-                        DATE_FORMATTER.format(notice.getCreatedAt())
-                ))
-                .collect(Collectors.toList());
+        // 도메인 Page 객체를 응답 DTO Page 객체로 변환
+        Page<NoticeListResponse> responsePage = noticePage.map(notice -> new NoticeListResponse(
+                notice.getNoticeId(),
+                notice.getType(),
+                notice.getTitle(),
+                DATE_FORMATTER.format(notice.getCreatedAt())
+        ));
+
+        // 글로벌 공통 응답으로 Wrapping 하여 반환
+        return PageResponse.from(responsePage);
     }
 
     @Override
