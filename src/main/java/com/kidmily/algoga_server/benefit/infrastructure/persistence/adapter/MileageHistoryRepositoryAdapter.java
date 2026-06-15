@@ -24,7 +24,8 @@ public class MileageHistoryRepositoryAdapter implements MileageHistoryRepository
                 mileageHistory.getAmount(),
                 mileageHistory.getType(),
                 mileageHistory.getReason(),
-                mileageHistory.getCreatedAt()
+                mileageHistory.getCreatedAt(),
+                mileageHistory.getExpiredAt()
         );
 
         MileageHistoryJpaEntity savedEntity = springDataMileageHistoryRepository.save(entity);
@@ -57,7 +58,8 @@ public class MileageHistoryRepositoryAdapter implements MileageHistoryRepository
                 entity.getAmount(),
                 entity.getType(),
                 entity.getReason(),
-                entity.getCreatedAt()
+                entity.getCreatedAt(),
+                entity.getExpiredAt()
         );
     }
 }

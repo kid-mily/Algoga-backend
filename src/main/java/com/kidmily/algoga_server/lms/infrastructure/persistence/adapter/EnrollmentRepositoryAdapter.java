@@ -3,7 +3,7 @@ package com.kidmily.algoga_server.lms.infrastructure.persistence.adapter;
 import com.kidmily.algoga_server.lms.domain.model.Enrollment;
 import com.kidmily.algoga_server.lms.domain.repository.EnrollmentRepository;
 import com.kidmily.algoga_server.lms.infrastructure.persistence.entity.EnrollmentJpaEntity;
-import com.kidmily.algoga_server.lms.tdd.SpringDataEnrollmentRepository;
+import com.kidmily.algoga_server.lms.infrastructure.persistence.repository.SpringDataEnrollmentRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 
@@ -24,7 +24,8 @@ public class EnrollmentRepositoryAdapter implements EnrollmentRepository {
                         enrollment.getCourseId(),
                         enrollment.getStatus(),
                         enrollment.getEnrolledAt(),
-                        enrollment.getCompletedAt()
+                        enrollment.getCompletedAt(),
+                        enrollment.getAccessExpiresAt()
                 ));
 
         entity.updateStatus(enrollment.getStatus(), enrollment.getCompletedAt());
@@ -49,7 +50,8 @@ public class EnrollmentRepositoryAdapter implements EnrollmentRepository {
                 entity.getCourseId(),
                 entity.getStatus(),
                 entity.getEnrolledAt(),
-                entity.getCompletedAt()
+                entity.getCompletedAt(),
+                entity.getAccessExpiresAt()
         );
     }
 }

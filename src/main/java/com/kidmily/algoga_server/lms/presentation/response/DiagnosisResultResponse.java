@@ -1,5 +1,6 @@
 package com.kidmily.algoga_server.lms.presentation.response;
 
+import com.kidmily.algoga_server.lms.application.result.DiagnosisResultView;
 import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.time.LocalDateTime;
@@ -23,10 +24,10 @@ public record DiagnosisResultResponse(
         @Schema(description = "점수", example = "60")
         Integer score,
 
-        @Schema(description = "강의 난이도 코드", example = "INTERMEDIATE")
+        @Schema(description = "강의 레벨 코드", example = "INTERMEDIATE")
         String level,
 
-        @Schema(description = "강의 난이도 이름", example = "중급")
+        @Schema(description = "강의 레벨 이름", example = "중급")
         String levelName,
 
         @Schema(description = "제출 일시")
@@ -38,4 +39,22 @@ public record DiagnosisResultResponse(
         @Schema(description = "추천 강의 목록")
         List<CourseListResponse> recommendedCourses
 ) {
+    public static DiagnosisResultResponse from(DiagnosisResultView result) {
+        return new DiagnosisResultResponse(
+                result.resultId(),
+                result.countryId(),
+                result.correctCount(),
+                result.totalCount(),
+                result.score(),
+                result.level(),
+                result.levelName(),
+                result.submittedAt(),
+                result.answers().stream()
+                        .map(DiagnosisAnswerResultResponse::from)
+                        .toList(),
+                result.recommendedCourses().stream()
+                        .map(CourseListResponse::from)
+                        .toList()
+        );
+    }
 }

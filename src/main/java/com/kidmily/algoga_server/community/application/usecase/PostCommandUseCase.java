@@ -1,5 +1,6 @@
 package com.kidmily.algoga_server.community.application.usecase;
 
+import com.kidmily.algoga_server.community.application.command.AdminDeletePostCommand;
 import com.kidmily.algoga_server.community.application.command.CreatePostCommand;
 import com.kidmily.algoga_server.community.application.command.DeletePostCommand;
 import com.kidmily.algoga_server.community.application.command.UpdatePostCommand;
@@ -10,4 +11,5 @@ public interface PostCommandUseCase {
     Long handle(CreatePostCommand command);
     Long handle(UpdatePostCommand command);
     void handle(DeletePostCommand command);
+    void handle(AdminDeletePostCommand command);
 }

@@ -1,5 +1,6 @@
 package com.kidmily.algoga_server.user.application;
 
+import com.kidmily.algoga_server.global.event.UserSignedUpEvent;
 import com.kidmily.algoga_server.global.infrastructure.mail.EmailSender;
 import com.kidmily.algoga_server.global.security.GlobalJwtProvider;
 import com.kidmily.algoga_server.global.security.dto.SocialAuthResult;
@@ -18,6 +19,7 @@ import com.kidmily.algoga_server.user.presentation.response.FindIdResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -39,6 +41,7 @@ public class AuthService implements SocialLoginProcessor {
     private final GlobalJwtProvider globalJwtProvider;
     private final EmailSender emailSender;
     private final RedisTemplate<String, String> redisTemplate; // Redis 도구 주입!
+    private final ApplicationEventPublisher eventPublisher;
 
     // 프론트엔드 주소 주입 (HTTP cookie할 때 추가함)
     @Value("${app.frontend.base-url:http://localhost:17000}")
@@ -129,7 +132,8 @@ public class AuthService implements SocialLoginProcessor {
                 .termsPrivacyAgreed(request.termsPrivacyAgreed())
                 .termsMarketingAgreed(request.termsMarketingAgreed())
                 .build();
-        userRepository.save(user);
+        User savedUser = userRepository.save(user);
+        eventPublisher.publishEvent(new UserSignedUpEvent(savedUser.getId()));
 
         // 가입이 성공적으로 끝났으니, "인증 완료" 포스트잇도 떼서 버립니다! (청소)
         redisTemplate.delete("AUTH_SUCCESS:" + email);
@@ -295,7 +299,8 @@ public class AuthService implements SocialLoginProcessor {
                 .termsMarketingAgreed(request.termsMarketingAgreed())
                 .build();
 
-        userRepository.save(user);
+        User savedUser = userRepository.save(user);
+        eventPublisher.publishEvent(new UserSignedUpEvent(savedUser.getId()));
 
         log.info("소셜 신규 회원가입 완료 [아이디(이메일): {}, 소셜: {}]",
                 user.getUsername(), user.getSocialType());
@@ -329,4 +334,5 @@ public class AuthService implements SocialLoginProcessor {
             return new SocialAuthResult(redirectUrl, null, null);
         }
     }
+}
 }

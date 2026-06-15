@@ -1,7 +1,5 @@
 package com.kidmily.algoga_server.lms.application.result;
 
-import com.kidmily.algoga_server.lms.domain.model.CourseQnaComment;
-
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -16,6 +14,6 @@ public record CourseQnaDetailResult(
         String status,
         LocalDateTime createdAt,
         LocalDateTime answeredAt,
-        List<CourseQnaComment> comments
+        List<CourseQnaCommentResult> comments
 ) {
 }

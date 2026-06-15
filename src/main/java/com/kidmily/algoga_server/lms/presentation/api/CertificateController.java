@@ -3,7 +3,7 @@ package com.kidmily.algoga_server.lms.presentation.api;
 import com.kidmily.algoga_server.global.annotation.swagger.ApiErrorCodeExample;
 import com.kidmily.algoga_server.lms.application.service.CertificatePdfService;
 import com.kidmily.algoga_server.lms.exception.LmsErrorCode;
-import com.kidmily.algoga_server.user.settings.CustomUserDetails;
+import com.kidmily.algoga_server.lms.presentation.support.CurrentUserIdResolver;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -41,10 +41,10 @@ public class CertificateController {
             @Parameter(description = "강의 ID", example = "3")
             @PathVariable Long courseId,
 
-            @AuthenticationPrincipal CustomUserDetails userDetails
+            @AuthenticationPrincipal Object userDetails
     ) {
-        Long currentUserId = userDetails.getUser().getId();
-        String userName = userDetails.getUser().getName();
+        Long currentUserId = CurrentUserIdResolver.resolveNullable(userDetails);
+        String userName = CurrentUserIdResolver.resolveNameNullable(userDetails);
 
         byte[] pdfBytes = certificatePdfService.generateCertificatePdf(
                 currentUserId,

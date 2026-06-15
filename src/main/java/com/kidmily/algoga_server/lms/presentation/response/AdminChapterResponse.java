@@ -1,38 +1,36 @@
 package com.kidmily.algoga_server.lms.presentation.response;
 
-import com.kidmily.algoga_server.lms.domain.model.Chapter;
+import com.kidmily.algoga_server.lms.application.result.ChapterResult;
 import io.swagger.v3.oas.annotations.media.Schema;
 
-@Schema(description = "어드민 챕터 응답")
+@Schema(description = "관리자 챕터 응답")
 public record AdminChapterResponse(
-
         @Schema(description = "챕터 ID", example = "1")
         Long chapterId,
 
-        @Schema(description = "강의 ID", example = "1")
+        @Schema(description = "강의 ID", example = "57")
         Long courseId,
 
-        @Schema(description = "챕터 제목", example = "오사카 입국 준비")
+        @Schema(description = "챕터 제목", example = "출국 전 준비사항")
         String title,
 
-        @Schema(description = "챕터 영상 파일 경로", example = "videos/550e8400-e29b-41d4-a716-446655440000.mp4")
+        @Schema(description = "강의 영상 URL")
         String videoUrl,
 
-        @Schema(description = "영상 재생 시간. 초 단위", example = "600")
+        @Schema(description = "영상 길이. 초 단위", example = "600")
         int durationSeconds,
 
-        @Schema(description = "챕터 노출 순서", example = "1")
+        @Schema(description = "챕터 순서", example = "1")
         int chapterOrder
 ) {
-
-    public static AdminChapterResponse from(Chapter chapter) {
+    public static AdminChapterResponse from(ChapterResult chapter) {
         return new AdminChapterResponse(
-                chapter.getId(),
-                chapter.getCourseId(),
-                chapter.getTitle(),
-                chapter.getVideoUrl(),
-                chapter.getDurationSeconds(),
-                chapter.getChapterOrder()
+                chapter.chapterId(),
+                chapter.courseId(),
+                chapter.title(),
+                chapter.videoUrl(),
+                chapter.durationSeconds(),
+                chapter.chapterOrder()
         );
     }
 }

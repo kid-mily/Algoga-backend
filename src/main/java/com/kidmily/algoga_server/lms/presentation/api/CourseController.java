@@ -2,10 +2,8 @@ package com.kidmily.algoga_server.lms.presentation.api;
 
 import com.kidmily.algoga_server.global.common.api.response.ApiResponse;
 import com.kidmily.algoga_server.lms.application.usecase.CourseUseCase;
-import com.kidmily.algoga_server.lms.application.service.CourseService;
-import com.kidmily.algoga_server.lms.domain.model.Course;
 import com.kidmily.algoga_server.lms.presentation.response.CourseListResponse;
-import com.kidmily.algoga_server.user.settings.CustomUserDetails;
+import com.kidmily.algoga_server.lms.presentation.support.CurrentUserIdResolver;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -19,21 +17,20 @@ import java.util.List;
 public class CourseController {
 
     private final CourseUseCase courseUseCase;
-    private final CourseService courseService;
 
     @GetMapping("/countries/{countryId}")
     public ResponseEntity<ApiResponse<List<CourseListResponse>>> getCoursesByCountry(
             @PathVariable Long countryId,
-            @AuthenticationPrincipal CustomUserDetails userDetails
+            @AuthenticationPrincipal Object userDetails
     ) {
-        Long currentUserId = getCurrentUserId(userDetails);
+        Long currentUserId = CurrentUserIdResolver.resolveNullable(userDetails);
 
         List<CourseListResponse> response = courseUseCase.getPublishedCoursesByCountry(countryId)
                 .stream()
                 .map(course -> CourseListResponse.from(
                         course,
-                        courseService.isEnrolled(currentUserId, course.getId()),
-                        courseService.isPaid(currentUserId, course.getId())
+                        courseUseCase.isEnrolled(currentUserId, course.courseId()),
+                        courseUseCase.isPaid(currentUserId, course.courseId())
                 ))
                 .toList();
 
@@ -49,15 +46,15 @@ public class CourseController {
     @GetMapping("/{courseId}")
     public ResponseEntity<ApiResponse<CourseListResponse>> getCourse(
             @PathVariable Long courseId,
-            @AuthenticationPrincipal CustomUserDetails userDetails
+            @AuthenticationPrincipal Object userDetails
     ) {
-        Long currentUserId = getCurrentUserId(userDetails);
-        Course course = courseUseCase.getPublishedCourse(courseId);
+        Long currentUserId = CurrentUserIdResolver.resolveNullable(userDetails);
+        var course = courseUseCase.getPublishedCourse(courseId);
 
         CourseListResponse response = CourseListResponse.from(
                 course,
-                courseService.isEnrolled(currentUserId, course.getId()),
-                courseService.isPaid(currentUserId, course.getId())
+                courseUseCase.isEnrolled(currentUserId, course.courseId()),
+                courseUseCase.isPaid(currentUserId, course.courseId())
         );
 
         return ResponseEntity.ok(
@@ -69,11 +66,4 @@ public class CourseController {
         );
     }
 
-    private Long getCurrentUserId(CustomUserDetails userDetails) {
-        if (userDetails == null) {
-            return null;
-        }
-
-        return userDetails.getUser().getId();
-    }
 }

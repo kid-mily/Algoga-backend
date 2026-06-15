@@ -8,6 +8,7 @@ import com.kidmily.algoga_server.banner.application.usecase.BannerQueryUseCase;
 import com.kidmily.algoga_server.banner.exception.BannerErrorCode;
 import com.kidmily.algoga_server.banner.presentation.api.request.CreateBannerRequest;
 import com.kidmily.algoga_server.banner.presentation.api.request.UpdateBannerRequest;
+import com.kidmily.algoga_server.banner.presentation.api.response.AdminBannerResponse;
 import com.kidmily.algoga_server.banner.presentation.api.response.BannerResponse;
 import com.kidmily.algoga_server.banner.presentation.api.response.CreateBannerResponse;
 import com.kidmily.algoga_server.global.annotation.swagger.ApiErrorCodeExample;
@@ -34,10 +35,34 @@ public class BannerController {
     private final BannerQueryUseCase bannerQueryUseCase;
 
     @GetMapping
-    @Operation(summary = "배너 화면 조회")
+    @Operation(summary = "배너 화면 조회 (사용자용)")
     public ResponseEntity<ApiResponse<List<BannerResponse>>> getBanners() {
         List<BannerResponse> banners = bannerQueryUseCase.getActiveBanners();
         return ResponseEntity.ok(ApiResponse.success("BANNER_LIST_FOUND", "배너 조회에 성공했습니다.", banners));
+    }
+
+    // 🔥 관리자용 전체 배너 조회 추가
+    @PreAuthorize("hasAnyRole('CS_MANAGER', 'SUPER_ADMIN')")
+    @GetMapping("/admin/all")
+    @Operation(summary = "전체 배너 조회 (관리자용)", description = "비활성화된 배너를 포함한 모든 배너를 최신순으로 조회합니다.")
+    public ResponseEntity<ApiResponse<List<AdminBannerResponse>>> getAllAdminBanners(
+            @CurrentManager Long managerId
+    ) {
+        List<AdminBannerResponse> banners = bannerQueryUseCase.getAllBanners();
+        return ResponseEntity.ok(ApiResponse.success("ADMIN_BANNER_LIST_FOUND", "관리자용 전체 배너 조회에 성공했습니다.", banners));
+    }
+
+    // 🔥 관리자용 배너 상세 조회 추가
+    @PreAuthorize("hasAnyRole('CS_MANAGER', 'SUPER_ADMIN')")
+    @GetMapping("/admin/{bannerId}")
+    @Operation(summary = "배너 상세 조회 (관리자용)", description = "수정 페이지 등에서 기존 배너의 데이터를 불러올 때 사용합니다.")
+    @ApiErrorCodeExample(domain = BannerErrorCode.class, value = {"BANNER_NOT_FOUND"})
+    public ResponseEntity<ApiResponse<AdminBannerResponse>> getAdminBannerDetail(
+            @PathVariable Long bannerId,
+            @CurrentManager Long managerId
+    ) {
+        AdminBannerResponse banner = bannerQueryUseCase.getBannerDetail(bannerId);
+        return ResponseEntity.ok(ApiResponse.success("ADMIN_BANNER_DETAIL_FOUND", "관리자용 배너 상세 조회에 성공했습니다.", banner));
     }
 
     @PreAuthorize("hasAnyRole('CS_MANAGER', 'SUPER_ADMIN')")

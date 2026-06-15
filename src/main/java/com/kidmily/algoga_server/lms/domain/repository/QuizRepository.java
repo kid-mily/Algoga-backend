@@ -25,5 +25,5 @@ public interface QuizRepository {
             String explanation
     );
 
-    boolean softDelete(Long quizId, Long courseId);
+    boolean delete(Long quizId, Long courseId);
 }

@@ -18,6 +18,8 @@ public interface UserCouponRepository {
 
     boolean existsByUserIdAndCouponPolicyId(Long userId, Long couponPolicyId);
 
+    boolean existsByUserIdAndCouponName(Long userId, String couponName);
+
     Optional<UserCoupon> findById(Long id);
 
     void markUsed(Long userCouponId, LocalDateTime usedAt);

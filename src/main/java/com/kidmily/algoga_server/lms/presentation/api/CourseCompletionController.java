@@ -3,11 +3,10 @@ package com.kidmily.algoga_server.lms.presentation.api;
 import com.kidmily.algoga_server.global.annotation.swagger.ApiErrorCodeExample;
 import com.kidmily.algoga_server.global.common.api.response.ApiResponse;
 import com.kidmily.algoga_server.lms.application.command.CompleteCourseCommand;
-import com.kidmily.algoga_server.lms.application.usecase.CourseCompletionUseCase;
-import com.kidmily.algoga_server.lms.domain.model.CourseCompletion;
+import com.kidmily.algoga_server.lms.application.usecase.CourseUseCase;
 import com.kidmily.algoga_server.lms.exception.LmsErrorCode;
 import com.kidmily.algoga_server.lms.presentation.response.CourseCompletionResponse;
-import com.kidmily.algoga_server.user.settings.CustomUserDetails;
+import com.kidmily.algoga_server.lms.presentation.support.CurrentUserIdResolver;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -23,7 +22,7 @@ import org.springframework.web.bind.annotation.*;
 @RequiredArgsConstructor
 public class CourseCompletionController {
 
-    private final CourseCompletionUseCase courseCompletionUseCase;
+    private final CourseUseCase courseUseCase;
 
     @Operation(
             summary = "강의 이수 완료 처리",
@@ -43,16 +42,16 @@ public class CourseCompletionController {
             @Parameter(description = "강의 ID", example = "3")
             @PathVariable Long courseId,
 
-            @AuthenticationPrincipal CustomUserDetails userDetails
+            @AuthenticationPrincipal Object userDetails
     ) {
-        Long currentUserId = userDetails.getUser().getId();
+        Long currentUserId = CurrentUserIdResolver.resolveNullable(userDetails);
 
         CompleteCourseCommand command = new CompleteCourseCommand(
                 currentUserId,
                 courseId
         );
 
-        CourseCompletion courseCompletion = courseCompletionUseCase.completeCourse(command);
+        var courseCompletion = courseUseCase.completeCourse(command);
 
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(ApiResponse.created(

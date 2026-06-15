@@ -3,7 +3,7 @@ package com.kidmily.algoga_server.lms.infrastructure.persistence.adapter;
 import com.kidmily.algoga_server.lms.domain.model.CourseReview;
 import com.kidmily.algoga_server.lms.domain.repository.CourseReviewRepository;
 import com.kidmily.algoga_server.lms.infrastructure.persistence.entity.CourseReviewJpaEntity;
-import com.kidmily.algoga_server.lms.tdd.SpringDataCourseReviewRepository;
+import com.kidmily.algoga_server.lms.infrastructure.persistence.repository.SpringDataCourseReviewRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 

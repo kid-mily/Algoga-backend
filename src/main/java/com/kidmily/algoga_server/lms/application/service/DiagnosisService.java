@@ -1,23 +1,22 @@
 package com.kidmily.algoga_server.lms.application.service;
 
+import com.kidmily.algoga_server.lms.application.command.SubmitDiagnosisAnswerCommand;
+import com.kidmily.algoga_server.lms.application.command.SubmitDiagnosisCommand;
+import com.kidmily.algoga_server.lms.application.port.UserProfilePort;
+import com.kidmily.algoga_server.lms.application.result.DiagnosisAnswerResult;
+import com.kidmily.algoga_server.lms.application.result.DiagnosisQuestionResult;
+import com.kidmily.algoga_server.lms.application.result.DiagnosisResultView;
 import com.kidmily.algoga_server.lms.application.usecase.CourseUseCase;
+import com.kidmily.algoga_server.lms.application.usecase.DiagnosisUseCase;
+import com.kidmily.algoga_server.lms.domain.model.DiagnosisAnswer;
+import com.kidmily.algoga_server.lms.domain.model.DiagnosisQuestion;
+import com.kidmily.algoga_server.lms.domain.model.DiagnosisResult;
+import com.kidmily.algoga_server.lms.domain.repository.DiagnosisAnswerRepository;
+import com.kidmily.algoga_server.lms.domain.repository.DiagnosisQuestionRepository;
+import com.kidmily.algoga_server.lms.domain.repository.DiagnosisResultRepository;
 import com.kidmily.algoga_server.lms.domain.repository.MapRepository;
 import com.kidmily.algoga_server.lms.exception.LmsErrorCode;
 import com.kidmily.algoga_server.lms.exception.LmsException;
-import com.kidmily.algoga_server.lms.infrastructure.persistence.entity.DiagnosisAnswerJpaEntity;
-import com.kidmily.algoga_server.lms.infrastructure.persistence.entity.DiagnosisQuestionJpaEntity;
-import com.kidmily.algoga_server.lms.infrastructure.persistence.entity.DiagnosisResultJpaEntity;
-import com.kidmily.algoga_server.lms.tdd.SpringDataDiagnosisAnswerRepository;
-import com.kidmily.algoga_server.lms.tdd.SpringDataDiagnosisQuestionRepository;
-import com.kidmily.algoga_server.lms.tdd.SpringDataDiagnosisResultRepository;
-import com.kidmily.algoga_server.lms.presentation.request.DiagnosisAnswerRequest;
-import com.kidmily.algoga_server.lms.presentation.request.DiagnosisSubmitRequest;
-import com.kidmily.algoga_server.lms.presentation.response.CourseListResponse;
-import com.kidmily.algoga_server.lms.presentation.response.DiagnosisAnswerResultResponse;
-import com.kidmily.algoga_server.lms.presentation.response.DiagnosisQuestionResponse;
-import com.kidmily.algoga_server.lms.presentation.response.DiagnosisResultResponse;
-import com.kidmily.algoga_server.user.domain.User;
-import com.kidmily.algoga_server.user.domain.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -31,38 +30,37 @@ import java.util.stream.Collectors;
 @Service
 @RequiredArgsConstructor
 @Transactional
-public class DiagnosisService {
+public class DiagnosisService implements DiagnosisUseCase {
 
-    private final SpringDataDiagnosisQuestionRepository diagnosisQuestionRepository;
-    private final SpringDataDiagnosisResultRepository diagnosisResultRepository;
-    private final SpringDataDiagnosisAnswerRepository diagnosisAnswerRepository;
+    private final DiagnosisQuestionRepository diagnosisQuestionRepository;
+    private final DiagnosisResultRepository diagnosisResultRepository;
+    private final DiagnosisAnswerRepository diagnosisAnswerRepository;
     private final MapRepository mapRepository;
     private final CourseUseCase courseUseCase;
-    private final UserRepository userRepository;
+    private final UserProfilePort userProfilePort;
 
+    @Override
     @Transactional(readOnly = true)
-    public List<DiagnosisQuestionResponse> getQuestions(Long countryId) {
+    public List<DiagnosisQuestionResult> getQuestions(Long countryId) {
         validateCountry(countryId);
-
-        return diagnosisQuestionRepository
-                .findByCountryIdAndActiveTrueOrderByQuestionOrderAscIdAsc(countryId)
-                .stream()
-                .map(DiagnosisQuestionResponse::from)
+        return diagnosisQuestionRepository.findActiveByCountryId(countryId).stream()
+                .map(DiagnosisQuestionResult::from)
                 .toList();
     }
 
-    public DiagnosisResultResponse submitResult(Long userId, DiagnosisSubmitRequest request) {
-        validateCountry(request.countryId());
-        validateDuplicateAnswers(request.answers());
+    @Override
+    public DiagnosisResultView submitResult(SubmitDiagnosisCommand command) {
+        validateCountry(command.countryId());
+        validateDuplicateAnswers(command.answers());
 
-        List<Long> questionIds = request.answers()
+        List<Long> questionIds = command.answers()
                 .stream()
-                .map(DiagnosisAnswerRequest::questionId)
+                .map(SubmitDiagnosisAnswerCommand::questionId)
                 .toList();
 
-        Map<Long, DiagnosisQuestionJpaEntity> questionMap = diagnosisQuestionRepository.findByIdIn(questionIds)
+        Map<Long, DiagnosisQuestion> questionMap = diagnosisQuestionRepository.findByIds(questionIds)
                 .stream()
-                .collect(Collectors.toMap(DiagnosisQuestionJpaEntity::getId, Function.identity()));
+                .collect(Collectors.toMap(DiagnosisQuestion::id, Function.identity()));
 
         if (questionMap.size() != questionIds.size()) {
             throw new LmsException(LmsErrorCode.DIAGNOSIS_QUESTION_NOT_FOUND);
@@ -70,105 +68,94 @@ public class DiagnosisService {
 
         int correctCount = 0;
 
-        for (DiagnosisAnswerRequest answer : request.answers()) {
-            DiagnosisQuestionJpaEntity question = questionMap.get(answer.questionId());
+        for (SubmitDiagnosisAnswerCommand answer : command.answers()) {
+            DiagnosisQuestion question = questionMap.get(answer.questionId());
 
-            if (!question.isActive() || !question.getCountryId().equals(request.countryId())) {
+            if (!question.active() || !question.countryId().equals(command.countryId())) {
                 throw new LmsException(LmsErrorCode.INVALID_DIAGNOSIS_ANSWER);
             }
 
-            if (question.getCorrectOption() == answer.selectedOption()) {
+            if (question.correctOption() == answer.selectedOption()) {
                 correctCount++;
             }
         }
 
-        int totalCount = request.answers().size();
+        int totalCount = command.answers().size();
         int score = calculateScore(correctCount, totalCount);
         String level = calculateLevel(score);
 
-        DiagnosisResultJpaEntity result = diagnosisResultRepository.save(
-                new DiagnosisResultJpaEntity(
-                        userId,
-                        request.countryId(),
-                        correctCount,
-                        totalCount,
-                        score,
-                        level
-                )
-        );
-
-        List<DiagnosisAnswerResultResponse> answerResults = request.answers()
-                .stream()
-                .map(answer -> {
-                    DiagnosisQuestionJpaEntity question = questionMap.get(answer.questionId());
-                    boolean correct = question.getCorrectOption() == answer.selectedOption();
-
-                    diagnosisAnswerRepository.save(
-                            new DiagnosisAnswerJpaEntity(
-                                    result.getId(),
-                                    question.getId(),
-                                    answer.selectedOption(),
-                                    correct
-                            )
-                    );
-
-                    return new DiagnosisAnswerResultResponse(
-                            question.getId(),
-                            answer.selectedOption(),
-                            question.getCorrectOption(),
-                            correct,
-                            question.getExplanation()
-                    );
-                })
-                .toList();
-
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new LmsException(LmsErrorCode.INVALID_DIAGNOSIS_ANSWER));
-
-        user.updateDiagnosisResult(request.countryId(), level, score);
-
-        List<CourseListResponse> recommendedCourses = courseUseCase
-                .getRecommendedCoursesByCountryAndLevel(request.countryId(), level)
-                .stream()
-                .map(CourseListResponse::from)
-                .toList();
-
-        return new DiagnosisResultResponse(
-                result.getId(),
-                request.countryId(),
+        DiagnosisResult savedResult = diagnosisResultRepository.save(new DiagnosisResult(
+                null,
+                command.userId(),
+                command.countryId(),
                 correctCount,
                 totalCount,
                 score,
                 level,
-                toLevelName(level),
-                result.getCreatedAt(),
-                answerResults,
-                recommendedCourses
+                null
+        ));
+
+        List<DiagnosisAnswerResult> answerResults = command.answers()
+                .stream()
+                .map(answer -> saveAndCreateAnswerResult(savedResult.id(), answer, questionMap.get(answer.questionId())))
+                .toList();
+
+        if (userProfilePort.findProfile(command.userId()).isEmpty()) {
+            throw new LmsException(LmsErrorCode.INVALID_DIAGNOSIS_ANSWER);
+        }
+
+        userProfilePort.updateDiagnosisResult(command.userId(), command.countryId(), level, score);
+
+        return toResultView(savedResult, answerResults);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public DiagnosisResultView getLatestResult(Long userId) {
+        DiagnosisResult result = diagnosisResultRepository.findLatestByUserId(userId)
+                .orElseThrow(() -> new LmsException(LmsErrorCode.DIAGNOSIS_RESULT_NOT_FOUND));
+
+        return toResultView(result, List.of());
+    }
+
+    private DiagnosisAnswerResult saveAndCreateAnswerResult(
+            Long resultId,
+            SubmitDiagnosisAnswerCommand answer,
+            DiagnosisQuestion question
+    ) {
+        boolean correct = question.correctOption() == answer.selectedOption();
+
+        diagnosisAnswerRepository.save(DiagnosisAnswer.create(
+                resultId,
+                question.id(),
+                answer.selectedOption(),
+                correct
+        ));
+
+        return new DiagnosisAnswerResult(
+                question.id(),
+                answer.selectedOption(),
+                question.correctOption(),
+                correct,
+                question.explanation()
         );
     }
 
-    @Transactional(readOnly = true)
-    public DiagnosisResultResponse getLatestResult(Long userId) {
-        DiagnosisResultJpaEntity result = diagnosisResultRepository.findFirstByUserIdOrderByCreatedAtDesc(userId)
-                .orElseThrow(() -> new LmsException(LmsErrorCode.DIAGNOSIS_RESULT_NOT_FOUND));
-
-        List<CourseListResponse> recommendedCourses = courseUseCase
-                .getRecommendedCoursesByCountryAndLevel(result.getCountryId(), result.getLevel())
-                .stream()
-                .map(CourseListResponse::from)
-                .toList();
-
-        return new DiagnosisResultResponse(
-                result.getId(),
-                result.getCountryId(),
-                result.getCorrectCount(),
-                result.getTotalCount(),
-                result.getScore(),
-                result.getLevel(),
-                toLevelName(result.getLevel()),
-                result.getCreatedAt(),
-                List.of(),
-                recommendedCourses
+    private DiagnosisResultView toResultView(
+            DiagnosisResult result,
+            List<DiagnosisAnswerResult> answerResults
+    ) {
+        return new DiagnosisResultView(
+                result.id(),
+                result.countryId(),
+                result.correctCount(),
+                result.totalCount(),
+                result.score(),
+                result.level(),
+                toLevelName(result.level()),
+                result.createdAt(),
+                answerResults,
+                courseUseCase.getRecommendedCoursesByCountryAndLevel(result.countryId(), result.level())
         );
     }
 
@@ -178,9 +165,9 @@ public class DiagnosisService {
         }
     }
 
-    private void validateDuplicateAnswers(List<DiagnosisAnswerRequest> answers) {
+    private void validateDuplicateAnswers(List<SubmitDiagnosisAnswerCommand> answers) {
         LinkedHashSet<Long> uniqueQuestionIds = answers.stream()
-                .map(DiagnosisAnswerRequest::questionId)
+                .map(SubmitDiagnosisAnswerCommand::questionId)
                 .collect(Collectors.toCollection(LinkedHashSet::new));
 
         if (uniqueQuestionIds.size() != answers.size()) {

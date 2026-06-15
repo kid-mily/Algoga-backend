@@ -9,4 +9,5 @@ public interface BannerRepository {
     Optional<Banner> findById(Long bannerId);
     void deleteById(Long bannerId);
     List<Banner> findVisibleBanners();
+    List<Banner> findAllBanners(); // 🔥 관리자용 전체 조회 추가
 }

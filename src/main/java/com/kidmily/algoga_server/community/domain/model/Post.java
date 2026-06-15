@@ -158,6 +158,11 @@ public class Post {
             if (distinctCount != freeTags.size()) {
                 throw new PostException(PostErrorCode.POST_FREE_TAG_DUPLICATED);
             }
+            // 태그 길이 검증 추가
+            boolean hasLongTag = freeTags.stream().anyMatch(tag -> tag.length() > 10);
+            if (hasLongTag) {
+                throw new PostException(PostErrorCode.POST_FREE_TAG_TOO_LONG);
+            }
         }
     }
 
@@ -165,5 +170,10 @@ public class Post {
         if (imageUrls != null && imageUrls.size() > MAX_IMAGE_COUNT) {
             throw new PostException(PostErrorCode.POST_IMAGE_COUNT_EXCEEDED);
         }
+    }
+
+    // 관리자에 의한 게시글 삭제 (작성자 권한 검증 없음)
+    public void deleteByAdmin() {
+        this.isDeleted = true;
     }
 }

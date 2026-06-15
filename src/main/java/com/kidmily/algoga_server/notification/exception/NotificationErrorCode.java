@@ -9,6 +9,9 @@ import org.springframework.http.HttpStatus;
 @RequiredArgsConstructor
 public enum NotificationErrorCode implements BaseErrorCode {
 
+    // 400
+    NOTIFICATION_SETTING_INVALID(HttpStatus.BAD_REQUEST, "NOTIFICATION_003", "알림 설정 값을 입력해주세요."),
+
     // 401
     NOTIFICATION_UNAUTHORIZED(HttpStatus.UNAUTHORIZED, "NOTIFICATION_001", "알림 조회 권한이 없습니다."),
 

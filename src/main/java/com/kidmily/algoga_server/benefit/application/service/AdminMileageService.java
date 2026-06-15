@@ -2,6 +2,7 @@ package com.kidmily.algoga_server.benefit.application.service;
 
 import com.kidmily.algoga_server.benefit.application.command.AdminMileageTransactionCommand;
 import com.kidmily.algoga_server.benefit.application.port.LmsCoursePort;
+import com.kidmily.algoga_server.benefit.application.port.UserProfilePort;
 import com.kidmily.algoga_server.benefit.application.result.AdminMileageHistoryResult;
 import com.kidmily.algoga_server.benefit.application.result.AdminMileageSummaryResult;
 import com.kidmily.algoga_server.benefit.application.result.AdminMileageUserResult;
@@ -10,8 +11,6 @@ import com.kidmily.algoga_server.benefit.domain.model.MileageHistory;
 import com.kidmily.algoga_server.benefit.domain.repository.MileageHistoryRepository;
 import com.kidmily.algoga_server.benefit.exception.BenefitErrorCode;
 import com.kidmily.algoga_server.benefit.exception.BenefitException;
-import com.kidmily.algoga_server.user.domain.User;
-import com.kidmily.algoga_server.user.domain.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -32,7 +31,7 @@ public class AdminMileageService implements AdminMileageUseCase {
 
     private final MileageHistoryRepository mileageHistoryRepository;
     private final LmsCoursePort lmsCoursePort;
-    private final UserRepository userRepository;
+    private final UserProfilePort userProfilePort;
 
     @Override
     public AdminMileageSummaryResult getMileageUsers() {
@@ -148,17 +147,19 @@ public class AdminMileageService implements AdminMileageUseCase {
     }
 
     private Optional<AdminMileageUserResult> createUserResult(Long userId) {
-        Optional<User> optionalUser = userRepository.findById(userId);
+        Optional<UserProfilePort.UserProfile> optionalUser = userProfilePort.findProfile(userId);
 
         if (optionalUser.isEmpty()) {
             return Optional.empty();
         }
 
-        User user = optionalUser.get();
+        UserProfilePort.UserProfile user = optionalUser.get();
         List<MileageHistory> histories = mileageHistoryRepository.findByUserId(userId);
+        LocalDateTime now = LocalDateTime.now();
 
         int totalEarnedMileage = histories.stream()
                 .filter(this::isEarnType)
+                .filter(history -> history.isAvailableAt(now))
                 .mapToInt(MileageHistory::getAmount)
                 .sum();
 
@@ -167,7 +168,7 @@ public class AdminMileageService implements AdminMileageUseCase {
                 .mapToInt(MileageHistory::getAmount)
                 .sum();
 
-        int totalMileage = totalEarnedMileage - totalUsedMileage;
+        int totalMileage = Math.max(0, totalEarnedMileage - totalUsedMileage);
 
         LocalDateTime lastUpdatedAt = histories.stream()
                 .map(MileageHistory::getCreatedAt)
@@ -175,9 +176,9 @@ public class AdminMileageService implements AdminMileageUseCase {
                 .orElse(null);
 
         return Optional.of(new AdminMileageUserResult(
-                user.getId(),
-                user.getName(),
-                user.getEmail(),
+                user.userId(),
+                user.name(),
+                user.email(),
                 totalMileage,
                 totalEarnedMileage,
                 totalUsedMileage,
@@ -186,14 +187,14 @@ public class AdminMileageService implements AdminMileageUseCase {
     }
 
     private AdminMileageHistoryResult toHistoryResult(MileageHistory history) {
-        Optional<User> optionalUser = userRepository.findById(history.getUserId());
+        Optional<UserProfilePort.UserProfile> optionalUser = userProfilePort.findProfile(history.getUserId());
 
         String userName = optionalUser
-                .map(User::getName)
+                .map(UserProfilePort.UserProfile::name)
                 .orElse(null);
 
         String userEmail = optionalUser
-                .map(User::getEmail)
+                .map(UserProfilePort.UserProfile::email)
                 .orElse(null);
 
         String courseTitle = findCourseTitle(history.getCourseId());
@@ -219,7 +220,8 @@ public class AdminMileageService implements AdminMileageUseCase {
                 signedAmount,
                 history.getType(),
                 history.getReason(),
-                history.getCreatedAt()
+                history.getCreatedAt(),
+                history.getExpiredAt()
         );
     }
 
@@ -235,9 +237,11 @@ public class AdminMileageService implements AdminMileageUseCase {
 
     private int calculateCurrentMileage(Long userId) {
         List<MileageHistory> histories = mileageHistoryRepository.findByUserId(userId);
+        LocalDateTime now = LocalDateTime.now();
 
         int earned = histories.stream()
                 .filter(this::isEarnType)
+                .filter(history -> history.isAvailableAt(now))
                 .mapToInt(MileageHistory::getAmount)
                 .sum();
 
@@ -246,7 +250,7 @@ public class AdminMileageService implements AdminMileageUseCase {
                 .mapToInt(MileageHistory::getAmount)
                 .sum();
 
-        return earned - used;
+        return Math.max(0, earned - used);
     }
 
     private boolean isEarnType(MileageHistory history) {
@@ -259,7 +263,7 @@ public class AdminMileageService implements AdminMileageUseCase {
     }
 
     private void validateUser(Long userId) {
-        if (userRepository.findById(userId).isEmpty()) {
+        if (!userProfilePort.exists(userId)) {
             log.warn("[Admin Mileage] 마일리지 처리 실패. 사용자를 찾을 수 없습니다. userId={}", userId);
             throw new BenefitException(BenefitErrorCode.MILEAGE_USER_NOT_FOUND);
         }

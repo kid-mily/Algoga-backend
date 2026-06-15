@@ -8,4 +8,5 @@ import java.util.Optional;
 public interface CountryRepository {
     List<Country> findAllActive();
     Optional<Country> findById(Long id);
+    List<Country> findAllByIdIn(List<Long> ids);
 }

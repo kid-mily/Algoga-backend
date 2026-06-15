@@ -1,16 +1,16 @@
 package com.kidmily.algoga_server.lms.application.usecase;
 
-import com.kidmily.algoga_server.lms.domain.model.Country;
+import com.kidmily.algoga_server.lms.application.result.CountryResult;
 
 import java.util.List;
 
 public interface MapUseCase {
 
-    List<Country> getActiveCountries();
+    List<CountryResult> getActiveCountries();
 
-    List<Country> getCountriesByContinentCode(String continentCode);
+    List<CountryResult> getCountriesByContinentCode(String continentCode);
 
-    Country getActiveCountry(Long countryId);
+    CountryResult getActiveCountry(Long countryId);
 
 
 }

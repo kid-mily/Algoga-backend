@@ -15,7 +15,9 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
@@ -76,17 +78,55 @@ public class RefundController {
     }
 
     @GetMapping("/api/v1/admin/refund-requests")
-    @Operation(summary = "[어드민] 환불 요청 목록", description = "전체 환불 요청 목록을 상태별로 조회합니다.")
+    @Operation(summary = "[어드민] 환불 요청 목록", description = "전체 환불 요청 목록을 상태/사용자명/예약번호/상품명으로 검색합니다.")
     public ResponseEntity<ApiResponse<List<RefundResponse>>> getAllRefunds(
-            @Parameter(description = "환불 상태 필터 (REQUESTED/APPROVED/REJECTED/COMPLETED)")
-            @RequestParam(required = false) RefundStatus status
+            @Parameter(description = "환불 상태 필터 (REQUESTED/UNDER_REVIEW/APPROVED/REJECTED/COMPLETED)")
+            @RequestParam(required = false) RefundStatus status,
+            @RequestParam(required = false) String userName,
+            @RequestParam(required = false) String bookingNumber,
+            @RequestParam(required = false) String productName
     ) {
-        List<RefundResponse> response = refundQueryUseCase.getAllRefunds(status);
+        List<RefundResponse> response = refundQueryUseCase.getAllRefunds(status, userName, bookingNumber, productName);
         return ResponseEntity.ok(ApiResponse.success("REFUND_LIST", "환불 목록 조회에 성공했습니다.", response));
     }
 
+    @GetMapping("/api/v1/admin/refund-requests/{refundId}")
+    @Operation(summary = "[어드민] 환불 단건 조회", description = "환불 요청 상세 정보를 조회합니다.")
+    @ApiErrorCodeExample(domain = RefundErrorCode.class, value = {"REFUND_NOT_FOUND"})
+    public ResponseEntity<ApiResponse<RefundResponse>> getRefund(
+            @Parameter(description = "환불 요청 ID", example = "1")
+            @PathVariable Long refundId
+    ) {
+        RefundResponse response = refundQueryUseCase.getRefund(refundId);
+        return ResponseEntity.ok(ApiResponse.success("REFUND_DETAIL", "환불 상세 조회에 성공했습니다.", response));
+    }
+
+    @GetMapping("/api/v1/admin/refund-requests/excel")
+    @Operation(summary = "[어드민] 환불 내역 엑셀 다운로드", description = "환불 내역을 엑셀로 다운로드합니다.")
+    public ResponseEntity<byte[]> getRefundExcel(
+            @RequestParam(required = false) RefundStatus status
+    ) {
+        byte[] excel = refundQueryUseCase.getRefundExcel(status);
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"refunds.xlsx\"")
+                .contentType(MediaType.parseMediaType(
+                        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"))
+                .body(excel);
+    }
+
+    @PutMapping("/api/v1/admin/refund-requests/{refundId}/review")
+    @Operation(summary = "[어드민] 환불 검토 요청", description = "CS매니저가 정산매니저에게 환불 검토를 요청합니다. REQUESTED → UNDER_REVIEW")
+    @ApiErrorCodeExample(domain = RefundErrorCode.class, value = {"REFUND_NOT_FOUND", "INVALID_REFUND_STATUS"})
+    public ResponseEntity<ApiResponse<Void>> markUnderReview(
+            @Parameter(description = "환불 요청 ID", example = "1")
+            @PathVariable Long refundId
+    ) {
+        refundCommandUseCase.markUnderReview(refundId);
+        return ResponseEntity.ok(ApiResponse.success("REFUND_UNDER_REVIEW", "환불 검토 요청이 완료됐습니다."));
+    }
+
     @PutMapping("/api/v1/admin/refund-requests/{refundId}/approve")
-    @Operation(summary = "[어드민] 환불 승인", description = "환불 요청을 승인합니다. REQUESTED → APPROVED")
+    @Operation(summary = "[어드민] 환불 승인", description = "환불 요청을 승인합니다. UNDER_REVIEW → APPROVED")
     @ApiErrorCodeExample(domain = RefundErrorCode.class, value = {"REFUND_NOT_FOUND", "INVALID_REFUND_STATUS"})
     public ResponseEntity<ApiResponse<Void>> approve(
             @Parameter(description = "환불 요청 ID", example = "1")

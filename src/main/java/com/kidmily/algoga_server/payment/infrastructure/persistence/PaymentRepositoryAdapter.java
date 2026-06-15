@@ -93,4 +93,12 @@ public class PaymentRepositoryAdapter implements PaymentRepository {
                 status
         );
     }
+
+    @Override
+    public List<Payment> findByBookingIdInAndStatus(List<Long> bookingIds, PaymentStatus status) {
+        return springDataPaymentRepository.findByBookingIdInAndStatus(bookingIds, status)
+                .stream()
+                .map(paymentMapper::toDomain)
+                .toList();
+    }
 }
