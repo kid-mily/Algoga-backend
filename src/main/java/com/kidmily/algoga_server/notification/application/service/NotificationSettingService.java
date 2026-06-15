@@ -32,7 +32,12 @@ public class NotificationSettingService implements NotificationSettingQueryUseCa
         NotificationSetting setting = notificationSettingRepository.findByUserId(command.userId())
                 .orElseGet(() -> NotificationSetting.createDefault(command.userId()));
 
-        setting.update(null, null, command.communityEnabled(), null, null, null);
+        setting.update( command.learningEnabled(),
+                command.qnaEnabled(),
+                command.communityEnabled(),
+                command.noticeEnabled(),
+                command.inquiryEnabled(),
+                command.friendEnabled());
 
         return notificationSettingRepository.save(setting);
     }
