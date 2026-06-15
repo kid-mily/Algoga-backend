@@ -9,4 +9,8 @@ public interface DiagnosisQuestionRepository {
     List<DiagnosisQuestion> findActiveByCountryId(Long countryId);
 
     List<DiagnosisQuestion> findByIds(List<Long> ids);
+
+    boolean existsById(Long id);
+
+    void deleteById(Long id);
 }

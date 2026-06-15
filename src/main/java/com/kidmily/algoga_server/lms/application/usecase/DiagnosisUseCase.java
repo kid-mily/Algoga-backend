@@ -13,4 +13,6 @@ public interface DiagnosisUseCase {
     DiagnosisResultView submitResult(SubmitDiagnosisCommand command);
 
     DiagnosisResultView getLatestResult(Long userId);
+
+    void deleteQuestion(Long questionId);
 }

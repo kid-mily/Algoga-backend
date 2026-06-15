@@ -31,6 +31,16 @@ public class DiagnosisQuestionRepositoryAdapter implements DiagnosisQuestionRepo
                 .toList();
     }
 
+    @Override
+    public boolean existsById(Long id) {
+        return springDataDiagnosisQuestionRepository.existsById(id);
+    }
+
+    @Override
+    public void deleteById(Long id) {
+        springDataDiagnosisQuestionRepository.deleteById(id);
+    }
+
     private DiagnosisQuestion toDomain(DiagnosisQuestionJpaEntity entity) {
         return new DiagnosisQuestion(
                 entity.getId(),
