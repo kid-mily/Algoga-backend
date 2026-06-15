@@ -11,42 +11,64 @@ import org.springframework.security.config.annotation.web.configurers.AbstractHt
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.CorsConfigurationSource;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+
+import java.util.List;
 
 @Configuration
 @EnableWebSecurity
-@EnableMethodSecurity // 컨트롤러의 @PreAuthorize 처리를 위해 필수
+@EnableMethodSecurity
 @RequiredArgsConstructor
 public class GlobalSecurityConfig {
 
     private final GlobalJwtAuthenticationFilter globalJwtAuthenticationFilter;
-
-    // 구글에서 받아온 유저 정보를 처리할 서비스
     private final CustomOAuth2UserService customOAuth2UserService;
-
-    // 소셜 로그인 성공 시 JWT 토큰을 발급하고 프론트엔드로 보내줄 핸들러
     private final OAuth2SuccessHandler oAuth2SuccessHandler;
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
                 .csrf(AbstractHttpConfigurer::disable)
+                // 🌟 1. 시큐리티 체인에 CORS 설정 추가 (핵심!)
+                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
-                        // 🌟 요청하신 대로 모든 경로에 대해 일단 통과(permitAll)시키도록 변경
-                        // (세부 권한은 각 컨트롤러의 @PreAuthorize에서 처리)
                         .anyRequest().permitAll()
                 )
-                // OAuth2 소셜 로그인 설정 시작
                 .oauth2Login(oauth2 -> oauth2
-                        // 구글 로그인 성공 후, 구글 서버에서 사용자 정보(이메일, 이름 등)를 가져온 상태에서 실행됨
                         .userInfoEndpoint(userInfo -> userInfo
                                 .userService(customOAuth2UserService)
                         )
-                        // 유저 정보 처리까지 다 성공하면 이 핸들러를 실행해라!
                         .successHandler(oAuth2SuccessHandler)
                 )
                 .addFilterBefore(globalJwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
+    }
+
+    // 🌟 2. CORS 상세 정책 빈 등록
+    @Bean
+    public CorsConfigurationSource corsConfigurationSource() {
+        CorsConfiguration configuration = new CorsConfiguration();
+
+        // 🚨 프론트엔드 도메인을 정확히 명시해야 브라우저가 허용합니다 (와일드카드 * 금지)
+        configuration.setAllowedOrigins(List.of(
+                "http://localhost:17000",
+                "http://127.0.0.1:17000",
+                "https://kidmily.kro.kr" // 추후 운영 프론트엔드 도메인도 여기에 추가
+        ));
+
+        configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
+        configuration.setAllowedHeaders(List.of("*"));
+
+        // 🌟 프론트엔드와 쿠키(인증 정보) 통신을 위해 반드시 true
+        configuration.setAllowCredentials(true);
+        configuration.setExposedHeaders(List.of("Authorization", "X-Trace-Id"));
+
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        source.registerCorsConfiguration("/**", configuration);
+        return source;
     }
 }

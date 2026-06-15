@@ -32,22 +32,22 @@ public class OAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
 
         SocialAuthResult authResult = socialLoginProcessor.processLoginAndGetRedirectUrl(email, name);
 
-        // 기존 유저여서 토큰이 발급된 경우 HttpOnly 쿠키 2개 생성
         if (authResult.accessToken() != null && authResult.refreshToken() != null) {
+            // 🌟 클라우드(HTTPS) 서버와 로컬(HTTP) 간의 쿠키 전송을 위한 설정
             ResponseCookie accessCookie = ResponseCookie.from("accessToken", authResult.accessToken())
                     .httpOnly(true)
-                    .secure(false) // HTTPS 운영 서버 배포 시 true 로 변경
+                    .secure(true) // 🚨 무조건 true! (SameSite=None의 필수 조건)
                     .path("/")
-                    .maxAge(30 * 60) // 30분
-                    .sameSite("Lax")
+                    .maxAge(30 * 60)
+                    .sameSite("None") // 🚨 크로스 도메인 통신을 허용
                     .build();
 
             ResponseCookie refreshCookie = ResponseCookie.from("refreshToken", authResult.refreshToken())
                     .httpOnly(true)
-                    .secure(false) // HTTPS 운영 서버 배포 시 true 로 변경
+                    .secure(true) // 🚨 무조건 true!
                     .path("/")
-                    .maxAge(7 * 24 * 60 * 60) // 7일
-                    .sameSite("Lax")
+                    .maxAge(7 * 24 * 60 * 60)
+                    .sameSite("None") // 🚨 크로스 도메인 허용
                     .build();
 
             response.addHeader(HttpHeaders.SET_COOKIE, accessCookie.toString());

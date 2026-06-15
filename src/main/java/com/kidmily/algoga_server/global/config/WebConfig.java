@@ -9,11 +9,8 @@ public class WebConfig implements WebMvcConfigurer {
 
     @Override
     public void addCorsMappings(CorsRegistry registry) {
-        registry.addMapping("/**") // 서버의 모든 URL 경로(/**)에 대해 CORS 룰 적용
-                .allowedOriginPatterns("*") // 모든 출처(Origin) 허용 (allowCredentials와 혼용 가능)
-                .allowedMethods("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS") // 모든 HTTP 메서드 허용
-                .allowedHeaders("*") // 모든 HTTP 헤더 허용
-                .allowCredentials(true) // 쿠키 및 인증 헤더(Authorization 등) 전송 허용
-                .exposedHeaders("Authorization", "X-Trace-Id"); // 프론트엔드 브라우저가 접근할 수 있는 응답 헤더 설정
+        // 🚨 주의: GlobalSecurityConfig의 CORS와 충돌하여
+        // "다중 Access-Control-Allow-Origin 헤더" 에러를 유발하므로 비워둡니다!
+        // CORS 설정은 시큐리티 설정에서 전담합니다.
     }
 }
