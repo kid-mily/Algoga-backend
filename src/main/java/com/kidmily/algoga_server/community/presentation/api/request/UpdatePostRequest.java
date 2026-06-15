@@ -30,9 +30,6 @@ public record UpdatePostRequest(
         @Schema(description = "나라 ID (선택)", example = "1")
         Long countryId,
 
-        @Schema(description = "수강 강의 ID (선택)", example = "3")
-        Long lectureId,
-
         @Schema(description = "자유 태그 목록 (최대 10개, 태그당 최대 10자)", example = "[\"도쿄\", \"맛집\"]")
         @Size(max = 10, message = "자유 태그는 최대 10개입니다.")
         List<String> freeTags,

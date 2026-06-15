@@ -43,7 +43,7 @@ public class CommunityController {
 
 
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    @Operation(summary = "게시글 작성", description = "나라, 자유, 수강강의 태그 및 최대 10장의 사진을 포함해 게시글을 등록합니다.")
+    @Operation(summary = "게시글 작성", description = "나라, 자유 태그 및 최대 10장의 사진을 포함해 게시글을 등록합니다.")
     @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "201", description = "게시글 작성에 성공했습니다.")
     @ApiErrorCodeExample(domain = PostErrorCode.class, value = {
             "POST_INVALID_REQUEST",
@@ -69,7 +69,7 @@ public class CommunityController {
                 request.title(),
                 request.content(),
                 request.countryId(),
-                request.lectureId(),
+                null,
                 request.freeTags() == null ? List.of() : request.freeTags(),
                 request.images() == null ? List.of() : request.images()
         );
@@ -144,7 +144,7 @@ public class CommunityController {
                 request.title(),
                 request.content(),
                 request.countryId(),
-                request.lectureId(),
+                null,
                 request.freeTags() == null ? List.of() : request.freeTags(),
                 request.images() == null ? List.of() : request.images()
         );
