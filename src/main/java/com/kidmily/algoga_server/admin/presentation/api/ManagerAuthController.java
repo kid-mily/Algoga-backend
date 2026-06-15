@@ -29,7 +29,7 @@ public class ManagerAuthController {
     @Operation(summary = "매니저 로그인", description = "어드민 계정으로 로그인하여 토큰을 발급받습니다.")
     @ApiErrorCodeExample(domain = ManagerErrorCode.class, value = {"MANAGER_NOT_FOUND", "DELETED_MANAGER", "INVALID_PASSWORD"})
     @PostMapping("/login")
-    public ApiResponse<Void> login( // 🌟 반환 타입을 ApiResponse<Void> 로 변경
+    public ApiResponse<AdminAuthTokenResponse> login( // 🌟 반환 타입을 ApiResponse<Void> 로 변경
                                     @RequestBody @Valid ManagerLoginRequest request,
                                     HttpServletResponse response // 🌟 쿠키 주입을 위해 추가
     ) {
@@ -62,7 +62,7 @@ public class ManagerAuthController {
         log.info("[Manager Login] 관리자 로그인 성공 - ID: {}", request.loginId());
 
         // 🌟 맨 마지막에 데이터를 응답 결과에 포함하지 않고 null로 반환하여 JSON에 출력되지 않게 합니다.
-        return ApiResponse.success("MANAGER_LOGIN_SUCCESS", "관리자 로그인에 성공했습니다.", null);
+        return ApiResponse.success("MANAGER_LOGIN_SUCCESS", "관리자 로그인에 성공했습니다.", tokenResponse);
     }
 
     @Operation(summary = "매니저 로그아웃", description = "토큰 쿠키를 만료시켜 로그아웃 처리합니다.")
