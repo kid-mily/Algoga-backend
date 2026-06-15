@@ -30,7 +30,7 @@ public class PaymentMapper {
                 entity.getUserId(),
                 entity.getPaymentType(),
                 entity.getAmount(),
-                entity.getUsedMileage(),
+                entity.getUsedMileage() != null ? entity.getUsedMileage() : 0,
                 entity.getUsedCouponId(),
                 entity.getStatus(),
                 entity.getIdempotencyKey(),

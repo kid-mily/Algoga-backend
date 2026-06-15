@@ -37,7 +37,7 @@ public class PaymentJpaEntity {
     private int amount;
 
     @Column(name = "used_mileage")
-    private int usedMileage;
+    private Integer usedMileage;
 
     @Column(name = "used_coupon_id")
     private Long usedCouponId;
@@ -56,7 +56,7 @@ public class PaymentJpaEntity {
     private LocalDateTime createdAt;
 
     public PaymentJpaEntity(Long bookingId, Long courseId, Long userId, PaymentType paymentType,
-                            int amount, int usedMileage, Long usedCouponId,
+                            int amount, Integer usedMileage, Long usedCouponId,
                             PaymentStatus status, String idempotencyKey,
                             String portonePaymentId, LocalDateTime createdAt) {
         this.bookingId = bookingId;
