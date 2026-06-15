@@ -88,10 +88,10 @@ public class AuthController {
         AuthTokenResponse tokenResponse = authService.login(request);
 
         ResponseCookie accessCookie = ResponseCookie.from("accessToken", tokenResponse.accessToken())
-                .httpOnly(true).secure(false).path("/").maxAge(30 * 60).sameSite("Lax").build();
+                .httpOnly(true).secure(false).path("/").maxAge(30 * 60).sameSite("None").build();
 
         ResponseCookie refreshCookie = ResponseCookie.from("refreshToken", tokenResponse.refreshToken())
-                .httpOnly(true).secure(false).path("/").maxAge(7 * 24 * 60 * 60).sameSite("Lax").build();
+                .httpOnly(true).secure(false).path("/").maxAge(7 * 24 * 60 * 60).sameSite("None").build();
 
         response.addHeader(HttpHeaders.SET_COOKIE, accessCookie.toString());
         response.addHeader(HttpHeaders.SET_COOKIE, refreshCookie.toString());
@@ -223,7 +223,7 @@ public class AuthController {
                 .secure(false) // HTTPS 적용 시 true
                 .path("/")
                 .maxAge(30 * 60) // 30분
-                .sameSite("Lax")
+                .sameSite("None")
                 .build();
 
         response.addHeader(HttpHeaders.SET_COOKIE, accessCookie.toString());
