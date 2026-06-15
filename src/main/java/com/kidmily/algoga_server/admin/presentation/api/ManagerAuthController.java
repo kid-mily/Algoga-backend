@@ -45,7 +45,7 @@ public class ManagerAuthController {
                 .secure(false) // HTTPS 운영 서버 배포 시 true로 변경
                 .path("/")
                 .maxAge(30 * 60) // 30분
-                .sameSite("Lax")
+                .sameSite("None")
                 .build();
 
         ResponseCookie refreshCookie = ResponseCookie.from("refreshToken", tokenResponse.refreshToken())
@@ -53,7 +53,7 @@ public class ManagerAuthController {
                 .secure(false) // HTTPS 운영 서버 배포 시 true로 변경
                 .path("/")
                 .maxAge(7 * 24 * 60 * 60) // 7일
-                .sameSite("Lax")
+                .sameSite("None")
                 .build();
 
         response.addHeader(HttpHeaders.SET_COOKIE, accessCookie.toString());
@@ -82,7 +82,7 @@ public class ManagerAuthController {
                 .secure(false) // HTTPS 운영 서버 배포 시 true로 변경
                 .path("/")
                 .maxAge(0) // 0으로 설정하여 브라우저에서 즉시 삭제되도록 유도
-                .sameSite("Lax")
+                .sameSite("None")
                 .build();
 
         // 🌟 2. Refresh Token 쿠키 즉시 만료 (maxAge = 0)
@@ -91,7 +91,7 @@ public class ManagerAuthController {
                 .secure(false) // HTTPS 운영 서버 배포 시 true로 변경
                 .path("/")
                 .maxAge(0) // 0으로 설정하여 브라우저에서 즉시 삭제되도록 유도
-                .sameSite("Lax")
+                .sameSite("None")
                 .build();
 
         // 🌟 3. 응답 헤더에 만료된 쿠키를 세팅하여 기존 쿠키 덮어쓰기
