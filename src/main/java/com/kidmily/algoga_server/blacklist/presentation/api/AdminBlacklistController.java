@@ -20,7 +20,7 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/v1/admin/blacklists")
-@PreAuthorize("hasAnyRole('CS_MANAGER', 'SUPER_ADMIN')")
+@PreAuthorize("hasAnyRole('SUPER_ADMIN')")
 @Tag(name = "Admin Blacklist", description = "관리자 전용 블랙리스트 조회 및 관리 API")
 public class AdminBlacklistController {
 
