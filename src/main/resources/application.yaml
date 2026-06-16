@@ -14,9 +14,9 @@ spring:
               - email
           kakao:
             client-id: ${KAKAO_CLIENT_ID} # 카카오 디벨로퍼스 REST API 키
-            client-secret: ${KAKAO_CLIENT_SECRET} # (선택) 카카오 보안 설정에서 발급받은 코드
+#            client-secret: ${KAKAO_CLIENT_SECRET} # (선택) 카카오 보안 설정에서 발급받은 코드
             redirect-uri: "{baseUrl}/login/oauth2/code/kakao"
-            client-authentication-method: client_secret_post
+            client-authentication-method: none
             authorization-grant-type: authorization_code
             scope:
               - profile_nickname
