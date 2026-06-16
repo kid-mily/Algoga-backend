@@ -47,7 +47,9 @@ public enum PostErrorCode implements BaseErrorCode {
 
     // 404
     POST_NOT_FOUND(HttpStatus.NOT_FOUND, "POST_018", "게시글을 찾을 수 없습니다."),
-    COMMENT_NOT_FOUND(HttpStatus.NOT_FOUND, "POST_019", "댓글을 찾을 수 없습니다.");
+    COMMENT_NOT_FOUND(HttpStatus.NOT_FOUND, "POST_019", "댓글을 찾을 수 없습니다."),
+
+    POST_IMAGE_INVALID_FORMAT(HttpStatus.BAD_REQUEST, "POST_026", "이미지 형식은 jpg, jpeg, png, webp만 허용됩니다.");
 
 
 

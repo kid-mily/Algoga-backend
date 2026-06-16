@@ -58,7 +58,9 @@ public class NotificationQueryService implements NotificationQueryUseCase {
                 unreadCount > 0,
                 notifications,
                 notificationPage.hasNext(),
-                notificationPage.getTotalElements()
+                notificationPage.getTotalElements(),
+                notificationPage.getTotalPages(),
+                page
         );
     }
 }

@@ -26,9 +26,11 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 
 import java.util.List;
+import java.util.Set;
 
 @RestController
 @RequiredArgsConstructor
@@ -40,6 +42,10 @@ public class CommunityController {
     private final PostQueryUseCase postQueryUseCase;
     private final CommentCommandUseCase commentCommandUseCase;
     private final UserPort userPort;
+    private static final long MAX_IMAGE_SIZE = 10 * 1024 * 1024L; // 10MB
+    private static final Set<String> ALLOWED_MIME_TYPES = Set.of(
+            "image/jpeg", "image/png", "image/webp"
+    );
 
 
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
@@ -52,7 +58,8 @@ public class CommunityController {
             "POST_COURSE_TAG_LIMIT_EXCEEDED",
             "POST_IMAGE_COUNT_EXCEEDED",
             "POST_IMAGE_SIZE_EXCEEDED",
-            "ACCOUNT_TYPE_FORBIDDEN"
+            "ACCOUNT_TYPE_FORBIDDEN",
+            "POST_IMAGE_INVALID_FORMAT",
     })
     public ResponseEntity<ApiResponse<CreatePostResponse>> createPost(
             @Valid @ModelAttribute CreatePostRequest request,
@@ -62,6 +69,8 @@ public class CommunityController {
             throw new PostException(PostErrorCode.ACCOUNT_TYPE_FORBIDDEN);
         }
         Long currentUserId = userDetails.getUser().getId();
+
+        validateImages(request.images());
 
         CreatePostCommand command = new CreatePostCommand(
                 currentUserId,
@@ -124,7 +133,8 @@ public class CommunityController {
             "POST_UPDATE_FORBIDDEN",
             "POST_CATEGORY_INVALID",
             "POST_FREE_TAG_LIMIT_EXCEEDED",
-            "ACCOUNT_TYPE_FORBIDDEN"
+            "ACCOUNT_TYPE_FORBIDDEN",
+            "POST_IMAGE_INVALID_FORMAT",
     })
     public ResponseEntity<ApiResponse<UpdatePostResponse>> updatePost(
             @Parameter(description = "게시글 ID", example = "1")
@@ -136,6 +146,8 @@ public class CommunityController {
             throw new PostException(PostErrorCode.ACCOUNT_TYPE_FORBIDDEN);
         }
         Long currentUserId = userDetails.getUser().getId();
+
+        validateImages(request.images());
 
         UpdatePostCommand command = new UpdatePostCommand(
                 postId,
@@ -278,4 +290,17 @@ public class CommunityController {
         return ResponseEntity.noContent().build();
     }
 
+    private void validateImages(List<MultipartFile> images) {
+        if (images == null || images.isEmpty()) return;
+        for (MultipartFile image : images) {
+            if (image == null || image.isEmpty()) continue;
+            if (image.getSize() > MAX_IMAGE_SIZE) {
+                throw new PostException(PostErrorCode.POST_IMAGE_SIZE_EXCEEDED);
+            }
+            String contentType = image.getContentType();
+            if (contentType == null || !ALLOWED_MIME_TYPES.contains(contentType.toLowerCase())) {
+                throw new PostException(PostErrorCode.POST_IMAGE_INVALID_FORMAT);
+            }
+        }
+    }
 }
