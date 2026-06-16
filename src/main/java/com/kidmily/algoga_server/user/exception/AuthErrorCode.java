@@ -28,8 +28,8 @@ public enum AuthErrorCode implements BaseErrorCode {
     // 4. 이메일 인증 관련 (추가하신다면 필수!)
     EMAIL_AUTH_CODE_EXPIRED(HttpStatus.BAD_REQUEST, "AUTH_012", "인증번호가 만료되었습니다."),
     EMAIL_AUTH_CODE_MISMATCH(HttpStatus.BAD_REQUEST, "AUTH_013", "인증번호가 일치하지 않습니다."),
-    EMAIL_NOT_VERIFIED(HttpStatus.BAD_REQUEST, "AUTH_014", "이메일 인증이 완료되지 않았습니다.");
-    
+    EMAIL_NOT_VERIFIED(HttpStatus.BAD_REQUEST, "AUTH_014", "이메일 인증이 완료되지 않았습니다."),
+    BLACKLISTED_USER(HttpStatus.FORBIDDEN, "AUTH_015", "블랙리스트에 등록되어 접근이 영구히 제한된 계정입니다. 고객센터에 문의하세요.");
     private final HttpStatus status;
     private final String code;
     private final String message;

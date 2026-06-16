@@ -159,6 +159,13 @@ public class AuthService implements SocialLoginProcessor {
             throw new UserException(UserErrorCode.ACCOUNT_LOCKED);
         }
 
+        // 🌟 블랙리스트 여부 확인하여 로그인 원천 차단
+        String isBlacklisted = redisTemplate.opsForValue().get("BLACKLIST:" + user.getEmail());
+        if ("true".equals(isBlacklisted)) {
+            log.warn("블랙리스트 유저의 로그인 시도 차단 [아이디: {}]", user.getUsername());
+            throw new AuthException(AuthErrorCode.BLACKLISTED_USER);
+        }
+
         if (!passwordEncoder.matches(request.password(), user.getPassword())) {
             user.increaseLoginFailure();
             userRepository.save(user);
@@ -254,6 +261,13 @@ public class AuthService implements SocialLoginProcessor {
 
     // 토큰 재발급을 위한 검증 메서드
     public String refreshAccessToken(String email, String refreshToken) {
+        // 🌟 블랙리스트 여부 확인하여 재발급 차단
+        String isBlacklisted = redisTemplate.opsForValue().get("BLACKLIST:" + email);
+        if ("true".equals(isBlacklisted)) {
+            log.warn("블랙리스트 유저의 토큰 재발급 시도 차단 [이메일: {}]", email);
+            throw new AuthException(AuthErrorCode.BLACKLISTED_USER);
+        }
+
         String savedRefreshToken = redisTemplate.opsForValue().get("RT:" + email);
 
         if (savedRefreshToken == null || !savedRefreshToken.equals(refreshToken)) {
@@ -315,6 +329,14 @@ public class AuthService implements SocialLoginProcessor {
         boolean isExistingUser = userRepository.findByEmailAndIsDeletedFalse(email).isPresent();
 
         if (isExistingUser) {
+            // 🌟 블랙리스트 여부 확인
+            String isBlacklisted = redisTemplate.opsForValue().get("BLACKLIST:" + email);
+            if ("true".equals(isBlacklisted)) {
+                log.warn("블랙리스트 유저의 소셜 로그인 시도 차단 [이메일: {}]", email);
+                // 블랙리스트 차단 시 프론트엔드의 에러 페이지나 처리 화면으로 리다이렉트 (선택 사항)
+                return new SocialAuthResult(frontendBaseUrl + "/login?error=blacklisted", null, null);
+            }
+
             String accessToken = globalJwtProvider.createUserAccessToken(email);
             String refreshToken = globalJwtProvider.createUserRefreshToken(email);
 
@@ -339,4 +361,3 @@ public class AuthService implements SocialLoginProcessor {
         }
     }
 }
-
