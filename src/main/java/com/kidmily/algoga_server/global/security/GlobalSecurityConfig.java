@@ -27,6 +27,9 @@ public class GlobalSecurityConfig {
     private final CustomOAuth2UserService customOAuth2UserService;
     private final OAuth2SuccessHandler oAuth2SuccessHandler;
 
+    private final CustomAuthenticationEntryPoint authenticationEntryPoint;
+    private final CustomAccessDeniedHandler accessDeniedHandler;
+
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
@@ -35,8 +38,25 @@ public class GlobalSecurityConfig {
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
+                        // 1. 누구나 접근 가능해야 하는 곳 (로그인, 회원가입, 스웨거 등)
+                        .requestMatchers("/api/v1/auth/**", "/oauth2/**", "/login/**", "/swagger-ui/**", "/v3/api-docs/**").permitAll()
+
+                        // 2. [403 에러 유도] 관리자 페이지는 ADMIN 권한만 접근 가능
+                        .requestMatchers("/api/v1/admin/**").hasRole("ADMIN")
+
+                        // 3. [401 에러 유도] 유저 관련 API는 반드시 로그인(인증) 필수!
+                        .requestMatchers("/api/v1/users/**").authenticated()
+                        // 모든 경로에 대해 일단 통과(permitAll)시키도록
+                        // (세부 권한은 각 컨트롤러의 @PreAuthorize에서 처리)
                         .anyRequest().permitAll()
                 )
+
+                .exceptionHandling(exception -> exception
+                        .authenticationEntryPoint(authenticationEntryPoint) // 401 (로그인 안 함)
+                        .accessDeniedHandler(accessDeniedHandler)           // 403 (권한 없음)
+                )
+
+                // OAuth2 소셜 로그인 설정 시작
                 .oauth2Login(oauth2 -> oauth2
                         .userInfoEndpoint(userInfo -> userInfo
                                 .userService(customOAuth2UserService)
