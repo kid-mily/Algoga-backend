@@ -12,6 +12,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
@@ -21,6 +22,7 @@ import java.util.List;
 @RequestMapping("/api/v1/admin/payments")
 @RequiredArgsConstructor
 @Tag(name = "Admin Payment", description = "어드민 정산 API")
+@PreAuthorize("hasAnyAuthority('SETTLEMENT_MANAGER', 'ROLE_SETTLEMENT_MANAGER', 'SUPER_ADMIN', 'ROLE_SUPER_ADMIN')")
 public class AdminPaymentController {
 
     private final PaymentQueryUseCase paymentQueryUseCase;

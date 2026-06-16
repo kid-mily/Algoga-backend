@@ -1,41 +1,36 @@
 # 프론트엔드 이슈 정리
 
-## 🔴 미해결 — 단과 결제 500 에러
+## ✅ 해결 완료 — 단과 결제 500 에러 (2026-06-16)
 
 ### 현상
-- 단과 결제 (`POST /api/v1/payments/lecture`) 최초 시도 시 500 반환
+- 단과 결제 (`POST /api/v1/payments/lecture`) 시도 시 500 반환
 - 에러 코드: `GLOBAL_001` — 서버 내부에서 오류가 발생했습니다.
-- traceId: `39939a9a`
+- traceId: `39939a9a`, `835ca31a`, `837f85fc`, `f27a6541`, `cc1d1702`
 
-### 확인된 사항
-- 재시도가 아닌 **첫 번째 결제 시도**에서 발생
-- 쿠폰/마일리지 적용 여부 미확인
+### 원인 (2가지 복합)
 
-### 원인 파악을 위해 민지님께 추가 확인 필요
-1. 결제 요청 시 보내는 데이터 캡처 (courseId, amount, portonePaymentId 등)
-2. PortOne 결제 자체는 성공으로 뜨는지 여부
-3. 쿠폰 또는 마일리지 적용 여부
+**1. Spring self-invocation 으로 인한 `@Transactional` 무시**
+- `PaymentCommandService.handleLecturePayment()` 가 같은 클래스의 `saveLecturePayment()`(`@Transactional`)를
+  `this.method()` 형태로 직접 호출 → AOP 프록시를 거치지 않아 트랜잭션이 전혀 적용되지 않음
+- 트랜잭션(세션) 없이 `courseRepository.findByIdAndDeletedFalse()`가 lazy 컬렉션(`Course.chapters`)을 읽으려다
+  `LazyInitializationException` 발생
+- 같은 패턴이 `handle()→savePayment()`, `handleWebhook()→processWebhook()` 에도 있었음 (캐시 무효화 `@CacheEvict`도 같이 무시되고 있던 숨은 버그)
 
-### 요청 스펙 (참고용)
-```json
-POST /api/v1/payments/lecture
-Authorization: Bearer {accessToken}
+**2. DB 스키마 불일치**
+- `payments.booking_id` 컬럼이 실제 DB에는 `NOT NULL`로 박혀있었으나, JPA 엔티티는 `nullable = true`로 정의
+- `ddl-auto: update` 는 기존 컬럼 제약을 자동으로 완화해주지 않아서 발생한 불일치
+- 강의 단독결제(`LECTURE_ONLY`)는 예약이 없어 `bookingId = null`로 저장하는데, DB가 이를 막아서
+  `DataIntegrityViolationException` 발생
 
-{
-  "courseId": Long,         // 필수
-  "amount": int,            // 필수 (1 이상)
-  "usedMileage": int,       // 선택 (없으면 0)
-  "usedCouponId": Long,     // 선택 (없으면 null)
-  "portonePaymentId": String // 필수
-}
-```
+### 해결
+1. `PaymentTransactionService` 신규 빈 분리 — `@Transactional`/`@CacheEvict` 메서드들을 별도 빈으로 옮겨
+   `PaymentCommandService`가 이 빈을 주입받아 호출하도록 변경 (self-invocation 제거)
+2. `db/migrations/2026-06-16_fix_payments_booking_id_nullable.sql` — `booking_id` 컬럼 NULL 허용으로 수정
+   - **로컬 DB 적용 완료**
+   - **⚠️ 운영 DB(kidmily.kro.kr) 미적용 — 배포 시 반드시 동일 마이그레이션 실행 필요**
 
-### 예상 원인 후보
-| 우선순위 | 원인 | 확인 방법 |
-|---|---|---|
-| 1 | portonePaymentId 누락 또는 잘못된 값 전달 | 요청 데이터 확인 |
-| 2 | PortOne 결제 검증 실패 (금액 불일치) | PortOne 대시보드 확인 |
-| 3 | courseId에 해당하는 강의가 삭제/비공개 상태 | DB 확인 |
+### 검증
+- Swagger `POST /api/v1/payments/lecture` 로 직접 테스트 — 201 `LECTURE_PAYMENT_CREATED` 확인 (paymentId: 7)
 
 ---
 
