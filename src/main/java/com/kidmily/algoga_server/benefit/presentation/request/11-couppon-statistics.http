@@ -1,22 +1,7 @@
 ### ==========================================================
 ### 11. 쿠폰 통계
-### 관리자 API라서 매니저 토큰 필요
-### 자동 변수 안 될 때 쓰는 수동 토큰 버전
+### 먼저 LMS의 01-auth-map.http에서 콘텐츠 매니저 로그인 실행 후 사용
 ### ==========================================================
-
-@managerAccessToken = 여기에_매니저_accessToken_붙여넣기
-
-
-### 콘텐츠 매니저 로그인
-### 실행 후 응답의 data.accessToken을 복사해서 위 managerAccessToken에 붙여넣기
-POST http://localhost:15000/api/v1/admin/auth/login
-Content-Type: application/json
-Accept: application/json
-
-{
-  "loginId": "content_manager_01",
-  "password": "password123!"
-}
 
 
 ### 쿠폰 통계 - 전체 조회

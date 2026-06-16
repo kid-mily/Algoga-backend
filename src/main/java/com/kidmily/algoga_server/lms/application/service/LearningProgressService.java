@@ -90,7 +90,7 @@ public class LearningProgressService implements LearningProgressUseCase {
     }
 
     private void validateCourse(Long courseId) {
-        if (courseRepository.findByIdAndDeletedFalse(courseId).isEmpty()) {
+        if (courseRepository.findById(courseId).isEmpty()) {
             log.warn("[Learning Progress Command] 진도율 업데이트 실패. 존재하지 않거나 삭제된 강의입니다. courseId={}",
                     courseId);
             throw new LmsException(LmsErrorCode.COURSE_NOT_FOUND);

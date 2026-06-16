@@ -5,7 +5,6 @@ public record CreateCouponPolicyCommand(
         Long managerId,
         String couponName,
         String discountType,
-        int discountValue,
-        int validDays
+        int discountValue
 ) {
 }

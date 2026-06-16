@@ -11,7 +11,7 @@
 
 ### 강의 리뷰 - 리뷰 등록
 POST http://localhost:15000/api/v1/courses/3/reviews
-Authorization: Bearer {{accessToken}}
+Authorization: Bearer {{userAccessToken}}
 Content-Type: application/json
 
 {
@@ -22,9 +22,9 @@ Content-Type: application/json
 
 ### 강의 리뷰 - 리뷰 목록 조회
 GET http://localhost:15000/api/v1/courses/3/reviews
-Authorization: Bearer {{accessToken}}
+Authorization: Bearer {{userAccessToken}}
 
 
 ### 강의 리뷰 - 리뷰 요약 조회
 GET http://localhost:15000/api/v1/courses/3/reviews/summary
-Authorization: Bearer {{accessToken}}
+Authorization: Bearer {{userAccessToken}}

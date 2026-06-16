@@ -1,5 +1,5 @@
 package com.kidmily.algoga_server.notice.presentation.api;
-
+import com.kidmily.algoga_server.global.common.api.response.PageResponse;
 import com.kidmily.algoga_server.global.annotation.swagger.ApiErrorCodeExample;
 import com.kidmily.algoga_server.global.common.api.response.ApiResponse;
 import com.kidmily.algoga_server.notice.application.usecase.NoticeQueryUseCase;
@@ -42,11 +42,11 @@ public class PublicNoticeController {
     }
 
     @GetMapping("/{tag}/{index}")
-    @Operation(summary = "공지사항 전체 조회", description = "태그와 페이지 번호를 기반으로 공지사항 목록을 조회합니다.")
+    @Operation(summary = "공지사항 전체 조회", description = "태그와 페이지 번호를 기반으로 공지사항 목록을 한 페이지당 10개씩 조회합니다. 스웨거 응답 예시에서 totalPages(최대 인덱스)와 totalElements 등의 페이징 정보를 확인할 수 있습니다.") // 🌟 설명 추가
     @ApiErrorCodeExample(domain = NoticeErrorCode.class, value = {"INVALID_TAG_OR_INDEX"})
-    public ResponseEntity<ApiResponse<List<NoticeListResponse>>> getNotices(
-            @Parameter(description = "조회할 태그명 (ALL, NOTICE, EVENT, MAINTENANCE 등)", example = "ALL") @PathVariable String tag,
-            @Parameter(description = "조회할 페이지 번호 (1부터 시작)", example = "1") @PathVariable Integer index
+    public ResponseEntity<ApiResponse<PageResponse<NoticeListResponse>>> getNotices( // 🌟 PageResponse 로 타입 변경
+                                                                                     @Parameter(description = "조회할 태그명 (ALL, NOTICE, EVENT, MAINTENANCE 등)", example = "ALL") @PathVariable String tag,
+                                                                                     @Parameter(description = "조회할 페이지 번호 (1부터 시작)", example = "1") @PathVariable Integer index
     ) {
         return ResponseEntity.ok(ApiResponse.success(
                 "NOTICE_LIST_FOUND", "공지사항 전체 조회에 성공했습니다.", noticeQueryUseCase.getNotices(tag, index)

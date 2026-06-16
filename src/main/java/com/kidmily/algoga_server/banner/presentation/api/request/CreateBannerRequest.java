@@ -1,5 +1,6 @@
 package com.kidmily.algoga_server.banner.presentation.api.request;
 
+import com.kidmily.algoga_server.banner.presentation.api.validation.ValidBannerImage;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotNull;
 import org.springframework.web.multipart.MultipartFile;
@@ -7,6 +8,7 @@ import org.springframework.web.multipart.MultipartFile;
 @Schema(description = "배너 등록 요청 DTO (multipart/form-data)")
 public record CreateBannerRequest(
         @NotNull(message = "배너 이미지는 필수입니다.")
+        @ValidBannerImage
         @Schema(description = "업로드할 배너 이미지 파일")
         MultipartFile image,
 

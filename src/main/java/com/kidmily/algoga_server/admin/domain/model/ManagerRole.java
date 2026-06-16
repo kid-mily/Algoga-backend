@@ -4,5 +4,6 @@ public enum ManagerRole {
     CONTENT_MANAGER,
     CS_MANAGER,
     SETTLEMENT_MANAGER,
-    SUPER_ADMIN
+    SUPER_ADMIN,
+    STATISTICS_MANAGER
 }

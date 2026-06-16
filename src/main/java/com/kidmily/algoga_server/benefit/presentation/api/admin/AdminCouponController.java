@@ -63,8 +63,7 @@ public class AdminCouponController {
                 managerId,
                 request.couponName(),
                 request.discountType(),
-                request.discountValue(),
-                request.validDays()
+                request.discountValue()
         );
 
         var couponPolicy = couponPolicyUseCase.createCouponPolicy(command);
@@ -129,8 +128,7 @@ public class AdminCouponController {
                 couponPolicyId,
                 request.couponName(),
                 request.discountType(),
-                request.discountValue(),
-                request.validDays()
+                request.discountValue()
         );
 
         var couponPolicy = couponPolicyUseCase.updateCouponPolicy(command);
