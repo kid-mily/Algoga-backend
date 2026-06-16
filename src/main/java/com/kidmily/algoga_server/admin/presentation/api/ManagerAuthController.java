@@ -30,8 +30,8 @@ public class ManagerAuthController {
     @ApiErrorCodeExample(domain = ManagerErrorCode.class, value = {"MANAGER_NOT_FOUND", "DELETED_MANAGER", "INVALID_PASSWORD"})
     @PostMapping("/login")
     public ApiResponse<AdminAuthTokenResponse> login( // 🌟 반환 타입을 ApiResponse<Void> 로 변경
-                                    @RequestBody @Valid ManagerLoginRequest request,
-                                    HttpServletResponse response // 🌟 쿠키 주입을 위해 추가
+                                                      @RequestBody @Valid ManagerLoginRequest request,
+                                                      HttpServletResponse response // 🌟 쿠키 주입을 위해 추가
     ) {
 
         log.info("[Manager Login] 관리자 로그인 시도 - ID: {}", request.loginId());
@@ -42,7 +42,7 @@ public class ManagerAuthController {
         // 🌟 유저 도메인과 완전히 동일하게 쿠키 세팅 생성
         ResponseCookie accessCookie = ResponseCookie.from("accessToken", tokenResponse.accessToken())
                 .httpOnly(true)
-                .secure(false) // HTTPS 운영 서버 배포 시 true로 변경
+                .secure(true) // HTTPS 운영 서버 배포 시 true로 변경
                 .path("/")
                 .maxAge(30 * 60) // 30분
                 .sameSite("None")
@@ -50,7 +50,7 @@ public class ManagerAuthController {
 
         ResponseCookie refreshCookie = ResponseCookie.from("refreshToken", tokenResponse.refreshToken())
                 .httpOnly(true)
-                .secure(false) // HTTPS 운영 서버 배포 시 true로 변경
+                .secure(true) // HTTPS 운영 서버 배포 시 true로 변경
                 .path("/")
                 .maxAge(7 * 24 * 60 * 60) // 7일
                 .sameSite("None")
@@ -79,7 +79,7 @@ public class ManagerAuthController {
         // 🌟 1. Access Token 쿠키 즉시 만료 (maxAge = 0)
         ResponseCookie accessCookie = ResponseCookie.from("accessToken", "")
                 .httpOnly(true)
-                .secure(false) // HTTPS 운영 서버 배포 시 true로 변경
+                .secure(true) // HTTPS 운영 서버 배포 시 true로 변경
                 .path("/")
                 .maxAge(0) // 0으로 설정하여 브라우저에서 즉시 삭제되도록 유도
                 .sameSite("None")
@@ -88,7 +88,7 @@ public class ManagerAuthController {
         // 🌟 2. Refresh Token 쿠키 즉시 만료 (maxAge = 0)
         ResponseCookie refreshCookie = ResponseCookie.from("refreshToken", "")
                 .httpOnly(true)
-                .secure(false) // HTTPS 운영 서버 배포 시 true로 변경
+                .secure(true) // HTTPS 운영 서버 배포 시 true로 변경
                 .path("/")
                 .maxAge(0) // 0으로 설정하여 브라우저에서 즉시 삭제되도록 유도
                 .sameSite("None")
