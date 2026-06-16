@@ -41,8 +41,11 @@ public class GlobalSecurityConfig {
                         // 1. 누구나 접근 가능해야 하는 곳 (로그인, 회원가입, 스웨거 등)
                         .requestMatchers("/api/v1/auth/**", "/oauth2/**", "/login/**", "/swagger-ui/**", "/v3/api-docs/**").permitAll()
 
-                        // 2. [403 에러 유도] 관리자 페이지는 ADMIN 권한만 접근 가능
-                        .requestMatchers("/api/v1/admin/**").hasRole("ADMIN")
+                        // 2. [403 에러 유도] 관리자 페이지는 ADMIN들만 접근 가능
+                        .requestMatchers("/api/v1/admin/**", "/api/v1/**/admin/**")
+                        .hasAnyRole("SUPER_ADMIN", "CS_MANAGER", "CONTENT_MANAGER", "SETTLEMENT_MANAGER", "STATISTICS_MANAGER")
+
+
 
                         // 3. [401 에러 유도] 유저 관련 API는 반드시 로그인(인증) 필수!
                         .requestMatchers("/api/v1/users/**").authenticated()
