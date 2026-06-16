@@ -31,6 +31,8 @@ public interface CourseUseCase {
 
     List<MyCourseResult> getMyCourses(Long userId);
 
+    CourseClassroomResult getCourseClassroom(Long userId, Long courseId);
+
     CourseQnaResult createQna(CreateCourseQnaCommand command);
 
     List<CourseQnaResult> getQnas(Long courseId);

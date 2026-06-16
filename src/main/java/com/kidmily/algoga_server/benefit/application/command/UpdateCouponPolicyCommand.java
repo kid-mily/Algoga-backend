@@ -5,7 +5,6 @@ public record UpdateCouponPolicyCommand(
         Long couponPolicyId,
         String couponName,
         String discountType,
-        int discountValue,
-        int validDays
+        int discountValue
 ) {
 }

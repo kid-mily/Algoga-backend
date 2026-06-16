@@ -81,7 +81,6 @@ public class PostQueryService implements PostQueryUseCase {
                 post.getContent(),
                 post.getCountryId(),
                 countryName,
-                post.getLectureId(),
                 post.getImageUrls(),
                 post.getViewCount(),
                 likeCount,
@@ -124,7 +123,6 @@ public class PostQueryService implements PostQueryUseCase {
     @Override
     public List<TagResponse> getPostFilterTags() {
         List<TagResponse> categoryTags = getCategories().stream()
-                .filter(category -> category != PostTagType.FREE)
                 .map(TagResponse::fromCategory)
                 .toList();
 
@@ -292,7 +290,6 @@ public class PostQueryService implements PostQueryUseCase {
                 post.getContent(),
                 post.getCountryId(),
                 countryName,
-                post.getLectureId(),
                 post.getImageUrls(),
                 post.getViewCount(),
                 likeCount,

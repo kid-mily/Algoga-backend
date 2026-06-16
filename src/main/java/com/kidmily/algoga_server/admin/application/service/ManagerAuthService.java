@@ -47,7 +47,7 @@ public class ManagerAuthService implements ManagerAuthUseCase {
         String accessToken = globalJwtProvider.createAdminAccessToken(manager.getId(), manager.getLoginId(), roleName);
         String refreshToken = globalJwtProvider.createAdminRefreshToken(manager.getLoginId());
 
-        return new AdminAuthTokenResponse(accessToken, refreshToken);
+        return new AdminAuthTokenResponse(accessToken, refreshToken, manager.getRole());
     }
 
     @PostConstruct

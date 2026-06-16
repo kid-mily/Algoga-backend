@@ -9,4 +9,4 @@
 
 ### 수료증 - PDF 발급
 GET http://localhost:15000/api/v1/courses/3/certificate
-Authorization: Bearer {{accessToken}}
+Authorization: Bearer {{userAccessToken}}

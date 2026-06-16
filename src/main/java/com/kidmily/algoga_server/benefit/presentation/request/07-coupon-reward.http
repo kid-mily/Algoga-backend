@@ -9,8 +9,8 @@
 ### ==========================================================
 
 @host = http://localhost:15000
-@courseId = 76
-@couponPolicyId = 14
+@courseId = 54
+@couponPolicyId = 16
 
 
 ### Content manager login
@@ -27,6 +27,9 @@ Accept: application/json
     if (response.status === 200) {
         client.global.set("managerAccessToken", response.body.data.accessToken);
         client.log("managerAccessToken saved");
+    } else {
+        client.global.clear("managerAccessToken");
+        client.log("manager login failed; stale token cleared");
     }
 %}
 
@@ -57,10 +60,9 @@ Content-Type: application/json
 Accept: application/json
 
 {
-  "couponName": "Course completion discount coupon22",
+  "couponName": "Course completion  discount coupon22",
   "discountType": "RATE",
-  "discountValue": 10,
-  "validDays": 30
+  "discountValue": 10
 }
 
 
@@ -79,8 +81,7 @@ Accept: application/json
 {
   "couponName": "Updated course completion discount coupon",
   "discountType": "RATE",
-  "discountValue": 15,
-  "validDays": 30
+  "discountValue": 15
 }
 
 
@@ -93,8 +94,7 @@ Accept: application/json
 {
   "couponName": "Course completion discount coupon",
   "discountType": "RATE",
-  "discountValue": 15,
-  "validDays": 30
+  "discountValue": 15
 }
 
 

@@ -55,7 +55,12 @@ public class NotificationSettingController {
 
         UpdateNotificationSettingCommand command = new UpdateNotificationSettingCommand(
                 userId,
-                request.communityEnabled()
+                request.learningEnabled(),
+                request.qnaEnabled(),
+                request.communityEnabled(),
+                request.noticeEnabled(),
+                request.inquiryEnabled(),
+                request.friendEnabled()
         );
 
         NotificationSetting setting = notificationSettingCommandUseCase.updateSetting(command);
