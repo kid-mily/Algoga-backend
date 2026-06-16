@@ -94,13 +94,7 @@ public class MetricsConfig {
     }
 
     // ── API 에러 ─────────────────────────────────────────────────────────────
-
-    /** API 에러 횟수 (reason 태그: validation / business / server_error) */
-    @Bean
-    public Counter apiErrorsTotal(MeterRegistry registry) {
-        return Counter.builder("algoga_api_errors_total")
-                .description("API 에러 발생 횟수")
-                .tag("reason", "unknown")
-                .register(registry);
-    }
+    // algoga_api_errors_total{reason=...} 는 CommonExceptionAdvice.recordApiError()에서
+    // MeterRegistry.counter()로 동적으로 등록/증가시킴 (access_denied / business / validation /
+    // bad_request / method_not_allowed / not_found / server_error)
 }
