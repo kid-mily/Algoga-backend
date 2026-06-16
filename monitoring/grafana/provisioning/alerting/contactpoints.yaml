@@ -1,0 +1,14 @@
+apiVersion: 1
+
+# ⚠️ 운영 적용 전 settings.url을 실제 Slack Incoming Webhook / 이메일 SMTP로 교체하세요.
+# 현재는 placeholder이며, 비워두면 Grafana가 알림 자체는 평가하지만 발송에 실패합니다.
+contactPoints:
+  - orgId: 1
+    name: algoga-default
+    receivers:
+      - uid: algoga-slack-webhook
+        type: webhook
+        settings:
+          url: https://hooks.slack.com/services/REPLACE/ME/WITH_REAL_WEBHOOK
+          httpMethod: POST
+        disableResolveMessage: false
