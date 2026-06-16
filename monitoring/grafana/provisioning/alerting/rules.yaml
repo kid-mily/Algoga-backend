@@ -1,0 +1,150 @@
+apiVersion: 1
+
+groups:
+  - orgId: 1
+    name: algoga-alerts
+    folder: Algoga Alerts
+    interval: 1m
+    rules:
+      # 1. PortOne 서킷브레이커 OPEN — 결제/환불 외부 API 자체가 막힌 상태
+      - uid: algoga-portone-circuit-open
+        title: "[PortOne] 서킷브레이커 OPEN"
+        condition: C
+        for: 1m
+        labels:
+          severity: critical
+          domain: payment
+        annotations:
+          summary: "PortOne 서킷브레이커가 OPEN 상태입니다. 결제/환불 외부 API 호출이 차단되고 있습니다."
+        data:
+          - refId: A
+            relativeTimeRange: { from: 300, to: 0 }
+            datasourceUid: prometheus_ds
+            model:
+              expr: resilience4j_circuitbreaker_state{name="portone", state="open"}
+              instant: true
+              refId: A
+          - refId: C
+            datasourceUid: "__expr__"
+            model:
+              type: threshold
+              expression: A
+              refId: C
+              conditions:
+                - evaluator: { type: gt, params: [0] }
+                  query: { params: ["A"] }
+
+      # 2. 결제 실패율 급증 (최근 5분 실패 비율 > 30%)
+      - uid: algoga-payment-failure-rate-high
+        title: "[Payment] 결제 실패율 급증 (>30%)"
+        condition: C
+        for: 2m
+        labels:
+          severity: warning
+          domain: payment
+        annotations:
+          summary: "최근 5분간 결제 실패율이 30%를 초과했습니다. PortOne 장애 또는 결제 로직 이슈 가능성."
+        data:
+          - refId: A
+            relativeTimeRange: { from: 300, to: 0 }
+            datasourceUid: prometheus_ds
+            model:
+              expr: >
+                sum(rate(algoga_payment_total{result="failed"}[5m]))
+                /
+                clamp_min(sum(rate(algoga_payment_total[5m])), 0.001)
+              instant: true
+              refId: A
+          - refId: C
+            datasourceUid: "__expr__"
+            model:
+              type: threshold
+              expression: A
+              refId: C
+              conditions:
+                - evaluator: { type: gt, params: [0.3] }
+                  query: { params: ["A"] }
+
+      # 3. 어드민 API 403 거부 급증 — 권한 없는 토큰의 어드민 API 공격/오용 시도 의심
+      - uid: algoga-admin-403-spike
+        title: "[Security] 어드민 API 403 거부 급증"
+        condition: C
+        for: 2m
+        labels:
+          severity: warning
+          domain: security
+        annotations:
+          summary: "최근 5분간 access_denied(403) 발생률이 비정상적으로 높습니다. 권한 없는 토큰의 어드민 API 접근 시도 의심."
+        data:
+          - refId: A
+            relativeTimeRange: { from: 300, to: 0 }
+            datasourceUid: prometheus_ds
+            model:
+              expr: sum(rate(algoga_api_errors_total{reason="access_denied"}[5m]))
+              instant: true
+              refId: A
+          - refId: C
+            datasourceUid: "__expr__"
+            model:
+              type: threshold
+              expression: A
+              refId: C
+              conditions:
+                - evaluator: { type: gt, params: [0.1] }
+                  query: { params: ["A"] }
+
+      # 4. 5xx 서버 에러 급증
+      - uid: algoga-server-error-spike
+        title: "[Reliability] 서버 에러(5xx) 급증"
+        condition: C
+        for: 2m
+        labels:
+          severity: critical
+          domain: reliability
+        annotations:
+          summary: "최근 5분간 server_error(5xx) 발생률이 비정상적으로 높습니다."
+        data:
+          - refId: A
+            relativeTimeRange: { from: 300, to: 0 }
+            datasourceUid: prometheus_ds
+            model:
+              expr: sum(rate(algoga_api_errors_total{reason="server_error"}[5m]))
+              instant: true
+              refId: A
+          - refId: C
+            datasourceUid: "__expr__"
+            model:
+              type: threshold
+              expression: A
+              refId: C
+              conditions:
+                - evaluator: { type: gt, params: [0.1] }
+                  query: { params: ["A"] }
+
+      # 5. DB 커넥션 풀 대기(pending) 발생 — 커넥션 고갈 위험
+      - uid: algoga-db-pool-exhaustion
+        title: "[Infra] DB 커넥션 풀 대기 발생"
+        condition: C
+        for: 2m
+        labels:
+          severity: warning
+          domain: infra
+        annotations:
+          summary: "HikariCP 커넥션 풀에서 pending(대기) 커넥션이 발생했습니다. 풀 고갈 위험."
+        data:
+          - refId: A
+            relativeTimeRange: { from: 300, to: 0 }
+            datasourceUid: prometheus_ds
+            model:
+              expr: max(hikaricp_connections_pending)
+              instant: true
+              refId: A
+          - refId: C
+            datasourceUid: "__expr__"
+            model:
+              type: threshold
+              expression: A
+              refId: C
+              conditions:
+                - evaluator: { type: gt, params: [0] }
+                  query: { params: ["A"] }
