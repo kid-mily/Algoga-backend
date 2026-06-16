@@ -26,6 +26,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.util.UriComponentsBuilder;
 
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
@@ -326,9 +328,11 @@ public class AuthService implements SocialLoginProcessor {
         } else {
             log.info("소셜 로그인 (신규 유저 발견, 회원가입 유도) [이메일: {}]", email);
 
+            String encodedName = URLEncoder.encode(name, StandardCharsets.UTF_8);
+
             String redirectUrl = UriComponentsBuilder.fromUriString(frontendBaseUrl + "/auth/register")
                     .queryParam("email", email)
-                    .queryParam("name", name)
+                    .queryParam("name", encodedName)
                     .queryParam("socialType", socialType)
                     .build().toUriString();
             return new SocialAuthResult(redirectUrl, null, null);
