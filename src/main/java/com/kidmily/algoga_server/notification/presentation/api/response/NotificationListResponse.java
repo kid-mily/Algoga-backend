@@ -19,5 +19,11 @@ public record NotificationListResponse(
         boolean hasNext,
 
         @Schema(description = "전체 알림 수", example = "8")
-        long totalElements
+        long totalElements,
+
+        @Schema(description = "전체 페이지 수", example = "3")
+        int totalPages,
+
+        @Schema(description = "현재 페이지 번호 (1부터 시작)", example = "1")
+        int currentPage
 ) {}

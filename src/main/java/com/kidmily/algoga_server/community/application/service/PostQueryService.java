@@ -210,6 +210,8 @@ public class PostQueryService implements PostQueryUseCase {
                         communityQueryPolicy.resolveProfileImageUrl(c.getUserId()),
                         c.getContent(),
                         c.getCreatedAt(),
+                        likeDislikeRepository.countLikes(TargetType.COMMENT, c.getCommentId()),
+                        likeDislikeRepository.countDislikes(TargetType.COMMENT, c.getCommentId()),
                         // 해당 댓글의 대댓글 붙이기
                         comments.stream()
                                 .filter(r -> c.getCommentId().equals(r.getParentId()))
@@ -220,6 +222,8 @@ public class PostQueryService implements PostQueryUseCase {
                                         communityQueryPolicy.resolveProfileImageUrl(r.getUserId()),
                                         r.getContent(),
                                         r.getCreatedAt(),
+                                        likeDislikeRepository.countLikes(TargetType.COMMENT, c.getCommentId()),
+                                        likeDislikeRepository.countDislikes(TargetType.COMMENT, c.getCommentId()),
                                         List.of()
                                 ))
                                 .toList()

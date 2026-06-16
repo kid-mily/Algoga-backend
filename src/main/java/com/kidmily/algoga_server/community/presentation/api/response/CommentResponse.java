@@ -25,6 +25,13 @@ public record CommentResponse(
         @Schema(description = "작성일시")
         LocalDateTime createdAt,
 
+        @Schema(description = "좋아요 수", example = "5")
+        Long likeCount,
+
+        @Schema(description = "싫어요 수", example = "1")
+        Long dislikeCount,
+
+
         @Schema(description = "대댓글 목록")
         List<CommentResponse> replies
 ) {}
