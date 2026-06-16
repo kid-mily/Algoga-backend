@@ -65,6 +65,14 @@ public class GlobalSecurityConfig {
                                 .userService(customOAuth2UserService)
                         )
                         .successHandler(oAuth2SuccessHandler)
+                        // 👇 이 세 줄을 추가하세요! (실패 시 프론트엔드로 얌전하게 돌려보냄)
+                        .failureHandler((request, response, exception) -> {
+                            // 실패 원인을 로그로 찍어보면 디버깅하기 좋습니다.
+                            System.out.println("소셜 로그인 실패 원인: " + exception.getMessage());
+
+                            // 프론트엔드의 로그인 페이지로 에러 표시와 함께 돌려보냅니다.
+                            response.sendRedirect("http://localhost:17000/login?error=true");
+                        })
                 )
                 .addFilterBefore(globalJwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
