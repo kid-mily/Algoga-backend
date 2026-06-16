@@ -46,7 +46,7 @@ public class AuthService implements SocialLoginProcessor {
     private final ApplicationEventPublisher eventPublisher;
 
     // 프론트엔드 주소 주입 (HTTP cookie할 때 추가함)
-    @Value("${app.frontend.base-url:http://localhost:17000}")
+    @Value("${user.app.frontend.base-url}")
     private String frontendBaseUrl;
 
     // 이메일 인증번호 발송

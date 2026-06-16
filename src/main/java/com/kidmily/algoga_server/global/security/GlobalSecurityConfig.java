@@ -42,7 +42,7 @@ public class GlobalSecurityConfig {
                         .requestMatchers("/api/v1/auth/**", "/oauth2/**", "/login/**", "/swagger-ui/**", "/v3/api-docs/**").permitAll()
 
                         // 2. [403 에러 유도] 관리자 페이지는 ADMIN들만 접근 가능
-                        .requestMatchers("/api/v1/admin/**", "/api/v1/**/admin/**")
+                        .requestMatchers("/api/v1/admin/**", "/api/v1/*/admin/**")
                         .hasAnyRole("SUPER_ADMIN", "CS_MANAGER", "CONTENT_MANAGER", "SETTLEMENT_MANAGER", "STATISTICS_MANAGER")
 
 
