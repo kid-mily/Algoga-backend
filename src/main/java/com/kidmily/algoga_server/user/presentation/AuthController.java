@@ -88,10 +88,10 @@ public class AuthController {
         AuthTokenResponse tokenResponse = authService.login(request);
 
         ResponseCookie accessCookie = ResponseCookie.from("accessToken", tokenResponse.accessToken())
-                .httpOnly(true).secure(false).path("/").maxAge(30 * 60).sameSite("Lax").build();
+                .httpOnly(true).secure(true).path("/").maxAge(30 * 60).sameSite("None").build();
 
         ResponseCookie refreshCookie = ResponseCookie.from("refreshToken", tokenResponse.refreshToken())
-                .httpOnly(true).secure(false).path("/").maxAge(7 * 24 * 60 * 60).sameSite("Lax").build();
+                .httpOnly(true).secure(true).path("/").maxAge(7 * 24 * 60 * 60).sameSite("None").build();
 
         response.addHeader(HttpHeaders.SET_COOKIE, accessCookie.toString());
         response.addHeader(HttpHeaders.SET_COOKIE, refreshCookie.toString());
@@ -220,10 +220,10 @@ public class AuthController {
         // 4. 새로 발급받은 엑세스 토큰을 다시 HttpOnly 쿠키로 예쁘게 구워서 줍니다.
         ResponseCookie accessCookie = ResponseCookie.from("accessToken", newAccessToken)
                 .httpOnly(true)
-                .secure(false) // HTTPS 적용 시 true
+                .secure(true) // HTTPS 적용 시 true
                 .path("/")
                 .maxAge(30 * 60) // 30분
-                .sameSite("Lax")
+                .sameSite("None")
                 .build();
 
         response.addHeader(HttpHeaders.SET_COOKIE, accessCookie.toString());
