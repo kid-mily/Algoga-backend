@@ -18,6 +18,10 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
+import com.kidmily.algoga_server.global.event.UserWithdrawnEvent;
+import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.data.redis.core.RedisTemplate;
+import java.util.concurrent.TimeUnit;
 
 @Slf4j
 @Service
@@ -32,6 +36,10 @@ public class UserService {
     // S3 스토리지 공통 포트 및 유저 세팅 인프라 빈 주입
     private final FileStoragePort fileStoragePort;
     private final UserStorageSettings storageSettings;
+
+    // softDelete 정책 관련
+    private final ApplicationEventPublisher eventPublisher;
+    private final RedisTemplate<String, String> redisTemplate;
 
     // 내 프로필 조회
     @Transactional(readOnly = true)
@@ -123,6 +131,7 @@ public class UserService {
     }
 
     // 회원 탈퇴 (Soft Delete)
+    @Transactional
     public void withdraw(String email) {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new UserException(UserErrorCode.NOT_FOUND_USER));
@@ -132,9 +141,25 @@ public class UserService {
             throw new UserException(UserErrorCode.DELETED_USER);
         }
 
-        user.withdraw(); // User 엔티티의 isDeleted 상태를 true로 변경
+        // [TODO] 팀원들이 예약/환불 인터페이스를 만들어주면 이 주석을 풀고 사용하세요!
+//         if (bookingQueryUseCase.hasActiveBooking(user.getId())) {
+//         throw new UserException(UserErrorCode.ACTIVE_BOOKING_EXISTS);
+//         }
+//         if (refundQueryUseCase.hasActiveRefund(user.getId())) {
+//         throw new UserException(UserErrorCode.ACTIVE_REFUND_EXISTS);
+//         }
+//
+        // 유저 엔티티 Soft Delete 처리 (탈퇴 상태, 날짜 기록, 이메일 랜덤 변경)
+        user.withdraw();
 
-        // @Transactional 안에서 엔티티 값이 변경되면 JPA가 알아서 DB에 UPDATE 쿼리를 날립니다! (더티 체킹)
-        log.info("회원 탈퇴 처리 완료 [이메일: {}]", email);
+        // 로그아웃 처리 (Redis 토큰 삭제 및 블랙리스트 등록으로 즉시 쫓아냄)
+        // 이메일이 이미 _deleted_ 로 바뀌었으므로, 원래 email 변수를 사용해 지워줍니다.
+        redisTemplate.delete("RT:" + email);
+
+        // 탈퇴 이벤트 퍼블리싱
+        // 이제 다른 도메인(쿠폰, 예약 등) 담당자들이 이 이벤트를 듣고 각자 데이터를 지웁니다.
+        eventPublisher.publishEvent(new UserWithdrawnEvent(user.getId(), email));
+
+        log.info("회원 탈퇴 처리 완료 및 이벤트 발행 [기존 이메일: {}, 식별자: {}]", email, user.getId());
     }
 }

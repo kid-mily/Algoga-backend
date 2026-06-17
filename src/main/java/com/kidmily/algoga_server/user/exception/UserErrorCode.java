@@ -22,7 +22,11 @@ public enum UserErrorCode implements BaseErrorCode {
     INVALID_PASSWORD(HttpStatus.BAD_REQUEST, "USER_006", "아이디 또는 비밀번호가 틀렸습니다."),
     DELETED_USER(HttpStatus.FORBIDDEN, "USER_007", "탈퇴한 계정입니다."),
     ACCOUNT_LOCKED(HttpStatus.FORBIDDEN, "USER_008", "비밀번호 5회 오류로 인해 5분간 계정이 잠겼습니다."),
-    UNAUTHORIZED_PASSWORD_RESET(HttpStatus.FORBIDDEN, "USER_009", "비밀번호 변경(초기화) 대상자가 아닙니다."); // 임시 비번 강제 변경 방어용
+    UNAUTHORIZED_PASSWORD_RESET(HttpStatus.FORBIDDEN, "USER_009", "비밀번호 변경(초기화) 대상자가 아닙니다."), // 임시 비번 강제 변경 방어용
+
+    // 탈퇴 검증용 에러 코드 2개 추가
+    ACTIVE_BOOKING_EXISTS(HttpStatus.BAD_REQUEST, "USER_010", "진행 중인 예약이 있어 탈퇴할 수 없습니다."),
+    ACTIVE_REFUND_EXISTS(HttpStatus.BAD_REQUEST, "USER_011", "진행 중인 환불이 있어 탈퇴할 수 없습니다.");
     private final HttpStatus status;
     private final String code;
     private final String message;

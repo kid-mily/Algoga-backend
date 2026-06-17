@@ -57,6 +57,10 @@ public class User {
     @Column(name = "is_deleted")
     private boolean isDeleted;
 
+    // 삭제 일자를 기록할 필드 추가
+    @Column(name = "deleted_at")
+    private LocalDateTime deletedAt;
+
     private String referralCode;
     private String signupPath;
 
@@ -109,6 +113,7 @@ public class User {
     // 회원 탈퇴 (Soft Delete + 데이터 충돌 방지)
     public void withdraw() {
         this.isDeleted = true;
+        this.deletedAt = LocalDateTime.now();
 
         // 고유 식별자를 생성하여 기존 데이터 뒤에 붙여줍니다. (이메일/아이디 재가입 허용을 위함)
         String deleteStr = "_deleted_" + java.util.UUID.randomUUID().toString().substring(0, 8);

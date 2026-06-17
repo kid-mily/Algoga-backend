@@ -135,7 +135,7 @@ public class AuthService implements SocialLoginProcessor {
                 .termsMarketingAgreed(request.termsMarketingAgreed())
                 .build();
         User savedUser = userRepository.save(user);
-        eventPublisher.publishEvent(new UserSignedUpEvent(savedUser.getId()));
+        //eventPublisher.publishEvent(new UserSignedUpEvent(savedUser.getId()));
 
         // 가입이 성공적으로 끝났으니, "인증 완료" 포스트잇도 떼서 버립니다! (청소)
         redisTemplate.delete("AUTH_SUCCESS:" + email);
