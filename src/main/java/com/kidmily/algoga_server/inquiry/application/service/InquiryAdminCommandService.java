@@ -6,7 +6,9 @@ import com.kidmily.algoga_server.inquiry.domain.model.Inquiry;
 import com.kidmily.algoga_server.inquiry.domain.repository.InquiryRepository;
 import com.kidmily.algoga_server.inquiry.exception.InquiryErrorCode;
 import com.kidmily.algoga_server.inquiry.exception.InquiryException;
+import com.kidmily.algoga_server.notification.domain.event.InquiryAnsweredEvent;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -14,6 +16,7 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class InquiryAdminCommandService implements InquiryAdminCommandUseCase {
     private final InquiryRepository inquiryRepository;
+    private final ApplicationEventPublisher eventPublisher;
 
     @Override
     @Transactional
@@ -24,5 +27,11 @@ public class InquiryAdminCommandService implements InquiryAdminCommandUseCase {
         
         inquiry.answer(managerId, answer);
         inquiryRepository.save(inquiry);
+
+        eventPublisher.publishEvent(new InquiryAnsweredEvent(
+                inquiry.getUserId(),
+                inquiry.getInquiryId(),
+                answer
+        ));
     }
 }
