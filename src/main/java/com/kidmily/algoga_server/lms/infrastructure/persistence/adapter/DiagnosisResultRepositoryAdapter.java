@@ -7,6 +7,7 @@ import com.kidmily.algoga_server.lms.infrastructure.persistence.repository.Sprin
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
 import java.util.Optional;
 
 @Repository
@@ -33,6 +34,25 @@ public class DiagnosisResultRepositoryAdapter implements DiagnosisResultReposito
     public Optional<DiagnosisResult> findLatestByUserId(Long userId) {
         return springDataDiagnosisResultRepository.findFirstByUserIdOrderByCreatedAtDesc(userId)
                 .map(this::toDomain);
+    }
+
+    @Override
+    public List<DiagnosisResult> findForAdmin(Long userId, Long countryId) {
+        List<DiagnosisResultJpaEntity> entities;
+
+        if (userId != null && countryId != null) {
+            entities = springDataDiagnosisResultRepository.findByUserIdAndCountryIdOrderByCreatedAtDesc(userId, countryId);
+        } else if (userId != null) {
+            entities = springDataDiagnosisResultRepository.findByUserIdOrderByCreatedAtDesc(userId);
+        } else if (countryId != null) {
+            entities = springDataDiagnosisResultRepository.findByCountryIdOrderByCreatedAtDesc(countryId);
+        } else {
+            entities = springDataDiagnosisResultRepository.findAllByOrderByCreatedAtDesc();
+        }
+
+        return entities.stream()
+                .map(this::toDomain)
+                .toList();
     }
 
     private DiagnosisResult toDomain(DiagnosisResultJpaEntity entity) {

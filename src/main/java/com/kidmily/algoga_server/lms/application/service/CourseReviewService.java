@@ -1,6 +1,8 @@
 package com.kidmily.algoga_server.lms.application.service;
 
 import com.kidmily.algoga_server.lms.application.command.CreateCourseReviewCommand;
+import com.kidmily.algoga_server.lms.application.command.UpdateCourseReviewVisibilityCommand;
+import com.kidmily.algoga_server.lms.application.result.AdminCourseReviewResult;
 import com.kidmily.algoga_server.lms.application.result.CourseReviewResult;
 import com.kidmily.algoga_server.lms.application.result.CourseReviewSummaryResult;
 import com.kidmily.algoga_server.lms.application.usecase.CourseReviewUseCase;
@@ -117,6 +119,43 @@ public class CourseReviewService implements CourseReviewUseCase {
         return result;
     }
 
+    @Override
+    public List<AdminCourseReviewResult> getAdminReviews(Long courseId) {
+        validateCourse(courseId);
+
+        return courseReviewRepository.findAllByCourseId(courseId).stream()
+                .map(AdminCourseReviewResult::from)
+                .toList();
+    }
+
+    @Override
+    public AdminCourseReviewResult getAdminReview(Long courseId, Long reviewId) {
+        validateCourse(courseId);
+        return AdminCourseReviewResult.from(findReview(courseId, reviewId));
+    }
+
+    @Override
+    @Transactional
+    public AdminCourseReviewResult updateReviewVisibility(UpdateCourseReviewVisibilityCommand command) {
+        validateCourse(command.courseId());
+
+        CourseReview review = findReview(command.courseId(), command.reviewId());
+        CourseReview updatedReview = Boolean.TRUE.equals(command.hidden())
+                ? review.hide()
+                : review.show();
+
+        return AdminCourseReviewResult.from(courseReviewRepository.save(updatedReview));
+    }
+
+    @Override
+    @Transactional
+    public void deleteReview(Long courseId, Long reviewId) {
+        validateCourse(courseId);
+
+        CourseReview review = findReview(courseId, reviewId);
+        courseReviewRepository.save(review.hide());
+    }
+
     private int countByRating(
             List<CourseReview> reviews,
             int rating
@@ -178,5 +217,10 @@ public class CourseReviewService implements CourseReviewUseCase {
             log.warn("[Course Review] 리뷰 평점 검증 실패. rating={}", rating);
             throw new LmsException(LmsErrorCode.INVALID_REVIEW_RATING);
         }
+    }
+
+    private CourseReview findReview(Long courseId, Long reviewId) {
+        return courseReviewRepository.findByIdAndCourseId(reviewId, courseId)
+                .orElseThrow(() -> new LmsException(LmsErrorCode.REVIEW_NOT_FOUND));
     }
 }

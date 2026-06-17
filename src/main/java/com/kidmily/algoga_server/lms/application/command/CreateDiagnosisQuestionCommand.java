@@ -1,0 +1,15 @@
+package com.kidmily.algoga_server.lms.application.command;
+
+public record CreateDiagnosisQuestionCommand(
+        Long countryId,
+        String questionText,
+        String option1,
+        String option2,
+        String option3,
+        String option4,
+        Integer correctOption,
+        String explanation,
+        Integer questionOrder,
+        Boolean active
+) {
+}

@@ -8,6 +8,7 @@ import com.kidmily.algoga_server.booking.domain.model.Booking;
 import com.kidmily.algoga_server.booking.domain.model.BookingStatus;
 import com.kidmily.algoga_server.booking.domain.repository.BookingRepository;
 import com.kidmily.algoga_server.global.exception.BusinessException;
+import com.kidmily.algoga_server.global.event.LecturePaymentCompletedEvent;
 import com.kidmily.algoga_server.lms.domain.repository.CourseRepository;
 import com.kidmily.algoga_server.payment.application.command.CreateLecturePaymentCommand;
 import com.kidmily.algoga_server.payment.application.command.CreatePaymentCommand;
@@ -206,6 +207,7 @@ public class PaymentTransactionService {
         if ("PAID".equals(portoneStatus)) {
             payment.markSuccess(command.portonePaymentId());
             log.info("[PaymentTransactionService] 강의 결제 성공 - courseId: {}", command.courseId());
+            LocalDateTime paidAt = LocalDateTime.now();
 
             if (command.usedCouponId() != null) {
                 userCouponRepository.markUsed(command.usedCouponId(), LocalDateTime.now());
@@ -233,7 +235,13 @@ public class PaymentTransactionService {
                     command.courseId(),
                     PaymentType.LECTURE_ONLY,
                     command.amount(),
-                    LocalDateTime.now()
+                    paidAt
+            ));
+
+            eventPublisher.publishEvent(new LecturePaymentCompletedEvent(
+                    command.userId(),
+                    command.courseId(),
+                    paidAt
             ));
         } else {
             payment.markFailed();

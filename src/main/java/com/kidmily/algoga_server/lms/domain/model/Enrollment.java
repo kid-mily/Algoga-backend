@@ -31,7 +31,10 @@ public class Enrollment {
     }
 
     public static Enrollment create(Long userId, Long courseId) {
-        LocalDateTime enrolledAt = LocalDateTime.now();
+        return create(userId, courseId, LocalDateTime.now());
+    }
+
+    public static Enrollment create(Long userId, Long courseId, LocalDateTime enrolledAt) {
         return new Enrollment(null, userId, courseId, EnrollmentStatus.ENROLLED, enrolledAt, null, enrolledAt.plusMonths(6));
     }
 

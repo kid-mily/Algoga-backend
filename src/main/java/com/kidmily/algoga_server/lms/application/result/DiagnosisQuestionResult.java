@@ -10,6 +10,9 @@ public record DiagnosisQuestionResult(
         String option2,
         String option3,
         String option4,
+        int correctOption,
+        String explanation,
+        boolean active,
         int questionOrder
 ) {
     public static DiagnosisQuestionResult from(DiagnosisQuestion question) {
@@ -21,6 +24,9 @@ public record DiagnosisQuestionResult(
                 question.option2(),
                 question.option3(),
                 question.option4(),
+                question.correctOption(),
+                question.explanation(),
+                question.active(),
                 question.questionOrder()
         );
     }
