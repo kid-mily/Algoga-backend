@@ -11,4 +11,10 @@ public interface SpringDataDiagnosisResultRepository extends JpaRepository<Diagn
     Optional<DiagnosisResultJpaEntity> findFirstByUserIdOrderByCreatedAtDesc(Long userId);
 
     List<DiagnosisResultJpaEntity> findByUserIdOrderByCreatedAtDesc(Long userId);
+
+    List<DiagnosisResultJpaEntity> findByCountryIdOrderByCreatedAtDesc(Long countryId);
+
+    List<DiagnosisResultJpaEntity> findByUserIdAndCountryIdOrderByCreatedAtDesc(Long userId, Long countryId);
+
+    List<DiagnosisResultJpaEntity> findAllByOrderByCreatedAtDesc();
 }

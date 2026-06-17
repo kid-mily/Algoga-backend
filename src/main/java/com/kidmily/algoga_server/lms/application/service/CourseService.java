@@ -7,7 +7,6 @@ import com.kidmily.algoga_server.lms.application.command.CreateCourseCommand;
 import com.kidmily.algoga_server.lms.application.command.CreateCourseQnaCommand;
 import com.kidmily.algoga_server.lms.application.command.CreateCourseQnaCommentCommand;
 import com.kidmily.algoga_server.lms.application.command.UpdateCourseCommand;
-import com.kidmily.algoga_server.lms.application.port.PaymentPort;
 import com.kidmily.algoga_server.lms.application.port.UserProfilePort;
 import com.kidmily.algoga_server.lms.application.result.*;
 import com.kidmily.algoga_server.lms.application.usecase.CourseUseCase;
@@ -67,7 +66,6 @@ public class CourseService implements CourseUseCase {
     private final CourseQnaCommentRepository courseQnaCommentRepository;
     private final MapRepository mapRepository;
     private final EnrollmentRepository enrollmentRepository;
-    private final PaymentPort paymentPort;
     private final UserProfilePort userProfilePort;
     private final FileStoragePort fileStoragePort;
     private final LmsStorageSettings storageSettings;
@@ -187,13 +185,9 @@ public class CourseService implements CourseUseCase {
     public List<CourseStudentResult> getCourseStudents(Long courseId) {
         Course course = findCourse(courseId);
         List<Chapter> chapters = chapterRepository.findByCourseId(courseId);
-        List<LearningProgress> courseProgresses = learningProgressRepository.findByCourseId(courseId);
-
-        Set<Long> userIds = new LinkedHashSet<>();
-
-        for (LearningProgress progress : courseProgresses) {
-            userIds.add(progress.getUserId());
-        }
+        Set<Long> userIds = enrollmentRepository.findByCourseId(courseId).stream()
+                .map(enrollment -> enrollment.getUserId())
+                .collect(java.util.stream.Collectors.toCollection(LinkedHashSet::new));
 
         return userIds.stream()
                 .map(userId -> createCourseStudentResult(userId, course, chapters))
@@ -205,11 +199,9 @@ public class CourseService implements CourseUseCase {
     @Override
     @Transactional(readOnly = true)
     public List<MyCourseResult> getMyCourses(Long userId) {
-        Set<Long> courseIds = new LinkedHashSet<>();
-
-        courseIds.addAll(paymentPort.findPaidCourseIds(userId));
-
-        return courseIds.stream()
+        return enrollmentRepository.findByUserId(userId).stream()
+                .map(enrollment -> enrollment.getCourseId())
+                .distinct()
                 .map(courseId -> createMyCourseResult(userId, courseId))
                 .flatMap(Optional::stream)
                 .toList();
@@ -390,9 +382,7 @@ public class CourseService implements CourseUseCase {
             return false;
         }
 
-        return paymentPort.findPaidCourseIds(userId)
-                .stream()
-                .anyMatch(courseId::equals);
+        return enrollmentRepository.existsByUserIdAndCourseId(userId, courseId);
     }
 
     @Override
@@ -555,7 +545,7 @@ public class CourseService implements CourseUseCase {
         int progressRate = calculateCourseProgressRate(chapters, progresses);
         int totalDurationSeconds = calculateTotalDurationSeconds(chapters);
 
-        long studentCount = paymentPort.countPaidUsersByCourse(courseId);
+        long studentCount = enrollmentRepository.countByCourseId(courseId);
 
         double averageRating = calculateAverageRating(courseReviewRepository.findByCourseId(courseId));
         Optional<CourseCompletion> optionalCompletion = courseCompletionRepository.findByUserIdAndCourseId(userId, courseId);

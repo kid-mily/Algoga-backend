@@ -1,7 +1,6 @@
 package com.kidmily.algoga_server.lms.application.service;
 
 import com.kidmily.algoga_server.global.port.out.FileStoragePort;
-import com.kidmily.algoga_server.lms.application.port.PaymentPort;
 import com.kidmily.algoga_server.lms.application.port.UserProfilePort;
 import com.kidmily.algoga_server.lms.application.result.CourseClassroomResult;
 import com.kidmily.algoga_server.lms.domain.model.Chapter;
@@ -59,7 +58,6 @@ class CourseServiceClassroomTest {
     @Mock private CourseQnaCommentRepository courseQnaCommentRepository;
     @Mock private MapRepository mapRepository;
     @Mock private EnrollmentRepository enrollmentRepository;
-    @Mock private PaymentPort paymentPort;
     @Mock private UserProfilePort userProfilePort;
     @Mock private FileStoragePort fileStoragePort;
     @Mock private LmsStorageSettings storageSettings;

@@ -10,6 +10,7 @@ public class CourseReview {
     private final int rating;
     private final String content;
     private final boolean deleted;
+    private final LocalDateTime deletedAt;
     private final LocalDateTime createdAt;
     private final LocalDateTime updatedAt;
 
@@ -20,6 +21,7 @@ public class CourseReview {
             int rating,
             String content,
             boolean deleted,
+            LocalDateTime deletedAt,
             LocalDateTime createdAt,
             LocalDateTime updatedAt
     ) {
@@ -29,6 +31,7 @@ public class CourseReview {
         this.rating = rating;
         this.content = content;
         this.deleted = deleted;
+        this.deletedAt = deletedAt;
         this.createdAt = createdAt;
         this.updatedAt = updatedAt;
     }
@@ -48,6 +51,7 @@ public class CourseReview {
                 rating,
                 content,
                 false,
+                null,
                 now,
                 now
         );
@@ -60,6 +64,7 @@ public class CourseReview {
             int rating,
             String content,
             boolean deleted,
+            LocalDateTime deletedAt,
             LocalDateTime createdAt,
             LocalDateTime updatedAt
     ) {
@@ -70,6 +75,7 @@ public class CourseReview {
                 rating,
                 content,
                 deleted,
+                deletedAt,
                 createdAt,
                 updatedAt
         );
@@ -86,12 +92,14 @@ public class CourseReview {
                 rating,
                 content,
                 this.deleted,
+                this.deletedAt,
                 this.createdAt,
                 LocalDateTime.now()
         );
     }
 
-    public CourseReview delete() {
+    public CourseReview hide() {
+        LocalDateTime now = LocalDateTime.now();
         return new CourseReview(
                 this.id,
                 this.courseId,
@@ -99,6 +107,21 @@ public class CourseReview {
                 this.rating,
                 this.content,
                 true,
+                now,
+                this.createdAt,
+                now
+        );
+    }
+
+    public CourseReview show() {
+        return new CourseReview(
+                this.id,
+                this.courseId,
+                this.userId,
+                this.rating,
+                this.content,
+                false,
+                null,
                 this.createdAt,
                 LocalDateTime.now()
         );
@@ -126,6 +149,10 @@ public class CourseReview {
 
     public boolean isDeleted() {
         return deleted;
+    }
+
+    public LocalDateTime getDeletedAt() {
+        return deletedAt;
     }
 
     public LocalDateTime getCreatedAt() {

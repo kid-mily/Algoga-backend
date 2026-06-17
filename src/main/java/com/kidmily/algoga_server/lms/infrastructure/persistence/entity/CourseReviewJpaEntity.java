@@ -42,6 +42,9 @@ public class CourseReviewJpaEntity {
     @Column(name = "is_deleted", nullable = false)
     private boolean deleted = false;
 
+    @Column(name = "deleted_at")
+    private LocalDateTime deletedAt;
+
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
 
@@ -54,6 +57,7 @@ public class CourseReviewJpaEntity {
             int rating,
             String content,
             boolean deleted,
+            LocalDateTime deletedAt,
             LocalDateTime createdAt,
             LocalDateTime updatedAt
     ) {
@@ -62,6 +66,7 @@ public class CourseReviewJpaEntity {
         this.rating = rating;
         this.content = content;
         this.deleted = deleted;
+        this.deletedAt = deletedAt;
         this.createdAt = createdAt;
         this.updatedAt = updatedAt;
     }
@@ -76,8 +81,9 @@ public class CourseReviewJpaEntity {
         this.updatedAt = updatedAt;
     }
 
-    public void softDelete(LocalDateTime updatedAt) {
-        this.deleted = true;
+    public void updateVisibility(boolean deleted, LocalDateTime deletedAt, LocalDateTime updatedAt) {
+        this.deleted = deleted;
+        this.deletedAt = deletedAt;
         this.updatedAt = updatedAt;
     }
 }

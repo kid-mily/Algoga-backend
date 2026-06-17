@@ -7,6 +7,7 @@ import com.kidmily.algoga_server.lms.infrastructure.persistence.repository.Sprin
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
 import java.util.Optional;
 
 @Repository
@@ -39,8 +40,27 @@ public class EnrollmentRepositoryAdapter implements EnrollmentRepository {
     }
 
     @Override
+    public List<Enrollment> findByUserId(Long userId) {
+        return springDataEnrollmentRepository.findByUserId(userId).stream()
+                .map(this::toDomain)
+                .toList();
+    }
+
+    @Override
+    public List<Enrollment> findByCourseId(Long courseId) {
+        return springDataEnrollmentRepository.findByCourseId(courseId).stream()
+                .map(this::toDomain)
+                .toList();
+    }
+
+    @Override
     public boolean existsByUserIdAndCourseId(Long userId, Long courseId) {
         return springDataEnrollmentRepository.existsByUserIdAndCourseId(userId, courseId);
+    }
+
+    @Override
+    public long countByCourseId(Long courseId) {
+        return springDataEnrollmentRepository.countByCourseId(courseId);
     }
 
     private Enrollment toDomain(EnrollmentJpaEntity entity) {

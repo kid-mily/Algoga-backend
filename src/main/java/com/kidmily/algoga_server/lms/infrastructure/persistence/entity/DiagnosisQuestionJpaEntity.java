@@ -76,6 +76,28 @@ public class DiagnosisQuestionJpaEntity {
         this.active = true;
     }
 
+    public void update(
+            String questionText,
+            String option1,
+            String option2,
+            String option3,
+            String option4,
+            int correctOption,
+            String explanation,
+            int questionOrder,
+            boolean active
+    ) {
+        this.questionText = questionText;
+        this.option1 = option1;
+        this.option2 = option2;
+        this.option3 = option3;
+        this.option4 = option4;
+        this.correctOption = correctOption;
+        this.explanation = explanation;
+        this.questionOrder = questionOrder;
+        this.active = active;
+    }
+
     public void deactivate() {
         this.active = false;
     }
