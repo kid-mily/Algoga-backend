@@ -11,9 +11,12 @@ import com.kidmily.algoga_server.user.settings.CustomUserDetails;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
+import org.springframework.http.ResponseCookie;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
@@ -70,8 +73,29 @@ public class UserController {
     @Operation(summary = "회원 탈퇴", description = "계정을 Soft Delete 처리합니다.")
     @DeleteMapping("/me")
     public ApiResponse<Void> withdraw(
-            @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails) {
+            @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails, HttpServletResponse response) {
         userService.withdraw(userDetails.getUsername());
+
+        // 수명이 0초인 '빈 쿠키'를 생성해서 브라우저로 덮어쓰기 명령 (쿠키 폭파)
+        ResponseCookie deleteAccessCookie = ResponseCookie.from("accessToken", "")
+                .path("/")
+                .maxAge(0) // 수명을 0으로 줘서 즉시 삭제시킴
+                .httpOnly(true)
+                .secure(true)
+                .sameSite("None") // HTTPS 연동 환경에 맞게
+                .build();
+
+        ResponseCookie deleteRefreshCookie = ResponseCookie.from("refreshToken", "")
+                .path("/")
+                .maxAge(0)
+                .httpOnly(true)
+                .secure(true)
+                .sameSite("None")
+                .build();
+
+        response.addHeader(HttpHeaders.SET_COOKIE, deleteAccessCookie.toString());
+        response.addHeader(HttpHeaders.SET_COOKIE, deleteRefreshCookie.toString());
+
         return ApiResponse.success("USER_WITHDRAW_SUCCESS", "회원 탈퇴가 완료되었습니다.");
     }
 }

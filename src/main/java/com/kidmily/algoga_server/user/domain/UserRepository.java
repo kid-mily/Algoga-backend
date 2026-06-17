@@ -3,6 +3,7 @@ package com.kidmily.algoga_server.user.domain;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -25,4 +26,7 @@ public interface UserRepository extends JpaRepository<User, Long> {
     List<User> findByNameContaining(String keyword);
     @Query("SELECT u.id FROM User u WHERE u.isDeleted = false")
     List<Long> findAllActiveUserIds();
+
+    // 14일 전에 탈퇴한(isDeleted=true) 유저 목록 가져오기
+    List<User> findByIsDeletedTrueAndDeletedAtBefore(LocalDateTime dateTime);
 }
