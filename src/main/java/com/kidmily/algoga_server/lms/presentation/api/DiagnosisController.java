@@ -40,8 +40,11 @@ public class DiagnosisController {
     })
     @GetMapping("/questions")
     public ResponseEntity<ApiResponse<List<DiagnosisQuestionResponse>>> getQuestions(
+            @AuthenticationPrincipal Object userDetails,
             @RequestParam Long countryId
     ) {
+        CurrentUserIdResolver.resolveRequired(userDetails);
+
         return ResponseEntity.ok(
                 ApiResponse.success(
                         "DIAGNOSIS_QUESTIONS_FOUND",

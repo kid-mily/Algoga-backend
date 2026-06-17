@@ -7,6 +7,7 @@ import com.kidmily.algoga_server.lms.infrastructure.persistence.repository.Sprin
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -22,15 +23,16 @@ public class CourseReviewRepositoryAdapter implements CourseReviewRepository {
                         courseReview.getId() == null ? -1L : courseReview.getId()
                 )
                 .map(existingEntity -> {
-                    if (courseReview.isDeleted()) {
-                        existingEntity.softDelete(courseReview.getUpdatedAt());
-                    } else {
-                        existingEntity.update(
-                                courseReview.getRating(),
-                                courseReview.getContent(),
-                                courseReview.getUpdatedAt()
-                        );
-                    }
+                    existingEntity.update(
+                            courseReview.getRating(),
+                            courseReview.getContent(),
+                            courseReview.getUpdatedAt()
+                    );
+                    existingEntity.updateVisibility(
+                            courseReview.isDeleted(),
+                            courseReview.getDeletedAt(),
+                            courseReview.getUpdatedAt()
+                    );
 
                     return existingEntity;
                 })
@@ -40,6 +42,7 @@ public class CourseReviewRepositoryAdapter implements CourseReviewRepository {
                         courseReview.getRating(),
                         courseReview.getContent(),
                         courseReview.isDeleted(),
+                        courseReview.getDeletedAt(),
                         courseReview.getCreatedAt(),
                         courseReview.getUpdatedAt()
                 ));
@@ -76,11 +79,24 @@ public class CourseReviewRepositoryAdapter implements CourseReviewRepository {
     }
 
     @Override
+    public List<CourseReview> findAllByCourseId(Long courseId) {
+        return springDataCourseReviewRepository.findByCourseIdOrderByCreatedAtDesc(courseId)
+                .stream()
+                .map(this::toDomain)
+                .toList();
+    }
+
+    @Override
     public boolean existsByUserIdAndCourseIdAndDeletedFalse(
             Long userId,
             Long courseId
     ) {
         return springDataCourseReviewRepository.existsByUserIdAndCourseIdAndDeletedFalse(userId, courseId);
+    }
+
+    @Override
+    public void deleteHiddenBefore(LocalDateTime threshold) {
+        springDataCourseReviewRepository.deleteByDeletedTrueAndDeletedAtBefore(threshold);
     }
 
     private CourseReview toDomain(CourseReviewJpaEntity entity) {
@@ -91,6 +107,7 @@ public class CourseReviewRepositoryAdapter implements CourseReviewRepository {
                 entity.getRating(),
                 entity.getContent(),
                 entity.isDeleted(),
+                entity.getDeletedAt(),
                 entity.getCreatedAt(),
                 entity.getUpdatedAt()
         );

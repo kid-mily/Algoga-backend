@@ -1,8 +1,11 @@
 package com.kidmily.algoga_server.lms.application.service;
 
+import com.kidmily.algoga_server.lms.application.command.CreateDiagnosisQuestionCommand;
 import com.kidmily.algoga_server.lms.application.command.SubmitDiagnosisAnswerCommand;
 import com.kidmily.algoga_server.lms.application.command.SubmitDiagnosisCommand;
+import com.kidmily.algoga_server.lms.application.command.UpdateDiagnosisQuestionCommand;
 import com.kidmily.algoga_server.lms.application.port.UserProfilePort;
+import com.kidmily.algoga_server.lms.application.result.AdminDiagnosisResult;
 import com.kidmily.algoga_server.lms.application.result.DiagnosisAnswerResult;
 import com.kidmily.algoga_server.lms.application.result.DiagnosisQuestionResult;
 import com.kidmily.algoga_server.lms.application.result.DiagnosisResultView;
@@ -46,6 +49,61 @@ public class DiagnosisService implements DiagnosisUseCase {
         return diagnosisQuestionRepository.findActiveByCountryId(countryId).stream()
                 .map(DiagnosisQuestionResult::from)
                 .toList();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<DiagnosisQuestionResult> getAdminQuestions(Long countryId) {
+        validateCountry(countryId);
+        return diagnosisQuestionRepository.findByCountryId(countryId).stream()
+                .map(DiagnosisQuestionResult::from)
+                .toList();
+    }
+
+    @Override
+    public DiagnosisQuestionResult createQuestion(CreateDiagnosisQuestionCommand command) {
+        validateCountry(command.countryId());
+        validateDiagnosisQuestion(command.correctOption(), command.questionOrder());
+
+        DiagnosisQuestion question = new DiagnosisQuestion(
+                null,
+                command.countryId(),
+                command.questionText(),
+                command.option1(),
+                command.option2(),
+                command.option3(),
+                command.option4(),
+                command.correctOption(),
+                command.explanation(),
+                command.questionOrder(),
+                command.active() == null || command.active()
+        );
+
+        return DiagnosisQuestionResult.from(diagnosisQuestionRepository.save(question));
+    }
+
+    @Override
+    public DiagnosisQuestionResult updateQuestion(Long questionId, UpdateDiagnosisQuestionCommand command) {
+        DiagnosisQuestion existingQuestion = diagnosisQuestionRepository.findById(questionId)
+                .orElseThrow(() -> new LmsException(LmsErrorCode.DIAGNOSIS_QUESTION_NOT_FOUND));
+
+        validateDiagnosisQuestion(command.correctOption(), command.questionOrder());
+
+        DiagnosisQuestion question = new DiagnosisQuestion(
+                existingQuestion.id(),
+                existingQuestion.countryId(),
+                command.questionText(),
+                command.option1(),
+                command.option2(),
+                command.option3(),
+                command.option4(),
+                command.correctOption(),
+                command.explanation(),
+                command.questionOrder(),
+                command.active() == null || command.active()
+        );
+
+        return DiagnosisQuestionResult.from(diagnosisQuestionRepository.save(question));
     }
 
     @Override
@@ -119,6 +177,18 @@ public class DiagnosisService implements DiagnosisUseCase {
     }
 
     @Override
+    @Transactional(readOnly = true)
+    public List<AdminDiagnosisResult> getAdminResults(Long userId, Long countryId) {
+        if (countryId != null) {
+            validateCountry(countryId);
+        }
+
+        return diagnosisResultRepository.findForAdmin(userId, countryId).stream()
+                .map(AdminDiagnosisResult::from)
+                .toList();
+    }
+
+    @Override
     public void deleteQuestion(Long questionId) {
         if (!diagnosisQuestionRepository.existsById(questionId)) {
             throw new LmsException(LmsErrorCode.DIAGNOSIS_QUESTION_NOT_FOUND);
@@ -172,6 +242,16 @@ public class DiagnosisService implements DiagnosisUseCase {
     private void validateCountry(Long countryId) {
         if (mapRepository.findActiveCountryById(countryId).isEmpty()) {
             throw new LmsException(LmsErrorCode.COUNTRY_NOT_FOUND);
+        }
+    }
+
+    private void validateDiagnosisQuestion(Integer correctOption, Integer questionOrder) {
+        if (correctOption == null || correctOption < 1 || correctOption > 4) {
+            throw new LmsException(LmsErrorCode.INVALID_DIAGNOSIS_ANSWER);
+        }
+
+        if (questionOrder == null || questionOrder < 1) {
+            throw new LmsException(LmsErrorCode.INVALID_DIAGNOSIS_ANSWER);
         }
     }
 
