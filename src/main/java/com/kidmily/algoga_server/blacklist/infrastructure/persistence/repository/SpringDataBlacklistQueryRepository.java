@@ -10,9 +10,8 @@ import org.springframework.data.repository.query.Param;
 
 import java.util.Optional;
 
-public interface BlacklistQueryRepository extends JpaRepository<BlacklistJpaEntity, Long> {
+public interface SpringDataBlacklistQueryRepository extends JpaRepository<BlacklistJpaEntity, Long> {
 
-    // 1. 블랙리스트 후보 유저 전체 목록 페이징 조회 (신고 5회 이상 & 검색어 조건 추가)
     @Query(value = """
             SELECT 
                 u.user_id AS userId, u.username AS username, u.name AS name, 
@@ -35,7 +34,6 @@ public interface BlacklistQueryRepository extends JpaRepository<BlacklistJpaEnti
             nativeQuery = true)
     Page<BlacklistUserQueryProjection> findAllCandidateUsers(@Param("keyword") String keyword, Pageable pageable);
 
-    // 2. 이미 블랙리스트로 등록된 유저 목록 페이징 조회 (검색어 조건 추가)
     @Query(value = """
             SELECT 
                 u.user_id AS userId, u.username AS username, u.name AS name, 
@@ -60,7 +58,6 @@ public interface BlacklistQueryRepository extends JpaRepository<BlacklistJpaEnti
             nativeQuery = true)
     Page<BlacklistUserQueryProjection> findAllBlacklistedUsers(@Param("keyword") String keyword, Pageable pageable);
 
-    // 3. 단일 유저 상세 조회
     @Query(value = """
             SELECT 
                 u.user_id AS userId, u.username AS username, u.name AS name, 
