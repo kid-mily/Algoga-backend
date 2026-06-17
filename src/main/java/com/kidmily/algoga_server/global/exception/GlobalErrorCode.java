@@ -11,7 +11,8 @@ public enum GlobalErrorCode implements BaseErrorCode {
     INVALID_REQUEST(HttpStatus.BAD_REQUEST, "GLOBAL_002", "잘못된 요청입니다."),
     METHOD_NOT_ALLOWED(HttpStatus.METHOD_NOT_ALLOWED, "GLOBAL_003", "지원하지 않는 HTTP 메서드입니다."),
     API_NOT_FOUND(HttpStatus.NOT_FOUND, "GLOBAL_004", "요청하신 API 경로를 찾을 수 없습니다."),
-    ACCESS_DENIED(HttpStatus.FORBIDDEN, "GLOBAL_005", "접근 권한이 없습니다.");
+    ACCESS_DENIED(HttpStatus.FORBIDDEN, "GLOBAL_005", "접근 권한이 없습니다."),
+    CONCURRENT_REQUEST(HttpStatus.CONFLICT, "GLOBAL_006", "요청이 처리 중입니다. 잠시 후 다시 시도해주세요.");
 
     private final HttpStatus status;
     private final String code;
