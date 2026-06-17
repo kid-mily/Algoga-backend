@@ -18,6 +18,7 @@ public class NotificationCommandService implements NotificationCommandUseCase {
 
     private final NotificationRepository notificationRepository;
 
+
     @Override
     public void markAsRead(Long userId, Long notificationId) {
         log.info("[NotificationCommandService] 개별 읽음 처리 - userId: {}, notificationId: {}",

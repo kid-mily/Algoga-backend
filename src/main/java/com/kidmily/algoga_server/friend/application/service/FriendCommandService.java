@@ -7,9 +7,12 @@ import com.kidmily.algoga_server.friend.domain.model.RelationStatus;
 import com.kidmily.algoga_server.friend.domain.repository.FriendRepository;
 import com.kidmily.algoga_server.friend.exception.FriendErrorCode;
 import com.kidmily.algoga_server.friend.exception.FriendException;
+import com.kidmily.algoga_server.notification.domain.event.FriendAcceptedEvent;
+import com.kidmily.algoga_server.notification.domain.event.FriendRequestedEvent;
 import com.kidmily.algoga_server.user.domain.User;
 import com.kidmily.algoga_server.user.domain.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.util.Optional;
@@ -21,6 +24,7 @@ public class FriendCommandService implements FriendCommandUseCase {
 
     private final FriendRepository friendRepository;
     private final UserRepository userRepository;
+    private final ApplicationEventPublisher eventPublisher;
 
     @Override
     public void sendFriendRequest(CreateFriendCommand command) {
@@ -57,6 +61,14 @@ public class FriendCommandService implements FriendCommandUseCase {
                 .status(RelationStatus.REQUESTED)
                 .build();
         friendRepository.save(newRelation);
+
+        User requester = userRepository.findById(myId)
+                .orElseThrow(() -> new FriendException(FriendErrorCode.USER_NOT_FOUND));
+        eventPublisher.publishEvent(new FriendRequestedEvent(
+                targetUser.getId(),
+                myId,
+                requester.getNickname()
+        ));
     }
 
     @Override
@@ -76,6 +88,14 @@ public class FriendCommandService implements FriendCommandUseCase {
 
         relation.accept();
         friendRepository.save(relation);
+
+        User acceptor = userRepository.findById(myId)
+                .orElseThrow(() -> new FriendException(FriendErrorCode.USER_NOT_FOUND));
+        eventPublisher.publishEvent(new FriendAcceptedEvent(
+                relation.getRequesterId(),
+                myId,
+                acceptor.getNickname()
+        ));
     }
 
     @Override

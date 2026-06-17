@@ -9,7 +9,7 @@ public enum NotificationType {
 
     // 학습
     COURSE_REGISTERED("강의 수강 등록", NotificationCategory.LEARNING), // 필요없음
-    COURSE_COMPLETED("강의 수강 완료", NotificationCategory.LEARNING), // ⭐완료
+    COURSE_COMPLETED("강의 수강 완료", NotificationCategory.LEARNING), // publishEvent 호출해야함
     DDAY_REMINDER("D-day 알림", NotificationCategory.LEARNING),
 
     // Q&A
@@ -26,14 +26,14 @@ public enum NotificationType {
     REFUND_REJECTED("환불 거절", NotificationCategory.MANDATORY), // ⭐완료
 
     // 공지사항
-    NOTICE_CREATED("공지사항 등록", NotificationCategory.NOTICE),
+    NOTICE_CREATED("공지사항 등록", NotificationCategory.NOTICE),  // ⭐완료
 
     // 문의
-    INQUIRY_ANSWERED("문의 답변", NotificationCategory.INQUIRY),
+    INQUIRY_ANSWERED("문의 답변", NotificationCategory.INQUIRY),  // ⭐완료
 
     // 친구
-    FRIEND_REQUESTED("친구 요청", NotificationCategory.FRIEND),
-    FRIEND_ACCEPTED("친구 수락", NotificationCategory.FRIEND),
+    FRIEND_REQUESTED("친구 요청", NotificationCategory.FRIEND),  // ⭐완료
+    FRIEND_ACCEPTED("친구 수락", NotificationCategory.FRIEND),  // ⭐완료
 
     // 시스템
     SYSTEM("시스템 알림", NotificationCategory.MANDATORY);

@@ -2,17 +2,21 @@ package com.kidmily.algoga_server.notice.application.service;
 
 import com.kidmily.algoga_server.notice.application.command.CreateNoticeCommand;
 import com.kidmily.algoga_server.notice.application.command.UpdateNoticeCommand;
+import com.kidmily.algoga_server.notice.application.port.UserPort;
 import com.kidmily.algoga_server.notice.application.usecase.NoticeCommandUseCase;
 import com.kidmily.algoga_server.notice.domain.model.Notice;
 import com.kidmily.algoga_server.notice.domain.repository.NoticeRepository;
 import com.kidmily.algoga_server.notice.exception.NoticeErrorCode;
 import com.kidmily.algoga_server.notice.exception.NoticeException;
+import com.kidmily.algoga_server.notification.domain.event.NoticeCreatedEvent;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
+import java.util.List;
 
 @Slf4j
 @Service
@@ -20,6 +24,8 @@ import java.time.Instant;
 public class NoticeCommandService implements NoticeCommandUseCase {
 
     private final NoticeRepository noticeRepository;
+    private final ApplicationEventPublisher eventPublisher;
+    private final UserPort userPort;
 
     @Override
     @Transactional
@@ -29,6 +35,11 @@ public class NoticeCommandService implements NoticeCommandUseCase {
         // 🌟 하드코딩 되어있던 currentManagerId 대신 request.managerId() 사용
         Notice newNotice = Notice.create(request.managerId(), request.noticeTagType(), request.title(), request.content(), now);
         Long savedId = noticeRepository.save(newNotice).getNoticeId();
+
+        List<Long> userIds = userPort.findAllActiveUserIds();
+        userIds.forEach(userId ->
+                eventPublisher.publishEvent(new NoticeCreatedEvent(userId, savedId, request.title(), request.content()))
+        );
 
         log.info("[Notice Created] noticeId: {}, managerId: {}, type: {}", savedId, request.managerId(), request.noticeTagType());
         return savedId;
