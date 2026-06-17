@@ -1,5 +1,6 @@
 package com.kidmily.algoga_server.blacklist.application.service;
 
+import com.kidmily.algoga_server.blacklist.application.command.DeregisterBlacklistCommand;
 import com.kidmily.algoga_server.blacklist.application.command.RegisterBlacklistCommand;
 import com.kidmily.algoga_server.blacklist.application.port.BlacklistReportPort;
 import com.kidmily.algoga_server.blacklist.application.usecase.BlacklistCommandUseCase;
@@ -26,12 +27,10 @@ public class BlacklistCommandService implements BlacklistCommandUseCase {
 
     @Override
     public void registerBlacklist(RegisterBlacklistCommand command) {
-        // 예외 처리 1: 이미 블랙리스트인지 검증
         if (blacklistRepository.existsByUserIdAndStatus(command.userId(), BlacklistStatus.ACTIVE)) {
             throw new BlacklistException(BlacklistErrorCode.ALREADY_BLACKLISTED);
         }
 
-        // 예외 처리 2: 신고 횟수 5회 이상 검증
         long reportCount = reportPort.getCompletedReportCount(command.userId());
         if (reportCount < 5) {
             throw new BlacklistException(BlacklistErrorCode.NOT_ENOUGH_REPORTS);
@@ -44,14 +43,14 @@ public class BlacklistCommandService implements BlacklistCommandUseCase {
     }
 
     @Override
-    public void deregisterBlacklist(Long userId) {
-        // 예외 처리 3: 등록된 블랙리스트 내역이 없으면 해제 불가
-        Blacklist blacklist = blacklistRepository.findByUserIdAndStatus(userId, BlacklistStatus.ACTIVE)
+    public void deregisterBlacklist(DeregisterBlacklistCommand command) {
+        // 🌟 수정됨: command.userId() 로 값 추출
+        Blacklist blacklist = blacklistRepository.findByUserIdAndStatus(command.userId(), BlacklistStatus.ACTIVE)
                 .orElseThrow(() -> new BlacklistException(BlacklistErrorCode.BLACKLIST_NOT_FOUND));
 
         blacklist.deregister();
         blacklistRepository.save(blacklist);
 
-        eventPublisher.publishEvent(new UserUnblacklistedEvent(userId));
+        eventPublisher.publishEvent(new UserUnblacklistedEvent(command.userId()));
     }
 }
