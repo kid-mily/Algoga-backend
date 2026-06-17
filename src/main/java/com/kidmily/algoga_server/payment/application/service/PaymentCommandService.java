@@ -1,6 +1,7 @@
 package com.kidmily.algoga_server.payment.application.service;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.kidmily.algoga_server.global.lock.DistributedLock;
 import com.kidmily.algoga_server.payment.application.command.CreateLecturePaymentCommand;
 import com.kidmily.algoga_server.payment.application.command.CreatePaymentCommand;
 import com.kidmily.algoga_server.payment.application.usecase.PaymentCommandUseCase;
@@ -31,6 +32,7 @@ public class PaymentCommandService implements PaymentCommandUseCase {
     private final Counter paymentFailedTotal;
     private final Timer portoneApiDurationSeconds;
 
+    @DistributedLock(key = "'payment:' + #command.bookingId()")
     @Override
     public Long handle(CreatePaymentCommand command) {
         log.info("[PaymentCommandService] 결제 요청 - bookingId: {}, type: {}, amount: {}",
@@ -57,6 +59,7 @@ public class PaymentCommandService implements PaymentCommandUseCase {
         });
     }
 
+    @DistributedLock(key = "'payment:lecture:' + #command.courseId() + ':' + #command.userId()")
     @Override
     public Long handleLecturePayment(CreateLecturePaymentCommand command) {
         log.info("[PaymentCommandService] 강의 단독 결제 요청 - courseId: {}, userId: {}, amount: {}",

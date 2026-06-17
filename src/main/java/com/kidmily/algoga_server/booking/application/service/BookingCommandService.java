@@ -11,6 +11,7 @@ import com.kidmily.algoga_server.booking.domain.model.BookingStatus;
 import com.kidmily.algoga_server.booking.domain.repository.BookingRepository;
 import com.kidmily.algoga_server.booking.exception.BookingErrorCode;
 import com.kidmily.algoga_server.global.exception.BusinessException;
+import com.kidmily.algoga_server.global.lock.DistributedLock;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.CacheEvict;
@@ -33,6 +34,7 @@ public class BookingCommandService implements BookingCommandUseCase {
     private final AccommodationRepository accommodationRepository;
     private final ApplicationEventPublisher eventPublisher;
 
+    @DistributedLock(key = "'booking:' + #command.userId() + ':' + #command.accommodationId() + ':' + #command.checkInDate()")
     @CacheEvict(value = "myBookings", key = "#command.userId()")
     @Override
     public Long handle(CreateBookingCommand command) {
