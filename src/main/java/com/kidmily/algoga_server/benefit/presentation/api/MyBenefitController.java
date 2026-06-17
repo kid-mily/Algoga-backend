@@ -26,7 +26,7 @@ public class MyBenefitController {
             summary = "내 쿠폰함 조회",
             description = "로그인한 사용자가 보유한 쿠폰 목록을 조회합니다."
     )
-    @GetMapping({"/coupons", "/benefits/coupons"})
+    @GetMapping({"/coupons"})
     public ResponseEntity<ApiResponse<List<MyCouponResponse>>> getMyCoupons(
             @AuthenticationPrincipal Object userDetails
     ) {
@@ -50,7 +50,7 @@ public class MyBenefitController {
             summary = "내 마일리지 내역 조회",
             description = "로그인한 사용자의 현재 보유 마일리지와 마일리지 적립/사용 내역을 조회합니다."
     )
-    @GetMapping({"/mileages", "/benefits/mileages"})
+    @GetMapping({"/mileages"})
     public ResponseEntity<ApiResponse<MyMileageResponse>> getMyMileages(
             @AuthenticationPrincipal Object userDetails
     ) {

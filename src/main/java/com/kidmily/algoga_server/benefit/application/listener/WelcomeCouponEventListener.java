@@ -5,8 +5,9 @@ import com.kidmily.algoga_server.benefit.domain.repository.UserCouponRepository;
 import com.kidmily.algoga_server.global.event.UserSignedUpEvent;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.event.TransactionPhase;
+import org.springframework.transaction.event.TransactionalEventListener;
 
 @Slf4j
 @Component
@@ -17,14 +18,18 @@ public class WelcomeCouponEventListener {
 
     private final UserCouponRepository userCouponRepository;
 
-    @EventListener
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void issueWelcomeCoupon(UserSignedUpEvent event) {
-        if (event.userId() == null
-                || userCouponRepository.existsByUserIdAndCouponName(event.userId(), WELCOME_COUPON_NAME)) {
-            return;
-        }
+        try {
+            if (event.userId() == null
+                    || userCouponRepository.existsByUserIdAndCouponName(event.userId(), WELCOME_COUPON_NAME)) {
+                return;
+            }
 
-        userCouponRepository.save(UserCoupon.issueWelcome(event.userId()));
-        log.info("[WelcomeCoupon] Issued welcome coupon. userId={}", event.userId());
+            userCouponRepository.save(UserCoupon.issueWelcome(event.userId()));
+            log.info("[WelcomeCoupon] Issued welcome coupon. userId={}", event.userId());
+        } catch (Exception e) {
+            log.error("[WelcomeCoupon] Failed to issue welcome coupon. userId={}", event.userId(), e);
+        }
     }
 }
