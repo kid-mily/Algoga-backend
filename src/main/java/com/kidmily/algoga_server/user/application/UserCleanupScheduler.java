@@ -18,9 +18,7 @@ public class UserCleanupScheduler {
     private final UserRepository userRepository;
 
     // 매일 밤 0시 0분 0초에 실행
-//    @Scheduled(cron = "0 0 0 * * *")
-//    @Transactional
-    @Scheduled(initialDelay = 5000, fixedDelay = Long.MAX_VALUE)
+    @Scheduled(cron = "0 0 0 * * *")
     @Transactional
     public void cleanUpExpiredUsers() {
         // 14일 전 기준 시간 계산
