@@ -34,7 +34,7 @@ public class CouponStatisticsController {
             "COURSE_NOT_FOUND",
             "COUNTRY_NOT_FOUND"
     })
-    @PreAuthorize("hasAnyAuthority('CONTENT_MANAGER', 'ROLE_CONTENT_MANAGER', 'SUPER_ADMIN', 'ROLE_SUPER_ADMIN')")
+    @PreAuthorize("hasAnyAuthority('STATISTICS_MANAGER', 'ROLE_STATISTICS_MANAGER', 'SUPER_ADMIN', 'ROLE_SUPER_ADMIN')")
     @GetMapping
     public ResponseEntity<ApiResponse<CouponStatisticsResponse>> getCouponStatistics(
             @Parameter(description = "강의 ID 필터", example = "3")
