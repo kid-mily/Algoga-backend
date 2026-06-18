@@ -11,6 +11,9 @@ groups:
         title: "[PortOne] 서킷브레이커 OPEN"
         condition: C
         for: 1m
+        # 로컬: 서버 꺼져 데이터 없을 때 조용히 OK 처리(노이즈 제거). 운영 배포 시 noDataState 를 NoData 로 되돌려 서버 다운을 감지할 것.
+        noDataState: OK
+        execErrState: OK
         labels:
           severity: critical
           domain: payment
@@ -39,6 +42,9 @@ groups:
         title: "[Payment] 결제 실패율 급증 (>30%)"
         condition: C
         for: 2m
+        # 로컬: 데이터 없을 때 OK 처리. 운영에선 NoData 권장.
+        noDataState: OK
+        execErrState: OK
         labels:
           severity: warning
           domain: payment
@@ -70,6 +76,9 @@ groups:
         title: "[Security] 어드민 API 403 거부 급증"
         condition: C
         for: 2m
+        # 로컬: 데이터 없을 때 OK 처리. 운영에선 NoData 권장.
+        noDataState: OK
+        execErrState: OK
         labels:
           severity: warning
           domain: security
@@ -98,6 +107,9 @@ groups:
         title: "[Reliability] 서버 에러(5xx) 급증"
         condition: C
         for: 2m
+        # 로컬: 데이터 없을 때 OK 처리. 운영에선 NoData 권장.
+        noDataState: OK
+        execErrState: OK
         labels:
           severity: critical
           domain: reliability
@@ -126,6 +138,9 @@ groups:
         title: "[Infra] DB 커넥션 풀 대기 발생"
         condition: C
         for: 2m
+        # 로컬: 데이터 없을 때 OK 처리. 운영에선 NoData 권장.
+        noDataState: OK
+        execErrState: OK
         labels:
           severity: warning
           domain: infra

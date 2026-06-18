@@ -52,13 +52,16 @@ public class PaymentJpaEntity {
     @Column(name = "portone_payment_id")
     private String portonePaymentId;
 
+    @Column(name = "payment_method")
+    private String paymentMethod;
+
     @Column(name = "created_at")
     private LocalDateTime createdAt;
 
     public PaymentJpaEntity(Long bookingId, Long courseId, Long userId, PaymentType paymentType,
                             int amount, Integer usedMileage, Long usedCouponId,
                             PaymentStatus status, String idempotencyKey,
-                            String portonePaymentId, LocalDateTime createdAt) {
+                            String portonePaymentId, String paymentMethod, LocalDateTime createdAt) {
         this.bookingId = bookingId;
         this.courseId = courseId;
         this.userId = userId;
@@ -69,6 +72,7 @@ public class PaymentJpaEntity {
         this.status = status;
         this.idempotencyKey = idempotencyKey;
         this.portonePaymentId = portonePaymentId;
+        this.paymentMethod = paymentMethod;
         this.createdAt = createdAt;
     }
 

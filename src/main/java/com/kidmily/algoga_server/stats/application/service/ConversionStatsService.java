@@ -10,6 +10,7 @@ import com.kidmily.algoga_server.stats.presentation.api.response.ConversionDaily
 import com.kidmily.algoga_server.stats.presentation.api.response.ConversionProductResponse;
 import com.kidmily.algoga_server.stats.presentation.api.response.ConversionProductStatsResponse;
 import com.kidmily.algoga_server.stats.presentation.api.response.ConversionSummaryResponse;
+import io.micrometer.core.instrument.Counter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -28,11 +29,13 @@ public class ConversionStatsService implements ConversionStatsUseCase {
     private final PaymentAttemptRepository paymentAttemptRepository;
     private final BookingRepository bookingRepository;
     private final AccommodationRepository accommodationRepository;
+    private final Counter paymentAttemptTotal;
 
     @Override
     @Transactional
     public void recordAttempt(Long userId, Long accommodationId) {
         paymentAttemptRepository.save(PaymentAttempt.create(userId, accommodationId));
+        paymentAttemptTotal.increment();
     }
 
     @Override

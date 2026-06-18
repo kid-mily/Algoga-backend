@@ -60,7 +60,7 @@ public class PaymentTransactionService {
             @CacheEvict(value = "adminPaymentStats", key = "'all'")
     })
     @Transactional
-    public Long savePayment(CreatePaymentCommand command, String portoneStatus, int paidAmount) {
+    public Long savePayment(CreatePaymentCommand command, String portoneStatus, int paidAmount, String paymentMethod) {
         Booking booking = bookingRepository.findById(command.bookingId())
                 .orElseThrow(() -> {
                     log.warn("[PaymentTransactionService] 예약을 찾을 수 없음 - bookingId: {}", command.bookingId());
@@ -103,7 +103,8 @@ public class PaymentTransactionService {
                 command.amount(),
                 command.usedMileage(),
                 command.usedCouponId(),
-                idempotencyKey
+                idempotencyKey,
+                paymentMethod
         );
 
         if ("PAID".equals(portoneStatus)) {
@@ -163,7 +164,7 @@ public class PaymentTransactionService {
     }
 
     @Transactional
-    public Long saveLecturePayment(CreateLecturePaymentCommand command, String portoneStatus, int paidAmount) {
+    public Long saveLecturePayment(CreateLecturePaymentCommand command, String portoneStatus, int paidAmount, String paymentMethod) {
         courseRepository.findByIdAndDeletedFalse(command.courseId())
                 .orElseThrow(() -> {
                     log.warn("[PaymentTransactionService] 강의를 찾을 수 없음 - courseId: {}", command.courseId());
@@ -201,7 +202,8 @@ public class PaymentTransactionService {
                 command.amount(),
                 command.usedMileage(),
                 command.usedCouponId(),
-                idempotencyKey
+                idempotencyKey,
+                paymentMethod
         );
 
         if ("PAID".equals(portoneStatus)) {
@@ -254,7 +256,7 @@ public class PaymentTransactionService {
     }
 
     @Transactional
-    public void processWebhook(String portonePaymentId, String portoneStatus) {
+    public void processWebhook(String portonePaymentId, String portoneStatus, String paymentMethod) {
         paymentRepository.findByPortonePaymentId(portonePaymentId).ifPresent(payment -> {
             if (payment.getStatus() == PaymentStatus.SUCCESS) {
                 log.info("[PaymentTransactionService] 웹훅 - 이미 SUCCESS 처리된 결제, 스킵 - portonePaymentId: {}", portonePaymentId);
@@ -263,6 +265,7 @@ public class PaymentTransactionService {
 
             if ("PAID".equals(portoneStatus)) {
                 payment.markSuccess(portonePaymentId);
+                payment.updatePaymentMethod(paymentMethod);
                 paymentRepository.save(payment);
 
                 if (payment.getBookingId() != null) {

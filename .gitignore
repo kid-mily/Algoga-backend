@@ -46,3 +46,7 @@ logs/
 
 # 비밀번호가 포함된 설정 파일은 깃허브에 업로드 금지
 application-secret.yml
+
+# 모니터링 비밀값 (Slack Webhook 등)
+.env
+monitoring/.env
