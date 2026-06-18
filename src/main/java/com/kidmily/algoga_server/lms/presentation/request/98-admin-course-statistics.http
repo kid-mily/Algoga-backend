@@ -1,0 +1,12 @@
+### 통계 매니저 로그인 먼저 실행 후 사용
+
+### 수강률 통계 조회
+GET http://localhost:15000/api/v1/admin/statistics/courses/enrollment?page=0&size=10
+Cookie: accessToken={{managerAccessToken}}
+Accept: application/json
+
+
+### 수강률 통계 검색
+GET http://localhost:15000/api/v1/admin/statistics/courses/enrollment?keyword=도쿄&page=0&size=10
+Cookie: accessToken={{managerAccessToken}}
+Accept: application/json
