@@ -45,9 +45,10 @@ public class PaymentCommandService implements PaymentCommandUseCase {
             );
             String portoneStatus = portoneResult.path("status").asText();
             int paidAmount = portoneResult.path("amount").path("total").asInt();
-            log.info("[PaymentCommandService] PortOne 검증 결과 - status: {}, amount: {}", portoneStatus, paidAmount);
+            String paymentMethod = extractPaymentMethod(portoneResult);
+            log.info("[PaymentCommandService] PortOne 검증 결과 - status: {}, amount: {}, method: {}", portoneStatus, paidAmount, paymentMethod);
 
-            Long paymentId = paymentTransactionService.savePayment(command, portoneStatus, paidAmount);
+            Long paymentId = paymentTransactionService.savePayment(command, portoneStatus, paidAmount, paymentMethod);
 
             if ("PAID".equals(portoneStatus)) {
                 paymentSuccessTotal.increment();
@@ -69,9 +70,10 @@ public class PaymentCommandService implements PaymentCommandUseCase {
         JsonNode portoneResult = portOneClient.getPayment(command.portonePaymentId());
         String portoneStatus = portoneResult.path("status").asText();
         int paidAmount = portoneResult.path("amount").path("total").asInt();
-        log.info("[PaymentCommandService] PortOne 검증 결과 - status: {}, amount: {}", portoneStatus, paidAmount);
+        String paymentMethod = extractPaymentMethod(portoneResult);
+        log.info("[PaymentCommandService] PortOne 검증 결과 - status: {}, amount: {}, method: {}", portoneStatus, paidAmount, paymentMethod);
 
-        return paymentTransactionService.saveLecturePayment(command, portoneStatus, paidAmount);
+        return paymentTransactionService.saveLecturePayment(command, portoneStatus, paidAmount, paymentMethod);
     }
 
     @Override
@@ -81,7 +83,30 @@ public class PaymentCommandService implements PaymentCommandUseCase {
         // PortOne API 호출을 트랜잭션 밖에서 먼저 수행
         JsonNode portoneResult = portOneClient.getPayment(portonePaymentId);
         String portoneStatus = portoneResult.path("status").asText();
+        String paymentMethod = extractPaymentMethod(portoneResult);
 
-        paymentTransactionService.processWebhook(portonePaymentId, portoneStatus);
+        paymentTransactionService.processWebhook(portonePaymentId, portoneStatus, paymentMethod);
+    }
+
+    /**
+     * PortOne v2 결제 응답의 {@code method} 노드에서 실제 결제수단을 추출한다.
+     * 간편결제는 {@code provider}(TOSSPAY/KAKAOPAY 등), 그 외에는 {@code type}(PaymentMethodCard 등)을 사용.
+     * 프론트는 이 코드값을 한글 라벨로 매핑한다. 추출 불가 시 null.
+     */
+    private String extractPaymentMethod(JsonNode portoneResult) {
+        JsonNode method = portoneResult.path("method");
+        if (method.isMissingNode() || method.isNull()) {
+            return null;
+        }
+        if (method.hasNonNull("provider")) {
+            return method.path("provider").asText();
+        }
+        if (method.path("easyPay").hasNonNull("provider")) {
+            return method.path("easyPay").path("provider").asText();
+        }
+        if (method.hasNonNull("type")) {
+            return method.path("type").asText();
+        }
+        return null;
     }
 }

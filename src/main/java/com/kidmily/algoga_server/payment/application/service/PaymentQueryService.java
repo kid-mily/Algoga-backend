@@ -277,7 +277,7 @@ public class PaymentQueryService implements PaymentQueryUseCase {
                     .orElse(null);
         }
 
-        return PaymentResponse.fromWithDetail(payment, userName, productName, payment.getPaymentType().name());
+        return PaymentResponse.fromWithDetail(payment, userName, productName, payment.getPaymentMethod());
     }
 
     public int calculateLectureAmount(Long courseId, int usedMileage, Long usedCouponId, Long userId) {

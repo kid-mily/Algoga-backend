@@ -36,7 +36,8 @@ public record PaymentResponse(
                 payment.getStatus(),
                 payment.getPortonePaymentId(),
                 payment.getCreatedAt(),
-                null, null, null
+                null, null,
+                payment.getPaymentMethod()
         );
     }
 

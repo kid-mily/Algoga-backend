@@ -21,11 +21,13 @@ public class Payment {
     private PaymentStatus status;
     private String idempotencyKey;
     private String portonePaymentId;
+    /** 실제 결제수단 (PortOne 응답의 method에서 추출 — 예: TOSSPAY, KAKAOPAY, PaymentMethodCard). null 가능. */
+    private String paymentMethod;
     private LocalDateTime createdAt;
 
     public static Payment create(Long bookingId, Long courseId, Long userId, PaymentType paymentType,
                                  int amount, int usedMileage, Long usedCouponId,
-                                 String idempotencyKey) {
+                                 String idempotencyKey, String paymentMethod) {
         Payment payment = new Payment();
         payment.bookingId = bookingId;
         payment.courseId = courseId;
@@ -36,6 +38,7 @@ public class Payment {
         payment.usedCouponId = usedCouponId;
         payment.status = PaymentStatus.FAILED;
         payment.idempotencyKey = idempotencyKey;
+        payment.paymentMethod = paymentMethod;
         payment.createdAt = LocalDateTime.now();
         return payment;
     }
@@ -44,7 +47,8 @@ public class Payment {
                                        PaymentType paymentType, int amount,
                                        int usedMileage, Long usedCouponId,
                                        PaymentStatus status, String idempotencyKey,
-                                       String portonePaymentId, LocalDateTime createdAt) {
+                                       String portonePaymentId, String paymentMethod,
+                                       LocalDateTime createdAt) {
         Payment payment = new Payment();
         payment.id = id;
         payment.bookingId = bookingId;
@@ -57,6 +61,7 @@ public class Payment {
         payment.status = status;
         payment.idempotencyKey = idempotencyKey;
         payment.portonePaymentId = portonePaymentId;
+        payment.paymentMethod = paymentMethod;
         payment.createdAt = createdAt;
         return payment;
     }
@@ -72,5 +77,10 @@ public class Payment {
 
     public void markRefunded() {
         this.status = PaymentStatus.REFUNDED;
+    }
+
+    /** 웹훅 등으로 뒤늦게 결제수단이 확인된 경우 갱신 */
+    public void updatePaymentMethod(String paymentMethod) {
+        this.paymentMethod = paymentMethod;
     }
 }

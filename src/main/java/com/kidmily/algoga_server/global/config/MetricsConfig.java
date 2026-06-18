@@ -93,6 +93,16 @@ public class MetricsConfig {
                 .register(registry);
     }
 
+    // ── Payment Funnel ───────────────────────────────────────────────────────
+
+    /** 결제 페이지 진입 횟수 */
+    @Bean
+    public Counter paymentAttemptTotal(MeterRegistry registry) {
+        return Counter.builder("algoga_payment_attempt_total")
+                .description("결제 페이지 진입 횟수")
+                .register(registry);
+    }
+
     // ── API 에러 ─────────────────────────────────────────────────────────────
     // algoga_api_errors_total{reason=...} 는 CommonExceptionAdvice.recordApiError()에서
     // MeterRegistry.counter()로 동적으로 등록/증가시킴 (access_denied / business / validation /
