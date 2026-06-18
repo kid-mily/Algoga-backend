@@ -10,6 +10,7 @@ import com.kidmily.algoga_server.user.presentation.request.UpdatePasswordRequest
 import com.kidmily.algoga_server.user.presentation.request.UpdateProfileRequest;
 import com.kidmily.algoga_server.user.presentation.request.VerifyPasswordRequest;
 import com.kidmily.algoga_server.user.presentation.response.AuthTokenResponse;
+import com.kidmily.algoga_server.user.presentation.response.SignupPathStatResponse;
 import com.kidmily.algoga_server.user.presentation.response.UserProfileResponse;
 import com.kidmily.algoga_server.user.settings.UserStorageSettings;
 import lombok.RequiredArgsConstructor;
@@ -21,6 +22,8 @@ import org.springframework.web.multipart.MultipartFile;
 import com.kidmily.algoga_server.global.event.UserWithdrawnEvent;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.redis.core.RedisTemplate;
+
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 @Slf4j
@@ -161,5 +164,13 @@ public class UserService {
         eventPublisher.publishEvent(new UserWithdrawnEvent(user.getId(), email));
 
         log.info("회원 탈퇴 처리 완료 및 이벤트 발행 [기존 이메일: {}, 식별자: {}]", email, user.getId());
+    }
+
+    // 가입 경로 통계 조회 (관리자 통게용)
+    @Transactional(readOnly = true)
+    public List<SignupPathStatResponse> getSignupPathStats() {
+        return userRepository.countUsersBySignupPath().stream()
+                .map(SignupPathStatResponse::from)
+                .toList();
     }
 }

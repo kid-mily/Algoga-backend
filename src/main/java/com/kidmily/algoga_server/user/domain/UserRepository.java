@@ -29,4 +29,17 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
     // 14일 전에 탈퇴한(isDeleted=true) 유저 목록 가져오기
     List<User> findByIsDeletedTrueAndDeletedAtBefore(LocalDateTime dateTime);
+
+    // 결과를 담을 아주 얇은 바구니(인터페이스)를 하나 선언합니다.
+    interface SignupPathStat {
+        String getPath();
+        Long getCount();
+    }
+
+    // DB에게 "가입경로별로 그룹 묶어서 숫자 세서 줘!" 라고 명령합니다. (탈퇴한 유저는 제외)
+    @Query("SELECT u.signupPath AS path, COUNT(u) AS count " +
+            "FROM User u " +
+            "WHERE u.isDeleted = false " +
+            "GROUP BY u.signupPath")
+    List<SignupPathStat> countUsersBySignupPath();
 }
