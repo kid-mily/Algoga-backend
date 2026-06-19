@@ -12,4 +12,5 @@ public interface FileStoragePort {
     String uploadFile(MultipartFile file, String bucketName, String directory);
 
     void deleteFile(String bucketName, String fileUrl);
+    String uploadFileAsync(java.io.File file, String bucketName, String targetS3Key);
 }
