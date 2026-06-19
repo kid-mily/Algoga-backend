@@ -79,4 +79,20 @@ public class S3StorageAdapter implements FileStoragePort {
             log.error("[S3 Delete Error] 파일 삭제 중 오류 발생: {}", e.getMessage());
         }
     }
+
+    @Override
+    public String uploadFileAsync(java.io.File file, String bucketName, String targetS3Key) {
+        try {
+            PutObjectRequest putObjectRequest = PutObjectRequest.builder()
+                    .bucket(bucketName)
+                    .key(targetS3Key)
+                    .build();
+
+            s3Client.putObject(putObjectRequest, RequestBody.fromFile(file));
+            return endpoint + "/" + bucketName + "/" + targetS3Key;
+        } catch (Exception e) {
+            log.error("[S3 Async Upload Error] 비동기 파일 업로드 실패: {}", e.getMessage(), e);
+            throw new BusinessException(GlobalErrorCode.SERVER_ERROR);
+        }
+    }
 }
