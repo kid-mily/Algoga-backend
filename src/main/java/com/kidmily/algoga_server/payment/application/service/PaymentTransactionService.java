@@ -163,6 +163,10 @@ public class PaymentTransactionService {
         return saved.getId();
     }
 
+    @Caching(evict = {
+            @CacheEvict(value = "myPayments", key = "#command.userId()"),
+            @CacheEvict(value = "adminPaymentStats", key = "'all'")
+    })
     @Transactional
     public Long saveLecturePayment(CreateLecturePaymentCommand command, String portoneStatus, int paidAmount, String paymentMethod) {
         courseRepository.findByIdAndDeletedFalse(command.courseId())
