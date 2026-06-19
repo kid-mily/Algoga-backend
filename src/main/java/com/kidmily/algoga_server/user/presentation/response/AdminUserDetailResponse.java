@@ -1,5 +1,9 @@
 package com.kidmily.algoga_server.user.presentation.response;
 
+// 🌟 커뮤니티 파트의 Response 객체 Import
+import com.kidmily.algoga_server.community.presentation.api.response.AdminPostListResponse;
+import com.kidmily.algoga_server.community.presentation.api.response.AdminCommentListResponse;
+
 import com.kidmily.algoga_server.user.domain.User;
 import io.swagger.v3.oas.annotations.media.Schema;
 import java.time.LocalDateTime;
@@ -25,13 +29,20 @@ public record AdminUserDetailResponse(
         @Schema(description = "회원의 친구 목록")
         List<AdminFriendDetailResponse> friends,
 
-        @Schema(description = "🤝 타 팀원 담당: 회원이 작성한 게시글 목록 (임시 타입)")
-        List<Object> posts,
+        // 🌟 타입을 Object에서 팀원이 만든 전용 페이징 객체로 변경!
+        @Schema(description = "회원이 작성한 게시글 목록 데이터")
+        AdminPostListResponse posts,
 
-        @Schema(description = "🤝 타 팀원 담당: 회원이 작성한 댓글 목록 (임시 타입)")
-        List<Object> comments
+        @Schema(description = "회원이 작성한 댓글 목록 데이터")
+        AdminCommentListResponse comments
 ) {
-    public static AdminUserDetailResponse of(User user, boolean isOnline, List<AdminFriendDetailResponse> friends) {
+    public static AdminUserDetailResponse of(
+            User user,
+            boolean isOnline,
+            List<AdminFriendDetailResponse> friends,
+            AdminPostListResponse posts,
+            AdminCommentListResponse comments) {
+
         return new AdminUserDetailResponse(
                 user.getId(),
                 user.getNickname(),
@@ -39,8 +50,8 @@ public record AdminUserDetailResponse(
                 user.getCreatedAt(),
                 isOnline,
                 friends,
-                List.of(), // 타 팀원 담당 영역
-                List.of()  // 타 팀원 담당 영역
+                posts,
+                comments
         );
     }
 }

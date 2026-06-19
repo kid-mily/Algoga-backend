@@ -48,8 +48,6 @@ public class UserService {
     private final ApplicationEventPublisher eventPublisher;
     private final RedisTemplate<String, String> redisTemplate;
 
-    private final FriendRepository friendRepository;
-
     // 내 프로필 조회
     @Transactional(readOnly = true)
     public UserProfileResponse getMyProfile(String email) {
@@ -181,65 +179,20 @@ public class UserService {
     }
 
     // 🌟 관리자용: 전체 유저 리스트 조회 로직
-    // ==========================================
     @Transactional(readOnly = true)
-    public Page<AdminUserListResponse> getAdminUserList(Pageable pageable) {
-
-        // 1. 삭제되지 않은 유저 목록을 DB에서 페이징(10개씩 등)해서 가져옵니다.
-        Page<User> users = userRepository.findByIsDeletedFalse(pageable); // (UserRepository에 이 메서드가 없다면 만들어주세요!)
-
-        // 2. 가져온 유저들을 하나씩 돌면서 DTO로 예쁘게 변환합니다.
-        return users.map(user -> {
-
-            // 🌟 내 담당: DB에서 숫자(카운트)만 아주 가볍게 쏙 빼옵니다!
-            long friendCount = friendRepository.countAcceptedFriends(user.getId());
-
-            // 🤝 타 팀원 담당: 게시글 파트 담당자가 나중에 자기 Repository 주입해서 채울 자리 (일단 0)
-            long postCount = 0L;
-            long commentCount = 0L;
-
-            return AdminUserListResponse.of(user, friendCount, postCount, commentCount);
-        });
+    public Page<User> getAdminUserListRaw(Pageable pageable) {
+        return userRepository.findByIsDeletedFalse(pageable);
     }
 
     // 🌟 관리자용: 특정 유저 상세 조회 (기본 정보 + 로그인상태 + 친구 목록)
-    // ==========================================
     @Transactional(readOnly = true)
-    public com.kidmily.algoga_server.user.presentation.response.AdminUserDetailResponse getAdminUserDetail(Long targetUserId) {
-
-        // 1. 대상 유저 기본 정보 조회
-        User user = userRepository.findById(targetUserId)
+    public User getAdminUserDetailRaw(Long targetUserId) {
+        return userRepository.findById(targetUserId)
                 .orElseThrow(() -> new UserException(UserErrorCode.NOT_FOUND_USER));
-
-        // 2. 실무 정답: Redis에 로그인 시 쌓이는 Access Token 세션 키가 존재하는지 판단하여 활동상태 정의!
-        // (원래 로그인 필터 규격에 맞춰 "RT:이메일" 혹은 로그인 세션 키 이름으로 대조하면 됩니다)
-        boolean isOnline = Boolean.TRUE.equals(redisTemplate.hasKey("RT:" + user.getEmail()));
-
-        // 3. 이 유저의 수락 완료된 친구 관계 리스트 가져오기 (기존에 만들어두신 완벽한 메서드 활용)
-        List<com.kidmily.algoga_server.friend.domain.model.FriendRelation> relations = friendRepository.findAcceptedFriends(targetUserId);
-
-        // 4. 친구들의 User ID 추출 (내가 요청했으면 상대방ID, 내가 받았으면 요청자ID)
-        List<Long> friendIds = relations.stream()
-                .map(rel -> rel.getRequesterId().equals(targetUserId) ? rel.getReceiverId() : rel.getRequesterId())
-                .toList();
-
-        // 5. 한 번에 친구들의 닉네임을 뺴오기 위해 배치 조회 후 Map 변환 (성능 최적화 정석)
-        java.util.Map<Long, String> friendNicknameMap = userRepository.findAllById(friendIds).stream()
-                .collect(java.util.stream.Collectors.toMap(User::getId, User::getNickname));
-
-        // 6. 스키마 규격(AdminFriendDetailResponse)으로 예쁘게 매핑
-        List<com.kidmily.algoga_server.user.presentation.response.AdminFriendDetailResponse> friendDetails = relations.stream().map(rel -> {
-            Long friendId = rel.getRequesterId().equals(targetUserId) ? rel.getReceiverId() : rel.getRequesterId();
-            String nickname = friendNicknameMap.getOrDefault(friendId, "알 수 없음(탈퇴유저)");
-
-            return com.kidmily.algoga_server.user.presentation.response.AdminFriendDetailResponse.of(
-                    friendId,
-                    nickname,
-                    rel.getUpdatedAt() // 친구 관계가 최신 승인된 날짜 (또는 createdAt)
-            );
-        }).toList();
-
-        // 7. 최상위 상세 DTO로 최종 조립하여 반환
-        return com.kidmily.algoga_server.user.presentation.response.AdminUserDetailResponse.of(user, isOnline, friendDetails);
     }
+
+    public boolean isUserOnline(String email) {
+        return Boolean.TRUE.equals(redisTemplate.hasKey("RT:" + email));
+    }
+
 }
