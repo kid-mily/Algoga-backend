@@ -21,4 +21,5 @@ public interface FriendRepository {
 
     // 삭제 시 필요 (이미 save/findById가 있다면 추가)
     void delete(FriendRelation relation);
+
 }

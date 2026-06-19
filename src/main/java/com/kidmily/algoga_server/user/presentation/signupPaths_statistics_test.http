@@ -1,9 +1,7 @@
 ### 환경변수 세팅
 @baseUrl = http://localhost:15000
 
-### 1. 매니저 로그인 (사전 준비)
-# 🌟 요청 주소를 완전히 매치시켰습니다.
-# 🌟 성공하면 인텔리제이가 내부적으로 쿠키를 기억합니다.
+### 1. 매니저 로그인 (여기서 나온 accessToken 값을 복사하세요!)
 POST {{baseUrl}}/api/v1/auth/admin/login
 Content-Type: application/json
 
@@ -12,12 +10,22 @@ Content-Type: application/json
   "password": "password123!"
 }
 
-
 ### --------------------------------------------------
-# 🌟 각 요청 사이에는 반드시 이렇게 ### 분리선이 명확해야 초록색 재생 버튼(▶)이 활성화됩니다.
-### --------------------------------------------------
-
 
 ### 2. 유저 가입 경로 통계 조회 API 테스트
-# 🌟 1번을 성공한 직후 바로 이 버튼을 누르시면 쿠키가 자동으로 실려 날아갑니다!
 GET {{baseUrl}}/api/v1/admin/statistics/users/signup-paths
+Cookie: accessToken=eyJhbGciOiJIUzM4NCJ9.eyJzdWIiOiJzdXBlcl9hZG1pbiIsInR5cGUiOiJBRE1JTiIsImlkIjoxLCJyb2xlIjoiUk9MRV9TVVBFUl9BRE1JTiIsImlhdCI6MTc4MTg0MjMyMSwiZXhwIjoxNzgxODQ0MTIxfQ.csUp-P4IBqCCBJe2zoF_-YdiRSNY23TZDtf6W7JFa2Kz_nWwdhbrZbd0o3Nh35AT
+
+
+### --------------------------------------------------
+
+### 3. 유저 리스트 전체 조회 API 테스트 (관리자용)
+GET {{baseUrl}}/api/v1/admin/statistics/users?page=0&size=10
+Cookie: accessToken=eyJhbGciOiJIUzM4NCJ9.eyJzdWIiOiJzdXBlcl9hZG1pbiIsInR5cGUiOiJBRE1JTiIsImlkIjoxLCJyb2xlIjoiUk9MRV9TVVBFUl9BRE1JTiIsImlhdCI6MTc4MTg0MjMyMSwiZXhwIjoxNzgxODQ0MTIxfQ.csUp-P4IBqCCBJe2zoF_-YdiRSNY23TZDtf6W7JFa2Kz_nWwdhbrZbd0o3Nh35AT
+
+
+### --------------------------------------------------
+
+### 4. 특정 유저 상세 및 친구 목록 탭 조회 테스트
+GET {{baseUrl}}/api/v1/admin/statistics/users/1
+Cookie: accessToken=eyJhbGciOiJIUzM4NCJ9.eyJzdWIiOiJzdXBlcl9hZG1pbiIsInR5cGUiOiJBRE1JTiIsImlkIjoxLCJyb2xlIjoiUk9MRV9TVVBFUl9BRE1JTiIsImlhdCI6MTc4MTg0MjMyMSwiZXhwIjoxNzgxODQ0MTIxfQ.csUp-P4IBqCCBJe2zoF_-YdiRSNY23TZDtf6W7JFa2Kz_nWwdhbrZbd0o3Nh35AT
