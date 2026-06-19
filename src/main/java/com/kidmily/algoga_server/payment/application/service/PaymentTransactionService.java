@@ -24,6 +24,8 @@ import com.kidmily.algoga_server.user.domain.UserRepository;
 import com.kidmily.algoga_server.user.exception.UserErrorCode;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.Cache;
+import org.springframework.cache.CacheManager;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Caching;
 import org.springframework.context.ApplicationEventPublisher;
@@ -54,6 +56,7 @@ public class PaymentTransactionService {
     private final CourseRepository courseRepository;
     private final UserCouponRepository userCouponRepository;
     private final MileageHistoryRepository mileageHistoryRepository;
+    private final CacheManager cacheManager;
 
     @Caching(evict = {
             @CacheEvict(value = "myPayments", key = "#command.userId()"),
@@ -271,6 +274,21 @@ public class PaymentTransactionService {
                 payment.markSuccess(portonePaymentId);
                 payment.updatePaymentMethod(paymentMethod);
                 paymentRepository.save(payment);
+
+                // 웹훅으로 결제 확정 시에도 결제 목록/통계 캐시를 무효화한다.
+                // 웹훅은 PortOne이 호출하는 경로라 userId 파라미터가 없어 @CacheEvict(key=...)를 쓸 수 없으므로,
+                // 저장된 payment 엔티티의 userId 로 CacheManager 를 통해 직접 evict 한다.
+                Long cacheUserId = payment.getUserId();
+                if (cacheUserId != null) {
+                    Cache myPaymentsCache = cacheManager.getCache("myPayments");
+                    if (myPaymentsCache != null) {
+                        myPaymentsCache.evict(cacheUserId);
+                    }
+                }
+                Cache adminStatsCache = cacheManager.getCache("adminPaymentStats");
+                if (adminStatsCache != null) {
+                    adminStatsCache.evict("all");
+                }
 
                 if (payment.getBookingId() != null) {
                     BookingStatus newBookingStatus = resolveBookingStatus(payment.getPaymentType());
