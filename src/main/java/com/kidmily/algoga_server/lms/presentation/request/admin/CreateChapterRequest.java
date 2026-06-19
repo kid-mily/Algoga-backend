@@ -13,6 +13,9 @@ public record CreateChapterRequest(
         @NotBlank(message = "챕터 제목은 필수입니다.")
         String title,
 
+        @Schema(description = "챕터 설명", example = "이 챕터에서 배울 내용을 입력합니다.")
+        String description,
+
         @Schema(description = "영상 재생 시간. 초 단위", example = "600")
         @NotNull(message = "영상 재생 시간은 필수입니다.")
         @Min(value = 1, message = "영상 재생 시간은 1초 이상이어야 합니다.")

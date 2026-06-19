@@ -58,11 +58,11 @@ public class ChapterService implements ChapterUseCase {
         Chapter savedChapter = chapterRepository.save(Chapter.create(
                 command.courseId(),
                 command.title(),
+                command.description(),
                 videoUrl,
                 command.durationSeconds(),
                 command.chapterOrder()
         ));
-
         return ChapterResult.from(savedChapter);
     }
 
@@ -93,6 +93,7 @@ public class ChapterService implements ChapterUseCase {
                 chapterId,
                 courseId,
                 command.title(),
+                command.description(),
                 targetVideoUrl,
                 command.durationSeconds(),
                 command.chapterOrder()

@@ -21,6 +21,7 @@ public class ChapterRepositoryAdapter implements ChapterRepository {
         ChapterJpaEntity entity = new ChapterJpaEntity(
                 chapter.getCourseId(),
                 chapter.getTitle(),
+                chapter.getDescription(),
                 chapter.getVideoUrl(),
                 chapter.getDurationSeconds(),
                 chapter.getChapterOrder()
@@ -50,6 +51,7 @@ public class ChapterRepositoryAdapter implements ChapterRepository {
             Long chapterId,
             Long courseId,
             String title,
+            String description,
             String videoUrl,
             int durationSeconds,
             int chapterOrder
@@ -58,6 +60,7 @@ public class ChapterRepositoryAdapter implements ChapterRepository {
                 .map(entity -> {
                     entity.updateBasicInfo(
                             title,
+                            description,
                             videoUrl,
                             durationSeconds,
                             chapterOrder
@@ -108,6 +111,7 @@ public class ChapterRepositoryAdapter implements ChapterRepository {
                 entity.getId(),
                 entity.getCourseId(),
                 entity.getTitle(),
+                entity.getDescription(),
                 entity.getVideoUrl(),
                 entity.getDurationSeconds(),
                 entity.getOrderNum(),

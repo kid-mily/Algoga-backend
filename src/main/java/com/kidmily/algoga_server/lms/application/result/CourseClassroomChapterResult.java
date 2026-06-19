@@ -3,6 +3,7 @@ package com.kidmily.algoga_server.lms.application.result;
 public record CourseClassroomChapterResult(
         Long chapterId,
         String title,
+        String description,
         String videoUrl,
         int durationSeconds,
         int chapterOrder,

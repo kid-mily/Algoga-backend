@@ -237,6 +237,7 @@ public class CourseService implements CourseUseCase {
             chapterResults.add(new CourseClassroomChapterResult(
                     chapter.getId(),
                     chapter.getTitle(),
+                    chapter.getDescription(),
                     locked ? null : chapter.getVideoUrl(),
                     chapter.getDurationSeconds(),
                     chapter.getChapterOrder(),

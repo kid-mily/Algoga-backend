@@ -13,6 +13,9 @@ public record UpdateChapterRequest(
         @NotBlank(message = "챕터 제목은 필수입니다.")
         String title,
 
+        @Schema(description = "수정할 챕터 설명", example = "수정된 챕터 설명입니다.")
+        String description,
+
         @Schema(description = "수정할 영상 재생 시간. 초 단위", example = "720")
         @NotNull(message = "영상 재생 시간은 필수입니다.")
         @Min(value = 1, message = "영상 재생 시간은 1초 이상이어야 합니다.")

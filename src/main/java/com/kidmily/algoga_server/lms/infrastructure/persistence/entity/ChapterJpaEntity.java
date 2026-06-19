@@ -22,6 +22,9 @@ public class ChapterJpaEntity {
     @Column(nullable = false, length = 255)
     private String title;
 
+    @Column(name = "description", columnDefinition = "TEXT")
+    private String description;
+
     @Column(name = "video_url", nullable = false, length = 500)
     private String videoUrl;
 
@@ -37,12 +40,14 @@ public class ChapterJpaEntity {
     public ChapterJpaEntity(
             Long courseId,
             String title,
+            String description,
             String videoUrl,
             int durationSeconds,
             int orderNum
     ) {
         this.courseId = courseId;
         this.title = title;
+        this.description = description;
         this.videoUrl = videoUrl;
         this.durationSeconds = durationSeconds;
         this.orderNum = orderNum;
@@ -56,6 +61,7 @@ public class ChapterJpaEntity {
             int orderNum
     ) {
         this.title = title;
+        this.description = null;
         this.videoUrl = videoUrl;
         this.durationSeconds = durationSeconds;
         this.orderNum = orderNum;
@@ -64,11 +70,13 @@ public class ChapterJpaEntity {
 
     public void updateBasicInfo(
             String title,
+            String description,
             String videoUrl,
             int durationSeconds,
             int orderNum
     ) {
         this.title = title;
+        this.description = description;
 
         if (videoUrl != null) {
             this.videoUrl = videoUrl;

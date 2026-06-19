@@ -89,6 +89,7 @@ public class AdminChapterController {
         CreateChapterCommand command = new CreateChapterCommand(
                 courseId,
                 request.title(),
+                request.description(),
                 videoFile,
                 request.durationSeconds(),
                 request.chapterOrder()
@@ -136,6 +137,7 @@ public class AdminChapterController {
 
         UpdateChapterCommand command = new UpdateChapterCommand(
                 request.title(),
+                request.description(),
                 videoFile,
                 request.durationSeconds(),
                 request.chapterOrder()
