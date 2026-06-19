@@ -123,7 +123,8 @@ public class AuthService implements SocialLoginProcessor {
                 .gender(Gender.valueOf(request.gender().toUpperCase()))
                 .nickname(request.nickname())
                 .socialType(SocialType.LOCAL)
-                .personalCode(UUID.randomUUID().toString())
+//                .personalCode(UUID.randomUUID().toString())
+                .personalCode(generateUniquePersonalCode()) // 6자리 난수 생성 메서드 호출
                 .loginFailCount(0)
                 .isDeleted(false)
                 .referralCode(request.referralCode())
@@ -303,7 +304,8 @@ public class AuthService implements SocialLoginProcessor {
                 .gender(Gender.valueOf(request.gender().toUpperCase()))
                 .nickname(request.nickname())
                 .socialType(SocialType.valueOf(request.socialType().toUpperCase()))
-                .personalCode(UUID.randomUUID().toString())
+//                .personalCode(UUID.randomUUID().toString())
+                .personalCode(generateUniquePersonalCode()) // 6자로 난수 생성 메서드
                 .loginFailCount(0)
                 .isDeleted(false)
                 .referralCode(request.referralCode())
@@ -359,5 +361,14 @@ public class AuthService implements SocialLoginProcessor {
                     .build().toUriString();
             return new SocialAuthResult(redirectUrl, null, null);
         }
+    }
+
+    // 🌟 중복 없는 6자리 고유 코드를 생성하는 내부 메서드
+    private String generateUniquePersonalCode() {
+        String personalCode;
+        do {
+            personalCode = com.kidmily.algoga_server.user.util.PersonalCodeGenerator.generate();
+        } while (userRepository.existsByPersonalCode(personalCode));
+        return personalCode;
     }
 }
