@@ -30,7 +30,7 @@ public record ManagerCreateRequest(
         @Email(message = "올바른 이메일 형식을 입력해주세요.")
         String email,
 
-        @Schema(description = "관리자 권한 (CONTENT_MANAGER, CS_MANAGER, SETTLEMENT_MANAGER, SUPER_ADMIN)", example = "CS_MANAGER")
+        @Schema(description = "관리자 권한 (CONTENT_MANAGER, CS_MANAGER, SETTLEMENT_MANAGER, STATISTS_MANAGER, SUPER_ADMIN)", example = "CS_MANAGER")
         @NotBlank(message = "권한은 필수입니다.")
         String role
 ) {}
