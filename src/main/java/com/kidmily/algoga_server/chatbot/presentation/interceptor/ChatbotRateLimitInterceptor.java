@@ -31,7 +31,9 @@ public class ChatbotRateLimitInterceptor implements HandlerInterceptor {
 
     @Override
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) throws Exception {
-        
+        if ("true".equals(System.getProperty("LOAD_TEST_MODE"))) {
+            return true;
+        }
         // 🌟 1. 해시 충돌 없는 안전한 String 식별자 추출
         String identifier = extractUserIdentifier(request);
 
