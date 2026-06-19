@@ -33,3 +33,48 @@ Cookie: accessToken=eyJhbGciOiJIUzM4NCJ9.eyJzdWIiOiJzdXBlcl9hZG1pbiIsInR5cGUiOiJ
 # 기대 결과: "검색", "지인추천" 등의 경로별로 가입한 유저 수가 집계되어 나옵니다.
 GET {{baseUrl}}/api/v1/admin/users/statistics/signup-paths
 Cookie: accessToken=eyJhbGciOiJIUzM4NCJ9.eyJzdWIiOiJzdXBlcl9hZG1pbiIsInR5cGUiOiJBRE1JTiIsImlkIjoxLCJyb2xlIjoiUk9MRV9TVVBFUl9BRE1JTiIsImlhdCI6MTc4MTg1NjIzMSwiZXhwIjoxNzgxODU4MDMxfQ.Th4dwnwi6i5RDKRpkZqzJGW8t_avotFjGj46klJH78QT126BcW9l6VaIeiyzAPWs
+
+
+
+### --------------------------------------------------
+
+
+
+### 2. 신규 회원가입 (Personal Code 6자리 생성 테스트)
+POST {{baseUrl}}/api/v1/auth/signup
+Content-Type: application/json
+
+{
+  "username": "wndmsld1234",
+  "email": "wndmsld12@gmail.com",
+  "password": "test0302",
+  "name": "길똥이",
+  "phone": "010-4973-1489",
+  "birthDate": "2001-02-01",
+  "gender": "MALE",
+  "nickname": "코드테스터",
+  "termsServiceAgreed": true,
+  "termsPrivacyAgreed": true,
+  "termsMarketingAgreed": false
+}
+
+### --------------------------------------------------
+
+### 3. 로그인 및 내 프로필 조회 테스트 (코드 발급 확인)
+# 3-1. 먼저 로그인을 해서 토큰을 받습니다.
+POST {{baseUrl}}/api/v1/auth/login
+Content-Type: application/json
+
+{
+  "username": "test_user_99",
+  "password": "Password123!"
+}
+
+> {%
+    // 인텔리제이가 응답으로 받은 토큰을 변수에 자동 저장하도록 하는 스크립트입니다.
+    client.global.set("auth_token", response.body.data.accessToken);
+%}
+
+### 3-2. 내 프로필 조회를 통해 6자리 코드가 제대로 들어갔는지 확인!
+GET {{baseUrl}}/api/v1/users/me
+Authorization: Bearer {{auth_token}}
