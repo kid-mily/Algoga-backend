@@ -17,6 +17,7 @@ public interface ChapterRepository {
             Long chapterId,
             Long courseId,
             String title,
+            String description,
             String videoUrl,
             int durationSeconds,
             int chapterOrder

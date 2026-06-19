@@ -5,6 +5,7 @@ public class Chapter {
     private final Long id;
     private final Long courseId;
     private final String title;
+    private final String description;
     private final String videoUrl;
     private final int durationSeconds;
     private final int chapterOrder;
@@ -14,6 +15,7 @@ public class Chapter {
             Long id,
             Long courseId,
             String title,
+            String description,
             String videoUrl,
             int durationSeconds,
             int chapterOrder,
@@ -22,6 +24,7 @@ public class Chapter {
         this.id = id;
         this.courseId = courseId;
         this.title = title;
+        this.description = description;
         this.videoUrl = videoUrl;
         this.durationSeconds = durationSeconds;
         this.chapterOrder = chapterOrder;
@@ -31,6 +34,7 @@ public class Chapter {
     public static Chapter create(
             Long courseId,
             String title,
+            String description,
             String videoUrl,
             int durationSeconds,
             int chapterOrder
@@ -39,6 +43,7 @@ public class Chapter {
                 null,
                 courseId,
                 title,
+                description,
                 videoUrl,
                 durationSeconds,
                 chapterOrder,
@@ -56,10 +61,33 @@ public class Chapter {
                 null,
                 null,
                 title,
+                null,
                 videoUrl,
                 durationSeconds,
                 chapterOrder,
                 false
+        );
+    }
+
+    public static Chapter withId(
+            Long id,
+            Long courseId,
+            String title,
+            String description,
+            String videoUrl,
+            int durationSeconds,
+            int chapterOrder,
+            boolean deleted
+    ) {
+        return new Chapter(
+                id,
+                courseId,
+                title,
+                description,
+                videoUrl,
+                durationSeconds,
+                chapterOrder,
+                deleted
         );
     }
 
@@ -74,30 +102,11 @@ public class Chapter {
                 id,
                 null,
                 title,
+                null,
                 videoUrl,
                 durationSeconds,
                 chapterOrder,
                 false
-        );
-    }
-
-    public static Chapter withId(
-            Long id,
-            Long courseId,
-            String title,
-            String videoUrl,
-            int durationSeconds,
-            int chapterOrder,
-            boolean deleted
-    ) {
-        return new Chapter(
-                id,
-                courseId,
-                title,
-                videoUrl,
-                durationSeconds,
-                chapterOrder,
-                deleted
         );
     }
 
@@ -112,6 +121,7 @@ public class Chapter {
     public String getTitle() {
         return title;
     }
+    public String getDescription() {return description;  }
 
     public String getVideoUrl() {
         return videoUrl;

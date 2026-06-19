@@ -42,6 +42,9 @@ public record CourseClassroomResponse(
             @Schema(description = "챕터 제목", example = "1강. 여행 전 필수 준비")
             String title,
 
+            @Schema(description = "챕터 설명", example = "이 챕터에서 배울 내용을 입력합니다.")
+            String description,
+
             @Schema(description = "영상 URL. 잠긴 챕터는 null")
             String videoUrl,
 
@@ -67,6 +70,7 @@ public record CourseClassroomResponse(
             return new ChapterLearningResponse(
                     result.chapterId(),
                     result.title(),
+                    result.description(),
                     result.videoUrl(),
                     result.durationSeconds(),
                     result.chapterOrder(),

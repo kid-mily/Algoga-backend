@@ -106,6 +106,7 @@ public class CourseMapper {
                 entity.getId(),
                 entity.getCourseId(),
                 entity.getTitle(),
+                entity.getDescription(),
                 entity.getVideoUrl(),
                 entity.getDurationSeconds(),
                 entity.getOrderNum(),
