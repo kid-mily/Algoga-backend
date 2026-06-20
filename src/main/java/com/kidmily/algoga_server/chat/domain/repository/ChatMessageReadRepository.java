@@ -9,4 +9,5 @@ public interface ChatMessageReadRepository {
     long countUnreadByRoomIdAndUserId(Long roomId, Long userId);
     long countUnreadByMessageId(Long messageId);
     void deleteByUserId(Long userId);
+    void deleteByRoomIdAndUserId(Long roomId, Long userId);
 }

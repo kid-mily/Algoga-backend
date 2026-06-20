@@ -41,4 +41,9 @@ public class ChatMessageReadRepositoryAdapter implements ChatMessageReadReposito
     public void deleteByUserId(Long userId) {
         springDataRepository.deleteByUserId(userId);
     }
+
+    @Override
+    public void deleteByRoomIdAndUserId(Long roomId, Long userId) {
+        springDataRepository.deleteByRoomIdAndUserId(roomId, userId);
+    }
 }

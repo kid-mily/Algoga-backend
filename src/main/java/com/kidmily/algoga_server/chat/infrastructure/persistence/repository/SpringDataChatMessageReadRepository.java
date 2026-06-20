@@ -30,4 +30,8 @@ public interface SpringDataChatMessageReadRepository extends JpaRepository<ChatM
     long countUnread(@Param("roomId") Long roomId, @Param("userId") Long userId);
     long countByMessageIdAndReadAtIsNull(Long messageId);
     void deleteByUserId(Long userId);
+
+    @Modifying(clearAutomatically = true)
+    @Query("DELETE FROM ChatMessageReadJpaEntity r WHERE r.userId = :userId AND r.messageId IN (SELECT m.id FROM ChatMessageJpaEntity m WHERE m.roomId = :roomId)")
+    void deleteByRoomIdAndUserId(@Param("roomId") Long roomId, @Param("userId") Long userId);
 }

@@ -154,7 +154,7 @@ public class ChatService implements ChatUseCase {
                 .orElseThrow(() -> new ChatException(ChatErrorCode.CHAT_NOT_MEMBER));
 
         chatRoomMemberRepository.deleteByRoomIdAndUserId(roomId, userId);
-        chatMessageReadRepository.deleteByUserId(userId);
+        chatMessageReadRepository.deleteByRoomIdAndUserId(roomId, userId);
 
         if (chatRoomMemberRepository.countByRoomId(roomId) == 0) {
             chatRoomRepository.softDelete(roomId);
