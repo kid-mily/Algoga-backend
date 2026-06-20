@@ -21,7 +21,9 @@ public enum BenefitErrorCode implements BaseErrorCode {
     COUNTRY_NOT_FOUND(HttpStatus.NOT_FOUND, "BENEFIT_010", "해당 국가를 찾을 수 없습니다."),
     BENEFIT_UNAUTHORIZED(HttpStatus.UNAUTHORIZED, "BENEFIT_011", "로그인이 필요합니다."),
     COURSE_REWARD_PERIOD_EXPIRED(HttpStatus.BAD_REQUEST, "BENEFIT_012", "강의 보상 지급 가능 기간이 만료되었습니다."),
-    DUPLICATED_COUPON_POLICY_NAME(HttpStatus.CONFLICT, "BENEFIT_013", "이미 사용 중인 쿠폰명입니다.");
+    DUPLICATED_COUPON_POLICY_NAME(HttpStatus.CONFLICT, "BENEFIT_013", "이미 사용 중인 쿠폰명입니다."),
+    COURSE_REWARD_FAILURE_NOT_FOUND(HttpStatus.NOT_FOUND, "BENEFIT_014", "강의 보상 실패 기록을 찾을 수 없습니다."),
+    COURSE_REWARD_FAILURE_ALREADY_RESOLVED(HttpStatus.CONFLICT, "BENEFIT_015", "이미 처리 완료된 강의 보상 실패 기록입니다.");
 
     private final HttpStatus status;
     private final String code;

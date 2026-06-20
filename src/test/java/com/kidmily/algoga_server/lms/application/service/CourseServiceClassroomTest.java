@@ -160,6 +160,7 @@ class CourseServiceClassroomTest {
                 chapterId,
                 COURSE_ID,
                 chapterOrder + " chapter",
+                null,
                 videoUrl,
                 600,
                 chapterOrder,
