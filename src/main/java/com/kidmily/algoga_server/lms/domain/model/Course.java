@@ -11,6 +11,7 @@ public class Course {
     private String title;
     private String description;
     private Integer price;
+    private Integer maxRewardMileage;
     private String thumbnailUrl;
     private String fileUrl;
     private List<CourseFile> courseFiles;
@@ -26,6 +27,7 @@ public class Course {
             String title,
             String description,
             Integer price,
+            Integer maxRewardMileage,
             String thumbnailUrl,
             String fileUrl,
             List<CourseFile> courseFiles,
@@ -40,6 +42,7 @@ public class Course {
         this.title = title;
         this.description = description;
         this.price = price;
+        this.maxRewardMileage = maxRewardMileage != null ? maxRewardMileage : 0;
         this.thumbnailUrl = thumbnailUrl;
         this.fileUrl = fileUrl;
         this.courseFiles = courseFiles != null ? courseFiles : new ArrayList<>();
@@ -55,6 +58,7 @@ public class Course {
             String title,
             String description,
             Integer price,
+            Integer maxRewardMileage,
             String thumbnailUrl,
             String fileUrl,
             String level,
@@ -72,6 +76,7 @@ public class Course {
                 title,
                 description,
                 price,
+                maxRewardMileage,
                 thumbnailUrl,
                 courseFiles,
                 level,
@@ -85,6 +90,7 @@ public class Course {
             String title,
             String description,
             Integer price,
+            Integer maxRewardMileage,
             String thumbnailUrl,
             List<CourseFile> courseFiles,
             String level,
@@ -97,6 +103,7 @@ public class Course {
                 title,
                 description,
                 price,
+                maxRewardMileage,
                 thumbnailUrl,
                 getFirstFileUrl(courseFiles),
                 courseFiles,
@@ -114,6 +121,7 @@ public class Course {
             String title,
             String description,
             Integer price,
+            Integer maxRewardMileage,
             String thumbnailUrl,
             String fileUrl,
             String level,
@@ -127,6 +135,7 @@ public class Course {
                 title,
                 description,
                 price,
+                maxRewardMileage,
                 thumbnailUrl,
                 fileUrl,
                 new ArrayList<>(),
@@ -144,6 +153,7 @@ public class Course {
             String title,
             String description,
             Integer price,
+            Integer maxRewardMileage,
             String thumbnailUrl,
             String fileUrl,
             String level,
@@ -158,6 +168,7 @@ public class Course {
                 title,
                 description,
                 price,
+                maxRewardMileage,
                 thumbnailUrl,
                 fileUrl,
                 new ArrayList<>(),
@@ -175,6 +186,7 @@ public class Course {
             String title,
             String description,
             Integer price,
+            Integer maxRewardMileage,
             String thumbnailUrl,
             String fileUrl,
             List<CourseFile> courseFiles,
@@ -190,6 +202,7 @@ public class Course {
                 title,
                 description,
                 price,
+                maxRewardMileage,
                 thumbnailUrl,
                 fileUrl,
                 courseFiles,
@@ -242,6 +255,10 @@ public class Course {
 
     public Integer getPrice() {
         return price;
+    }
+
+    public Integer getMaxRewardMileage() {
+        return maxRewardMileage;
     }
 
     public String getThumbnailUrl() {

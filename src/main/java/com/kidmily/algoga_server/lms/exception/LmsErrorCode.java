@@ -9,7 +9,7 @@ import org.springframework.http.HttpStatus;
 @RequiredArgsConstructor
 public enum LmsErrorCode implements BaseErrorCode {
 
-    COURSE_NOT_FOUND(HttpStatus.NOT_FOUND, "LMS_001", "해당 과정을 찾을 수 없습니다."),
+    COURSE_NOT_FOUND(HttpStatus.NOT_FOUND, "LMS_001", "해당 강의를 찾을 수 없습니다."),
     QUIZ_NOT_FOUND(HttpStatus.NOT_FOUND, "LMS_002", "해당 퀴즈를 찾을 수 없습니다."),
     INVALID_PROGRESS(HttpStatus.BAD_REQUEST, "LMS_003", "유효하지 않은 학습 진도입니다."),
     FILE_UPLOAD_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "LMS_004", "파일 저장에 실패했습니다."),
@@ -23,10 +23,10 @@ public enum LmsErrorCode implements BaseErrorCode {
     INVALID_QUIZ_OPTION(HttpStatus.BAD_REQUEST, "LMS_012", "퀴즈 보기는 4개 모두 입력해야 합니다."),
     INVALID_QUIZ_ANSWER(HttpStatus.BAD_REQUEST, "LMS_013", "퀴즈 정답 번호는 1부터 4 사이여야 합니다."),
     CHAPTER_LOCKED(HttpStatus.BAD_REQUEST, "LMS_014", "이전 강의를 먼저 완료해주세요."),
-    QUIZ_LOCKED(HttpStatus.BAD_REQUEST, "LMS_015", "모든 챕터를 완료한 후 퀴즈를 풀 수 있습니다."),
+    QUIZ_LOCKED(HttpStatus.BAD_REQUEST, "LMS_015", "모든 챕터를 완료해야 퀴즈를 풀 수 있습니다."),
     INVALID_QUIZ_SUBMISSION(HttpStatus.BAD_REQUEST, "LMS_016", "퀴즈 제출 답안이 올바르지 않습니다."),
-    COURSE_ALREADY_COMPLETED(HttpStatus.CONFLICT, "LMS_017", "이미 이수 완료한 강의입니다."),
-    QUIZ_NOT_SUBMITTED(HttpStatus.BAD_REQUEST, "LMS_018", "퀴즈 제출 후 강의를 이수 완료할 수 있습니다."),
+    COURSE_ALREADY_COMPLETED(HttpStatus.CONFLICT, "LMS_017", "이미 수강 완료한 강의입니다."),
+    QUIZ_NOT_SUBMITTED(HttpStatus.BAD_REQUEST, "LMS_018", "퀴즈 제출 후 강의를 완료할 수 있습니다."),
     COURSE_COMPLETION_NOT_FOUND(HttpStatus.NOT_FOUND, "LMS_019", "강의 이수 내역을 찾을 수 없습니다."),
 
     QNA_NOT_FOUND(HttpStatus.NOT_FOUND, "LMS_023", "해당 Q&A를 찾을 수 없습니다."),
@@ -38,12 +38,13 @@ public enum LmsErrorCode implements BaseErrorCode {
 
     CHAPTER_LIMIT_EXCEEDED(HttpStatus.BAD_REQUEST, "LMS_032", "챕터는 최대 5개까지만 등록할 수 있습니다."),
     DUPLICATED_CHAPTER_ORDER(HttpStatus.BAD_REQUEST, "LMS_033", "이미 사용 중인 챕터 순서입니다."),
-    INVALID_COURSE_LEVEL(HttpStatus.BAD_REQUEST, "LMS_034", "강의 난이도는 BEGINNER, INTERMEDIATE, ADVANCED 중 하나여야 합니다."),
+    INVALID_COURSE_LEVEL(HttpStatus.BAD_REQUEST, "LMS_034", "강의 레벨은 BEGINNER, INTERMEDIATE, ADVANCED 중 하나여야 합니다."),
     NOT_ENROLLED(HttpStatus.FORBIDDEN, "LMS_035", "수강 등록된 강의가 아닙니다."),
     DIAGNOSIS_QUESTION_NOT_FOUND(HttpStatus.NOT_FOUND, "LMS_036", "진단평가 문제를 찾을 수 없습니다."),
     INVALID_DIAGNOSIS_ANSWER(HttpStatus.BAD_REQUEST, "LMS_037", "진단평가 답안이 올바르지 않습니다."),
     DIAGNOSIS_RESULT_NOT_FOUND(HttpStatus.NOT_FOUND, "LMS_038", "진단평가 결과를 찾을 수 없습니다."),
-    DIAGNOSIS_LOGIN_REQUIRED(HttpStatus.UNAUTHORIZED, "LMS_039", "진단평가 결과를 저장하려면 로그인이 필요합니다.");
+    DIAGNOSIS_LOGIN_REQUIRED(HttpStatus.UNAUTHORIZED, "LMS_039", "진단평가 결과를 저장하려면 로그인이 필요합니다."),
+    INVALID_COURSE_REWARD_MILEAGE(HttpStatus.BAD_REQUEST, "LMS_040", "강의 최대 지급 마일리지는 0 이상이어야 합니다.");
 
     private final HttpStatus status;
     private final String code;

@@ -71,6 +71,7 @@ public class LmsCourseAdapter implements LmsCoursePort {
         return new CourseRewardInfo(
                 invokeNoArg(course, "getId"),
                 invokeNoArg(course, "getPrice"),
+                invokeNoArg(course, "getMaxRewardMileage"),
                 invokeNoArg(submission, "getCorrectCount"),
                 invokeNoArg(enrolledCourse, "getEnrolledAt")
         );
