@@ -24,6 +24,7 @@ public interface CourseRepository {
             String title,
             String description,
             Integer price,
+            Integer maxRewardMileage,
             String thumbnailUrl,
             String fileUrl,
             List<CourseFile> courseFiles,

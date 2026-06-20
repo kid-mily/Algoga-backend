@@ -16,6 +16,7 @@ public interface LmsCoursePort {
     record CourseRewardInfo(
             Long courseId,
             Integer coursePrice,
+            Integer maxRewardMileage,
             int correctCount,
             LocalDateTime enrolledAt
     ) {

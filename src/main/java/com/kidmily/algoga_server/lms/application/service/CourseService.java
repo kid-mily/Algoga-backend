@@ -1,14 +1,24 @@
 package com.kidmily.algoga_server.lms.application.service;
 
-import com.kidmily.algoga_server.global.port.out.FileStoragePort;
 import com.kidmily.algoga_server.lms.application.command.AnswerCourseQnaCommand;
 import com.kidmily.algoga_server.lms.application.command.CompleteCourseCommand;
 import com.kidmily.algoga_server.lms.application.command.CreateCourseCommand;
 import com.kidmily.algoga_server.lms.application.command.CreateCourseQnaCommand;
 import com.kidmily.algoga_server.lms.application.command.CreateCourseQnaCommentCommand;
 import com.kidmily.algoga_server.lms.application.command.UpdateCourseCommand;
+import com.kidmily.algoga_server.lms.application.port.CourseFileStoragePort;
+import com.kidmily.algoga_server.lms.application.port.UploadFile;
 import com.kidmily.algoga_server.lms.application.port.UserProfilePort;
-import com.kidmily.algoga_server.lms.application.result.*;
+import com.kidmily.algoga_server.lms.application.result.CourseClassroomChapterResult;
+import com.kidmily.algoga_server.lms.application.result.CourseClassroomResult;
+import com.kidmily.algoga_server.lms.application.result.CourseCompletionResult;
+import com.kidmily.algoga_server.lms.application.result.CourseFileResult;
+import com.kidmily.algoga_server.lms.application.result.CourseQnaCommentResult;
+import com.kidmily.algoga_server.lms.application.result.CourseQnaDetailResult;
+import com.kidmily.algoga_server.lms.application.result.CourseQnaResult;
+import com.kidmily.algoga_server.lms.application.result.CourseResult;
+import com.kidmily.algoga_server.lms.application.result.CourseStudentResult;
+import com.kidmily.algoga_server.lms.application.result.MyCourseResult;
 import com.kidmily.algoga_server.lms.application.usecase.CourseUseCase;
 import com.kidmily.algoga_server.lms.domain.model.Chapter;
 import com.kidmily.algoga_server.lms.domain.model.Country;
@@ -40,7 +50,6 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.multipart.MultipartFile;
 
 import java.time.LocalDateTime;
 import java.util.Comparator;
@@ -67,12 +76,13 @@ public class CourseService implements CourseUseCase {
     private final MapRepository mapRepository;
     private final EnrollmentRepository enrollmentRepository;
     private final UserProfilePort userProfilePort;
-    private final FileStoragePort fileStoragePort;
+    private final CourseFileStoragePort fileStoragePort;
     private final LmsStorageSettings storageSettings;
 
     @Override
     public Long createCourse(CreateCourseCommand command) {
         validateCountry(command.countryId());
+        validateMaxRewardMileage(command.maxRewardMileage());
 
         String thumbnailUrl = null;
 
@@ -92,6 +102,7 @@ public class CourseService implements CourseUseCase {
                 command.title(),
                 command.description(),
                 command.price(),
+                command.maxRewardMileage(),
                 thumbnailUrl,
                 courseFiles,
                 command.level(),
@@ -115,6 +126,8 @@ public class CourseService implements CourseUseCase {
 
     @Override
     public CourseResult updateCourse(Long courseId, UpdateCourseCommand command) {
+        validateMaxRewardMileage(command.maxRewardMileage());
+
         Course course = findCourse(courseId);
 
         String targetThumbnailUrl = course.getThumbnailUrl();
@@ -145,6 +158,7 @@ public class CourseService implements CourseUseCase {
                 command.title(),
                 command.description(),
                 command.price(),
+                command.maxRewardMileage(),
                 targetThumbnailUrl,
                 targetFileUrl,
                 targetCourseFiles,
@@ -409,6 +423,7 @@ public class CourseService implements CourseUseCase {
     public Map<Long, Long> countPublishedCoursesByCountryIds(List<Long> countryIds) {
         return courseRepository.countPublishedByCountryIds(countryIds);
     }
+
     private Course findCourse(Long courseId) {
         return courseRepository.findByIdAndDeletedFalse(courseId)
                 .orElseThrow(() -> new LmsException(LmsErrorCode.COURSE_NOT_FOUND));
@@ -428,6 +443,7 @@ public class CourseService implements CourseUseCase {
             throw new LmsException(LmsErrorCode.NOT_ENROLLED);
         }
     }
+
     private void validateCountry(Long countryId) {
         mapRepository.findActiveCountryById(countryId)
                 .orElseThrow(() -> new LmsException(LmsErrorCode.COUNTRY_NOT_FOUND));
@@ -436,6 +452,12 @@ public class CourseService implements CourseUseCase {
     private void validateCourseLevel(String level) {
         if (CourseLevel.find(level).isEmpty()) {
             throw new LmsException(LmsErrorCode.INVALID_COURSE_LEVEL);
+        }
+    }
+
+    private void validateMaxRewardMileage(Integer maxRewardMileage) {
+        if (maxRewardMileage == null || maxRewardMileage < 0) {
+            throw new LmsException(LmsErrorCode.INVALID_COURSE_REWARD_MILEAGE);
         }
     }
 
@@ -663,18 +685,18 @@ public class CourseService implements CourseUseCase {
                 .orElse(defaultStatus);
     }
 
-    private List<CourseFile> uploadCourseFiles(List<MultipartFile> attachedFiles) {
+    private List<CourseFile> uploadCourseFiles(List<UploadFile> attachedFiles) {
         if (!hasAttachedFiles(attachedFiles)) {
             return List.of();
         }
 
-        List<MultipartFile> validFiles = attachedFiles.stream()
+        List<UploadFile> validFiles = attachedFiles.stream()
                 .filter(file -> file != null && !file.isEmpty())
                 .toList();
 
         return java.util.stream.IntStream.range(0, validFiles.size())
                 .mapToObj(index -> {
-                    MultipartFile file = validFiles.get(index);
+                    UploadFile file = validFiles.get(index);
 
                     String fileUrl = fileStoragePort.uploadFile(
                             file,
@@ -682,12 +704,12 @@ public class CourseService implements CourseUseCase {
                             storageSettings.getCourseFileDirectory()
                     );
 
-                    return CourseFile.create(fileUrl, file.getOriginalFilename(), index + 1);
+                    return CourseFile.create(fileUrl, file.originalFilename(), index + 1);
                 })
                 .toList();
     }
 
-    private boolean hasAttachedFiles(List<MultipartFile> attachedFiles) {
+    private boolean hasAttachedFiles(List<UploadFile> attachedFiles) {
         return attachedFiles != null
                 && attachedFiles.stream().anyMatch(file -> file != null && !file.isEmpty());
     }

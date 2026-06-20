@@ -1,6 +1,7 @@
 package com.kidmily.algoga_server.lms.presentation.request.admin;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
@@ -12,11 +13,11 @@ public record CreateCourseRequest(
         @NotNull(message = "국가 ID는 필수입니다.")
         Long countryId,
 
-        @Schema(description = "강의 제목", example = "오사카 여행 준비 마스터")
+        @Schema(description = "강의 제목", example = "오사카 여행 준비")
         @NotBlank(message = "강의 제목은 필수입니다.")
         String title,
 
-        @Schema(description = "강의 설명", example = "환전부터 교통패스까지 오사카 여행 준비에 필요한 내용을 학습합니다.")
+        @Schema(description = "강의 설명")
         @NotBlank(message = "강의 설명은 필수입니다.")
         String description,
 
@@ -25,12 +26,17 @@ public record CreateCourseRequest(
         @Positive(message = "강의 가격은 0보다 커야 합니다.")
         Integer price,
 
+        @Schema(description = "강의 완료 시 지급 가능한 최대 마일리지", example = "1000")
+        @NotNull(message = "최대 지급 마일리지는 필수입니다.")
+        @Min(value = 0, message = "최대 지급 마일리지는 0 이상이어야 합니다.")
+        Integer maxRewardMileage,
+
         @Schema(
-                description = "강의 난이도. BEGINNER=초급, INTERMEDIATE=중급, ADVANCED=고급",
+                description = "강의 레벨. BEGINNER=초급, INTERMEDIATE=중급, ADVANCED=고급",
                 example = "BEGINNER",
                 allowableValues = {"BEGINNER", "INTERMEDIATE", "ADVANCED"}
         )
-        @NotBlank(message = "강의 난이도는 필수입니다.")
+        @NotBlank(message = "강의 레벨은 필수입니다.")
         String level,
 
         @Schema(

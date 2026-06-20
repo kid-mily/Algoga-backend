@@ -38,6 +38,9 @@ public class CourseJpaEntity {
     @Column(name = "price", nullable = false)
     private Integer price;
 
+    @Column(name = "max_reward_mileage", nullable = false)
+    private Integer maxRewardMileage = 0;
+
     @Column(name = "thumbnail_url", nullable = false, length = 500)
     private String thumbnailUrl;
 
@@ -75,6 +78,7 @@ public class CourseJpaEntity {
             String title,
             String description,
             Integer price,
+            Integer maxRewardMileage,
             String thumbnailUrl,
             String fileUrl,
             String level,
@@ -86,6 +90,7 @@ public class CourseJpaEntity {
                 title,
                 description,
                 price,
+                maxRewardMileage,
                 thumbnailUrl,
                 fileUrl,
                 new ArrayList<>(),
@@ -100,6 +105,7 @@ public class CourseJpaEntity {
             String title,
             String description,
             Integer price,
+            Integer maxRewardMileage,
             String thumbnailUrl,
             String fileUrl,
             List<CourseFileJpaEntity> courseFiles,
@@ -111,6 +117,7 @@ public class CourseJpaEntity {
         this.title = title;
         this.description = description;
         this.price = price;
+        this.maxRewardMileage = maxRewardMileage != null ? maxRewardMileage : 0;
         this.thumbnailUrl = thumbnailUrl;
         this.fileUrl = fileUrl;
         this.courseFiles = courseFiles != null ? courseFiles : new ArrayList<>();
@@ -123,18 +130,20 @@ public class CourseJpaEntity {
             String title,
             String description,
             Integer price,
+            Integer maxRewardMileage,
             String thumbnailUrl,
             String fileUrl,
             String level,
             String status
     ) {
-        updateBasicInfo(title, description, price, thumbnailUrl, fileUrl, null, level, status);
+        updateBasicInfo(title, description, price, maxRewardMileage, thumbnailUrl, fileUrl, null, level, status);
     }
 
     public void updateBasicInfo(
             String title,
             String description,
             Integer price,
+            Integer maxRewardMileage,
             String thumbnailUrl,
             String fileUrl,
             List<CourseFileJpaEntity> newCourseFiles,
@@ -144,6 +153,7 @@ public class CourseJpaEntity {
         this.title = title;
         this.description = description;
         this.price = price;
+        this.maxRewardMileage = maxRewardMileage != null ? maxRewardMileage : 0;
         this.level = level;
         this.status = status;
 

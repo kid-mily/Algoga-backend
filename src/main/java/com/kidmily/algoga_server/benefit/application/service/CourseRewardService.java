@@ -60,7 +60,7 @@ public class CourseRewardService implements CourseRewardUseCase {
                 : issueCoupons(command.userId(), couponPolicies);
 
         int mileageRate = calculateMileageRate(courseRewardInfo.correctCount());
-        int mileageAmount = calculateMileageAmount(courseRewardInfo.coursePrice(), mileageRate);
+        int mileageAmount = calculateMileageAmount(courseRewardInfo.maxRewardMileage(), mileageRate);
 
         MileageHistory mileageHistory = MileageHistory.earn(
                 command.userId(),
@@ -145,14 +145,14 @@ public class CourseRewardService implements CourseRewardUseCase {
     }
 
     private int calculateMileageAmount(
-            Integer price,
+            Integer maxRewardMileage,
             int mileageRate
     ) {
-        if (price == null || price <= 0) {
+        if (maxRewardMileage == null || maxRewardMileage <= 0) {
             return 0;
         }
 
-        return (int) Math.floor(price * (mileageRate / 100.0));
+        return (int) Math.floor(maxRewardMileage * (mileageRate / 100.0));
     }
 
 }

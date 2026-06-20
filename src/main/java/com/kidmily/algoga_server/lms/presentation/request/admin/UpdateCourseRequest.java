@@ -1,6 +1,7 @@
 package com.kidmily.algoga_server.lms.presentation.request.admin;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
@@ -20,6 +21,11 @@ public record UpdateCourseRequest(
         @NotNull(message = "강의 가격은 필수입니다.")
         @Positive(message = "강의 가격은 0보다 커야 합니다.")
         Integer price,
+
+        @Schema(description = "수정할 최대 지급 마일리지", example = "1000")
+        @NotNull(message = "최대 지급 마일리지는 필수입니다.")
+        @Min(value = 0, message = "최대 지급 마일리지는 0 이상이어야 합니다.")
+        Integer maxRewardMileage,
 
         @Schema(
                 description = "강의 난이도. BEGINNER=초급, INTERMEDIATE=중급, ADVANCED=고급",
