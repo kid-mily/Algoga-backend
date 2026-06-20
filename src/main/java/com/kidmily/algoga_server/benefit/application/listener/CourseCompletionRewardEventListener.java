@@ -1,0 +1,45 @@
+package com.kidmily.algoga_server.benefit.application.listener;
+
+import com.kidmily.algoga_server.benefit.application.command.RecordCourseRewardFailureCommand;
+import com.kidmily.algoga_server.benefit.application.command.RewardCourseCommand;
+import com.kidmily.algoga_server.benefit.application.usecase.CourseRewardFailureUseCase;
+import com.kidmily.algoga_server.benefit.application.usecase.CourseRewardUseCase;
+import com.kidmily.algoga_server.global.event.CourseCompletionCompletedEvent;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Component;
+import org.springframework.transaction.event.TransactionPhase;
+import org.springframework.transaction.event.TransactionalEventListener;
+
+@Slf4j
+@Component
+@RequiredArgsConstructor
+public class CourseCompletionRewardEventListener {
+
+    private final CourseRewardUseCase courseRewardUseCase;
+    private final CourseRewardFailureUseCase courseRewardFailureUseCase;
+
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+    public void grantReward(CourseCompletionCompletedEvent event) {
+        try {
+            courseRewardUseCase.rewardCourseWithDetails(
+                    new RewardCourseCommand(event.userId(), event.courseId())
+            );
+
+            log.info("[CourseCompletionReward] Reward granted. userId={}, courseId={}, completionId={}",
+                    event.userId(), event.courseId(), event.completionId());
+        } catch (Exception exception) {
+            courseRewardFailureUseCase.recordFailure(
+                    new RecordCourseRewardFailureCommand(
+                            event.userId(),
+                            event.courseId(),
+                            event.completionId(),
+                            exception.getMessage()
+                    )
+            );
+
+            log.error("[CourseCompletionReward] Failed to grant reward. userId={}, courseId={}, completionId={}",
+                    event.userId(), event.courseId(), event.completionId(), exception);
+        }
+    }
+}

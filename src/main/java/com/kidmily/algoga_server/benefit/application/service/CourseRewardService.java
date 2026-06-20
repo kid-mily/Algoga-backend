@@ -134,14 +134,14 @@ public class CourseRewardService implements CourseRewardUseCase {
 
     private int calculateMileageRate(int correctCount) {
         if (correctCount >= 4) {
-            return 10;
+            return 100;
         }
 
         if (correctCount >= 2) {
-            return 7;
+            return 70;
         }
 
-        return 5;
+        return 50;
     }
 
     private int calculateMileageAmount(

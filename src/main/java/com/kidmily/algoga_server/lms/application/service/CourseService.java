@@ -1,46 +1,11 @@
 package com.kidmily.algoga_server.lms.application.service;
 
-import com.kidmily.algoga_server.lms.application.command.AnswerCourseQnaCommand;
-import com.kidmily.algoga_server.lms.application.command.CompleteCourseCommand;
-import com.kidmily.algoga_server.lms.application.command.CreateCourseCommand;
-import com.kidmily.algoga_server.lms.application.command.CreateCourseQnaCommand;
-import com.kidmily.algoga_server.lms.application.command.CreateCourseQnaCommentCommand;
-import com.kidmily.algoga_server.lms.application.command.UpdateCourseCommand;
-import com.kidmily.algoga_server.lms.application.port.CourseFileStoragePort;
-import com.kidmily.algoga_server.lms.application.port.UploadFile;
-import com.kidmily.algoga_server.lms.application.port.UserProfilePort;
-import com.kidmily.algoga_server.lms.application.result.CourseClassroomChapterResult;
-import com.kidmily.algoga_server.lms.application.result.CourseClassroomResult;
-import com.kidmily.algoga_server.lms.application.result.CourseCompletionResult;
-import com.kidmily.algoga_server.lms.application.result.CourseFileResult;
-import com.kidmily.algoga_server.lms.application.result.CourseQnaCommentResult;
-import com.kidmily.algoga_server.lms.application.result.CourseQnaDetailResult;
-import com.kidmily.algoga_server.lms.application.result.CourseQnaResult;
-import com.kidmily.algoga_server.lms.application.result.CourseResult;
-import com.kidmily.algoga_server.lms.application.result.CourseStudentResult;
-import com.kidmily.algoga_server.lms.application.result.MyCourseResult;
+import com.kidmily.algoga_server.lms.application.command.*;
+import com.kidmily.algoga_server.lms.application.port.*;
+import com.kidmily.algoga_server.lms.application.result.*;
 import com.kidmily.algoga_server.lms.application.usecase.CourseUseCase;
-import com.kidmily.algoga_server.lms.domain.model.Chapter;
-import com.kidmily.algoga_server.lms.domain.model.Country;
-import com.kidmily.algoga_server.lms.domain.model.Course;
-import com.kidmily.algoga_server.lms.domain.model.CourseCompletion;
-import com.kidmily.algoga_server.lms.domain.model.CourseFile;
-import com.kidmily.algoga_server.lms.domain.model.CourseLevel;
-import com.kidmily.algoga_server.lms.domain.model.CourseQna;
-import com.kidmily.algoga_server.lms.domain.model.CourseQnaComment;
-import com.kidmily.algoga_server.lms.domain.model.CourseReview;
-import com.kidmily.algoga_server.lms.domain.model.CourseStatus;
-import com.kidmily.algoga_server.lms.domain.model.LearningProgress;
-import com.kidmily.algoga_server.lms.domain.repository.ChapterRepository;
-import com.kidmily.algoga_server.lms.domain.repository.CourseCompletionRepository;
-import com.kidmily.algoga_server.lms.domain.repository.CourseQnaCommentRepository;
-import com.kidmily.algoga_server.lms.domain.repository.CourseQnaRepository;
-import com.kidmily.algoga_server.lms.domain.repository.CourseRepository;
-import com.kidmily.algoga_server.lms.domain.repository.CourseReviewRepository;
-import com.kidmily.algoga_server.lms.domain.repository.EnrollmentRepository;
-import com.kidmily.algoga_server.lms.domain.repository.LearningProgressRepository;
-import com.kidmily.algoga_server.lms.domain.repository.MapRepository;
-import com.kidmily.algoga_server.lms.domain.repository.QuizSubmissionRepository;
+import com.kidmily.algoga_server.lms.domain.model.*;
+import com.kidmily.algoga_server.lms.domain.repository.*;
 import com.kidmily.algoga_server.lms.exception.LmsErrorCode;
 import com.kidmily.algoga_server.lms.exception.LmsException;
 import com.kidmily.algoga_server.lms.settings.LmsStorageSettings;
@@ -50,14 +15,11 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import com.kidmily.algoga_server.global.event.CourseCompletionCompletedEvent;
+import org.springframework.context.ApplicationEventPublisher;
 
 import java.time.LocalDateTime;
-import java.util.Comparator;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 
 @Slf4j
 @Service
@@ -78,6 +40,7 @@ public class CourseService implements CourseUseCase {
     private final UserProfilePort userProfilePort;
     private final CourseFileStoragePort fileStoragePort;
     private final LmsStorageSettings storageSettings;
+    private final ApplicationEventPublisher eventPublisher;
 
     @Override
     public Long createCourse(CreateCourseCommand command) {
@@ -191,7 +154,16 @@ public class CourseService implements CourseUseCase {
                 command.courseId()
         );
 
-        return CourseCompletionResult.from(courseCompletionRepository.save(courseCompletion));
+        CourseCompletion savedCompletion = courseCompletionRepository.save(courseCompletion);
+
+        eventPublisher.publishEvent(new CourseCompletionCompletedEvent(
+                savedCompletion.getUserId(),
+                savedCompletion.getCourseId(),
+                savedCompletion.getId(),
+                savedCompletion.getCompletedAt()
+        ));
+
+        return CourseCompletionResult.from(savedCompletion);
     }
 
     @Override

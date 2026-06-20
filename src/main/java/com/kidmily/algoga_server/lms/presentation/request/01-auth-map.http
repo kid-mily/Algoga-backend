@@ -23,21 +23,32 @@ Accept: application/json
 }
 
 > {%
-    if (response.status === 200) {
+    let token = null;
+
+    if (response.body && response.body.data && response.body.data.accessToken) {
+        token = response.body.data.accessToken;
+    }
+
+    if (!token) {
         const setCookie = response.headers.valuesOf
             ? response.headers.valuesOf("Set-Cookie").join("; ")
             : response.headers.valueOf("Set-Cookie");
+
         const match = setCookie && setCookie.match(/accessToken=([^;]+)/);
 
         if (match) {
-            client.global.set("adminToken", match[1]);
-            client.global.set("managerAccessToken", match[1]);
-            client.log("adminToken saved: " + client.global.get("adminToken"));
-            client.log("managerAccessToken saved: " + client.global.get("managerAccessToken"));
-        } else {
-            client.log("Admin accessToken cookie not found.");
-            client.log("Set-Cookie: " + setCookie);
+            token = match[1];
         }
+    }
+
+    if (response.status === 200 && token) {
+        client.global.set("adminToken", token);
+        client.global.set("managerAccessToken", token);
+        client.log("adminToken saved: " + client.global.get("adminToken"));
+        client.log("managerAccessToken saved: " + client.global.get("managerAccessToken"));
+    } else {
+        client.global.clear("adminToken");
+        client.log("Admin accessToken not found.");
     }
 %}
 
@@ -60,7 +71,7 @@ Cookie: accessToken={{adminToken}}
 
 
 ### Content manager login
-POST http://localhost:15000/api/v1/auth/admin/login
+POST {{host}}/api/v1/auth/admin/login
 Content-Type: application/json
 Accept: application/json
 
@@ -70,19 +81,26 @@ Accept: application/json
 }
 
 > {%
-    if (response.status === 200) {
-        const setCookie = response.headers.valuesOf
-            ? response.headers.valuesOf("Set-Cookie").join("; ")
-            : response.headers.valueOf("Set-Cookie");
-        const match = setCookie && setCookie.match(/accessToken=([^;]+)/);
+    let token = null;
 
-        if (match) {
-            client.global.set("managerAccessToken", match[1]);
-            client.log("managerAccessToken saved: " + client.global.get("managerAccessToken"));
-        } else {
-            client.log("Manager accessToken cookie not found.");
-            client.log("Set-Cookie: " + setCookie);
-        }
+    const setCookie = response.headers.valuesOf
+        ? response.headers.valuesOf("Set-Cookie").join("; ")
+        : response.headers.valueOf("Set-Cookie");
+
+    const match = setCookie && setCookie.match(/adminAccessToken=([^;]+)/);
+
+    if (match) {
+        token = match[1];
+    }
+
+    if (response.status === 200 && token) {
+        client.global.set("managerAccessToken", token);
+        client.log("managerAccessToken saved: " + client.global.get("managerAccessToken"));
+    } else {
+        client.global.clear("managerAccessToken");
+        client.log("managerAccessToken not found.");
+        client.log("status: " + response.status);
+        client.log("Set-Cookie: " + setCookie);
     }
 %}
 

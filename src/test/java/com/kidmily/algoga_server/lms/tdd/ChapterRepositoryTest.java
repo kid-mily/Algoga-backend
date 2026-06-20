@@ -28,19 +28,18 @@ class ChapterRepositoryTest {
     @Autowired
     private SpringDataCourseRepository courseRepository;
 
-
-
     @Test
     void 챕터_저장_및_조회_테스트() {
 
         // given
         // 강의 엔티티 생성.
         CourseJpaEntity course = new CourseJpaEntity(
-                1L,                 // country_id = 국가 ID
+                1L,                         // country_id = 국가 ID
                 2L,                         // manager_id = 관리자 ID
                 "TDD 테스트 강의",            // title = 강의 제목
                 "Repository 테스트용 강의",   // description = 강의 설명
                 10000,                      // price = 강의 가격
+                0,                          // maxRewardMileage = 최대 지급 마일리지
                 "thumbnail.png",            // thumbnail_url = 썸네일 주소
                 null,                       // file_url
                 "BEGINNER",                 // level = 강의 난이도
@@ -57,6 +56,7 @@ class ChapterRepositoryTest {
         ChapterJpaEntity chapter = new ChapterJpaEntity(
                 lectureId,                    // lecture_id = 강의 ID
                 "TDD 테스트 챕터",             // title = 챕터 제목
+                null,                         // description = 챕터 설명
                 "https://test-video.com",     // video_url = 영상 주소
                 600,                          // duration_seconds = 영상 길이
                 99                            // order_num = 챕터 순서
@@ -87,6 +87,7 @@ class ChapterRepositoryTest {
                 "TDD 목록 조회 강의",
                 "Repository 테스트용 강의",
                 10000,
+                0,
                 "thumbnail.png",
                 null,
                 "BEGINNER",
@@ -101,10 +102,24 @@ class ChapterRepositoryTest {
         Long lectureId = savedCourse.getId();
 
         // 첫 번째 챕터 저장.
-        chapterRepository.save(new ChapterJpaEntity(lectureId, "TDD 챕터 1", "https://test-1.com", 300, 101));
+        chapterRepository.save(new ChapterJpaEntity(
+                lectureId,
+                "TDD 챕터 1",
+                null,
+                "https://test-1.com",
+                300,
+                101
+        ));
 
         // 두 번째 챕터 저장.
-        chapterRepository.save(new ChapterJpaEntity(lectureId, "TDD 챕터 2", "https://test-2.com", 400, 102));
+        chapterRepository.save(new ChapterJpaEntity(
+                lectureId,
+                "TDD 챕터 2",
+                null,
+                "https://test-2.com",
+                400,
+                102
+        ));
 
         // when
         // 강의 ID로 삭제되지 않은 챕터 목록을 순서대로 조회.
