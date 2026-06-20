@@ -1,5 +1,7 @@
 package com.kidmily.algoga_server.user.application;
 
+import com.kidmily.algoga_server.friend.domain.model.RelationStatus;
+import com.kidmily.algoga_server.friend.domain.repository.FriendRepository;
 import com.kidmily.algoga_server.global.port.out.FileStoragePort;
 import com.kidmily.algoga_server.global.security.GlobalJwtProvider;
 import com.kidmily.algoga_server.user.domain.User;
@@ -9,12 +11,15 @@ import com.kidmily.algoga_server.user.exception.UserException;
 import com.kidmily.algoga_server.user.presentation.request.UpdatePasswordRequest;
 import com.kidmily.algoga_server.user.presentation.request.UpdateProfileRequest;
 import com.kidmily.algoga_server.user.presentation.request.VerifyPasswordRequest;
+import com.kidmily.algoga_server.user.presentation.response.AdminUserListResponse;
 import com.kidmily.algoga_server.user.presentation.response.AuthTokenResponse;
 import com.kidmily.algoga_server.user.presentation.response.SignupPathStatResponse;
 import com.kidmily.algoga_server.user.presentation.response.UserProfileResponse;
 import com.kidmily.algoga_server.user.settings.UserStorageSettings;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -22,7 +27,6 @@ import org.springframework.web.multipart.MultipartFile;
 import com.kidmily.algoga_server.global.event.UserWithdrawnEvent;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.redis.core.RedisTemplate;
-
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
@@ -173,4 +177,22 @@ public class UserService {
                 .map(SignupPathStatResponse::from)
                 .toList();
     }
+
+    // 🌟 관리자용: 전체 유저 리스트 조회 로직
+    @Transactional(readOnly = true)
+    public Page<User> getAdminUserListRaw(Pageable pageable) {
+        return userRepository.findByIsDeletedFalse(pageable);
+    }
+
+    // 🌟 관리자용: 특정 유저 상세 조회 (기본 정보 + 로그인상태 + 친구 목록)
+    @Transactional(readOnly = true)
+    public User getAdminUserDetailRaw(Long targetUserId) {
+        return userRepository.findById(targetUserId)
+                .orElseThrow(() -> new UserException(UserErrorCode.NOT_FOUND_USER));
+    }
+
+    public boolean isUserOnline(String email) {
+        return Boolean.TRUE.equals(redisTemplate.hasKey("RT:" + email));
+    }
+
 }

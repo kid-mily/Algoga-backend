@@ -62,26 +62,23 @@ public class ManagerAuthService implements ManagerAuthUseCase {
         redisTemplate.delete("ADMIN_RT:" + loginId);
     }
 
-    // 🌟 변경: 토큰 재발급 시에도 매니저 정보를 조회해 진짜 권한(Role)을 함께 반환함
     @Override
     public AdminAuthTokenResponse refreshAccessToken(String loginId, String refreshToken) {
-        // Redis 토큰 검증
+        // Redis 검증
         String savedRefreshToken = redisTemplate.opsForValue().get("ADMIN_RT:" + loginId);
 
         if (savedRefreshToken == null || !savedRefreshToken.equals(refreshToken)) {
             throw new ManagerException(ManagerErrorCode.ACCESS_DENIED);
         }
 
-        // 매니저 권한 조회를 위해 DB 탐색
         Manager manager = managerRepository.findByLoginId(loginId)
                 .orElseThrow(() -> new ManagerException(ManagerErrorCode.MANAGER_NOT_FOUND));
 
         String roleName = "ROLE_" + manager.getRole().name();
 
-        // 새로운 Access Token 발급
+        // 새 Access Token 발급
         String newAccessToken = globalJwtProvider.createAdminAccessToken(manager.getId(), manager.getLoginId(), roleName);
 
-        // 쿠키용 토큰과 응답 바디용 Role을 세트로 묶어서 반환
         return new AdminAuthTokenResponse(newAccessToken, refreshToken, manager.getRole());
     }
 

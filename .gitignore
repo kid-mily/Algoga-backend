@@ -47,6 +47,9 @@ logs/
 # 비밀번호가 포함된 설정 파일은 깃허브에 업로드 금지
 application-secret.yml
 
+# MCP 설정 (DB 접속 비밀번호 포함) — 로컬 전용, 깃 업로드 금지
+.mcp.json
+
 # 모니터링 비밀값 (Slack Webhook 등)
 .env
 monitoring/.env
