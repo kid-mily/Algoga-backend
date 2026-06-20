@@ -75,7 +75,7 @@ public class ReportController {
             @Parameter(description = "신고 유형 필터 (POST/COMMENT)")
             @RequestParam(required = false) TargetType targetType,
 
-            @Parameter(description = "신고자/피신고자 닉네임 검색")
+            @Parameter(description = "신고자/피신고자 이름, 닉네임 검색")
             @RequestParam(required = false) String keyword,
 
             @Parameter(description = "특정 피신고자 ID로 필터링 (블랙리스트 후보 상세 등에서 사용)")
