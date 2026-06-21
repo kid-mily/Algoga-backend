@@ -26,7 +26,7 @@ public class PublicNoticeController {
     private final NoticeQueryUseCase noticeQueryUseCase;
 
     @GetMapping("/main")
-    @Operation(summary = "공지사항 메인 조회", description = "메인 페이지에 노출되는 최신 공지사항 3개를 조회합니다.")
+    @Operation(summary = "공지사항 메인 조회", description = "메인 페이지에 노출되는 최신 공지사항 5개를 조회합니다.")
     public ResponseEntity<ApiResponse<List<NoticeMainResponse>>> getNoticeMain() {
         return ResponseEntity.ok(ApiResponse.success(
                 "NOTICE_MAIN_FOUND", "메인 공지사항 조회에 성공했습니다.", noticeQueryUseCase.getNoticeMain()

@@ -36,7 +36,7 @@ public class    NoticeQueryService implements NoticeQueryUseCase {
 
     @Override
     public List<NoticeMainResponse> getNoticeMain() {
-        return noticeRepository.findTop3Notices().stream()
+        return noticeRepository.findTop5Notices().stream()
                 .map(notice -> new NoticeMainResponse(
                         notice.getNoticeId(),
                         notice.getType(),
