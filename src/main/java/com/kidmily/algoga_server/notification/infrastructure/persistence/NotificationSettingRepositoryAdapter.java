@@ -28,4 +28,9 @@ public class NotificationSettingRepositoryAdapter implements NotificationSetting
         return springDataRepository.findById(userId)
                 .map(notificationSettingMapper::toDomain);
     }
+
+    @Override
+    public void deleteByUserId(Long userId) {
+        springDataRepository.deleteByUserId(userId);
+    }
 }

@@ -13,4 +13,5 @@ public interface CalendarRepository {
     void deleteByUserIdAndReferenceIdAndType(Long userId, Long referenceId, CalendarType type);
     List<Calendar> findByType(CalendarType type);
     Calendar update(Calendar calendar);
+    void deleteAllByUserId(Long userId);
 }

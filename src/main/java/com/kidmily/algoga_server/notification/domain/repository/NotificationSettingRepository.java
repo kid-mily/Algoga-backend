@@ -6,4 +6,5 @@ import java.util.Optional;
 public interface NotificationSettingRepository {
     NotificationSetting save(NotificationSetting setting);
     Optional<NotificationSetting> findByUserId(Long userId);
+    void deleteByUserId(Long userId);
 }

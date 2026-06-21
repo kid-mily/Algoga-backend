@@ -31,7 +31,8 @@ public interface CommentMapper {
                 jpaEntity.getParentId(),
                 jpaEntity.getContent(),
                 jpaEntity.getIsDeleted(),
-                jpaEntity.getCreatedAt()
+                jpaEntity.getCreatedAt(),
+                jpaEntity.getDeletedAt()
         );
     }
 }

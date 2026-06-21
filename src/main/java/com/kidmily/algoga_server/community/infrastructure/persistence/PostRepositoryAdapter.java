@@ -14,6 +14,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Repository;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -157,5 +158,13 @@ public class PostRepositoryAdapter implements PostRepository {
     public long countMyPosts(Long userId, List<PostTagType> categories) {
         List<PostTagType> categoriesParam = (categories == null || categories.isEmpty()) ? null : categories;
         return springDataRepository.countMyPosts(userId, categoriesParam);
+    }
+
+    @Override
+    public List<Post> findExpiredDeletedPosts(LocalDateTime threshold) {
+        return springDataRepository.findByIsDeletedTrueAndDeletedAtBefore(threshold)
+                .stream()
+                .map(postMapper::toDomain)
+                .toList();
     }
 }
