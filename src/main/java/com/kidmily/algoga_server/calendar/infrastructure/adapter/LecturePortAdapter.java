@@ -21,11 +21,10 @@ public class LecturePortAdapter implements LecturePort {
 
     @Override
     public String getLectureName(Long lectureId) {
-        return courseRepository.findByIdAndDeletedFalse(lectureId)
+        return courseRepository.findById(lectureId)
                 .map(course -> course.getTitle())
                 .orElse("알 수 없는 강의");
     }
-
     @Override
     public LocalDate getLectureStartDate(Long lectureId, Long userId) {
         return paymentRepository.findByUserId(userId).stream()
