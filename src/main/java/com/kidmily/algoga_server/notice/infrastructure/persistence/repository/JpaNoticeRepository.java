@@ -9,7 +9,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import java.util.List;
 
 public interface JpaNoticeRepository extends JpaRepository<NoticeEntity, Long> {
-    List<NoticeEntity> findTop3ByOrderByCreatedAtDesc();
+    List<NoticeEntity> findTop5ByOrderByCreatedAtDesc();
     
     // 🌟 List 대신 Page 로 반환 타입 변경
     Page<NoticeEntity> findAllByOrderByCreatedAtDesc(Pageable pageable);
