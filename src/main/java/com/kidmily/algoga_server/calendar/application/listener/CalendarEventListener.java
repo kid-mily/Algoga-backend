@@ -5,6 +5,7 @@ import com.kidmily.algoga_server.calendar.application.policy.CalendarSchedulePol
 import com.kidmily.algoga_server.calendar.domain.model.Calendar;
 import com.kidmily.algoga_server.calendar.domain.model.CalendarType;
 import com.kidmily.algoga_server.calendar.domain.repository.CalendarRepository;
+import com.kidmily.algoga_server.global.event.UserWithdrawnEvent;
 import com.kidmily.algoga_server.payment.domain.event.PackagePaymentCompletedEvent;
 import com.kidmily.algoga_server.payment.domain.event.PaymentCompletedEvent;
 import com.kidmily.algoga_server.refund.domain.event.RefundApprovedEvent;
@@ -156,6 +157,21 @@ public class CalendarEventListener {
         } catch (Exception e) {
             log.error("[CalendarEventListener] 환불 반영 중 캘린더 처리 실패! - userId: {}, error: {}",
                     event.userId(), e.getMessage(), e);
+        }
+    }
+
+    @Async
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+    public void handleUserWithdrawnEvent(UserWithdrawnEvent event) {
+        Long withdrawnUserId = event.userId();
+        log.info("[Calendar] 유저 탈퇴 이벤트 수신 - userId: {}", withdrawnUserId);
+
+        try {
+            calendarRepository.deleteAllByUserId(withdrawnUserId);
+            log.info("[Calendar] 유저({}) 캘린더 데이터 삭제 완료", withdrawnUserId);
+        } catch (Exception e) {
+            log.error("[Calendar] 유저 탈퇴 캘린더 삭제 중 오류: {}", e.getMessage(), e);
         }
     }
 }

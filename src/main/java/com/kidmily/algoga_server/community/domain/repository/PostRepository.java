@@ -3,6 +3,7 @@ package com.kidmily.algoga_server.community.domain.repository;
 import com.kidmily.algoga_server.community.domain.model.Post;
 import com.kidmily.algoga_server.community.domain.model.PostTagType;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -23,4 +24,6 @@ public interface PostRepository {
 
     // 신규: 인기 나라 태그 (게시글 수 상위 N개)
     List<CountryTagCount> findTopCountryTags(int limit);
+
+    List<Post> findExpiredDeletedPosts(LocalDateTime threshold);
 }

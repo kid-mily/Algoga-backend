@@ -94,7 +94,8 @@ public interface PostMapper {
                 imageUrls,
                 jpaEntity.getCreatedAt(),
                 jpaEntity.getViewCount(),
-                jpaEntity.getIsDeleted()
+                jpaEntity.getIsDeleted(),
+                jpaEntity.getDeletedAt()
         );
     }
 }

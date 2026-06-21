@@ -12,6 +12,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Repository;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -96,5 +97,13 @@ public class CommentRepositoryAdapter implements CommentRepository {
     @Override
     public long countMyComments(Long userId) {
         return springDataRepository.countMyComments(userId);
+    }
+
+    @Override
+    public List<Comment> findExpiredDeletedComments(LocalDateTime threshold) {
+        return springDataRepository.findByIsDeletedTrueAndDeletedAtBefore(threshold)
+                .stream()
+                .map(commentMapper::toDomain)
+                .toList();
     }
 }
