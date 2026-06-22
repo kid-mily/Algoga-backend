@@ -1,10 +1,11 @@
 package com.kidmily.algoga_server.benefit.application.listener;
 
-import com.kidmily.algoga_server.benefit.domain.model.UserCoupon;
-import com.kidmily.algoga_server.benefit.domain.repository.UserCouponRepository;
+import com.kidmily.algoga_server.benefit.application.command.IssueWelcomeCouponCommand;
+import com.kidmily.algoga_server.benefit.application.usecase.WelcomeCouponUseCase;
 import com.kidmily.algoga_server.global.event.UserSignedUpEvent;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.event.TransactionPhase;
 import org.springframework.transaction.event.TransactionalEventListener;
@@ -14,22 +15,23 @@ import org.springframework.transaction.event.TransactionalEventListener;
 @RequiredArgsConstructor
 public class WelcomeCouponEventListener {
 
-    private static final String WELCOME_COUPON_NAME = "웰컴쿠폰";
+    private final WelcomeCouponUseCase welcomeCouponUseCase;
 
-    private final UserCouponRepository userCouponRepository;
-
-    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+    @Async
+    @TransactionalEventListener(
+            phase = TransactionPhase.AFTER_COMMIT,
+            fallbackExecution = true
+    )
     public void issueWelcomeCoupon(UserSignedUpEvent event) {
-        try {
-            if (event.userId() == null
-                    || userCouponRepository.existsByUserIdAndCouponName(event.userId(), WELCOME_COUPON_NAME)) {
-                return;
-            }
+        log.info("[WelcomeCoupon] Signup event received. userId={}", event.userId());
 
-            userCouponRepository.save(UserCoupon.issueWelcome(event.userId()));
-            log.info("[WelcomeCoupon] Issued welcome coupon. userId={}", event.userId());
-        } catch (Exception e) {
-            log.error("[WelcomeCoupon] Failed to issue welcome coupon. userId={}", event.userId(), e);
+        try {
+            welcomeCouponUseCase.issueWelcomeCoupon(
+                    new IssueWelcomeCouponCommand(event.userId())
+            );
+        } catch (Exception exception) {
+            log.error("[WelcomeCoupon] Failed to issue welcome coupon. userId={}",
+                    event.userId(), exception);
         }
     }
 }

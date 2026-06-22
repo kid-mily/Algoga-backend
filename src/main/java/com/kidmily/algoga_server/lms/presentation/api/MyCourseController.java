@@ -35,7 +35,7 @@ public class MyCourseController {
     public ResponseEntity<ApiResponse<List<MyCourseResponse>>> getMyCourses(
             @AuthenticationPrincipal Object userDetails
     ) {
-        Long currentUserId = CurrentUserIdResolver.resolveNullable(userDetails);
+        Long currentUserId = CurrentUserIdResolver.resolveLoginRequired(userDetails);
 
         List<MyCourseResponse> response = courseUseCase.getMyCourses(currentUserId)
                 .stream()

@@ -10,16 +10,22 @@ public record CourseQnaCommentResult(
         Long userId,
         Long managerId,
         String writerType,
+        String nickname,
         String content,
         LocalDateTime createdAt
 ) {
     public static CourseQnaCommentResult from(CourseQnaComment comment) {
+        return from(comment, null);
+    }
+
+    public static CourseQnaCommentResult from(CourseQnaComment comment, String nickname) {
         return new CourseQnaCommentResult(
                 comment.getId(),
                 comment.getQnaId(),
                 comment.getUserId(),
                 comment.getManagerId(),
                 comment.getWriterType(),
+                nickname,
                 comment.getContent(),
                 comment.getCreatedAt()
         );

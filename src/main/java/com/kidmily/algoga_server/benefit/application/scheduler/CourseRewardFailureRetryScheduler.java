@@ -13,7 +13,8 @@ import java.util.List;
 @Slf4j
 @Component
 @RequiredArgsConstructor
-public class CourseRewardFailureRetryScheduler {
+public
+class CourseRewardFailureRetryScheduler {
 
     private static final int MAX_RETRY_COUNT = 3;
 

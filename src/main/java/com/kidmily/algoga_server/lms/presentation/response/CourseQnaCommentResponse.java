@@ -22,6 +22,9 @@ public record CourseQnaCommentResponse(
         @Schema(description = "작성자 타입", example = "USER")
         String writerType,
 
+        @Schema(description = "작성자 닉네임", example = "알고가유저")
+        String nickname,
+
         @Schema(description = "댓글 내용")
         String content,
 
@@ -35,6 +38,7 @@ public record CourseQnaCommentResponse(
                 comment.userId(),
                 comment.managerId(),
                 comment.writerType(),
+                comment.nickname(),
                 comment.content(),
                 comment.createdAt()
         );

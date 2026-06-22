@@ -8,6 +8,7 @@ public record CourseQnaResult(
         Long qnaId,
         Long courseId,
         Long userId,
+        String nickname,
         Long managerId,
         String title,
         String question,
@@ -17,10 +18,15 @@ public record CourseQnaResult(
         LocalDateTime answeredAt
 ) {
     public static CourseQnaResult from(CourseQna qna) {
+        return from(qna, null);
+    }
+
+    public static CourseQnaResult from(CourseQna qna, String nickname) {
         return new CourseQnaResult(
                 qna.getId(),
                 qna.getCourseId(),
                 qna.getUserId(),
+                nickname,
                 qna.getManagerId(),
                 qna.getTitle(),
                 qna.getQuestion(),

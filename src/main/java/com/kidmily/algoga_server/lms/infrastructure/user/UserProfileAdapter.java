@@ -53,7 +53,8 @@ public class UserProfileAdapter implements UserProfilePort {
         return new UserProfile(
                 (Long) invoke(user, "getId"),
                 (String) invoke(user, "getName"),
-                (String) invoke(user, "getEmail")
+                (String) invoke(user, "getEmail"),
+                (String) invoke(user, "getNickname")
         );
     }
 

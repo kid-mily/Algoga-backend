@@ -16,6 +16,9 @@ public record CourseReviewResponse(
         @Schema(description = "사용자 ID", example = "1")
         Long userId,
 
+        @Schema(description = "작성자 닉네임", example = "알고가유저")
+        String nickname,
+
         @Schema(description = "평점", example = "5")
         int rating,
 
@@ -33,6 +36,7 @@ public record CourseReviewResponse(
                 review.reviewId(),
                 review.courseId(),
                 review.userId(),
+                review.nickname(),
                 review.rating(),
                 review.content(),
                 review.createdAt(),

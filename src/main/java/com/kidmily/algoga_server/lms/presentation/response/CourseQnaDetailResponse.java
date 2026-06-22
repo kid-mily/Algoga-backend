@@ -18,16 +18,19 @@ public record CourseQnaDetailResponse(
         @Schema(description = "질문 작성자 ID", example = "1")
         Long userId,
 
+        @Schema(description = "질문 작성자 닉네임", example = "알고가유저")
+        String nickname,
+
         @Schema(description = "답변 작성 매니저 ID", example = "1")
         Long managerId,
 
-        @Schema(description = "질문 제목", example = "오사카 교통패스 관련 질문입니다.")
+        @Schema(description = "질문 제목", example = "강의 내용 관련 질문입니다.")
         String title,
 
-        @Schema(description = "질문 내용", example = "오사카 주유패스와 간사이 패스 중 어떤 것을 선택해야 하나요?")
+        @Schema(description = "질문 내용", example = "강의에서 설명한 내용 중 어떤 것을 선택해야 하나요?")
         String question,
 
-        @Schema(description = "답변 내용", example = "오사카 시내 관광 위주라면 오사카 주유패스를 추천드립니다.")
+        @Schema(description = "답변 내용", example = "해당 상황에서는 첫 번째 선택지를 추천드립니다.")
         String answer,
 
         @Schema(description = "Q&A 상태", example = "ANSWERED")
@@ -48,6 +51,7 @@ public record CourseQnaDetailResponse(
                 result.qnaId(),
                 result.courseId(),
                 result.userId(),
+                result.nickname(),
                 result.managerId(),
                 result.title(),
                 result.question(),
