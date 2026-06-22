@@ -23,11 +23,13 @@ public class Payment {
     private String portonePaymentId;
     /** 실제 결제수단 (PortOne 응답의 method에서 추출 — 예: TOSSPAY, KAKAOPAY, PaymentMethodCard). null 가능. */
     private String paymentMethod;
+    /** 결제 시점 사용자명 스냅샷 (user hard delete 후에도 잔여 결제내역에서 이름 보존용). null 가능. */
+    private String userName;
     private LocalDateTime createdAt;
 
     public static Payment create(Long bookingId, Long courseId, Long userId, PaymentType paymentType,
                                  int amount, int usedMileage, Long usedCouponId,
-                                 String idempotencyKey, String paymentMethod) {
+                                 String idempotencyKey, String paymentMethod, String userName) {
         Payment payment = new Payment();
         payment.bookingId = bookingId;
         payment.courseId = courseId;
@@ -39,6 +41,7 @@ public class Payment {
         payment.status = PaymentStatus.FAILED;
         payment.idempotencyKey = idempotencyKey;
         payment.paymentMethod = paymentMethod;
+        payment.userName = userName;
         payment.createdAt = LocalDateTime.now();
         return payment;
     }
@@ -48,7 +51,7 @@ public class Payment {
                                        int usedMileage, Long usedCouponId,
                                        PaymentStatus status, String idempotencyKey,
                                        String portonePaymentId, String paymentMethod,
-                                       LocalDateTime createdAt) {
+                                       String userName, LocalDateTime createdAt) {
         Payment payment = new Payment();
         payment.id = id;
         payment.bookingId = bookingId;
@@ -62,6 +65,7 @@ public class Payment {
         payment.idempotencyKey = idempotencyKey;
         payment.portonePaymentId = portonePaymentId;
         payment.paymentMethod = paymentMethod;
+        payment.userName = userName;
         payment.createdAt = createdAt;
         return payment;
     }

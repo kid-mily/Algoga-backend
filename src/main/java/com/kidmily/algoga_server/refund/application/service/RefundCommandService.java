@@ -75,6 +75,7 @@ public class RefundCommandService implements RefundCommandUseCase {
                 command.bookingId(),
                 command.paymentId(),
                 command.userId(),
+                payment.getUserName(),
                 command.reason(),
                 refundAmount
         );
@@ -120,12 +121,14 @@ public class RefundCommandService implements RefundCommandUseCase {
 
         int totalPaid = payments.stream().mapToInt(Payment::getAmount).sum();
         int refundAmount = calculateRefundAmount(booking, totalPaid);
-        Long paymentId = payments.get(payments.size() - 1).getId();
+        Payment selectedPayment = payments.get(payments.size() - 1);
+        Long paymentId = selectedPayment.getId();
 
         RefundRequest refundRequest = RefundRequest.create(
                 bookingId,
                 paymentId,
                 booking.getUserId(),
+                selectedPayment.getUserName(),
                 "CS 환불 전환 처리",
                 refundAmount
         );

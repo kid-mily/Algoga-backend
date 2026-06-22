@@ -10,6 +10,7 @@ import com.kidmily.algoga_server.booking.domain.model.Booking;
 import com.kidmily.algoga_server.booking.domain.model.BookingStatus;
 import com.kidmily.algoga_server.booking.domain.repository.BookingRepository;
 import com.kidmily.algoga_server.booking.exception.BookingErrorCode;
+import com.kidmily.algoga_server.booking.settings.cache.BookingCacheType;
 import com.kidmily.algoga_server.global.exception.BusinessException;
 import com.kidmily.algoga_server.global.lock.DistributedLock;
 import lombok.RequiredArgsConstructor;
@@ -35,7 +36,7 @@ public class BookingCommandService implements BookingCommandUseCase {
     private final ApplicationEventPublisher eventPublisher;
 
     @DistributedLock(key = "'booking:' + #command.userId() + ':' + #command.accommodationId() + ':' + #command.checkInDate()")
-    @CacheEvict(value = "myBookings", key = "#command.userId()")
+    @CacheEvict(value = BookingCacheType.Const.MY_BOOKINGS, key = "#command.userId()")
     @Override
     public Long handle(CreateBookingCommand command) {
         log.info("[BookingCommandService] 예약 생성 요청 - accommodationId: {}, userId: {}",
@@ -81,7 +82,7 @@ public class BookingCommandService implements BookingCommandUseCase {
         return savedBooking.getId();
     }
 
-    @CacheEvict(value = "myBookings", key = "#userId")
+    @CacheEvict(value = BookingCacheType.Const.MY_BOOKINGS, key = "#userId")
     @Override
     public void cancel(Long bookingId, Long userId) {
         log.info("[BookingCommandService] 예약 취소 요청 - bookingId: {}, userId: {}", bookingId, userId);

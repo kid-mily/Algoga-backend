@@ -28,6 +28,9 @@ public class RefundJpaEntity {
     @Column(name = "user_id", nullable = false)
     private Long userId;
 
+    @Column(name = "user_name")
+    private String userName;
+
     @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false)
     private RefundStatus status;
@@ -47,12 +50,13 @@ public class RefundJpaEntity {
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
 
-    public RefundJpaEntity(Long bookingId, Long paymentId, Long userId,
+    public RefundJpaEntity(Long bookingId, Long paymentId, Long userId, String userName,
                            RefundStatus status, String reason, String rejectReason,
                            int amount, LocalDateTime createdAt, LocalDateTime updatedAt) {
         this.bookingId = bookingId;
         this.paymentId = paymentId;
         this.userId = userId;
+        this.userName = userName;
         this.status = status;
         this.reason = reason;
         this.rejectReason = rejectReason;
@@ -61,13 +65,14 @@ public class RefundJpaEntity {
         this.updatedAt = updatedAt;
     }
 
-    public RefundJpaEntity(Long id, Long bookingId, Long paymentId, Long userId,
+    public RefundJpaEntity(Long id, Long bookingId, Long paymentId, Long userId, String userName,
                            RefundStatus status, String reason, String rejectReason,
                            int amount, LocalDateTime createdAt, LocalDateTime updatedAt) {
         this.id = id;
         this.bookingId = bookingId;
         this.paymentId = paymentId;
         this.userId = userId;
+        this.userName = userName;
         this.status = status;
         this.reason = reason;
         this.rejectReason = rejectReason;

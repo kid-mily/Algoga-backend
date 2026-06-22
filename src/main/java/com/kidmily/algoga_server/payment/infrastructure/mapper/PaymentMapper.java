@@ -20,6 +20,7 @@ public class PaymentMapper {
                 payment.getIdempotencyKey(),
                 payment.getPortonePaymentId(),
                 payment.getPaymentMethod(),
+                payment.getUserName(),
                 payment.getCreatedAt()
         );
     }
@@ -37,6 +38,7 @@ public class PaymentMapper {
                 entity.getIdempotencyKey(),
                 entity.getPortonePaymentId(),
                 entity.getPaymentMethod(),
+                entity.getUserName(),
                 entity.getCreatedAt()
         );
     }

@@ -19,6 +19,7 @@ import com.kidmily.algoga_server.payment.domain.model.PaymentStatus;
 import com.kidmily.algoga_server.payment.domain.model.PaymentType;
 import com.kidmily.algoga_server.payment.domain.repository.PaymentRepository;
 import com.kidmily.algoga_server.payment.exception.PaymentErrorCode;
+import com.kidmily.algoga_server.payment.settings.cache.PaymentCacheType;
 import com.kidmily.algoga_server.user.domain.User;
 import com.kidmily.algoga_server.user.domain.UserRepository;
 import com.kidmily.algoga_server.user.exception.UserErrorCode;
@@ -59,8 +60,8 @@ public class PaymentTransactionService {
     private final CacheManager cacheManager;
 
     @Caching(evict = {
-            @CacheEvict(value = "myPayments", key = "#command.userId()"),
-            @CacheEvict(value = "adminPaymentStats", key = "'all'")
+            @CacheEvict(value = PaymentCacheType.Const.MY_PAYMENTS, key = "#command.userId()"),
+            @CacheEvict(value = PaymentCacheType.Const.ADMIN_PAYMENT_STATS, key = "'all'")
     })
     @Transactional
     public Long savePayment(CreatePaymentCommand command, String portoneStatus, int paidAmount, String paymentMethod) {
@@ -98,6 +99,10 @@ public class PaymentTransactionService {
             throw new BusinessException(PaymentErrorCode.INVALID_PAYMENT_AMOUNT);
         }
 
+        String userName = userRepository.findById(command.userId())
+                .map(User::getName)
+                .orElse(null);
+
         Payment payment = Payment.create(
                 command.bookingId(),
                 null,
@@ -107,7 +112,8 @@ public class PaymentTransactionService {
                 command.usedMileage(),
                 command.usedCouponId(),
                 idempotencyKey,
-                paymentMethod
+                paymentMethod,
+                userName
         );
 
         if ("PAID".equals(portoneStatus)) {
@@ -167,8 +173,8 @@ public class PaymentTransactionService {
     }
 
     @Caching(evict = {
-            @CacheEvict(value = "myPayments", key = "#command.userId()"),
-            @CacheEvict(value = "adminPaymentStats", key = "'all'")
+            @CacheEvict(value = PaymentCacheType.Const.MY_PAYMENTS, key = "#command.userId()"),
+            @CacheEvict(value = PaymentCacheType.Const.ADMIN_PAYMENT_STATS, key = "'all'")
     })
     @Transactional
     public Long saveLecturePayment(CreateLecturePaymentCommand command, String portoneStatus, int paidAmount, String paymentMethod) {
@@ -201,6 +207,10 @@ public class PaymentTransactionService {
             throw new BusinessException(PaymentErrorCode.INVALID_PAYMENT_AMOUNT);
         }
 
+        String userName = userRepository.findById(command.userId())
+                .map(User::getName)
+                .orElse(null);
+
         Payment payment = Payment.create(
                 null,
                 command.courseId(),
@@ -210,7 +220,8 @@ public class PaymentTransactionService {
                 command.usedMileage(),
                 command.usedCouponId(),
                 idempotencyKey,
-                paymentMethod
+                paymentMethod,
+                userName
         );
 
         if ("PAID".equals(portoneStatus)) {
@@ -280,12 +291,12 @@ public class PaymentTransactionService {
                 // 저장된 payment 엔티티의 userId 로 CacheManager 를 통해 직접 evict 한다.
                 Long cacheUserId = payment.getUserId();
                 if (cacheUserId != null) {
-                    Cache myPaymentsCache = cacheManager.getCache("myPayments");
+                    Cache myPaymentsCache = cacheManager.getCache(PaymentCacheType.Const.MY_PAYMENTS);
                     if (myPaymentsCache != null) {
                         myPaymentsCache.evict(cacheUserId);
                     }
                 }
-                Cache adminStatsCache = cacheManager.getCache("adminPaymentStats");
+                Cache adminStatsCache = cacheManager.getCache(PaymentCacheType.Const.ADMIN_PAYMENT_STATS);
                 if (adminStatsCache != null) {
                     adminStatsCache.evict("all");
                 }
