@@ -1,17 +1,21 @@
 package com.kidmily.algoga_server.lms.application.service;
 
+import com.kidmily.algoga_server.global.event.CourseCompletionCompletedEvent;
 import com.kidmily.algoga_server.lms.application.command.CreateQuizCommand;
 import com.kidmily.algoga_server.lms.application.command.SubmitQuizAnswerCommand;
 import com.kidmily.algoga_server.lms.application.command.SubmitQuizCommand;
 import com.kidmily.algoga_server.lms.application.command.UpdateQuizCommand;
+import com.kidmily.algoga_server.lms.application.result.CourseCompletionResult;
 import com.kidmily.algoga_server.lms.application.result.QuizResult;
 import com.kidmily.algoga_server.lms.application.result.QuizSubmitResult;
 import com.kidmily.algoga_server.lms.application.result.WrongQuizAnswerResult;
 import com.kidmily.algoga_server.lms.application.usecase.QuizUseCase;
 import com.kidmily.algoga_server.lms.domain.model.Chapter;
+import com.kidmily.algoga_server.lms.domain.model.CourseCompletion;
 import com.kidmily.algoga_server.lms.domain.model.Quiz;
 import com.kidmily.algoga_server.lms.domain.model.QuizSubmission;
 import com.kidmily.algoga_server.lms.domain.repository.ChapterRepository;
+import com.kidmily.algoga_server.lms.domain.repository.CourseCompletionRepository;
 import com.kidmily.algoga_server.lms.domain.repository.CourseRepository;
 import com.kidmily.algoga_server.lms.domain.repository.EnrollmentRepository;
 import com.kidmily.algoga_server.lms.domain.repository.LearningProgressRepository;
@@ -20,15 +24,12 @@ import com.kidmily.algoga_server.lms.domain.repository.QuizSubmissionRepository;
 import com.kidmily.algoga_server.lms.exception.LmsErrorCode;
 import com.kidmily.algoga_server.lms.exception.LmsException;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -43,6 +44,8 @@ public class QuizService implements QuizUseCase {
     private final EnrollmentRepository enrollmentRepository;
     private final QuizRepository quizRepository;
     private final QuizSubmissionRepository quizSubmissionRepository;
+    private final CourseCompletionRepository courseCompletionRepository;
+    private final ApplicationEventPublisher eventPublisher;
 
     @Override
     @Transactional(readOnly = true)
@@ -166,14 +169,43 @@ public class QuizService implements QuizUseCase {
                 score
         ));
 
+        CourseCompletionResult completion = completeCourseIfNeeded(
+                command.userId(),
+                command.courseId()
+        );
+
         return new QuizSubmitResult(
                 command.userId(),
                 command.courseId(),
                 quizzes.size(),
                 correctCount,
                 score,
+                completion != null,
+                completion,
                 wrongAnswers
         );
+    }
+
+    private CourseCompletionResult completeCourseIfNeeded(Long userId, Long courseId) {
+        Optional<CourseCompletion> existingCompletion =
+                courseCompletionRepository.findByUserIdAndCourseId(userId, courseId);
+
+        if (existingCompletion.isPresent()) {
+            return CourseCompletionResult.from(existingCompletion.get());
+        }
+
+        CourseCompletion savedCompletion = courseCompletionRepository.save(
+                CourseCompletion.create(userId, courseId)
+        );
+
+        eventPublisher.publishEvent(new CourseCompletionCompletedEvent(
+                savedCompletion.getUserId(),
+                savedCompletion.getCourseId(),
+                savedCompletion.getId(),
+                savedCompletion.getCompletedAt()
+        ));
+
+        return CourseCompletionResult.from(savedCompletion);
     }
 
     private void validateActiveCourse(Long courseId) {

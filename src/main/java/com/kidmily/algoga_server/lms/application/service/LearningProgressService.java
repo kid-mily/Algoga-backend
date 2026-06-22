@@ -1,9 +1,12 @@
 package com.kidmily.algoga_server.lms.application.service;
 
 import com.kidmily.algoga_server.lms.application.command.UpdateLearningProgressCommand;
+import com.kidmily.algoga_server.lms.application.result.CourseClassroomChapterResult;
+import com.kidmily.algoga_server.lms.application.result.CourseClassroomResult;
 import com.kidmily.algoga_server.lms.application.result.LearningProgressResult;
 import com.kidmily.algoga_server.lms.application.usecase.LearningProgressUseCase;
 import com.kidmily.algoga_server.lms.domain.model.Chapter;
+import com.kidmily.algoga_server.lms.domain.model.Course;
 import com.kidmily.algoga_server.lms.domain.model.LearningProgress;
 import com.kidmily.algoga_server.lms.domain.repository.ChapterRepository;
 import com.kidmily.algoga_server.lms.domain.repository.CourseRepository;
@@ -19,6 +22,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
 
 @Slf4j
 @Service
@@ -33,21 +37,17 @@ public class LearningProgressService implements LearningProgressUseCase {
 
     @Override
     public LearningProgressResult updateProgress(UpdateLearningProgressCommand command) {
-        log.info("[Learning Progress Command] 챕터 진도율 업데이트 요청. userId={}, courseId={}, chapterId={}, watchedSeconds={}",
-                command.userId(), command.courseId(), command.chapterId(), command.watchedSeconds());
-
         validateWatchedSeconds(command.watchedSeconds());
-        validateCourse(command.courseId());
+
+        Course course = courseRepository.findById(command.courseId())
+                .orElseThrow(() -> new LmsException(LmsErrorCode.COURSE_NOT_FOUND));
+
         validateEnrollment(command.userId(), command.courseId());
 
         Chapter chapter = chapterRepository.findByIdAndCourseId(
                 command.chapterId(),
                 command.courseId()
-        ).orElseThrow(() -> {
-            log.warn("[Learning Progress Command] 진도율 업데이트 실패. 존재하지 않거나 삭제된 챕터입니다. courseId={}, chapterId={}",
-                    command.courseId(), command.chapterId());
-            return new LmsException(LmsErrorCode.CHAPTER_NOT_FOUND);
-        });
+        ).orElseThrow(() -> new LmsException(LmsErrorCode.CHAPTER_NOT_FOUND));
 
         validatePreviousChapterCompleted(command.userId(), command.courseId(), chapter);
 
@@ -67,14 +67,63 @@ public class LearningProgressService implements LearningProgressUseCase {
 
         LearningProgress savedProgress = learningProgressRepository.save(learningProgress);
 
-        log.info("[Learning Progress Command] 챕터 진도율 업데이트 완료. userId={}, courseId={}, chapterId={}, progressRate={}, completed={}",
-                savedProgress.getUserId(),
-                savedProgress.getCourseId(),
-                savedProgress.getChapterId(),
-                savedProgress.getProgressRate(),
-                savedProgress.isCompleted());
+        CourseClassroomResult classroom = createClassroomResult(
+                command.userId(),
+                course
+        );
 
-        return LearningProgressResult.from(savedProgress);
+        return LearningProgressResult.from(savedProgress, classroom);
+    }
+
+    private CourseClassroomResult createClassroomResult(Long userId, Course course) {
+        var enrollment = enrollmentRepository.findByUserIdAndCourseId(userId, course.getId())
+                .filter(value -> value.isAccessibleAt(LocalDateTime.now()))
+                .orElseThrow(() -> new LmsException(LmsErrorCode.NOT_ENROLLED));
+
+        List<Chapter> chapters = chapterRepository.findByCourseId(course.getId());
+        List<LearningProgress> progresses = learningProgressRepository.findByUserIdAndCourseId(userId, course.getId());
+
+        Map<Long, LearningProgress> progressByChapterId = progresses.stream()
+                .collect(java.util.stream.Collectors.toMap(
+                        LearningProgress::getChapterId,
+                        progress -> progress,
+                        (first, second) -> first
+                ));
+
+        boolean previousChaptersCompleted = true;
+        List<CourseClassroomChapterResult> chapterResults = new java.util.ArrayList<>();
+
+        for (Chapter currentChapter : chapters) {
+            LearningProgress progress = progressByChapterId.get(currentChapter.getId());
+            boolean completed = progress != null && progress.isCompleted();
+            boolean locked = !previousChaptersCompleted;
+
+            chapterResults.add(new CourseClassroomChapterResult(
+                    currentChapter.getId(),
+                    currentChapter.getTitle(),
+                    currentChapter.getDescription(),
+                    locked ? null : currentChapter.getVideoUrl(),
+                    currentChapter.getDurationSeconds(),
+                    currentChapter.getChapterOrder(),
+                    progress == null ? 0 : progress.getWatchedSeconds(),
+                    progress == null ? 0 : progress.getProgressRate(),
+                    completed,
+                    locked
+            ));
+
+            previousChaptersCompleted = previousChaptersCompleted && completed;
+        }
+
+        boolean quizAvailable = !chapters.isEmpty()
+                && chapterResults.stream().allMatch(CourseClassroomChapterResult::completed);
+
+        return new CourseClassroomResult(
+                course.getId(),
+                course.getTitle(),
+                enrollment.getAccessExpiresAt(),
+                quizAvailable,
+                chapterResults
+        );
     }
 
     private void validateEnrollment(Long userId, Long courseId) {
@@ -83,24 +132,12 @@ public class LearningProgressService implements LearningProgressUseCase {
                 .orElse(false);
 
         if (!accessible) {
-            log.warn("[Learning Progress Command] 진도율 업데이트 실패. 수강 등록되지 않은 강의입니다. userId={}, courseId={}",
-                    userId, courseId);
             throw new LmsException(LmsErrorCode.NOT_ENROLLED);
-        }
-    }
-
-    private void validateCourse(Long courseId) {
-        if (courseRepository.findById(courseId).isEmpty()) {
-            log.warn("[Learning Progress Command] 진도율 업데이트 실패. 존재하지 않거나 삭제된 강의입니다. courseId={}",
-                    courseId);
-            throw new LmsException(LmsErrorCode.COURSE_NOT_FOUND);
         }
     }
 
     private void validateWatchedSeconds(int watchedSeconds) {
         if (watchedSeconds < 0) {
-            log.warn("[Learning Progress Command] 진도율 업데이트 실패. 시청 시간이 음수입니다. watchedSeconds={}",
-                    watchedSeconds);
             throw new LmsException(LmsErrorCode.INVALID_PROGRESS);
         }
     }
@@ -123,8 +160,6 @@ public class LearningProgressService implements LearningProgressUseCase {
         );
 
         if (!previousCompleted) {
-            log.warn("[Learning Progress Command] 진도율 업데이트 실패. 이전 챕터 미완료 상태입니다. userId={}, courseId={}, currentChapterId={}, previousChapterId={}",
-                    userId, courseId, currentChapter.getId(), previousChapter.getId());
             throw new LmsException(LmsErrorCode.CHAPTER_LOCKED);
         }
     }

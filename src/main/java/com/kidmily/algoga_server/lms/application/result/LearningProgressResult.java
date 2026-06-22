@@ -9,9 +9,13 @@ public record LearningProgressResult(
         Long chapterId,
         int watchedSeconds,
         int progressRate,
-        boolean completed
+        boolean completed,
+        CourseClassroomResult classroom
 ) {
-    public static LearningProgressResult from(LearningProgress learningProgress) {
+    public static LearningProgressResult from(
+            LearningProgress learningProgress,
+            CourseClassroomResult classroom
+    ) {
         return new LearningProgressResult(
                 learningProgress.getId(),
                 learningProgress.getUserId(),
@@ -19,7 +23,8 @@ public record LearningProgressResult(
                 learningProgress.getChapterId(),
                 learningProgress.getWatchedSeconds(),
                 learningProgress.getProgressRate(),
-                learningProgress.isCompleted()
+                learningProgress.isCompleted(),
+                classroom
         );
     }
 }

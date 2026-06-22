@@ -23,6 +23,12 @@ public record QuizSubmitResponse(
         @Schema(description = "점수", example = "80")
         int score,
 
+        @Schema(description = "강의 수료 처리 여부", example = "true")
+        boolean courseCompleted,
+
+        @Schema(description = "수료 정보")
+        CourseCompletionResponse completion,
+
         @Schema(description = "오답 목록")
         List<WrongQuizAnswerResponse> wrongAnswers
 ) {
@@ -34,6 +40,8 @@ public record QuizSubmitResponse(
                 result.totalCount(),
                 result.correctCount(),
                 result.score(),
+                result.courseCompleted(),
+                result.completion() == null ? null : CourseCompletionResponse.from(result.completion()),
                 result.wrongAnswers()
                         .stream()
                         .map(WrongQuizAnswerResponse::from)
