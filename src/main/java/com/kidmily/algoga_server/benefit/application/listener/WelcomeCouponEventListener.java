@@ -25,8 +25,13 @@ public class WelcomeCouponEventListener {
     public void issueWelcomeCoupon(UserSignedUpEvent event) {
         log.info("[WelcomeCoupon] Signup event received. userId={}", event.userId());
 
-        welcomeCouponUseCase.issueWelcomeCoupon(
-                new IssueWelcomeCouponCommand(event.userId())
-        );
+        try {
+            welcomeCouponUseCase.issueWelcomeCoupon(
+                    new IssueWelcomeCouponCommand(event.userId())
+            );
+        } catch (Exception exception) {
+            log.error("[WelcomeCoupon] Failed to issue welcome coupon. userId={}",
+                    event.userId(), exception);
+        }
     }
 }

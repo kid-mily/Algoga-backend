@@ -2,6 +2,7 @@ package com.kidmily.algoga_server.lms.application.service;
 
 import com.kidmily.algoga_server.lms.application.command.CreateCourseReviewCommand;
 import com.kidmily.algoga_server.lms.application.command.UpdateCourseReviewVisibilityCommand;
+import com.kidmily.algoga_server.lms.application.port.UserProfilePort;
 import com.kidmily.algoga_server.lms.application.result.AdminCourseReviewResult;
 import com.kidmily.algoga_server.lms.application.result.CourseReviewResult;
 import com.kidmily.algoga_server.lms.application.result.CourseReviewSummaryResult;
@@ -28,6 +29,7 @@ public class CourseReviewService implements CourseReviewUseCase {
     private final CourseRepository courseRepository;
     private final CourseCompletionRepository courseCompletionRepository;
     private final CourseReviewRepository courseReviewRepository;
+    private final UserProfilePort userProfilePort;
 
     @Override
     @Transactional
@@ -60,7 +62,7 @@ public class CourseReviewService implements CourseReviewUseCase {
         log.info("[Course Review Command] 리뷰 등록 완료. reviewId={}, courseId={}, userId={}",
                 savedReview.getId(), savedReview.getCourseId(), savedReview.getUserId());
 
-        return CourseReviewResult.from(savedReview);
+        return toCourseReviewResult(savedReview);
     }
 
     @Override
@@ -75,7 +77,7 @@ public class CourseReviewService implements CourseReviewUseCase {
                 courseId, reviews.size());
 
         return reviews.stream()
-                .map(CourseReviewResult::from)
+                .map(this::toCourseReviewResult)
                 .toList();
     }
 
@@ -124,14 +126,14 @@ public class CourseReviewService implements CourseReviewUseCase {
         validateCourse(courseId);
 
         return courseReviewRepository.findAllByCourseId(courseId).stream()
-                .map(AdminCourseReviewResult::from)
+                .map(this::toAdminCourseReviewResult)
                 .toList();
     }
 
     @Override
     public AdminCourseReviewResult getAdminReview(Long courseId, Long reviewId) {
         validateCourse(courseId);
-        return AdminCourseReviewResult.from(findReview(courseId, reviewId));
+        return toAdminCourseReviewResult(findReview(courseId, reviewId));
     }
 
     @Override
@@ -144,7 +146,7 @@ public class CourseReviewService implements CourseReviewUseCase {
                 ? review.hide()
                 : review.show();
 
-        return AdminCourseReviewResult.from(courseReviewRepository.save(updatedReview));
+        return toAdminCourseReviewResult(courseReviewRepository.save(updatedReview));
     }
 
     @Override
@@ -219,6 +221,19 @@ public class CourseReviewService implements CourseReviewUseCase {
         }
     }
 
+    private CourseReviewResult toCourseReviewResult(CourseReview review) {
+        return CourseReviewResult.from(review, findNickname(review.getUserId()));
+    }
+
+    private AdminCourseReviewResult toAdminCourseReviewResult(CourseReview review) {
+        return AdminCourseReviewResult.from(review, findNickname(review.getUserId()));
+    }
+
+    private String findNickname(Long userId) {
+        return userProfilePort.findProfile(userId)
+                .map(UserProfilePort.UserProfile::nickname)
+                .orElse(null);
+    }
     private CourseReview findReview(Long courseId, Long reviewId) {
         return courseReviewRepository.findByIdAndCourseId(reviewId, courseId)
                 .orElseThrow(() -> new LmsException(LmsErrorCode.REVIEW_NOT_FOUND));

@@ -6,6 +6,7 @@ import com.kidmily.algoga_server.benefit.domain.model.UserCoupon;
 import com.kidmily.algoga_server.benefit.domain.repository.UserCouponRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
@@ -27,15 +28,26 @@ public class WelcomeCouponService implements WelcomeCouponUseCase {
         }
 
         if (userCouponRepository.existsByUserIdAndCouponName(command.userId(), WELCOME_COUPON_NAME)) {
+            log.info("[WelcomeCoupon] Welcome coupon already issued. userId={}", command.userId());
             return;
         }
 
-        UserCoupon savedCoupon = userCouponRepository.save(UserCoupon.issueWelcome(command.userId()));
+        try {
+            UserCoupon savedCoupon = userCouponRepository.save(UserCoupon.issueWelcome(command.userId()));
 
-        log.info(
-                "[WelcomeCoupon] Issued welcome coupon. userId={}, userCouponId={}",
-                command.userId(),
-                savedCoupon.getId()
-        );
+            log.info(
+                    "[WelcomeCoupon] Issued welcome coupon. userId={}, userCouponId={}",
+                    command.userId(),
+                    savedCoupon.getId()
+            );
+        } catch (DataIntegrityViolationException exception) {
+            if (userCouponRepository.existsByUserIdAndCouponName(command.userId(), WELCOME_COUPON_NAME)) {
+                log.info("[WelcomeCoupon] Welcome coupon already issued by concurrent request. userId={}",
+                        command.userId());
+                return;
+            }
+
+            throw exception;
+        }
     }
 }

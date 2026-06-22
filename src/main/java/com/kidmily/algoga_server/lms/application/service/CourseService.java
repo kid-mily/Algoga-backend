@@ -259,7 +259,7 @@ public class CourseService implements CourseUseCase {
                 command.question()
         );
 
-        return CourseQnaResult.from(courseQnaRepository.save(courseQna));
+        return toCourseQnaResult(courseQnaRepository.save(courseQna));
     }
 
     @Override
@@ -267,7 +267,7 @@ public class CourseService implements CourseUseCase {
     public List<CourseQnaResult> getQnas(Long courseId) {
         findCourse(courseId);
         return courseQnaRepository.findByCourseId(courseId).stream()
-                .map(CourseQnaResult::from)
+                .map(this::toCourseQnaResult)
                 .toList();
     }
 
@@ -283,6 +283,7 @@ public class CourseService implements CourseUseCase {
                 qna.getId(),
                 qna.getCourseId(),
                 qna.getUserId(),
+                findNickname(qna.getUserId()),
                 qna.getManagerId(),
                 qna.getTitle(),
                 qna.getQuestion(),
@@ -290,7 +291,7 @@ public class CourseService implements CourseUseCase {
                 qna.getStatus(),
                 qna.getCreatedAt(),
                 qna.getAnsweredAt(),
-                comments.stream().map(CourseQnaCommentResult::from).toList()
+                comments.stream().map(this::toCourseQnaCommentResult).toList()
         );
     }
 
@@ -305,7 +306,7 @@ public class CourseService implements CourseUseCase {
         }
 
         CourseQna answeredQna = qna.answer(command.managerId(), command.answer());
-        return CourseQnaResult.from(courseQnaRepository.save(answeredQna));
+        return toCourseQnaResult(courseQnaRepository.save(answeredQna));
     }
 
     @Override
@@ -325,7 +326,7 @@ public class CourseService implements CourseUseCase {
                 command.content()
         );
 
-        return CourseQnaCommentResult.from(courseQnaCommentRepository.save(comment));
+        return toCourseQnaCommentResult(courseQnaCommentRepository.save(comment));
     }
 
     @Override
@@ -647,6 +648,24 @@ public class CourseService implements CourseUseCase {
                 .orElse(0.0);
 
         return Math.round(average * 10.0) / 10.0;
+    }
+
+    private CourseQnaResult toCourseQnaResult(CourseQna qna) {
+        return CourseQnaResult.from(qna, findNickname(qna.getUserId()));
+    }
+
+    private CourseQnaCommentResult toCourseQnaCommentResult(CourseQnaComment comment) {
+        String nickname = "USER".equals(comment.getWriterType())
+                ? findNickname(comment.getUserId())
+                : null;
+
+        return CourseQnaCommentResult.from(comment, nickname);
+    }
+
+    private String findNickname(Long userId) {
+        return userProfilePort.findProfile(userId)
+                .map(UserProfilePort.UserProfile::nickname)
+                .orElse(null);
     }
 
     private CourseQna findQna(Long courseId, Long qnaId) {

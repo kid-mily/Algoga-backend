@@ -7,6 +7,7 @@ public record CourseQnaDetailResult(
         Long qnaId,
         Long courseId,
         Long userId,
+        String nickname,
         Long managerId,
         String title,
         String question,

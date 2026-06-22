@@ -16,6 +16,9 @@ public record CourseQnaResponse(
         @Schema(description = "질문 작성자 ID", example = "1")
         Long userId,
 
+        @Schema(description = "질문 작성자 닉네임", example = "알고가유저")
+        String nickname,
+
         @Schema(description = "답변 매니저 ID", example = "3")
         Long managerId,
 
@@ -42,6 +45,7 @@ public record CourseQnaResponse(
                 qna.qnaId(),
                 qna.courseId(),
                 qna.userId(),
+                qna.nickname(),
                 qna.managerId(),
                 qna.title(),
                 qna.question(),
