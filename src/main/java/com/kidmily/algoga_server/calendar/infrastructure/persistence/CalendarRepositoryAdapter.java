@@ -56,4 +56,9 @@ public class CalendarRepositoryAdapter implements CalendarRepository {
         entity.updateDDayAlertSent(calendar.getIsDDayAlertSent());
         return calendarMapper.toDomain(springDataRepository.save(entity));
     }
+
+    @Override
+    public void deleteAllByUserId(Long userId) {
+        springDataRepository.deleteAllByUserId(userId);
+    }
 }

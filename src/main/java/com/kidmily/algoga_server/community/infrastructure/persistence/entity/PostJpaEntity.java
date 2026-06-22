@@ -50,6 +50,9 @@ public class PostJpaEntity {
     @Builder.Default
     private Boolean isDeleted = false;
 
+    @Column(name = "deleted_at")
+    private LocalDateTime deletedAt;
+
     @Column(name = "created_at")
     private LocalDateTime createdAt;
 
@@ -87,6 +90,7 @@ public class PostJpaEntity {
 
     public void softDelete() {
         this.isDeleted = true;
+        this.deletedAt = LocalDateTime.now();
     }
 
 }

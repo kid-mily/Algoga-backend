@@ -14,11 +14,12 @@ public class Comment {
     private String content;
     private boolean deleted;
     private final LocalDateTime createdAt;
+    private LocalDateTime deletedAt;
 
     // 신규 생성용
     public static Comment create(Long postId, Long userId, Long parentId, String content) {
         validate(content);
-        return new Comment(null, postId, userId, parentId, content, false, null);
+        return new Comment(null, postId, userId, parentId, content, false, null, null);
     }
 
     public void updateContent(Long requesterId, String newContent) {
@@ -30,6 +31,7 @@ public class Comment {
     public void delete(Long requesterId) {
         validateOwnerForDelete(requesterId);
         this.deleted = true;
+        this.deletedAt = LocalDateTime.now();
     }
 
     private void validateOwnerForUpdate(Long requesterId) {
@@ -47,8 +49,8 @@ public class Comment {
     // DB 복원용
     public static Comment reconstitute(Long commentId, Long postId, Long userId,
                                        Long parentId, String content,
-                                       boolean deleted, LocalDateTime createdAt) {
-        return new Comment(commentId, postId, userId, parentId, content, deleted, createdAt);
+                                       boolean deleted, LocalDateTime createdAt, LocalDateTime deletedAt) {
+        return new Comment(commentId, postId, userId, parentId, content, deleted, createdAt, deletedAt);
     }
 
     private static void validate(String content) {
@@ -61,7 +63,7 @@ public class Comment {
     }
 
     private Comment(Long commentId, Long postId, Long userId, Long parentId,
-                    String content, boolean deleted, LocalDateTime createdAt) {
+                    String content, boolean deleted, LocalDateTime createdAt, LocalDateTime deletedAt) {
         this.commentId = commentId;
         this.postId = postId;
         this.userId = userId;
@@ -69,6 +71,7 @@ public class Comment {
         this.content = content;
         this.deleted = deleted;
         this.createdAt = createdAt;
+        this.deletedAt = deletedAt;
     }
 
     public Long getCommentId() { return commentId; }
@@ -97,5 +100,6 @@ public class Comment {
     // 관리자에 의한 댓글 삭제 (작성자 권한 검증 없음)
     public void deleteByAdmin() {
         this.deleted = true;
+        this.deletedAt = LocalDateTime.now();
     }
 }

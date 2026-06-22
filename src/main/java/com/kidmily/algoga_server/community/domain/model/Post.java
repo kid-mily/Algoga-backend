@@ -28,6 +28,7 @@ public class Post {
     private LocalDateTime createdAt;
     private Boolean isDeleted;
     private Integer viewCount;
+    private LocalDateTime deletedAt;
 
     // 1. 생성 시점의 생성자
     private Post(Long authorId, PostTagType category, String title, String content,
@@ -52,7 +53,7 @@ public class Post {
     // DB 조회 후 재구성용 생성자
     private Post(Long id, Long authorId, PostTagType category, String title, String content,
                  Long countryId, Long lectureId, List<String> freeTags, List<String> imageUrls,
-                 LocalDateTime createdAt, Integer viewCount, Boolean isDeleted) {
+                 LocalDateTime createdAt, Integer viewCount, Boolean isDeleted, LocalDateTime deletedAt) {
         this.id = id;
         this.authorId = authorId;
         this.category = category;
@@ -65,6 +66,7 @@ public class Post {
         this.createdAt = createdAt;
         this.viewCount = viewCount;
         this.isDeleted = isDeleted;
+        this.deletedAt = deletedAt;
     }
 
     // 2. 정적 팩토리 메서드
@@ -119,14 +121,15 @@ public class Post {
     public void delete(Long requesterId) {
         validateOwnerForDelete(requesterId);
         this.isDeleted = true;
+        this.deletedAt = LocalDateTime.now();
     }
 
 
     public static Post reconstitute(Long id, Long authorId, PostTagType category, String title, String content,
                                     Long countryId, Long lectureId, List<String> freeTags, List<String> imageUrls,
-                                    LocalDateTime createdAt, Integer viewCount, Boolean isDeleted) {
+                                    LocalDateTime createdAt, Integer viewCount, Boolean isDeleted, LocalDateTime deletedAt) {
         return new Post(id, authorId, category, title, content, countryId, lectureId,
-                freeTags, imageUrls, createdAt, viewCount, isDeleted);
+                freeTags, imageUrls, createdAt, viewCount, isDeleted, deletedAt);
     }
 
     // 3. 도메인 규칙 검증 메서드 (상단 import에 맞게 BusinessException으로 일관성 유지)
@@ -175,5 +178,6 @@ public class Post {
     // 관리자에 의한 게시글 삭제 (작성자 권한 검증 없음)
     public void deleteByAdmin() {
         this.isDeleted = true;
+        this.deletedAt = LocalDateTime.now();
     }
 }

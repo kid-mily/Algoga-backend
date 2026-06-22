@@ -1,6 +1,7 @@
 package com.kidmily.algoga_server.notification.application.listener;
 
 import com.kidmily.algoga_server.calendar.application.port.AccommodationPort;
+import com.kidmily.algoga_server.global.event.UserWithdrawnEvent;
 import com.kidmily.algoga_server.notification.application.port.CoursePort;
 import com.kidmily.algoga_server.notification.domain.event.NotificationEvent;
 import com.kidmily.algoga_server.notification.domain.model.Notification;
@@ -159,6 +160,22 @@ public class NotificationEventListener {
 
         notificationRepository.save(notification);
         log.info("[NotificationEventListener] 환불 거절 알림 저장 완료 - userId: {}", event.userId());
+    }
+
+    @Async
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+    public void handleUserWithdrawnEvent(UserWithdrawnEvent event) {
+        Long withdrawnUserId = event.userId();
+        log.info("[Notification] 유저 탈퇴 이벤트 수신 - userId: {}", withdrawnUserId);
+
+        try {
+            notificationRepository.deleteAllByUserId(withdrawnUserId);
+            notificationSettingRepository.deleteByUserId(withdrawnUserId);
+            log.info("[Notification] 유저({}) 알림 데이터 삭제 완료", withdrawnUserId);
+        } catch (Exception e) {
+            log.error("[Notification] 유저 탈퇴 알림 삭제 중 오류: {}", e.getMessage(), e);
+        }
     }
 
 }
