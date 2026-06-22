@@ -566,7 +566,13 @@ public class CourseService implements CourseUseCase {
                 ? "/api/v1/courses/" + course.getId() + "/certificate"
                 : null;
 
-        String countryName = mapRepository.findActiveCountryById(course.getCountryId())
+        Optional<Country> country = mapRepository.findActiveCountryById(course.getCountryId());
+
+        String continentCode = country
+                .map(Country::getContinentCode)
+                .orElse(null);
+
+        String countryName = country
                 .map(Country::getName)
                 .orElse(null);
 
@@ -575,6 +581,7 @@ public class CourseService implements CourseUseCase {
                 course.getTitle(),
                 course.getThumbnailUrl(),
                 course.getCountryId(),
+                continentCode,
                 countryName,
                 totalDurationSeconds,
                 studentCount,

@@ -20,6 +20,9 @@ public record MyCourseResponse(
         @Schema(description = "국가 ID", example = "1")
         Long countryId,
 
+        @Schema(description = "대륙 코드", example = "ASIA")
+        String continentCode,
+
         @Schema(description = "국가명", example = "일본")
         String countryName,
 
@@ -72,6 +75,7 @@ public record MyCourseResponse(
                 result.title(),
                 result.thumbnailUrl(),
                 result.countryId(),
+                result.continentCode(),
                 result.countryName(),
                 result.totalDurationSeconds(),
                 result.studentCount(),

@@ -18,6 +18,14 @@ public final class CurrentUserIdResolver {
         return userId;
     }
 
+    public static Long resolveLoginRequired(Object principal) {
+        Long userId = resolveNullable(principal);
+        if (userId == null) {
+            throw new LmsException(LmsErrorCode.LOGIN_REQUIRED);
+        }
+        return userId;
+    }
+
     public static Long resolveNullable(Object principal) {
         if (principal == null) {
             return null;

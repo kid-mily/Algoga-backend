@@ -7,6 +7,7 @@ public record MyCourseResult(
         String title,
         String thumbnailUrl,
         Long countryId,
+        String continentCode,
         String countryName,
         int totalDurationSeconds,
         long studentCount,
