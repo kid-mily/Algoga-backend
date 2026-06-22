@@ -132,13 +132,16 @@ public class RefundQueryService implements RefundQueryUseCase {
     }
 
     private RefundResponse enrichRefund(RefundRequest refund) {
-        String userName = userRepository.findById(refund.getUserId())
-                .map(User::getName)
-                .orElse(null);
+        // 환불 요청 시점 스냅샷 우선(탈퇴/하드딜리트 후에도 이름 보존), 없으면(옛 환불건) live 조회 fallback
+        String userName = refund.getUserName() != null
+                ? refund.getUserName()
+                : userRepository.findById(refund.getUserId())
+                        .map(User::getName)
+                        .orElse(null);
 
         Payment payment = paymentRepository.findById(refund.getPaymentId()).orElse(null);
         int paidAmount = payment != null ? payment.getAmount() : 0;
-        String paymentMethod = payment != null ? payment.getPaymentType().name() : null;
+        String paymentMethod = payment != null ? payment.getPaymentMethod() : null;
 
         Booking booking = bookingRepository.findById(refund.getBookingId()).orElse(null);
         String bookingNumber = booking != null ? booking.getBookingNumber() : null;

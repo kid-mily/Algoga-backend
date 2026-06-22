@@ -21,6 +21,7 @@ import com.kidmily.algoga_server.payment.infrastructure.pdf.ConfirmationPdfGener
 import com.kidmily.algoga_server.payment.presentation.api.response.PaymentMonthlyDetailResponse;
 import com.kidmily.algoga_server.payment.presentation.api.response.PaymentResponse;
 import com.kidmily.algoga_server.payment.presentation.api.response.PaymentStatsResponse;
+import com.kidmily.algoga_server.payment.settings.cache.PaymentCacheType;
 import com.kidmily.algoga_server.user.domain.User;
 import com.kidmily.algoga_server.user.domain.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -87,7 +88,7 @@ public class PaymentQueryService implements PaymentQueryUseCase {
         return confirmationPdfGenerator.generate(payment, booking);
     }
 
-    @Cacheable(value = "myPayments", key = "#userId")
+    @Cacheable(value = PaymentCacheType.Const.MY_PAYMENTS, key = "#userId")
     @Override
     public List<PaymentResponse> getMyPayments(Long userId) {
         log.info("[PaymentQueryService] 내 결제 내역 조회 - userId: {}", userId);
@@ -154,7 +155,7 @@ public class PaymentQueryService implements PaymentQueryUseCase {
         }
     }
 
-    @Cacheable(value = "adminPaymentStats", key = "#year != null ? #year : 'all'")
+    @Cacheable(value = PaymentCacheType.Const.ADMIN_PAYMENT_STATS, key = "#year != null ? #year : 'all'")
     @Override
     public List<PaymentStatsResponse> getAdminPaymentStats(Integer year) {
         log.info("[PaymentQueryService] 어드민 월별 수익 통계 조회 - year: {}", year);
@@ -261,9 +262,12 @@ public class PaymentQueryService implements PaymentQueryUseCase {
     }
 
     private PaymentResponse enrichPayment(Payment payment) {
-        String userName = userRepository.findById(payment.getUserId())
-                .map(User::getName)
-                .orElse(null);
+        // 결제 시점 스냅샷 우선(탈퇴/하드딜리트 후에도 이름 보존), 없으면(옛 결제건) live 조회 fallback
+        String userName = payment.getUserName() != null
+                ? payment.getUserName()
+                : userRepository.findById(payment.getUserId())
+                        .map(User::getName)
+                        .orElse(null);
 
         String productName = null;
         if (payment.getCourseId() != null) {
