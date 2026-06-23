@@ -8,12 +8,14 @@ import com.kidmily.algoga_server.banner.domain.repository.BannerRepository;
 import com.kidmily.algoga_server.banner.exception.BannerErrorCode;
 import com.kidmily.algoga_server.banner.exception.BannerException;
 import com.kidmily.algoga_server.banner.settings.BannerStorageSettings;
+import com.kidmily.algoga_server.banner.settings.cache.BannerCacheType;
 import com.kidmily.algoga_server.global.port.out.FileStoragePort;
 import com.kidmily.algoga_server.global.type.FileType;
 import com.kidmily.algoga_server.global.util.FileTypeDetector;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -31,6 +33,7 @@ public class BannerCommandService implements BannerCommandUseCase {
 
     @Override
     @Transactional
+    @CacheEvict(cacheNames = BannerCacheType.Const.ACTIVE_BANNERS, allEntries = true)
     public Long registerBanner(CreateBannerCommand command) {
         MultipartFile file = command.image();
 
@@ -63,6 +66,7 @@ public class BannerCommandService implements BannerCommandUseCase {
 
     @Override
     @Transactional
+    @CacheEvict(cacheNames = BannerCacheType.Const.ACTIVE_BANNERS, allEntries = true)
     public void modifyBanner(Long bannerId, UpdateBannerCommand command) {
         Banner banner = bannerRepository.findById(bannerId)
                 .orElseThrow(() -> new BannerException(BannerErrorCode.BANNER_NOT_FOUND));
@@ -101,6 +105,7 @@ public class BannerCommandService implements BannerCommandUseCase {
 
     @Override
     @Transactional
+    @CacheEvict(cacheNames = BannerCacheType.Const.ACTIVE_BANNERS, allEntries = true)
     public void deleteBanner(Long bannerId) {
         Banner banner = bannerRepository.findById(bannerId)
                 .orElseThrow(() -> new BannerException(BannerErrorCode.BANNER_NOT_FOUND));

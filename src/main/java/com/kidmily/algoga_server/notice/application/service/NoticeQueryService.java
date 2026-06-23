@@ -9,6 +9,10 @@ import com.kidmily.algoga_server.notice.presentation.NoticeTagType;
 import com.kidmily.algoga_server.notice.presentation.api.response.NoticeListResponse;
 import com.kidmily.algoga_server.notice.presentation.api.response.NoticeMainResponse;
 import com.kidmily.algoga_server.notice.presentation.api.response.NoticeResponse;
+import com.kidmily.algoga_server.notice.settings.cache.NoticeCacheType;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.annotation.Caching;
 import org.springframework.data.domain.Page; // 🌟 추가
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -34,6 +38,7 @@ public class    NoticeQueryService implements NoticeQueryUseCase {
     private static final DateTimeFormatter TIME_FORMATTER = DateTimeFormatter.ofPattern("HH:mm").withZone(SEOUL_ZONE);
     private static final DateTimeFormatter FULL_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss").withZone(SEOUL_ZONE);
 
+    @Cacheable(cacheNames = NoticeCacheType.Const.NOTICE_MAIN, key = "'top5'")
     @Override
     public List<NoticeMainResponse> getNoticeMain() {
         return noticeRepository.findTop5Notices().stream()
@@ -46,6 +51,7 @@ public class    NoticeQueryService implements NoticeQueryUseCase {
                 )).collect(Collectors.toList());
     }
 
+    @Cacheable(cacheNames = NoticeCacheType.Const.NOTICE_LIST, key = "#tag + ':' + #index")
     @Override
     public PageResponse<NoticeListResponse> getNotices(String tag, Integer index) {
         Page<Notice> noticePage;
@@ -74,6 +80,7 @@ public class    NoticeQueryService implements NoticeQueryUseCase {
         return PageResponse.from(responsePage);
     }
 
+    @Cacheable(cacheNames = NoticeCacheType.Const.NOTICE_DETAIL, key = "#noticeId")
     @Override
     public NoticeResponse getNotice(Long noticeId) {
         Notice notice = noticeRepository.findById(noticeId).orElseThrow(() ->
@@ -83,6 +90,7 @@ public class    NoticeQueryService implements NoticeQueryUseCase {
         return mapToNoticeResponse(notice);
     }
 
+    @Cacheable(cacheNames = NoticeCacheType.Const.NOTICE_TAGS, key = "'all'")
     @Override
     public List<NoticeTagType> getAllNoticeTags() {
         // Enum에 정의된 모든 값을 리스트 형태로 반환합니다.
