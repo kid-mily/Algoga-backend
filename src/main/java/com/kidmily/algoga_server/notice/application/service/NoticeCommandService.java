@@ -8,9 +8,12 @@ import com.kidmily.algoga_server.notice.domain.model.Notice;
 import com.kidmily.algoga_server.notice.domain.repository.NoticeRepository;
 import com.kidmily.algoga_server.notice.exception.NoticeErrorCode;
 import com.kidmily.algoga_server.notice.exception.NoticeException;
+import com.kidmily.algoga_server.notice.settings.cache.NoticeCacheType;
 import com.kidmily.algoga_server.notification.domain.event.NoticeCreatedEvent;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Caching;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -29,6 +32,7 @@ public class NoticeCommandService implements NoticeCommandUseCase {
 
     @Override
     @Transactional
+    @CacheEvict(cacheNames = {NoticeCacheType.Const.NOTICE_MAIN, NoticeCacheType.Const.NOTICE_LIST}, allEntries = true)
     public Long registerNotice(CreateNoticeCommand request) {
         Instant now = Instant.now();
 
@@ -47,6 +51,11 @@ public class NoticeCommandService implements NoticeCommandUseCase {
 
     @Override
     @Transactional
+    @Caching(evict = {
+            // 🌟 하드코딩 제거
+            @CacheEvict(cacheNames = NoticeCacheType.Const.NOTICE_DETAIL, key = "#noticeId"),
+            @CacheEvict(cacheNames = {NoticeCacheType.Const.NOTICE_MAIN, NoticeCacheType.Const.NOTICE_LIST}, allEntries = true)
+    })
     public void deleteNotice(Long noticeId) {
         noticeRepository.findById(noticeId).orElseThrow(() ->
                 new NoticeException(NoticeErrorCode.NOTICE_NOT_FOUND)
@@ -58,6 +67,11 @@ public class NoticeCommandService implements NoticeCommandUseCase {
 
     @Override
     @Transactional
+    @Caching(evict = {
+            // 🌟 하드코딩 제거
+            @CacheEvict(cacheNames = NoticeCacheType.Const.NOTICE_DETAIL, key = "#noticeId"),
+            @CacheEvict(cacheNames = {NoticeCacheType.Const.NOTICE_MAIN, NoticeCacheType.Const.NOTICE_LIST}, allEntries = true)
+    })
     public void modifyNotice(Long noticeId, UpdateNoticeCommand command) {
         Notice notice = noticeRepository.findById(noticeId).orElseThrow(() ->
                 new NoticeException(NoticeErrorCode.NOTICE_NOT_FOUND)

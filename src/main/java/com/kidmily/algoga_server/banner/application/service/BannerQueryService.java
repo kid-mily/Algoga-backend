@@ -6,7 +6,9 @@ import com.kidmily.algoga_server.banner.exception.BannerErrorCode;
 import com.kidmily.algoga_server.banner.exception.BannerException;
 import com.kidmily.algoga_server.banner.presentation.api.response.AdminBannerResponse;
 import com.kidmily.algoga_server.banner.presentation.api.response.BannerResponse;
+import com.kidmily.algoga_server.banner.settings.cache.BannerCacheType;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
@@ -19,6 +21,7 @@ public class BannerQueryService implements BannerQueryUseCase {
 
     private final BannerRepository bannerRepository;
 
+    @Cacheable(cacheNames = BannerCacheType.Const.ACTIVE_BANNERS, key = "'all'")
     @Override
     public List<BannerResponse> getActiveBanners() {
         return bannerRepository.findVisibleBanners().stream()
