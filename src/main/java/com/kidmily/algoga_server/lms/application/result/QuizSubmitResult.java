@@ -8,6 +8,8 @@ public record QuizSubmitResult(
         int totalCount,
         int correctCount,
         int score,
+        boolean courseCompleted,
+        CourseCompletionResult completion,
         List<WrongQuizAnswerResult> wrongAnswers
 ) {
 }

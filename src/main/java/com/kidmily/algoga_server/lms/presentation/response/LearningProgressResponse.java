@@ -24,7 +24,10 @@ public record LearningProgressResponse(
         int progressRate,
 
         @Schema(description = "챕터 학습 완료 여부", example = "true")
-        boolean completed
+        boolean completed,
+
+        @Schema(description = "진도율 반영 후 최신 강의장 상태")
+        CourseClassroomResponse classroom
 ) {
     public static LearningProgressResponse from(LearningProgressResult learningProgress) {
         return new LearningProgressResponse(
@@ -34,7 +37,8 @@ public record LearningProgressResponse(
                 learningProgress.chapterId(),
                 learningProgress.watchedSeconds(),
                 learningProgress.progressRate(),
-                learningProgress.completed()
+                learningProgress.completed(),
+                CourseClassroomResponse.from(learningProgress.classroom())
         );
     }
 }
