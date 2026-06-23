@@ -13,11 +13,17 @@ public record AdminCourseReviewResponse(
         @Schema(description = "강의 ID", example = "57")
         Long courseId,
 
-        @Schema(description = "사용자 ID", example = "1")
+        @Schema(description = "작성자 PK", example = "1")
         Long userId,
 
-        @Schema(description = "작성자 닉네임", example = "알고가유저")
-        String nickname,
+        @Schema(description = "작성자 아이디", example = "user01")
+        String username,
+
+        @Schema(description = "작성자 이름", example = "김알고")
+        String name,
+
+        @Schema(description = "작성자 이메일", example = "user@test.com")
+        String email,
 
         @Schema(description = "평점", example = "5")
         int rating,
@@ -42,7 +48,9 @@ public record AdminCourseReviewResponse(
                 review.reviewId(),
                 review.courseId(),
                 review.userId(),
-                review.nickname(),
+                review.username(),
+                review.name(),
+                review.email(),
                 review.rating(),
                 review.content(),
                 review.hidden(),

@@ -39,24 +39,20 @@ public class CertificatePdfService {
     private final CourseRepository courseRepository;
     private final CourseCompletionRepository courseCompletionRepository;
 
-    public byte[] generateCertificatePdf(
-            Long userId,
-            String userName,
-            Long courseId
-    ) {
+    public byte[] generateCertificatePdf(Long userId, String userName, Long courseId) {
         log.info("[Certificate Query] 수료증 PDF 발급 요청. userId={}, courseId={}", userId, courseId);
-
-        Course course = courseRepository.findByIdAndDeletedFalse(courseId)
-                .orElseThrow(() -> {
-                    log.warn("[Certificate Query] 수료증 발급 실패. 존재하지 않거나 삭제된 강의입니다. courseId={}", courseId);
-                    return new LmsException(LmsErrorCode.COURSE_NOT_FOUND);
-                });
 
         CourseCompletion courseCompletion = courseCompletionRepository.findByUserIdAndCourseId(userId, courseId)
                 .orElseThrow(() -> {
                     log.warn("[Certificate Query] 수료증 발급 실패. 강의 이수 내역이 없습니다. userId={}, courseId={}",
                             userId, courseId);
                     return new LmsException(LmsErrorCode.COURSE_COMPLETION_NOT_FOUND);
+                });
+
+        Course course = courseRepository.findById(courseId)
+                .orElseThrow(() -> {
+                    log.warn("[Certificate Query] 수료증 발급 실패. 존재하지 않는 강의입니다. courseId={}", courseId);
+                    return new LmsException(LmsErrorCode.COURSE_NOT_FOUND);
                 });
 
         try {
@@ -72,11 +68,7 @@ public class CertificatePdfService {
         }
     }
 
-    private byte[] createPdf(
-            String userName,
-            Course course,
-            CourseCompletion courseCompletion
-    ) throws IOException {
+    private byte[] createPdf(String userName, Course course, CourseCompletion courseCompletion) throws IOException {
         try (PDDocument document = new PDDocument();
              ByteArrayOutputStream outputStream = new ByteArrayOutputStream()) {
 
@@ -106,10 +98,8 @@ public class CertificatePdfService {
 
         float pageWidth = PDRectangle.A4.getWidth();
 
-        // 배경
         fillRect(contentStream, 0, 0, PDRectangle.A4.getWidth(), PDRectangle.A4.getHeight(), LIGHT_BG);
 
-        // 메인 카드
         float cardX = 55;
         float cardY = 70;
         float cardWidth = 485;
@@ -117,72 +107,48 @@ public class CertificatePdfService {
 
         drawRoundedRect(contentStream, cardX, cardY, cardWidth, cardHeight, 12, Color.WHITE, TEAL, 2.2f);
 
-        // 상단 원형 아이콘 배경
         drawCircle(contentStream, pageWidth / 2, 710, 34, PALE_BLUE, null, 0);
-
-        // 리본 아이콘
         drawRibbonIcon(contentStream, pageWidth / 2, 710);
 
-        // 제목
         drawCenteredText(contentStream, font, 28, "수료증", 650, TEAL);
         drawCenteredText(contentStream, font, 16, "Certificate of Completion", 615, DARK);
 
-        // 작은 구분선
         drawLine(contentStream, 244, 585, 351, 585, TEAL, 2.5f);
 
-        // 안내 문구
-        drawCenteredText(contentStream, font, 12, "이 수료증은 아래와 같이 증명합니다", 545, GRAY);
-
-        // 수료자명
+        drawCenteredText(contentStream, font, 12, "이 수료증은 아래와 같이 증명합니다.", 545, GRAY);
         drawCenteredText(contentStream, font, 20, safeText(userName), 505, DARK);
 
-        // 설명
         drawCenteredText(contentStream, font, 11, "위 수료자는 알고가(ALGOGA)에서 제공하는", 462, DARK);
-
-        // 강의명
-        drawCenteredTextWithMaxWidth(contentStream, font, 17, "「" + safeText(course.getTitle()) + "」", 432, TEAL, 380);
+        drawCenteredTextWithMaxWidth(contentStream, font, 17, "'" + safeText(course.getTitle()) + "'", 432, TEAL, 380);
 
         drawCenteredText(contentStream, font, 11, "과정을 성실히 이수하였으며,", 395, DARK);
         drawCenteredText(contentStream, font, 11, "수료 기준을 충족하였음을 증명합니다.", 373, DARK);
 
-        // 수료일
         drawCenteredText(contentStream, font, 13, completedDate, 325, DARK);
 
-        // 인증번호 박스
         drawRoundedRect(contentStream, 193, 260, 210, 52, 10, PALE_BLUE, null, 0);
         drawCenteredText(contentStream, font, 8, "인증번호", 294, GRAY);
         drawCenteredText(contentStream, font, 10, courseCompletion.getCertificateCode(), 275, DARK);
 
-        // 하단 로고 원
         drawCircle(contentStream, pageWidth / 2, 180, 34, PALE_TEAL, null, 0);
         drawCenteredText(contentStream, font, 8, "ALGOGA", 177, TEAL);
 
-        // 하단 장식 라인
         drawLine(contentStream, 105, 130, 490, 130, PALE_TEAL, 1.2f);
-
-        // 작은 푸터
         drawCenteredText(contentStream, font, 8, "This certificate is issued by Algoga Learning Management System.", 105, GRAY);
     }
 
-    private void drawRibbonIcon(
-            PDPageContentStream contentStream,
-            float centerX,
-            float centerY
-    ) throws IOException {
+    private void drawRibbonIcon(PDPageContentStream contentStream, float centerX, float centerY) throws IOException {
         contentStream.setStrokingColor(TEAL);
         contentStream.setLineWidth(2.4f);
 
-        // medal circle
         contentStream.addRect(centerX - 8, centerY - 3, 16, 16);
         contentStream.stroke();
 
-        // ribbon left
         contentStream.moveTo(centerX - 6, centerY - 3);
         contentStream.lineTo(centerX - 11, centerY - 20);
         contentStream.lineTo(centerX - 2, centerY - 14);
         contentStream.stroke();
 
-        // ribbon right
         contentStream.moveTo(centerX + 6, centerY - 3);
         contentStream.lineTo(centerX + 11, centerY - 20);
         contentStream.lineTo(centerX + 2, centerY - 14);
@@ -329,19 +295,17 @@ public class CertificatePdfService {
     ) throws IOException {
         float k = 0.552284749831f;
         float c = radius * k;
-        float x = centerX;
-        float y = centerY;
 
         if (fillColor != null) {
             contentStream.setNonStrokingColor(fillColor);
-            circlePath(contentStream, x, y, radius, c);
+            circlePath(contentStream, centerX, centerY, radius, c);
             contentStream.fill();
         }
 
         if (strokeColor != null && strokeWidth > 0) {
             contentStream.setStrokingColor(strokeColor);
             contentStream.setLineWidth(strokeWidth);
-            circlePath(contentStream, x, y, radius, c);
+            circlePath(contentStream, centerX, centerY, radius, c);
             contentStream.stroke();
         }
     }

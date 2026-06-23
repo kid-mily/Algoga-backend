@@ -21,6 +21,9 @@ public class CourseQnaCommentJpaEntity {
     @Column(name = "qna_id", nullable = false)
     private Long qnaId;
 
+    @Column(name = "parent_comment_id")
+    private Long parentCommentId;
+
     @Column(name = "user_id")
     private Long userId;
 
@@ -42,6 +45,7 @@ public class CourseQnaCommentJpaEntity {
 
     public CourseQnaCommentJpaEntity(
             Long qnaId,
+            Long parentCommentId,
             Long userId,
             Long managerId,
             String writerType,
@@ -50,6 +54,7 @@ public class CourseQnaCommentJpaEntity {
             LocalDateTime createdAt
     ) {
         this.qnaId = qnaId;
+        this.parentCommentId = parentCommentId;
         this.userId = userId;
         this.managerId = managerId;
         this.writerType = writerType;

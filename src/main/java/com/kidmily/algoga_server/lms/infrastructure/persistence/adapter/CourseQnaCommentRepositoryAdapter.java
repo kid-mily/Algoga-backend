@@ -30,6 +30,7 @@ public class CourseQnaCommentRepositoryAdapter implements CourseQnaCommentReposi
                 })
                 .orElseGet(() -> new CourseQnaCommentJpaEntity(
                         comment.getQnaId(),
+                        comment.getParentCommentId(),
                         comment.getUserId(),
                         comment.getManagerId(),
                         comment.getWriterType(),
@@ -44,10 +45,7 @@ public class CourseQnaCommentRepositoryAdapter implements CourseQnaCommentReposi
     }
 
     @Override
-    public Optional<CourseQnaComment> findByIdAndQnaId(
-            Long commentId,
-            Long qnaId
-    ) {
+    public Optional<CourseQnaComment> findByIdAndQnaId(Long commentId, Long qnaId) {
         return springDataCourseQnaCommentRepository.findByIdAndQnaId(commentId, qnaId)
                 .map(this::toDomain);
     }
@@ -64,6 +62,7 @@ public class CourseQnaCommentRepositoryAdapter implements CourseQnaCommentReposi
         return CourseQnaComment.withId(
                 entity.getId(),
                 entity.getQnaId(),
+                entity.getParentCommentId(),
                 entity.getUserId(),
                 entity.getManagerId(),
                 entity.getWriterType(),

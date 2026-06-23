@@ -26,7 +26,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
-@Tag(name = "강의 Q&A", description = "강의 Q&A 등록, 조회, 상세, 댓글 API")
+@Tag(name = "강의 Q&A", description = "강의 Q&A 등록, 조회, 상세, 댓글/대댓글 API")
 @RestController
 @RequestMapping("/api/v1/courses/{courseId}/qnas")
 @RequiredArgsConstructor
@@ -34,10 +34,7 @@ public class CourseQnaController {
 
     private final CourseUseCase courseUseCase;
 
-    @Operation(
-            summary = "강의 Q&A 등록",
-            description = "로그인한 사용자가 특정 강의에 질문을 등록합니다."
-    )
+    @Operation(summary = "강의 Q&A 등록")
     @ApiErrorCodeExample(domain = GlobalErrorCode.class, value = {"INVALID_REQUEST"})
     @ApiErrorCodeExample(domain = LmsErrorCode.class, value = {"COURSE_NOT_FOUND"})
     @PostMapping
@@ -49,7 +46,7 @@ public class CourseQnaController {
 
             @AuthenticationPrincipal Object userDetails
     ) {
-        Long currentUserId = CurrentUserIdResolver.resolveNullable(userDetails);
+        Long currentUserId = CurrentUserIdResolver.resolveLoginRequired(userDetails);
 
         CreateCourseQnaCommand command = new CreateCourseQnaCommand(
                 courseId,
@@ -68,10 +65,7 @@ public class CourseQnaController {
                 ));
     }
 
-    @Operation(
-            summary = "강의 Q&A 목록 조회",
-            description = "특정 강의에 등록된 Q&A 목록을 조회합니다."
-    )
+    @Operation(summary = "강의 Q&A 목록 조회")
     @ApiErrorCodeExample(domain = LmsErrorCode.class, value = {"COURSE_NOT_FOUND"})
     @GetMapping
     public ResponseEntity<ApiResponse<List<CourseQnaResponse>>> getQnas(
@@ -92,10 +86,7 @@ public class CourseQnaController {
         );
     }
 
-    @Operation(
-            summary = "강의 Q&A 상세 조회",
-            description = "특정 Q&A의 질문, 답변, 댓글 목록을 조회합니다."
-    )
+    @Operation(summary = "강의 Q&A 상세 조회")
     @ApiErrorCodeExample(domain = LmsErrorCode.class, value = {
             "COURSE_NOT_FOUND",
             "QNA_NOT_FOUND"
@@ -119,14 +110,12 @@ public class CourseQnaController {
         );
     }
 
-    @Operation(
-            summary = "강의 Q&A 사용자 댓글 등록",
-            description = "로그인한 사용자가 특정 Q&A에 댓글을 등록합니다."
-    )
+    @Operation(summary = "강의 Q&A 사용자 댓글/대댓글 등록")
     @ApiErrorCodeExample(domain = GlobalErrorCode.class, value = {"INVALID_REQUEST"})
     @ApiErrorCodeExample(domain = LmsErrorCode.class, value = {
             "COURSE_NOT_FOUND",
-            "QNA_NOT_FOUND"
+            "QNA_NOT_FOUND",
+            "QNA_COMMENT_NOT_FOUND"
     })
     @PostMapping("/{qnaId}/comments")
     public ResponseEntity<ApiResponse<CourseQnaCommentResponse>> createUserComment(
@@ -140,11 +129,12 @@ public class CourseQnaController {
 
             @AuthenticationPrincipal Object userDetails
     ) {
-        Long currentUserId = CurrentUserIdResolver.resolveNullable(userDetails);
+        Long currentUserId = CurrentUserIdResolver.resolveLoginRequired(userDetails);
 
         CreateCourseQnaCommentCommand command = new CreateCourseQnaCommentCommand(
                 courseId,
                 qnaId,
+                request.parentCommentId(),
                 currentUserId,
                 "USER",
                 request.content()

@@ -283,7 +283,10 @@ public class CourseService implements CourseUseCase {
                 qna.getId(),
                 qna.getCourseId(),
                 qna.getUserId(),
-                findNickname(qna.getUserId()),
+                profileValue(qna.getUserId(), UserProfilePort.UserProfile::username),
+                profileValue(qna.getUserId(), UserProfilePort.UserProfile::name),
+                profileValue(qna.getUserId(), UserProfilePort.UserProfile::email),
+                profileValue(qna.getUserId(), UserProfilePort.UserProfile::nickname),
                 qna.getManagerId(),
                 qna.getTitle(),
                 qna.getQuestion(),
@@ -314,19 +317,36 @@ public class CourseService implements CourseUseCase {
         findCourse(command.courseId());
         findQna(command.courseId(), command.qnaId());
 
+        validateParentComment(command.qnaId(), command.parentCommentId());
+
         CourseQnaComment comment = "MANAGER".equals(command.writerType())
                 ? CourseQnaComment.createManagerComment(
                 command.qnaId(),
+                command.parentCommentId(),
                 command.writerId(),
                 command.content()
         )
                 : CourseQnaComment.createUserComment(
                 command.qnaId(),
+                command.parentCommentId(),
                 command.writerId(),
                 command.content()
         );
 
         return toCourseQnaCommentResult(courseQnaCommentRepository.save(comment));
+    }
+
+    private void validateParentComment(Long qnaId, Long parentCommentId) {
+        if (parentCommentId == null) {
+            return;
+        }
+
+        CourseQnaComment parentComment = courseQnaCommentRepository.findByIdAndQnaId(parentCommentId, qnaId)
+                .orElseThrow(() -> new LmsException(LmsErrorCode.QNA_COMMENT_NOT_FOUND));
+
+        if (parentComment.getParentCommentId() != null) {
+            throw new LmsException(LmsErrorCode.QNA_COMMENT_NOT_FOUND);
+        }
     }
 
     @Override
@@ -651,21 +671,28 @@ public class CourseService implements CourseUseCase {
     }
 
     private CourseQnaResult toCourseQnaResult(CourseQna qna) {
-        return CourseQnaResult.from(qna, findNickname(qna.getUserId()));
+        return CourseQnaResult.from(qna, findProfile(qna.getUserId()));
     }
 
     private CourseQnaCommentResult toCourseQnaCommentResult(CourseQnaComment comment) {
-        String nickname = "USER".equals(comment.getWriterType())
-                ? findNickname(comment.getUserId())
+        UserProfilePort.UserProfile profile = "USER".equals(comment.getWriterType())
+                ? findProfile(comment.getUserId())
                 : null;
 
-        return CourseQnaCommentResult.from(comment, nickname);
+        return CourseQnaCommentResult.from(comment, profile);
     }
 
-    private String findNickname(Long userId) {
+    private UserProfilePort.UserProfile findProfile(Long userId) {
         return userProfilePort.findProfile(userId)
-                .map(UserProfilePort.UserProfile::nickname)
                 .orElse(null);
+    }
+
+    private String profileValue(
+            Long userId,
+            java.util.function.Function<UserProfilePort.UserProfile, String> mapper
+    ) {
+        UserProfilePort.UserProfile profile = findProfile(userId);
+        return profile == null ? null : mapper.apply(profile);
     }
 
     private CourseQna findQna(Long courseId, Long qnaId) {
