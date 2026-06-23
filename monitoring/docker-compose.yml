@@ -51,8 +51,10 @@ services:
     environment:
       - GF_SECURITY_ADMIN_PASSWORD=admin
       - GF_PATHS_PROVISIONING=/etc/grafana/provisioning
-      # .env 의 SLACK_WEBHOOK_URL 을 컨테이너로 주입 → contactpoints.yaml 에서 참조
-      - SLACK_WEBHOOK_URL=${SLACK_WEBHOOK_URL}
+      # .env 의 SLACK_WEBHOOK_URL 을 컨테이너로 주입 → contactpoints.yaml 에서 참조.
+      # .env 가 없는 팀원도 Grafana 가 뜨도록 기본 placeholder 제공(알림 발송만 안 됨).
+      # 실제 알림이 필요하면 monitoring/.env 에 SLACK_WEBHOOK_URL 을 넣어 덮어쓰면 됨.
+      - SLACK_WEBHOOK_URL=${SLACK_WEBHOOK_URL:-https://hooks.slack.com/services/PLACEHOLDER/PLACEHOLDER/PLACEHOLDER}
     volumes:
       - ./grafana/provisioning:/etc/grafana/provisioning
       - ./grafana/dashboards:/var/lib/grafana/dashboards
