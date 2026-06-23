@@ -40,7 +40,7 @@ class BookingCommandServiceTest {
     }
 
     @Test
-    @DisplayName("예약 취소 시 cancel() 호출 확인")
+    @DisplayName("예약 취소 시 리포지토리로 CANCEL_REQUESTED 상태 변경을 요청한다")
     void 예약_취소_성공() {
         // given
         Booking booking = mock(Booking.class);
@@ -50,8 +50,8 @@ class BookingCommandServiceTest {
         // when
         bookingCommandService.cancel(1L, 1L);
 
-        // then : 도메인 cancel() 이 호출되었는지 검증
-        verify(booking).cancel();
+        // then : 현재 구현은 도메인 cancel()이 아니라 리포지토리로 상태를 업데이트한다
+        verify(bookingRepository).updateStatus(1L, BookingStatus.CANCEL_REQUESTED);
     }
 
     @Test
@@ -79,7 +79,7 @@ class BookingCommandServiceTest {
         // when
         bookingCommandService.cancel(1L, 1L);
 
-        // then
-        assertEquals(BookingStatus.CANCEL_REQUESTED, booking.getStatus());
+        // then : 상태 변경은 리포지토리(updateStatus)를 통해 CANCEL_REQUESTED 로 요청된다
+        verify(bookingRepository).updateStatus(1L, BookingStatus.CANCEL_REQUESTED);
     }
 }

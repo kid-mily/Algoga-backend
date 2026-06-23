@@ -2,10 +2,13 @@ package com.kidmily.algoga_server.refund.application.service;
 
 import com.kidmily.algoga_server.booking.domain.repository.BookingRepository;
 import com.kidmily.algoga_server.global.exception.BusinessException;
+import com.kidmily.algoga_server.payment.domain.model.Payment;
 import com.kidmily.algoga_server.payment.domain.repository.PaymentRepository;
 import com.kidmily.algoga_server.payment.infrastructure.portone.PortOneClient;
 import com.kidmily.algoga_server.refund.domain.model.RefundRequest;
+import com.kidmily.algoga_server.refund.domain.model.RefundStatus;
 import com.kidmily.algoga_server.refund.domain.repository.RefundRepository;
+import io.micrometer.core.instrument.Counter;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -23,7 +26,7 @@ import static org.mockito.Mockito.*;
 /*
  * RefundCommandService 단위 테스트
  * - 환불 승인/거절/없는ID 예외 케이스 검증
- * - verify() 로 도메인 메서드 호출 여부 확인
+ * - 승인은 UNDER_REVIEW 상태에서만, 거절은 REQUESTED/UNDER_REVIEW 에서 가능 (STEP 6 상태흐름 반영)
  */
 @ExtendWith(MockitoExtension.class)
 class RefundCommandServiceTest {
@@ -33,6 +36,9 @@ class RefundCommandServiceTest {
     @Mock private PaymentRepository paymentRepository;
     @Mock private PortOneClient portOneClient;
     @Mock private ApplicationEventPublisher eventPublisher;
+    @Mock private Counter refundRequestedTotal;
+    @Mock private Counter refundApprovedTotal;
+    @Mock private Counter refundRejectedTotal;
 
     @InjectMocks
     private RefundCommandService refundCommandService;
@@ -44,10 +50,11 @@ class RefundCommandServiceTest {
     }
 
     @Test
-    @DisplayName("환불 승인 시 approve() 호출 확인")
+    @DisplayName("UNDER_REVIEW 상태 환불 승인 시 approve() 호출 확인")
     void 환불_승인_성공() {
-        // given
+        // given : 승인은 UNDER_REVIEW 상태에서만 가능
         RefundRequest refund = mock(RefundRequest.class);
+        when(refund.getStatus()).thenReturn(RefundStatus.UNDER_REVIEW);
         when(refundRepository.findById(1L)).thenReturn(Optional.of(refund));
 
         // when
@@ -58,11 +65,32 @@ class RefundCommandServiceTest {
     }
 
     @Test
-    @DisplayName("환불 거절 시 reject(reason) 호출 확인")
-    void 환불_거절_성공() {
-        // given
+    @DisplayName("UNDER_REVIEW 가 아닌 상태로 승인 시 예외 발생")
+    void 잘못된_상태_승인_시_예외_발생() {
+        // given : REQUESTED 상태(승인 불가)
         RefundRequest refund = mock(RefundRequest.class);
+        when(refund.getStatus()).thenReturn(RefundStatus.REQUESTED);
         when(refundRepository.findById(1L)).thenReturn(Optional.of(refund));
+
+        // when & then
+        assertThrows(BusinessException.class, () -> refundCommandService.approve(1L));
+        verify(refund, never()).approve();
+    }
+
+    @Test
+    @DisplayName("REQUESTED 상태 환불 거절 시 reject(reason) 호출 확인")
+    void 환불_거절_성공() {
+        // given : 거절은 REQUESTED/UNDER_REVIEW 에서 가능
+        RefundRequest refund = mock(RefundRequest.class);
+        when(refund.getStatus()).thenReturn(RefundStatus.REQUESTED);
+        when(refund.getPaymentId()).thenReturn(10L);
+        when(refund.getUserId()).thenReturn(1L);
+        when(refundRepository.findById(1L)).thenReturn(Optional.of(refund));
+
+        // 거절 후 강의/패키지 구분용 payment 조회 — courseId 있으면 강의(ofLecture) 분기로 booking 조회 회피
+        Payment payment = mock(Payment.class);
+        when(payment.getCourseId()).thenReturn(5L);
+        when(paymentRepository.findById(10L)).thenReturn(Optional.of(payment));
 
         // when
         refundCommandService.reject(1L, "규정 외 요청");

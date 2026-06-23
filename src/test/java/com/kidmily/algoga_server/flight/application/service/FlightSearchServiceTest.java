@@ -57,16 +57,16 @@ class FlightSearchServiceTest {
     }
 
     @Test
-    @DisplayName("항공편 검색 결과 없으면 빈 리스트 반환")
-    void 항공편_검색_결과_없으면_빈리스트_반환() {
-        // given
+    @DisplayName("API 결과가 없으면 Mock 폴백 데이터를 반환한다")
+    void 항공편_검색_결과_없으면_Mock폴백_반환() {
+        // given : 외부 API가 빈 결과를 줌
         when(flightApiClient.getDepartureFlights(anyString(), any(LocalDate.class)))
                 .thenReturn(Collections.emptyList());
 
         // when
         List<FlightInfo> result = flightSearchService.searchFlights("ICN", LocalDate.now());
 
-        // then
-        assertTrue(result.isEmpty());
+        // then : graceful degradation — 빈 리스트가 아니라 Mock 데이터로 채워 반환
+        assertFalse(result.isEmpty());
     }
 }
