@@ -22,9 +22,6 @@ public class EmailSenderImpl implements EmailSender {
     @Async
     @Override
     public void sendEmail(String toAddress, String subject, String body) {
-        // 여기서 비밀번호 로그 확인 (테스트용)
-        log.info("현재 사용 중인 비밀번호 앞자리: {}", password.substring(0, 3) + "****");
-
         try {
             SimpleMailMessage message = new SimpleMailMessage();
             message.setTo(toAddress);
