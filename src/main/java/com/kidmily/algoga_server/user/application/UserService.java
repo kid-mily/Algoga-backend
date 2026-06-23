@@ -1,9 +1,11 @@
 package com.kidmily.algoga_server.user.application;
 
+import com.kidmily.algoga_server.booking.application.usecase.BookingQueryUseCase;
 import com.kidmily.algoga_server.friend.domain.model.RelationStatus;
 import com.kidmily.algoga_server.friend.domain.repository.FriendRepository;
 import com.kidmily.algoga_server.global.port.out.FileStoragePort;
 import com.kidmily.algoga_server.global.security.GlobalJwtProvider;
+import com.kidmily.algoga_server.refund.application.usecase.RefundQueryUseCase;
 import com.kidmily.algoga_server.user.domain.User;
 import com.kidmily.algoga_server.user.domain.UserRepository;
 import com.kidmily.algoga_server.user.exception.UserErrorCode;
@@ -47,6 +49,10 @@ public class UserService {
     // softDelete 정책 관련
     private final ApplicationEventPublisher eventPublisher;
     private final RedisTemplate<String, String> redisTemplate;
+
+    // 소프트딜리트
+    private final BookingQueryUseCase bookingQueryUseCase;
+    private final RefundQueryUseCase refundQueryUseCase;
 
     // 내 프로필 조회
     @Transactional(readOnly = true)
@@ -148,14 +154,14 @@ public class UserService {
             throw new UserException(UserErrorCode.DELETED_USER);
         }
 
-        // [TODO] 팀원들이 예약/환불 인터페이스를 만들어주면 이 주석을 풀고 사용하세요!
-//         if (bookingQueryUseCase.hasActiveBooking(user.getId())) {
-//         throw new UserException(UserErrorCode.ACTIVE_BOOKING_EXISTS);
-//         }
-//         if (refundQueryUseCase.hasActiveRefund(user.getId())) {
-//         throw new UserException(UserErrorCode.ACTIVE_REFUND_EXISTS);
-//         }
-//
+        // 회원 탈퇴 할 때 예약/환불
+         if (bookingQueryUseCase.hasActiveBooking(user.getId())) {
+         throw new UserException(UserErrorCode.ACTIVE_BOOKING_EXISTS);
+         }
+         if (refundQueryUseCase.hasActiveRefund(user.getId())) {
+         throw new UserException(UserErrorCode.ACTIVE_REFUND_EXISTS);
+         }
+
         // 유저 엔티티 Soft Delete 처리 (탈퇴 상태, 날짜 기록, 이메일 랜덤 변경)
         user.withdraw();
 
