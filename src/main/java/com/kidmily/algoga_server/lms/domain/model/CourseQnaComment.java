@@ -6,6 +6,7 @@ public class CourseQnaComment {
 
     private final Long id;
     private final Long qnaId;
+    private final Long parentCommentId;
     private final Long userId;
     private final Long managerId;
     private final String writerType;
@@ -16,6 +17,7 @@ public class CourseQnaComment {
     private CourseQnaComment(
             Long id,
             Long qnaId,
+            Long parentCommentId,
             Long userId,
             Long managerId,
             String writerType,
@@ -25,6 +27,7 @@ public class CourseQnaComment {
     ) {
         this.id = id;
         this.qnaId = qnaId;
+        this.parentCommentId = parentCommentId;
         this.userId = userId;
         this.managerId = managerId;
         this.writerType = writerType;
@@ -35,12 +38,14 @@ public class CourseQnaComment {
 
     public static CourseQnaComment createUserComment(
             Long qnaId,
+            Long parentCommentId,
             Long userId,
             String content
     ) {
         return new CourseQnaComment(
                 null,
                 qnaId,
+                parentCommentId,
                 userId,
                 null,
                 "USER",
@@ -52,12 +57,14 @@ public class CourseQnaComment {
 
     public static CourseQnaComment createManagerComment(
             Long qnaId,
+            Long parentCommentId,
             Long managerId,
             String content
     ) {
         return new CourseQnaComment(
                 null,
                 qnaId,
+                parentCommentId,
                 null,
                 managerId,
                 "MANAGER",
@@ -70,6 +77,7 @@ public class CourseQnaComment {
     public static CourseQnaComment withId(
             Long id,
             Long qnaId,
+            Long parentCommentId,
             Long userId,
             Long managerId,
             String writerType,
@@ -80,6 +88,7 @@ public class CourseQnaComment {
         return new CourseQnaComment(
                 id,
                 qnaId,
+                parentCommentId,
                 userId,
                 managerId,
                 writerType,
@@ -93,6 +102,7 @@ public class CourseQnaComment {
         return new CourseQnaComment(
                 this.id,
                 this.qnaId,
+                this.parentCommentId,
                 this.userId,
                 this.managerId,
                 this.writerType,
@@ -102,12 +112,20 @@ public class CourseQnaComment {
         );
     }
 
+    public boolean isReply() {
+        return parentCommentId != null;
+    }
+
     public Long getId() {
         return id;
     }
 
     public Long getQnaId() {
         return qnaId;
+    }
+
+    public Long getParentCommentId() {
+        return parentCommentId;
     }
 
     public Long getUserId() {

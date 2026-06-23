@@ -1,5 +1,6 @@
 package com.kidmily.algoga_server.lms.application.result;
 
+import com.kidmily.algoga_server.lms.application.port.UserProfilePort;
 import com.kidmily.algoga_server.lms.domain.model.CourseQnaComment;
 
 import java.time.LocalDateTime;
@@ -7,7 +8,11 @@ import java.time.LocalDateTime;
 public record CourseQnaCommentResult(
         Long commentId,
         Long qnaId,
+        Long parentCommentId,
         Long userId,
+        String username,
+        String name,
+        String email,
         Long managerId,
         String writerType,
         String nickname,
@@ -18,14 +23,21 @@ public record CourseQnaCommentResult(
         return from(comment, null);
     }
 
-    public static CourseQnaCommentResult from(CourseQnaComment comment, String nickname) {
+    public static CourseQnaCommentResult from(
+            CourseQnaComment comment,
+            UserProfilePort.UserProfile profile
+    ) {
         return new CourseQnaCommentResult(
                 comment.getId(),
                 comment.getQnaId(),
+                comment.getParentCommentId(),
                 comment.getUserId(),
+                profile == null ? null : profile.username(),
+                profile == null ? null : profile.name(),
+                profile == null ? null : profile.email(),
                 comment.getManagerId(),
                 comment.getWriterType(),
-                nickname,
+                profile == null ? null : profile.nickname(),
                 comment.getContent(),
                 comment.getCreatedAt()
         );

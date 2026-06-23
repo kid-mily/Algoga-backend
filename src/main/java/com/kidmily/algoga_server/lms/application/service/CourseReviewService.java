@@ -222,16 +222,15 @@ public class CourseReviewService implements CourseReviewUseCase {
     }
 
     private CourseReviewResult toCourseReviewResult(CourseReview review) {
-        return CourseReviewResult.from(review, findNickname(review.getUserId()));
+        return CourseReviewResult.from(review, findProfile(review.getUserId()));
     }
 
     private AdminCourseReviewResult toAdminCourseReviewResult(CourseReview review) {
-        return AdminCourseReviewResult.from(review, findNickname(review.getUserId()));
+        return AdminCourseReviewResult.from(review, findProfile(review.getUserId()));
     }
 
-    private String findNickname(Long userId) {
+    private UserProfilePort.UserProfile findProfile(Long userId) {
         return userProfilePort.findProfile(userId)
-                .map(UserProfilePort.UserProfile::nickname)
                 .orElse(null);
     }
     private CourseReview findReview(Long courseId, Long reviewId) {

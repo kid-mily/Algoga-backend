@@ -6,8 +6,8 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import java.time.LocalDateTime;
 import java.util.List;
 
-@Schema(description = "강의 Q&A 댓글 응답")
-public record CourseQnaCommentResponse(
+@Schema(description = "관리자 강의 Q&A 댓글 응답")
+public record AdminCourseQnaCommentResponse(
         @Schema(description = "댓글 ID", example = "1")
         Long commentId,
 
@@ -17,17 +17,23 @@ public record CourseQnaCommentResponse(
         @Schema(description = "부모 댓글 ID. 일반 댓글이면 null", example = "1")
         Long parentCommentId,
 
-        @Schema(description = "사용자 ID", example = "1")
+        @Schema(description = "사용자 PK", example = "1")
         Long userId,
+
+        @Schema(description = "사용자 아이디", example = "user01")
+        String username,
+
+        @Schema(description = "사용자 이름", example = "김알고")
+        String name,
+
+        @Schema(description = "사용자 이메일", example = "user@test.com")
+        String email,
 
         @Schema(description = "매니저 ID", example = "3")
         Long managerId,
 
         @Schema(description = "작성자 타입", example = "USER")
         String writerType,
-
-        @Schema(description = "작성자 닉네임", example = "알고가유저")
-        String nickname,
 
         @Schema(description = "댓글 내용")
         String content,
@@ -36,24 +42,26 @@ public record CourseQnaCommentResponse(
         LocalDateTime createdAt,
 
         @Schema(description = "대댓글 목록")
-        List<CourseQnaCommentResponse> replies
+        List<AdminCourseQnaCommentResponse> replies
 ) {
-    public static CourseQnaCommentResponse from(CourseQnaCommentResult comment) {
+    public static AdminCourseQnaCommentResponse from(CourseQnaCommentResult comment) {
         return from(comment, List.of());
     }
 
-    public static CourseQnaCommentResponse from(
+    public static AdminCourseQnaCommentResponse from(
             CourseQnaCommentResult comment,
-            List<CourseQnaCommentResponse> replies
+            List<AdminCourseQnaCommentResponse> replies
     ) {
-        return new CourseQnaCommentResponse(
+        return new AdminCourseQnaCommentResponse(
                 comment.commentId(),
                 comment.qnaId(),
                 comment.parentCommentId(),
                 comment.userId(),
+                comment.username(),
+                comment.name(),
+                comment.email(),
                 comment.managerId(),
                 comment.writerType(),
-                comment.nickname(),
                 comment.content(),
                 comment.createdAt(),
                 replies

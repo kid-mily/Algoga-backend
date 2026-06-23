@@ -10,6 +10,7 @@ public interface UserProfilePort {
 
     record UserProfile(
             Long userId,
+            String username,
             String name,
             String email,
             String nickname
