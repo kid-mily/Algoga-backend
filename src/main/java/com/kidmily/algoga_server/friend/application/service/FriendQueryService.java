@@ -7,9 +7,11 @@ import com.kidmily.algoga_server.friend.domain.model.RelationStatus;
 import com.kidmily.algoga_server.friend.domain.repository.FriendRepository;
 import com.kidmily.algoga_server.friend.exception.FriendErrorCode;
 import com.kidmily.algoga_server.friend.exception.FriendException;
+import com.kidmily.algoga_server.friend.settings.cache.FriendCacheType;
 import com.kidmily.algoga_server.user.domain.User;
 import com.kidmily.algoga_server.user.domain.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -25,6 +27,7 @@ FriendQueryService implements FriendQueryUseCase {
     private final FriendRepository friendRepository;
     private final UserRepository userRepository;
 
+    @Cacheable(cacheNames = FriendCacheType.Const.FRIEND_LIST, key = "#myId")
     @Override
     public List<FriendView> getFriends(Long myId) {
         List<FriendRelation> relations = friendRepository.findAcceptedFriends(myId);

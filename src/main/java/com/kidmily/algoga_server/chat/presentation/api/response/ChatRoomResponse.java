@@ -21,6 +21,9 @@ public record ChatRoomResponse(
         @Schema(description = "채팅방 이름")
         String roomName,
 
+        @Schema(description = "채팅방 프로필 이미지 (1:1은 상대방 프로필)")
+        String profileImageUrl,
+
         @Schema(description = "마지막 메시지 내용")
         String lastMessage,
 
@@ -34,21 +37,17 @@ public record ChatRoomResponse(
 ) {
     public static ChatRoomResponse from(ChatRoom chatRoom) {
         return new ChatRoomResponse(
-                chatRoom.getId(),
-                chatRoom.getType(),
-                chatRoom.getCreatedAt(),
-                chatRoom.getRoomName(),
-                null,
-                null,
-                0
+                chatRoom.getId(), chatRoom.getType(), chatRoom.getCreatedAt(),
+                chatRoom.getRoomName(), null, null, null, 0
         );
     }
 
-    public static ChatRoomResponse of(ChatRoom room, String lastMessage,
-                                      LocalDateTime lastMessageAt, int unreadCount) {
+    public static ChatRoomResponse of(ChatRoom room, String roomName, String profileImageUrl,
+                                      String lastMessage, LocalDateTime lastMessageAt, int unreadCount) {
         return new ChatRoomResponse(
                 room.getId(), room.getType(), room.getCreatedAt(),
-                room.getRoomName(), lastMessage, lastMessageAt, unreadCount
+                roomName, profileImageUrl, lastMessage, lastMessageAt, unreadCount
         );
     }
+
 }
