@@ -2,7 +2,6 @@ package com.kidmily.algoga_server.chat.presentation;
 
 import com.kidmily.algoga_server.chat.application.command.SendChatMessageCommand;
 import com.kidmily.algoga_server.chat.application.usecase.ChatUseCase;
-import com.kidmily.algoga_server.chat.domain.model.ChatMessage;
 import com.kidmily.algoga_server.chat.presentation.api.response.ChatMessageResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -28,16 +27,12 @@ public class ChatMessageHandler {
                             SimpMessageHeaderAccessor headerAccessor) {
         Long senderId = (Long) headerAccessor.getSessionAttributes().get("userId");
 
-        ChatMessage message = chatUseCase.sendMessage(
+        ChatMessageResponse response = chatUseCase.sendMessage(
                 new SendChatMessageCommand(roomId, senderId, payload.content())
         );
 
-        // 해당 방 구독자 전체에게 브로드캐스트
-        // 클라이언트 구독: /topic/chat/rooms/{roomId}
-        messagingTemplate.convertAndSend(
-                "/topic/chat/rooms/" + roomId,
-                ChatMessageResponse.of(message, 0)
-        );
+        // 해당 방 구독자 전체에게 브로드캐스트 (발신자 정보 + unreadCount 포함)
+        messagingTemplate.convertAndSend("/topic/chat/rooms/" + roomId, response);
     }
 
     // 클라이언트: STOMP SEND /app/chat/rooms/{roomId}/read

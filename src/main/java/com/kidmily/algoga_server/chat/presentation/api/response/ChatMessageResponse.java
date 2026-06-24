@@ -17,6 +17,12 @@ public record ChatMessageResponse(
         @Schema(description = "발신자 유저 ID", example = "1")
         Long senderId,
 
+        @Schema(description = "발신자 닉네임", example = "홍길동")
+        String senderNickname,
+
+        @Schema(description = "발신자 프로필 이미지 URL")
+        String senderProfileImageUrl,
+
         @Schema(description = "메시지 내용", example = "안녕하세요!")
         String content,
 
@@ -26,9 +32,11 @@ public record ChatMessageResponse(
         @Schema(description = "메시지 전송 시각")
         LocalDateTime createdAt
 ) {
-    public static ChatMessageResponse of(ChatMessage message, int unreadCount) {
+    public static ChatMessageResponse of(ChatMessage message, String senderNickname,
+                                         String senderProfileImageUrl, int unreadCount) {
         return new ChatMessageResponse(
                 message.getId(), message.getRoomId(), message.getSenderId(),
+                senderNickname, senderProfileImageUrl,
                 message.getContent(), unreadCount, message.getCreatedAt()
         );
     }

@@ -14,7 +14,7 @@ public interface ChatUseCase {
 
     ChatRoomResponse getOrCreateRoom(CreateChatRoomCommand command);
     List<ChatMessageResponse> getMessages(Long roomId, Long userId);
-    ChatMessage sendMessage(SendChatMessageCommand command);
+    ChatMessageResponse sendMessage(SendChatMessageCommand command);
     void markAsRead(Long roomId, Long userId);
     List<ChatRoomResponse> getRooms(Long userId);
     ChatRoomResponse createGroupRoom(CreateGroupChatRoomCommand command);
