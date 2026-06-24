@@ -25,4 +25,11 @@ public class UserPortAdapter implements UserPort {
     public Optional<Long> findUserIdById(Long userId) {
         return userRepository.findById(userId).map(User::getId);
     }
+
+    @Override
+    public String getProfileImageUrl(Long userId) {
+        return userRepository.findById(userId)
+                .map(User::getProfileImageUrl)
+                .orElse(null);
+    }
 }
