@@ -201,3 +201,11 @@ resilience4j:
         # 항공편 API 타임아웃: 10초 (공공데이터 API라 느릴 수 있음)
         timeout-duration: 10s
         cancel-running-future: true
+
+# 동적 TTL 자동 조정 (DynamicTtlScheduler) — 캐시 히트율 보고 TTL 자동 확장/축소
+algoga:
+  cache:
+    dynamic-ttl:
+      enabled: true           # false 로 끄면 TTL 고정(baseline) 동작
+      interval-ms: 3600000    # 1시간마다 히트율 보고 TTL 조정
+      initial-delay-ms: 60000 # 기동 60초 후 첫 조정
