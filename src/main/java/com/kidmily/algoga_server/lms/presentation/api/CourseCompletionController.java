@@ -44,7 +44,7 @@ public class CourseCompletionController {
 
             @AuthenticationPrincipal Object userDetails
     ) {
-        Long currentUserId = CurrentUserIdResolver.resolveNullable(userDetails);
+        Long currentUserId = CurrentUserIdResolver.resolveLoginRequired(userDetails);
 
         CompleteCourseCommand command = new CompleteCourseCommand(
                 currentUserId,

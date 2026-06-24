@@ -16,6 +16,18 @@ public interface SpringDataCourseRepository extends JpaRepository<CourseJpaEntit
 
     Page<CourseJpaEntity> findByDeletedFalseOrderByIdDesc(Pageable pageable);
 
+    Page<CourseJpaEntity> findByDeletedFalseAndCountryIdInOrderByIdDesc(
+            List<Long> countryIds,
+            Pageable pageable
+    );
+
+    Page<CourseJpaEntity> findByDeletedTrueOrderByIdDesc(Pageable pageable);
+
+    Page<CourseJpaEntity> findByDeletedTrueAndCountryIdInOrderByIdDesc(
+            List<Long> countryIds,
+            Pageable pageable
+    );
+
     List<CourseJpaEntity> findByCountryIdAndStatusAndDeletedFalseOrderByIdDesc(
             Long countryId,
             String status

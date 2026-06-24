@@ -7,6 +7,7 @@ import com.kidmily.algoga_server.lms.application.command.SubmitQuizCommand;
 import com.kidmily.algoga_server.lms.application.command.UpdateQuizCommand;
 import com.kidmily.algoga_server.lms.application.result.CourseCompletionResult;
 import com.kidmily.algoga_server.lms.application.result.QuizResult;
+import com.kidmily.algoga_server.lms.application.result.QuizSubmissionResult;
 import com.kidmily.algoga_server.lms.application.result.QuizSubmitResult;
 import com.kidmily.algoga_server.lms.application.result.WrongQuizAnswerResult;
 import com.kidmily.algoga_server.lms.application.usecase.QuizUseCase;
@@ -29,7 +30,12 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -51,6 +57,7 @@ public class QuizService implements QuizUseCase {
     @Transactional(readOnly = true)
     public List<QuizResult> getQuizzes(Long courseId) {
         validateActiveCourse(courseId);
+
         return quizRepository.findByCourseId(courseId).stream()
                 .map(QuizResult::from)
                 .toList();
@@ -184,6 +191,18 @@ public class QuizService implements QuizUseCase {
                 completion,
                 wrongAnswers
         );
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public QuizSubmissionResult getMyQuizSubmission(Long userId, Long courseId) {
+        validateEnrollment(userId, courseId);
+        validateCourseExists(courseId);
+
+        QuizSubmission submission = quizSubmissionRepository.findByUserIdAndCourseId(userId, courseId)
+                .orElseThrow(() -> new LmsException(LmsErrorCode.QUIZ_NOT_SUBMITTED));
+
+        return QuizSubmissionResult.from(submission);
     }
 
     private CourseCompletionResult completeCourseIfNeeded(Long userId, Long courseId) {

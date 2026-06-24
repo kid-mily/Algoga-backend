@@ -19,8 +19,14 @@ public class CourseCompletionRewardEventListener {
     private final CourseRewardUseCase courseRewardUseCase;
     private final CourseRewardFailureUseCase courseRewardFailureUseCase;
 
-    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+    @TransactionalEventListener(
+            phase = TransactionPhase.AFTER_COMMIT,
+            fallbackExecution = true
+    )
     public void grantReward(CourseCompletionCompletedEvent event) {
+        log.info("[CourseCompletionReward] Event received. userId={}, courseId={}, completionId={}",
+                event.userId(), event.courseId(), event.completionId());
+
         try {
             courseRewardUseCase.rewardCourseWithDetails(
                     new RewardCourseCommand(event.userId(), event.courseId())

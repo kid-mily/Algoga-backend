@@ -51,7 +51,7 @@ public class CourseReviewController {
 
             @AuthenticationPrincipal Object userDetails
     ) {
-        Long currentUserId = CurrentUserIdResolver.resolveNullable(userDetails);
+        Long currentUserId = CurrentUserIdResolver.resolveLoginRequired(userDetails);
 
         CreateCourseReviewCommand command = new CreateCourseReviewCommand(
                 courseId,

@@ -6,6 +6,7 @@ import java.util.List;
 public record DiagnosisResultView(
         Long resultId,
         Long countryId,
+        String countryName,
         Integer correctCount,
         Integer totalCount,
         Integer score,

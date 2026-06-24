@@ -34,14 +34,17 @@ public record AdminCourseResponse(
         @Schema(description = "원본 파일명을 포함한 강의 자료 목록")
         List<CourseFileResponse> files,
 
-        @Schema(description = "강의 난이도 코드", example = "BEGINNER")
+        @Schema(description = "강의 레벨 코드", example = "BEGINNER")
         String level,
 
-        @Schema(description = "강의 난이도 이름", example = "초급")
+        @Schema(description = "강의 레벨 이름", example = "초급")
         String levelName,
 
         @Schema(description = "강의 상태", example = "PUBLISHED")
-        String status
+        String status,
+
+        @Schema(description = "삭제 여부", example = "true")
+        boolean deleted
 ) {
     public static AdminCourseResponse from(CourseResult course) {
         return new AdminCourseResponse(
@@ -56,7 +59,8 @@ public record AdminCourseResponse(
                 course.files().stream().map(CourseFileResponse::from).toList(),
                 course.level(),
                 course.levelName(),
-                course.status()
+                course.status(),
+                course.deleted()
         );
     }
 }

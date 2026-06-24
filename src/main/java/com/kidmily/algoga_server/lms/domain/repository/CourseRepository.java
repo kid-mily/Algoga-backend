@@ -19,6 +19,12 @@ public interface CourseRepository {
 
     Page<Course> findAllByDeletedFalse(Pageable pageable);
 
+    Page<Course> findAllByDeletedFalseAndCountryIdIn(List<Long> countryIds, Pageable pageable);
+
+    Page<Course> findAllByDeletedTrue(Pageable pageable);
+
+    Page<Course> findAllByDeletedTrueAndCountryIdIn(List<Long> countryIds, Pageable pageable);
+
     Optional<Course> updateBasicInfo(
             Long courseId,
             String title,

@@ -4,16 +4,16 @@ import java.time.LocalDateTime;
 
 public class CourseRewardFailure {
 
-    private Long id;
-    private Long userId;
-    private Long courseId;
-    private Long completionId;
-    private CourseRewardFailureStatus status;
-    private String failureReason;
-    private int retryCount;
-    private LocalDateTime createdAt;
-    private LocalDateTime lastFailedAt;
-    private LocalDateTime resolvedAt;
+    private final Long id;
+    private final Long userId;
+    private final Long courseId;
+    private final Long completionId;
+    private final CourseRewardFailureStatus status;
+    private final String failureReason;
+    private final int retryCount;
+    private final LocalDateTime createdAt;
+    private final LocalDateTime lastFailedAt;
+    private final LocalDateTime resolvedAt;
 
     private CourseRewardFailure(
             Long id,
@@ -102,6 +102,25 @@ public class CourseRewardFailure {
         );
     }
 
+    public CourseRewardFailure markRetryFailed(String failureReason, int maxRetryCount) {
+        CourseRewardFailureStatus nextStatus = retryCount >= maxRetryCount
+                ? CourseRewardFailureStatus.FAILED
+                : CourseRewardFailureStatus.PENDING;
+
+        return new CourseRewardFailure(
+                id,
+                userId,
+                courseId,
+                completionId,
+                nextStatus,
+                failureReason,
+                retryCount,
+                createdAt,
+                LocalDateTime.now(),
+                resolvedAt
+        );
+    }
+
     public CourseRewardFailure markResolved() {
         return new CourseRewardFailure(
                 id,
@@ -117,19 +136,8 @@ public class CourseRewardFailure {
         );
     }
 
-    public CourseRewardFailure markFailed(String failureReason) {
-        return new CourseRewardFailure(
-                id,
-                userId,
-                courseId,
-                completionId,
-                CourseRewardFailureStatus.FAILED,
-                failureReason,
-                retryCount,
-                createdAt,
-                LocalDateTime.now(),
-                resolvedAt
-        );
+    public boolean isResolved() {
+        return status == CourseRewardFailureStatus.RESOLVED;
     }
 
     public Long getId() {

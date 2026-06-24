@@ -22,6 +22,8 @@ import java.util.List;
 @RequiredArgsConstructor
 public class CourseRewardFailureService implements CourseRewardFailureUseCase {
 
+    private static final int MAX_RETRY_COUNT = 3;
+
     private final CourseRewardFailureRepository courseRewardFailureRepository;
     private final CourseRewardUseCase courseRewardUseCase;
 
@@ -48,12 +50,21 @@ public class CourseRewardFailureService implements CourseRewardFailureUseCase {
     }
 
     @Override
+    @Transactional(readOnly = true)
+    public List<CourseRewardFailureResult> getRetryableFailures(int maxRetryCount) {
+        return courseRewardFailureRepository.findRetryableFailures(maxRetryCount)
+                .stream()
+                .map(CourseRewardFailureResult::from)
+                .toList();
+    }
+
+    @Override
     @Transactional
     public CourseRewardFailureResult retryFailure(RetryCourseRewardFailureCommand command) {
         CourseRewardFailure failure = courseRewardFailureRepository.findById(command.failureId())
                 .orElseThrow(() -> new BenefitException(BenefitErrorCode.COURSE_REWARD_FAILURE_NOT_FOUND));
 
-        if (failure.getStatus() == CourseRewardFailureStatus.RESOLVED) {
+        if (failure.isResolved()) {
             throw new BenefitException(BenefitErrorCode.COURSE_REWARD_FAILURE_ALREADY_RESOLVED);
         }
 
@@ -71,18 +82,13 @@ public class CourseRewardFailureService implements CourseRewardFailureUseCase {
                     courseRewardFailureRepository.save(retryingFailure.markResolved())
             );
         } catch (Exception exception) {
-            CourseRewardFailure failed = retryingFailure.markFailed(exception.getMessage());
+            CourseRewardFailure failed = retryingFailure.markRetryFailed(
+                    exception.getMessage(),
+                    MAX_RETRY_COUNT
+            );
+
             courseRewardFailureRepository.save(failed);
             throw exception;
         }
-    }
-
-    @Override
-    @Transactional(readOnly = true)
-    public List<CourseRewardFailureResult> getRetryableFailures(int maxRetryCount) {
-        return courseRewardFailureRepository.findRetryableFailures(maxRetryCount)
-                .stream()
-                .map(CourseRewardFailureResult::from)
-                .toList();
     }
 }

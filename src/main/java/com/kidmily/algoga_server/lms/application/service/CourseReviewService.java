@@ -197,8 +197,8 @@ public class CourseReviewService implements CourseReviewUseCase {
     }
 
     private void validateCourse(Long courseId) {
-        if (courseRepository.findByIdAndDeletedFalse(courseId).isEmpty()) {
-            log.warn("[Course Review] 리뷰 처리 실패. 존재하지 않거나 삭제된 강의입니다. courseId={}", courseId);
+        if (courseRepository.findById(courseId).isEmpty()) {
+            log.warn("[Course Review] 후기 처리 실패. 존재하지 않는 강의입니다. courseId={}", courseId);
             throw new LmsException(LmsErrorCode.COURSE_NOT_FOUND);
         }
     }
