@@ -195,4 +195,18 @@ public class ChatService implements ChatUseCase {
         chatRoomMemberRepository.save(ChatRoomMember.create(newRoom.getId(), command.targetUserId()));
         return newRoom;
     }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<Long> getRoomMemberIds(Long roomId) {
+        return chatRoomMemberRepository.findByRoomId(roomId).stream()
+                .map(ChatRoomMember::getUserId)
+                .toList();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public int getUnreadCount(Long roomId, Long userId) {
+        return (int) chatMessageReadRepository.countUnreadByRoomIdAndUserId(roomId, userId);
+    }
 }
