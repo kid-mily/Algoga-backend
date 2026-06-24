@@ -17,7 +17,10 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 import java.nio.charset.StandardCharsets;
 
@@ -32,9 +35,9 @@ public class CertificateController {
     @Operation(
             summary = "수료증 PDF 발급",
             description = """
-                강의 이수 완료 내역이 있는 사용자에게 수료증 PDF를 발급합니다.
-                PDF에는 사용자명, 강의명, 수료일, 수료 코드가 포함됩니다.
-                """
+                    강의 이수 완료 내역이 있는 사용자에게 수료증 PDF를 발급합니다.
+                    PDF에는 사용자명, 강의명, 수료일, 수료 코드가 포함됩니다.
+                    """
     )
     @ApiResponse(
             responseCode = "200",
@@ -67,7 +70,7 @@ public class CertificateController {
 
         String filename = "certificate-course-" + courseId + ".pdf";
 
-        ContentDisposition contentDisposition = ContentDisposition.inline()
+        ContentDisposition contentDisposition = ContentDisposition.attachment()
                 .filename(filename, StandardCharsets.UTF_8)
                 .build();
 
