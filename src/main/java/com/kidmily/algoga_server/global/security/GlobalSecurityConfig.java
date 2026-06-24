@@ -89,7 +89,8 @@ public class GlobalSecurityConfig {
         configuration.setAllowedOrigins(List.of(
                 "http://localhost:17000",
                 "http://127.0.0.1:17000",
-                "https://kidmily.kro.kr" // 추후 운영 프론트엔드 도메인도 여기에 추가
+                "https://kidmily.kro.kr",
+                "https://algoga.kro.kr"// 추후 운영 프론트엔드 도메인도 여기에 추가
         ));
 
         configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
