@@ -8,6 +8,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.redis.cache.RedisCacheConfiguration;
 import org.springframework.data.redis.cache.RedisCacheManager;
+import org.springframework.data.redis.cache.RedisCacheWriter;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
 import org.springframework.data.redis.serializer.GenericJackson2JsonRedisSerializer;
 import org.springframework.data.redis.serializer.RedisSerializationContext;
@@ -31,7 +32,8 @@ public class CacheManagerConfig {
 
     @Bean
     public RedisCacheManager cacheManager(RedisConnectionFactory connectionFactory,
-                                          List<CacheRegistry> cacheRegistries) {
+                                          List<CacheRegistry> cacheRegistries,
+                                          DynamicTtlRegistry dynamicTtlRegistry) {
         ObjectMapper objectMapper = new ObjectMapper();
         objectMapper.registerModule(new JavaTimeModule());
         objectMapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
@@ -47,16 +49,23 @@ public class CacheManagerConfig {
                 .serializeValuesWith(RedisSerializationContext.SerializationPair.fromSerializer(serializer))
                 .disableCachingNullValues();
 
-        // 각 도메인 CacheRegistry 가 등록한 캐시별 TTL 을 모아서 적용
+        // 각 도메인 CacheRegistry 가 등록한 캐시별 TTL 을 모아서 적용.
+        // 고정 TTL 대신 TtlFunction 을 걸어, 캐시 쓰기마다 DynamicTtlRegistry 의 "현재 TTL"을 읽게 한다.
+        // → DynamicTtlScheduler 가 히트율을 보고 런타임에 TTL 을 조정할 수 있다(초기값=baseline 이라 시작 동작은 동일).
         Map<String, RedisCacheConfiguration> cacheConfigurations = new HashMap<>();
         for (CacheRegistry registry : cacheRegistries) {
-            registry.getCacheConfigurations().forEach((cacheName, ttl) ->
-                    cacheConfigurations.put(cacheName, defaultConfig.entryTtl(ttl)));
+            registry.getCacheConfigurations().forEach((cacheName, baselineTtl) -> {
+                dynamicTtlRegistry.register(cacheName, baselineTtl);
+                RedisCacheWriter.TtlFunction ttlFunction =
+                        (key, value) -> dynamicTtlRegistry.getTtl(cacheName);
+                cacheConfigurations.put(cacheName, defaultConfig.entryTtl(ttlFunction));
+            });
         }
 
         return RedisCacheManager.builder(connectionFactory)
                 .cacheDefaults(defaultConfig.entryTtl(Duration.ofMinutes(10)))
                 .withInitialCacheConfigurations(cacheConfigurations)
+                .enableStatistics() // 히트/미스 통계 수집 (DynamicTtlScheduler 의 히트율 계산 + Grafana 관측용)
                 .build();
     }
 }
