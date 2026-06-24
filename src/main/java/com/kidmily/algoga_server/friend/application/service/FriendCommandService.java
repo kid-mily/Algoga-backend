@@ -7,11 +7,13 @@ import com.kidmily.algoga_server.friend.domain.model.RelationStatus;
 import com.kidmily.algoga_server.friend.domain.repository.FriendRepository;
 import com.kidmily.algoga_server.friend.exception.FriendErrorCode;
 import com.kidmily.algoga_server.friend.exception.FriendException;
+import com.kidmily.algoga_server.friend.settings.cache.FriendCacheType;
 import com.kidmily.algoga_server.notification.domain.event.FriendAcceptedEvent;
 import com.kidmily.algoga_server.notification.domain.event.FriendRequestedEvent;
 import com.kidmily.algoga_server.user.domain.User;
 import com.kidmily.algoga_server.user.domain.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -71,6 +73,7 @@ public class FriendCommandService implements FriendCommandUseCase {
         ));
     }
 
+    @CacheEvict(cacheNames = FriendCacheType.Const.FRIEND_LIST, key = "#myId")
     @Override
     public void acceptFriendRequest(Long myId, Long requestId) {
         FriendRelation relation = friendRepository.findById(requestId)
@@ -109,6 +112,7 @@ public class FriendCommandService implements FriendCommandUseCase {
         friendRepository.deleteById(relationId);
     }
 
+    @CacheEvict(cacheNames = FriendCacheType.Const.FRIEND_LIST, key = "#myId")
     @Override
     public void deleteFriend(Long myId, Long relationId) {
         FriendRelation relation = friendRepository.findById(relationId)
@@ -120,6 +124,7 @@ public class FriendCommandService implements FriendCommandUseCase {
         friendRepository.deleteById(relation.getId());
     }
 
+    @CacheEvict(cacheNames = FriendCacheType.Const.FRIEND_LIST, key = "#myId")
     @Override
     public void blockUser(CreateFriendCommand command) {
         Long myId = command.requesterId();
@@ -145,6 +150,7 @@ public class FriendCommandService implements FriendCommandUseCase {
         friendRepository.save(blockRelation);
     }
 
+    @CacheEvict(cacheNames = "friendList", key = "#myId")
     @Override
     public void unblockUser(Long myId, String targetUserCode) {
         User targetUser = userRepository.findByPersonalCode(targetUserCode)
