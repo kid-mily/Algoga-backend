@@ -13,6 +13,7 @@ import org.apache.pdfbox.pdmodel.PDPage;
 import org.apache.pdfbox.pdmodel.PDPageContentStream;
 import org.apache.pdfbox.pdmodel.common.PDRectangle;
 import org.apache.pdfbox.pdmodel.font.PDType0Font;
+import org.springframework.core.io.ClassPathResource;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -20,6 +21,7 @@ import java.awt.Color;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 
@@ -28,6 +30,18 @@ import java.util.List;
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
 public class CertificatePdfService {
+
+    private static final String CLASSPATH_KOREAN_FONT = "fonts/NotoSansKR-VF.ttf";
+
+    private static final List<String> SYSTEM_KOREAN_FONT_PATHS = List.of(
+            "C:/Windows/Fonts/malgun.ttf",
+            "C:/Windows/Fonts/gulim.ttf",
+            "/System/Library/Fonts/AppleSDGothicNeo.ttc",
+            "/usr/share/fonts/truetype/noto/NotoSansCJK-Regular.ttc",
+            "/usr/share/fonts/opentype/noto/NotoSansCJK-Regular.ttc",
+            "/usr/share/fonts/truetype/noto/NotoSansKR-Regular.ttf",
+            "/usr/share/fonts/opentype/noto/NotoSansKR-Regular.otf"
+    );
 
     private static final Color TEAL = new Color(96, 154, 151);
     private static final Color DARK = new Color(20, 28, 45);
@@ -338,21 +352,21 @@ public class CertificatePdfService {
     }
 
     private PDType0Font loadKoreanFont(PDDocument document) throws IOException {
-        List<String> fontPaths = List.of(
-                "C:/Windows/Fonts/malgun.ttf",
-                "C:/Windows/Fonts/gulim.ttf",
-                "/System/Library/Fonts/AppleSDGothicNeo.ttc",
-                "/usr/share/fonts/truetype/noto/NotoSansCJK-Regular.ttc",
-                "/usr/share/fonts/opentype/noto/NotoSansCJK-Regular.ttc"
-        );
+        ClassPathResource fontResource = new ClassPathResource(CLASSPATH_KOREAN_FONT);
 
-        for (String fontPath : fontPaths) {
+        if (fontResource.exists()) {
+            try (InputStream inputStream = fontResource.getInputStream()) {
+                return PDType0Font.load(document, inputStream);
+            }
+        }
+
+        for (String fontPath : SYSTEM_KOREAN_FONT_PATHS) {
             File fontFile = new File(fontPath);
             if (fontFile.exists()) {
                 return PDType0Font.load(document, fontFile);
             }
         }
 
-        throw new IOException("한글 폰트를 찾을 수 없습니다.");
+        throw new IOException("한글 폰트를 찾을 수 없습니다. classpath=" + CLASSPATH_KOREAN_FONT);
     }
 }
