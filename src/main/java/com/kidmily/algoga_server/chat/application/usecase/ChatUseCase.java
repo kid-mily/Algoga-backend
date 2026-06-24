@@ -19,4 +19,6 @@ public interface ChatUseCase {
     List<ChatRoomResponse> getRooms(Long userId);
     ChatRoomResponse createGroupRoom(CreateGroupChatRoomCommand command);
     void leaveRoom(Long roomId, Long userId);
+    List<Long> getRoomMemberIds(Long roomId);
+    int getUnreadCount(Long roomId, Long userId);
 }

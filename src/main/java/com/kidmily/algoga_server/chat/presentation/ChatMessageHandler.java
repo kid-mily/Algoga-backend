@@ -12,6 +12,8 @@ import org.springframework.messaging.simp.SimpMessageHeaderAccessor;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Controller;
 
+import java.time.LocalDateTime;
+
 @Slf4j
 @Controller
 @RequiredArgsConstructor
@@ -31,8 +33,20 @@ public class ChatMessageHandler {
                 new SendChatMessageCommand(roomId, senderId, payload.content())
         );
 
-        // 해당 방 구독자 전체에게 브로드캐스트 (발신자 정보 + unreadCount 포함)
+        // 1) 방 구독자 전체에게 메시지 브로드캐스트 (기존)
         messagingTemplate.convertAndSend("/topic/chat/rooms/" + roomId, response);
+
+        // 2) 방 멤버 각자의 개인 채널로 목록 갱신 알림 (발신자 제외)
+        chatUseCase.getRoomMemberIds(roomId).stream()
+                .filter(memberId -> !memberId.equals(senderId))
+                .forEach(memberId -> {
+                    int unreadCount = chatUseCase.getUnreadCount(roomId, memberId);
+                    log.info("[ChatHandler] 개인 알림 전송 - userId: {}, roomId: {}", memberId, roomId);
+                    messagingTemplate.convertAndSend(
+                            "/topic/users/" + memberId,
+                            new RoomNotification(roomId, response.content(), response.createdAt(), unreadCount)
+                    );
+                });
     }
 
     // 클라이언트: STOMP SEND /app/chat/rooms/{roomId}/read
@@ -52,4 +66,6 @@ public class ChatMessageHandler {
 
     public record SendMessagePayload(String content) {}
     public record ReadEventPayload(Long roomId, Long readerId) {}
+    public record RoomNotification(Long roomId, String lastMessage,
+                                   LocalDateTime lastMessageAt, int unreadCount) {}
 }
