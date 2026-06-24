@@ -4,6 +4,7 @@ import com.kidmily.algoga_server.community.application.policy.CommunityQueryPoli
 import com.kidmily.algoga_server.community.application.usecase.PostQueryUseCase;
 import com.kidmily.algoga_server.community.domain.model.Comment;
 import com.kidmily.algoga_server.community.domain.model.Post;
+import com.kidmily.algoga_server.community.domain.port.ViewCountPort;
 import com.kidmily.algoga_server.community.domain.repository.CommentRepository;
 import com.kidmily.algoga_server.community.domain.repository.LikeDislikeRepository;
 import com.kidmily.algoga_server.community.domain.repository.PostRepository;
@@ -33,43 +34,40 @@ public class PostQueryService implements PostQueryUseCase {
     private static final int PAGE_SIZE = 10;
     private static final int POPULAR_COUNTRY_TAG_LIMIT = 5;
     private final CommunityQueryPolicy communityQueryPolicy;
+    private final ViewCountPort viewCountPort;
 
     @Override
-    @Transactional
-    public PostResponse getPost(Long postId) {
+    public PostResponse getPost(Long postId) {   // @Transactional 제거
         log.info("[PostQueryService] 게시글 단건 조회 요청 - postId: {}", postId);
 
         Post post = postRepository.findById(postId)
                 .orElseThrow(() -> new PostException(PostErrorCode.POST_NOT_FOUND));
+        
 
+        // Redis로 교체
+        viewCountPort.increment(postId);
 
-        // 조회수 증가
-        post.increaseViewCount();
-        postRepository.update(post);
-
-        // 좋아요/싫어요 수 카운트
         Long likeCount = likeDislikeRepository.countLikes(TargetType.POST, postId);
         Long dislikeCount = likeDislikeRepository.countDislikes(TargetType.POST, postId);
-
 
         List<CommentResponse> comments = toCommentTree(
                 commentRepository.findActiveCommentsByPostId(postId)
         );
 
-
         String countryName = communityQueryPolicy.resolveCountryName(post.getCountryId());
 
         Stream<TagResponse> countryStream = countryName != null ?
                 Stream.of(TagResponse.fromCountry(post.getCountryId(), countryName)) : Stream.empty();
-
         Stream<TagResponse> categoryStream = post.getCategory() != null ?
                 Stream.of(TagResponse.fromCategory(post.getCategory())) : Stream.empty();
-
         Stream<TagResponse> freeTagStream = post.getFreeTags() != null ?
                 post.getFreeTags().stream().map(TagResponse::fromFreeTag) : Stream.empty();
 
         List<TagResponse> tags = Stream.concat(countryStream,
                 Stream.concat(categoryStream, freeTagStream)).toList();
+
+        // view_count = DB값 + Redis 미반영값 합산 (Integer 타입 맞춰 int 캐스팅)
+        int viewCount = post.getViewCount() + (int) viewCountPort.getCurrentCount(postId);
 
         return new PostResponse(
                 post.getId(),
@@ -82,7 +80,7 @@ public class PostQueryService implements PostQueryUseCase {
                 post.getCountryId(),
                 countryName,
                 post.getImageUrls(),
-                post.getViewCount(),
+                viewCount,          // int — PostResponse의 Integer와 호환
                 likeCount,
                 dislikeCount,
                 (long) comments.size(),
