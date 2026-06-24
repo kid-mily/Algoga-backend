@@ -20,11 +20,23 @@ public record LearningProgressResponse(
         @Schema(description = "시청 시간. 초 단위", example = "600")
         int watchedSeconds,
 
-        @Schema(description = "진도율", example = "100")
+        @Schema(description = "현재 챕터 진도율", example = "100")
         int progressRate,
 
-        @Schema(description = "챕터 학습 완료 여부", example = "true")
+        @Schema(description = "현재 챕터 학습 완료 여부", example = "true")
         boolean completed,
+
+        @Schema(description = "다음 챕터 ID. 마지막 챕터면 null", example = "2")
+        Long nextChapterId,
+
+        @Schema(description = "다음 챕터 잠금 해제 여부", example = "true")
+        boolean nextChapterUnlocked,
+
+        @Schema(description = "강의 전체 진도율", example = "60")
+        int courseProgressRate,
+
+        @Schema(description = "퀴즈 응시 가능 여부", example = "false")
+        boolean quizAvailable,
 
         @Schema(description = "진도율 반영 후 최신 강의장 상태")
         CourseClassroomResponse classroom
@@ -38,6 +50,10 @@ public record LearningProgressResponse(
                 learningProgress.watchedSeconds(),
                 learningProgress.progressRate(),
                 learningProgress.completed(),
+                learningProgress.nextChapterId(),
+                learningProgress.nextChapterUnlocked(),
+                learningProgress.courseProgressRate(),
+                learningProgress.quizAvailable(),
                 CourseClassroomResponse.from(learningProgress.classroom())
         );
     }

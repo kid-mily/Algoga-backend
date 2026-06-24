@@ -56,15 +56,15 @@ public class CertificatePdfService {
                 });
 
         try {
-            byte[] pdfBytes = createPdf(userName, course, courseCompletion);
+            byte[] pdfBytes = createPdf(resolveUserName(userName), course, courseCompletion);
 
             log.info("[Certificate Query] 수료증 PDF 발급 완료. userId={}, courseId={}, certificateCode={}",
                     userId, courseId, courseCompletion.getCertificateCode());
 
             return pdfBytes;
-        } catch (IOException e) {
-            log.error("[Certificate Query] 수료증 PDF 생성 실패. userId={}, courseId={}", userId, courseId, e);
-            throw new IllegalStateException("수료증 PDF 생성에 실패했습니다.", e);
+        } catch (IOException exception) {
+            log.error("[Certificate Query] 수료증 PDF 생성 실패. userId={}, courseId={}", userId, courseId, exception);
+            throw new IllegalStateException("수료증 PDF 생성에 실패했습니다.", exception);
         }
     }
 
@@ -115,8 +115,8 @@ public class CertificatePdfService {
 
         drawLine(contentStream, 244, 585, 351, 585, TEAL, 2.5f);
 
-        drawCenteredText(contentStream, font, 12, "이 수료증은 아래와 같이 증명합니다.", 545, GRAY);
-        drawCenteredText(contentStream, font, 20, safeText(userName), 505, DARK);
+        drawCenteredText(contentStream, font, 12, "본 수료증은 아래와 같이 증명합니다.", 545, GRAY);
+        drawCenteredText(contentStream, font, 20, userName, 505, DARK);
 
         drawCenteredText(contentStream, font, 11, "위 수료자는 알고가(ALGOGA)에서 제공하는", 462, DARK);
         drawCenteredTextWithMaxWidth(contentStream, font, 17, "'" + safeText(course.getTitle()) + "'", 432, TEAL, 380);
@@ -325,6 +325,14 @@ public class CertificatePdfService {
         contentStream.closePath();
     }
 
+    private String resolveUserName(String userName) {
+        if (userName == null || userName.isBlank()) {
+            return "수강생";
+        }
+
+        return userName;
+    }
+
     private String safeText(String text) {
         return text == null ? "" : text;
     }
@@ -332,7 +340,7 @@ public class CertificatePdfService {
     private PDType0Font loadKoreanFont(PDDocument document) throws IOException {
         List<String> fontPaths = List.of(
                 "C:/Windows/Fonts/malgun.ttf",
-                "C:/Windows/Fonts/gulim.ttc",
+                "C:/Windows/Fonts/gulim.ttf",
                 "/System/Library/Fonts/AppleSDGothicNeo.ttc",
                 "/usr/share/fonts/truetype/noto/NotoSansCJK-Regular.ttc",
                 "/usr/share/fonts/opentype/noto/NotoSansCJK-Regular.ttc"

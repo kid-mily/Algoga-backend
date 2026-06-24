@@ -17,9 +17,13 @@ public interface CourseUseCase {
 
     Long createCourse(CreateCourseCommand command);
 
-    Page<CourseResult> getCourses(Pageable pageable);
+    Page<CourseResult> getCourses(Long countryId, String countryName, Pageable pageable);
+
+    Page<CourseResult> getDeletedCourses(Long countryId, String countryName, Pageable pageable);
 
     CourseResult getCourse(Long courseId);
+
+    CourseResult getDeletedCourse(Long courseId);
 
     CourseResult updateCourse(Long courseId, UpdateCourseCommand command);
 
@@ -29,7 +33,7 @@ public interface CourseUseCase {
 
     List<CourseStudentResult> getCourseStudents(Long courseId);
 
-    List<MyCourseResult> getMyCourses(Long userId);
+    Page<MyCourseResult> getMyCourses(Long userId, Pageable pageable);
 
     CourseClassroomResult getCourseClassroom(Long userId, Long courseId);
 

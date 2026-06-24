@@ -15,6 +15,9 @@ public record DiagnosisResultResponse(
         @Schema(description = "사용자가 선택한 국가 ID", example = "1")
         Long countryId,
 
+        @Schema(description = "국가명", example = "일본")
+        String countryName,
+
         @Schema(description = "정답 개수", example = "3")
         Integer correctCount,
 
@@ -43,6 +46,7 @@ public record DiagnosisResultResponse(
         return new DiagnosisResultResponse(
                 result.resultId(),
                 result.countryId(),
+                result.countryName(),
                 result.correctCount(),
                 result.totalCount(),
                 result.score(),

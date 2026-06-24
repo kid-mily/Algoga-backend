@@ -18,6 +18,7 @@ import org.springframework.transaction.annotation.Transactional;
 import com.kidmily.algoga_server.global.event.CourseCompletionCompletedEvent;
 import org.springframework.context.ApplicationEventPublisher;
 
+import org.springframework.data.domain.PageImpl;
 import java.time.LocalDateTime;
 import java.util.*;
 
@@ -77,14 +78,56 @@ public class CourseService implements CourseUseCase {
 
     @Override
     @Transactional(readOnly = true)
-    public Page<CourseResult> getCourses(Pageable pageable) {
-        return courseRepository.findAllByDeletedFalse(pageable).map(CourseResult::from);
+    public Page<CourseResult> getCourses(Long countryId, String countryName, Pageable pageable) {
+        List<Long> filteredCountryIds = resolveCountryFilter(countryId, countryName);
+
+        if (filteredCountryIds == null) {
+            return courseRepository.findAllByDeletedFalse(pageable)
+                    .map(CourseResult::from);
+        }
+
+        if (filteredCountryIds.isEmpty()) {
+            return Page.empty(pageable);
+        }
+
+        return courseRepository.findAllByDeletedFalseAndCountryIdIn(filteredCountryIds, pageable)
+                .map(CourseResult::from);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Page<CourseResult> getDeletedCourses(Long countryId, String countryName, Pageable pageable) {
+        List<Long> filteredCountryIds = resolveCountryFilter(countryId, countryName);
+
+        if (filteredCountryIds == null) {
+            return courseRepository.findAllByDeletedTrue(pageable)
+                    .map(CourseResult::from);
+        }
+
+        if (filteredCountryIds.isEmpty()) {
+            return Page.empty(pageable);
+        }
+
+        return courseRepository.findAllByDeletedTrueAndCountryIdIn(filteredCountryIds, pageable)
+                .map(CourseResult::from);
     }
 
     @Override
     @Transactional(readOnly = true)
     public CourseResult getCourse(Long courseId) {
         return CourseResult.from(findCourse(courseId));
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public CourseResult getDeletedCourse(Long courseId) {
+        Course course = findCourseIncludingDeleted(courseId);
+
+        if (!course.isDeleted()) {
+            throw new LmsException(LmsErrorCode.COURSE_NOT_FOUND);
+        }
+
+        return CourseResult.from(course);
     }
 
     @Override
@@ -184,13 +227,22 @@ public class CourseService implements CourseUseCase {
 
     @Override
     @Transactional(readOnly = true)
-    public List<MyCourseResult> getMyCourses(Long userId) {
-        return enrollmentRepository.findByUserId(userId).stream()
+    public Page<MyCourseResult> getMyCourses(Long userId, Pageable pageable) {
+        List<MyCourseResult> courses = enrollmentRepository.findByUserId(userId).stream()
                 .map(enrollment -> enrollment.getCourseId())
                 .distinct()
                 .map(courseId -> createMyCourseResult(userId, courseId))
                 .flatMap(Optional::stream)
                 .toList();
+
+        int start = (int) Math.min(pageable.getOffset(), courses.size());
+        int end = Math.min(start + pageable.getPageSize(), courses.size());
+
+        return new PageImpl<>(
+                courses.subList(start, end),
+                pageable,
+                courses.size()
+        );
     }
 
     @Override
@@ -250,7 +302,8 @@ public class CourseService implements CourseUseCase {
 
     @Override
     public CourseQnaResult createQna(CreateCourseQnaCommand command) {
-        findCourse(command.courseId());
+        validateAccessibleEnrollment(command.userId(), command.courseId());
+        findCourseIncludingDeleted(command.courseId());
 
         CourseQna courseQna = CourseQna.create(
                 command.courseId(),
@@ -265,7 +318,8 @@ public class CourseService implements CourseUseCase {
     @Override
     @Transactional(readOnly = true)
     public List<CourseQnaResult> getQnas(Long courseId) {
-        findCourse(courseId);
+        findCourseIncludingDeleted(courseId);
+
         return courseQnaRepository.findByCourseId(courseId).stream()
                 .map(this::toCourseQnaResult)
                 .toList();
@@ -274,7 +328,7 @@ public class CourseService implements CourseUseCase {
     @Override
     @Transactional(readOnly = true)
     public CourseQnaDetailResult getQnaDetail(Long courseId, Long qnaId) {
-        findCourse(courseId);
+        findCourseIncludingDeleted(courseId);
 
         CourseQna qna = findQna(courseId, qnaId);
         List<CourseQnaComment> comments = courseQnaCommentRepository.findByQnaId(qnaId);
@@ -294,13 +348,15 @@ public class CourseService implements CourseUseCase {
                 qna.getStatus(),
                 qna.getCreatedAt(),
                 qna.getAnsweredAt(),
-                comments.stream().map(this::toCourseQnaCommentResult).toList()
+                comments.stream()
+                        .map(this::toCourseQnaCommentResult)
+                        .toList()
         );
     }
 
     @Override
     public CourseQnaResult answerQna(AnswerCourseQnaCommand command) {
-        findCourse(command.courseId());
+        findCourseIncludingDeleted(command.courseId());
 
         CourseQna qna = findQna(command.courseId(), command.qnaId());
 
@@ -309,15 +365,19 @@ public class CourseService implements CourseUseCase {
         }
 
         CourseQna answeredQna = qna.answer(command.managerId(), command.answer());
+
         return toCourseQnaResult(courseQnaRepository.save(answeredQna));
     }
 
     @Override
     public CourseQnaCommentResult createComment(CreateCourseQnaCommentCommand command) {
-        findCourse(command.courseId());
+        findCourseIncludingDeleted(command.courseId());
         findQna(command.courseId(), command.qnaId());
-
         validateParentComment(command.qnaId(), command.parentCommentId());
+
+        if ("USER".equals(command.writerType())) {
+            validateAccessibleEnrollment(command.writerId(), command.courseId());
+        }
 
         CourseQnaComment comment = "MANAGER".equals(command.writerType())
                 ? CourseQnaComment.createManagerComment(
@@ -440,6 +500,40 @@ public class CourseService implements CourseUseCase {
     private void validateCountry(Long countryId) {
         mapRepository.findActiveCountryById(countryId)
                 .orElseThrow(() -> new LmsException(LmsErrorCode.COUNTRY_NOT_FOUND));
+    }
+
+    private List<Long> resolveCountryFilter(Long countryId, String countryName) {
+        boolean hasCountryId = countryId != null;
+        boolean hasCountryName = countryName != null && !countryName.isBlank();
+
+        if (!hasCountryId && !hasCountryName) {
+            return null;
+        }
+
+        if (hasCountryId) {
+            validateCountry(countryId);
+        }
+
+        List<Long> countryIdsByName = hasCountryName
+                ? mapRepository.findActiveCountries()
+                .stream()
+                .filter(country -> country.getName() != null)
+                .filter(country -> country.getName().contains(countryName.trim()))
+                .map(Country::getId)
+                .toList()
+                : null;
+
+        if (hasCountryId && hasCountryName) {
+            return countryIdsByName.stream()
+                    .filter(id -> id.equals(countryId))
+                    .toList();
+        }
+
+        if (hasCountryId) {
+            return List.of(countryId);
+        }
+
+        return countryIdsByName;
     }
 
     private void validateCourseLevel(String level) {

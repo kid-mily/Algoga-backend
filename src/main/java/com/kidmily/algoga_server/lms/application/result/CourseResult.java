@@ -17,7 +17,8 @@ public record CourseResult(
         List<CourseFileResult> files,
         String level,
         String levelName,
-        String status
+        String status,
+        boolean deleted
 ) {
     public static CourseResult from(Course course) {
         return new CourseResult(
@@ -32,7 +33,8 @@ public record CourseResult(
                 course.getCourseFiles().stream().map(CourseFileResult::from).toList(),
                 course.getLevel(),
                 CourseLevel.find(course.getLevel()).map(CourseLevel::displayName).orElse(""),
-                course.getStatus()
+                course.getStatus(),
+                course.isDeleted()
         );
     }
 }

@@ -23,6 +23,10 @@ import com.kidmily.algoga_server.lms.exception.LmsException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import com.kidmily.algoga_server.lms.application.result.DiagnosisResultSummary;
+import com.kidmily.algoga_server.lms.domain.model.Country;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -178,6 +182,17 @@ public class DiagnosisService implements DiagnosisUseCase {
 
     @Override
     @Transactional(readOnly = true)
+    public Page<DiagnosisResultSummary> getMyResults(Long userId, Pageable pageable) {
+        return diagnosisResultRepository.findByUserId(userId, pageable)
+                .map(result -> DiagnosisResultSummary.from(
+                        result,
+                        findCountryName(result.countryId()),
+                        toLevelName(result.level())
+                ));
+    }
+
+    @Override
+    @Transactional(readOnly = true)
     public List<AdminDiagnosisResult> getAdminResults(Long userId, Long countryId) {
         if (countryId != null) {
             validateCountry(countryId);
@@ -228,6 +243,7 @@ public class DiagnosisService implements DiagnosisUseCase {
         return new DiagnosisResultView(
                 result.id(),
                 result.countryId(),
+                findCountryName(result.countryId()),
                 result.correctCount(),
                 result.totalCount(),
                 result.score(),
@@ -243,6 +259,12 @@ public class DiagnosisService implements DiagnosisUseCase {
         if (mapRepository.findActiveCountryById(countryId).isEmpty()) {
             throw new LmsException(LmsErrorCode.COUNTRY_NOT_FOUND);
         }
+    }
+
+    private String findCountryName(Long countryId) {
+        return mapRepository.findActiveCountryById(countryId)
+                .map(Country::getName)
+                .orElse(null);
     }
 
     private void validateDiagnosisQuestion(Integer correctOption, Integer questionOrder) {

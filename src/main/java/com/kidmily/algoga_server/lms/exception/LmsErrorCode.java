@@ -26,7 +26,7 @@ public enum LmsErrorCode implements BaseErrorCode {
     QUIZ_LOCKED(HttpStatus.BAD_REQUEST, "LMS_015", "모든 챕터를 완료해야 퀴즈를 풀 수 있습니다."),
     INVALID_QUIZ_SUBMISSION(HttpStatus.BAD_REQUEST, "LMS_016", "퀴즈 제출 답안이 올바르지 않습니다."),
     COURSE_ALREADY_COMPLETED(HttpStatus.CONFLICT, "LMS_017", "이미 수강 완료한 강의입니다."),
-    QUIZ_NOT_SUBMITTED(HttpStatus.BAD_REQUEST, "LMS_018", "퀴즈 제출 후 강의를 완료할 수 있습니다."),
+    QUIZ_NOT_SUBMITTED(HttpStatus.BAD_REQUEST, "LMS_018", "퀴즈 제출 내역을 찾을 수 없습니다."),
     COURSE_COMPLETION_NOT_FOUND(HttpStatus.NOT_FOUND, "LMS_019", "강의 이수 내역을 찾을 수 없습니다."),
 
     QNA_NOT_FOUND(HttpStatus.NOT_FOUND, "LMS_023", "해당 Q&A를 찾을 수 없습니다."),

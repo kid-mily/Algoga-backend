@@ -9,6 +9,7 @@ import com.kidmily.algoga_server.lms.application.result.QuizSubmitResult;
 import com.kidmily.algoga_server.lms.application.usecase.QuizUseCase;
 import com.kidmily.algoga_server.lms.exception.LmsErrorCode;
 import com.kidmily.algoga_server.lms.presentation.request.SubmitQuizRequest;
+import com.kidmily.algoga_server.lms.presentation.response.QuizSubmissionResponse;
 import com.kidmily.algoga_server.lms.presentation.response.QuizSubmitResponse;
 import com.kidmily.algoga_server.lms.presentation.response.UserQuizResponse;
 import com.kidmily.algoga_server.lms.presentation.support.CurrentUserIdResolver;
@@ -23,7 +24,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
-@Tag(name = "퀴즈 풀이", description = "사용자 퀴즈 조회 및 제출/채점 API")
+@Tag(name = "퀴즈", description = "사용자 퀴즈 조회, 제출, 결과 조회 API")
 @RestController
 @RequestMapping("/api/v1/courses/{courseId}/quiz")
 @RequiredArgsConstructor
@@ -34,23 +35,24 @@ public class UserQuizController {
     @Operation(
             summary = "사용자 퀴즈 조회",
             description = """
-                    사용자가 강의의 모든 챕터를 완료한 뒤 퀴즈 목록을 조회합니다.
+                    사용자가 강의의 모든 챕터를 완료하면 퀴즈 목록을 조회합니다.
                     정답 번호와 해설은 응답에 포함하지 않습니다.
                     """
     )
     @ApiErrorCodeExample(domain = LmsErrorCode.class, value = {
             "COURSE_NOT_FOUND",
             "QUIZ_NOT_FOUND",
-            "QUIZ_LOCKED"
+            "QUIZ_LOCKED",
+            "NOT_ENROLLED"
     })
     @GetMapping
     public ResponseEntity<ApiResponse<List<UserQuizResponse>>> getQuizzes(
-            @Parameter(description = "강의 ID", example = "3")
+            @Parameter(description = "강의 ID", example = "53")
             @PathVariable Long courseId,
 
             @AuthenticationPrincipal Object userDetails
     ) {
-        Long currentUserId = CurrentUserIdResolver.resolveNullable(userDetails);
+        Long currentUserId = CurrentUserIdResolver.resolveLoginRequired(userDetails);
 
         List<UserQuizResponse> response = quizUseCase.getQuizzes(
                         currentUserId,
@@ -81,18 +83,19 @@ public class UserQuizController {
             "COURSE_NOT_FOUND",
             "QUIZ_NOT_FOUND",
             "QUIZ_LOCKED",
-            "INVALID_QUIZ_SUBMISSION"
+            "INVALID_QUIZ_SUBMISSION",
+            "NOT_ENROLLED"
     })
     @PostMapping("/submit")
     public ResponseEntity<ApiResponse<QuizSubmitResponse>> submitQuiz(
-            @Parameter(description = "강의 ID", example = "3")
+            @Parameter(description = "강의 ID", example = "53")
             @PathVariable Long courseId,
 
             @Valid @RequestBody SubmitQuizRequest request,
 
             @AuthenticationPrincipal Object userDetails
     ) {
-        Long currentUserId = CurrentUserIdResolver.resolveNullable(userDetails);
+        Long currentUserId = CurrentUserIdResolver.resolveLoginRequired(userDetails);
 
         List<SubmitQuizAnswerCommand> answers = request.answers()
                 .stream()
@@ -115,6 +118,40 @@ public class UserQuizController {
                         "QUIZ_SUBMITTED",
                         "퀴즈 제출 및 채점에 성공했습니다.",
                         QuizSubmitResponse.from(result)
+                )
+        );
+    }
+
+    @Operation(
+            summary = "내 퀴즈 제출 결과 조회",
+            description = """
+                    로그인한 사용자의 해당 강의 퀴즈 제출 결과를 조회합니다.
+                    현재 저장 구조상 전체 문제 수, 정답 수, 점수, 제출 일시를 반환합니다.
+                    """
+    )
+    @ApiErrorCodeExample(domain = LmsErrorCode.class, value = {
+            "COURSE_NOT_FOUND",
+            "QUIZ_NOT_SUBMITTED",
+            "NOT_ENROLLED"
+    })
+    @GetMapping("/result")
+    public ResponseEntity<ApiResponse<QuizSubmissionResponse>> getMyQuizSubmission(
+            @Parameter(description = "강의 ID", example = "53")
+            @PathVariable Long courseId,
+
+            @AuthenticationPrincipal Object userDetails
+    ) {
+        Long currentUserId = CurrentUserIdResolver.resolveLoginRequired(userDetails);
+
+        QuizSubmissionResponse response = QuizSubmissionResponse.from(
+                quizUseCase.getMyQuizSubmission(currentUserId, courseId)
+        );
+
+        return ResponseEntity.ok(
+                ApiResponse.success(
+                        "MY_QUIZ_SUBMISSION_FOUND",
+                        "내 퀴즈 제출 결과 조회에 성공했습니다.",
+                        response
                 )
         );
     }

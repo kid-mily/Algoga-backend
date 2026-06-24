@@ -18,6 +18,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.annotation.Propagation;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -41,6 +42,7 @@ public class CourseRewardService implements CourseRewardUseCase {
     }
 
     @Override
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public CourseRewardResult rewardCourseWithDetails(RewardCourseCommand command) {
         log.info("[Course Reward Command] 강의 보상 지급 요청. userId={}, courseId={}",
                 command.userId(), command.courseId());

@@ -15,11 +15,8 @@ public interface SpringDataCourseRewardFailureRepository extends JpaRepository<C
     @Query("""
             select failure
             from CourseRewardFailureJpaEntity failure
-            where failure.status in (
-                com.kidmily.algoga_server.benefit.domain.model.CourseRewardFailureStatus.PENDING,
-                com.kidmily.algoga_server.benefit.domain.model.CourseRewardFailureStatus.FAILED
-            )
-            and failure.retryCount < :maxRetryCount
+            where failure.status = com.kidmily.algoga_server.benefit.domain.model.CourseRewardFailureStatus.PENDING
+              and failure.retryCount < :maxRetryCount
             order by failure.lastFailedAt asc
             """)
     List<CourseRewardFailureJpaEntity> findRetryableFailures(@Param("maxRetryCount") int maxRetryCount);

@@ -93,14 +93,23 @@ public class AdminCourseController {
 
     @Operation(
             summary = "어드민 강의 목록 조회",
-            description = "삭제되지 않은 강의 목록을 최신순으로 조회합니다."
+            description = """
+                삭제되지 않은 강의 목록을 최신순으로 조회합니다.
+                countryId 또는 countryName으로 국가 필터링할 수 있습니다.
+                """
     )
     @PreAuthorize("hasAnyAuthority('CONTENT_MANAGER', 'ROLE_CONTENT_MANAGER', 'SUPER_ADMIN', 'ROLE_SUPER_ADMIN')")
     @GetMapping
     public ResponseEntity<ApiResponse<PageResponse<AdminCourseResponse>>> getCourses(
+            @Parameter(description = "국가 ID", example = "1")
+            @RequestParam(required = false) Long countryId,
+
+            @Parameter(description = "국가명 검색어", example = "일본")
+            @RequestParam(required = false) String countryName,
+
             @ParameterObject Pageable pageable
     ) {
-        Page<AdminCourseResponse> response = courseUseCase.getCourses(pageable)
+        Page<AdminCourseResponse> response = courseUseCase.getCourses(countryId, countryName, pageable)
                 .map(AdminCourseResponse::from);
 
         return ResponseEntity.ok(
@@ -108,6 +117,58 @@ public class AdminCourseController {
                         "ADMIN_COURSES_FOUND",
                         "어드민 강의 목록 조회에 성공했습니다.",
                         PageResponse.from(response)
+                )
+        );
+    }
+
+    @Operation(
+            summary = "어드민 삭제 강의 목록 조회",
+            description = """
+                콘텐츠 매니저가 삭제 처리한 강의 목록을 조회합니다.
+                Soft Delete 처리된 강의만 조회하며, countryId 또는 countryName으로 국가 필터링할 수 있습니다.
+                """
+    )
+    @PreAuthorize("hasAnyAuthority('CONTENT_MANAGER', 'ROLE_CONTENT_MANAGER', 'SUPER_ADMIN', 'ROLE_SUPER_ADMIN')")
+    @GetMapping("/deleted")
+    public ResponseEntity<ApiResponse<PageResponse<AdminCourseResponse>>> getDeletedCourses(
+            @Parameter(description = "국가 ID", example = "1")
+            @RequestParam(required = false) Long countryId,
+
+            @Parameter(description = "국가명 검색어", example = "일본")
+            @RequestParam(required = false) String countryName,
+
+            @ParameterObject Pageable pageable
+    ) {
+        Page<AdminCourseResponse> response = courseUseCase.getDeletedCourses(countryId, countryName, pageable)
+                .map(AdminCourseResponse::from);
+
+        return ResponseEntity.ok(
+                ApiResponse.success(
+                        "ADMIN_DELETED_COURSES_FOUND",
+                        "어드민 삭제 강의 목록 조회에 성공했습니다.",
+                        PageResponse.from(response)
+                )
+        );
+    }
+
+    @Operation(
+            summary = "어드민 삭제 강의 상세 조회",
+            description = "Soft Delete 처리된 강의의 상세 정보를 조회합니다."
+    )
+    @ApiErrorCodeExample(domain = LmsErrorCode.class, value = {"COURSE_NOT_FOUND"})
+    @PreAuthorize("hasAnyAuthority('CONTENT_MANAGER', 'ROLE_CONTENT_MANAGER', 'SUPER_ADMIN', 'ROLE_SUPER_ADMIN')")
+    @GetMapping("/deleted/{courseId}")
+    public ResponseEntity<ApiResponse<AdminCourseResponse>> getDeletedCourse(
+            @Parameter(description = "강의 ID", example = "1")
+            @PathVariable Long courseId
+    ) {
+        var course = courseUseCase.getDeletedCourse(courseId);
+
+        return ResponseEntity.ok(
+                ApiResponse.success(
+                        "ADMIN_DELETED_COURSE_FOUND",
+                        "어드민 삭제 강의 상세 조회에 성공했습니다.",
+                        AdminCourseResponse.from(course)
                 )
         );
     }

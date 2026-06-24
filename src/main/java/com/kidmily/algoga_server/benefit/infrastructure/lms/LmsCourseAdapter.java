@@ -101,7 +101,7 @@ public class LmsCourseAdapter implements LmsCoursePort {
     private Optional<Object> findCourse(Long courseId) {
         return invoke(
                 bean(COURSE_REPOSITORY),
-                "findByIdAndDeletedFalse",
+                "findById",
                 new Class<?>[]{Long.class},
                 courseId
         );

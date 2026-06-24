@@ -53,7 +53,7 @@ public class LearningProgressController {
 
             @AuthenticationPrincipal Object userDetails
     ) {
-        Long currentUserId = CurrentUserIdResolver.resolveNullable(userDetails);
+        Long currentUserId = CurrentUserIdResolver.resolveLoginRequired(userDetails);
 
         UpdateLearningProgressCommand command = new UpdateLearningProgressCommand(
                 currentUserId,
