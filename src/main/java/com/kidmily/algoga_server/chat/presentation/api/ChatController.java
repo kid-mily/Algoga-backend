@@ -3,8 +3,6 @@ package com.kidmily.algoga_server.chat.presentation.api;
 import com.kidmily.algoga_server.chat.application.command.CreateChatRoomCommand;
 import com.kidmily.algoga_server.chat.application.command.CreateGroupChatRoomCommand;
 import com.kidmily.algoga_server.chat.application.usecase.ChatUseCase;
-import com.kidmily.algoga_server.chat.domain.model.ChatRoom;
-import com.kidmily.algoga_server.chat.exception.ChatErrorCode;
 import com.kidmily.algoga_server.chat.presentation.api.request.CreateChatRoomRequest;
 import com.kidmily.algoga_server.chat.presentation.api.request.CreateGroupChatRoomRequest;
 import com.kidmily.algoga_server.chat.presentation.api.response.ChatMessageResponse;
@@ -19,6 +17,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
+import java.time.LocalDateTime;
 
 import java.util.List;
 
@@ -29,6 +29,7 @@ import java.util.List;
 public class ChatController {
 
     private final ChatUseCase chatUseCase;
+    private final SimpMessagingTemplate messagingTemplate;
 
     @PostMapping("/rooms")
     @Operation(summary = "1:1 채팅방 개설/진입", description = "친구와의 1:1 채팅방을 개설하거나 기존 채팅방에 진입합니다.")
@@ -93,7 +94,27 @@ public class ChatController {
             @AuthenticationPrincipal CustomUserDetails userDetails
     ) {
         Long currentUserId = userDetails.getUser().getId();
+
+        // 나가기 전에 닉네임 조회 (나가면 멤버에서 삭제되므로)
+        String nickname = chatUseCase.getNickname(currentUserId);
+
         chatUseCase.leaveRoom(roomId, currentUserId);
+
+        // 남은 멤버에게 시스템 메시지 브로드캐스트 (senderId=0 → 시스템 메시지 구분)
+        messagingTemplate.convertAndSend(
+                "/topic/chat/rooms/" + roomId,
+                new ChatMessageResponse(
+                        null,                       // messageId (DB 저장 안 함)
+                        roomId,
+                        0L,                         // senderId = 0 → 시스템 메시지 표식
+                        "시스템",                    // senderNickname
+                        null,                       // senderProfileImageUrl
+                        nickname + "님이 나갔습니다.", // content
+                        0,                          // unreadCount
+                        LocalDateTime.now()         // createdAt
+                )
+        );
+
         return ResponseEntity.ok(ApiResponse.success("CHAT_ROOM_LEFT", "채팅방을 나갔습니다.", null));
     }
 }

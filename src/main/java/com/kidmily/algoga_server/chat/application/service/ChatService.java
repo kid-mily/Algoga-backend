@@ -209,4 +209,10 @@ public class ChatService implements ChatUseCase {
     public int getUnreadCount(Long roomId, Long userId) {
         return (int) chatMessageReadRepository.countUnreadByRoomIdAndUserId(roomId, userId);
     }
+
+    @Override
+    @Transactional(readOnly = true)
+    public String getNickname(Long userId) {
+        return userPort.getNickname(userId);
+    }
 }
