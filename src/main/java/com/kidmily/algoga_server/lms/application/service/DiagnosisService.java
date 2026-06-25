@@ -23,10 +23,7 @@ import com.kidmily.algoga_server.lms.exception.LmsException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import com.kidmily.algoga_server.lms.application.result.DiagnosisResultSummary;
 import com.kidmily.algoga_server.lms.domain.model.Country;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
 
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -173,23 +170,18 @@ public class DiagnosisService implements DiagnosisUseCase {
 
     @Override
     @Transactional(readOnly = true)
-    public DiagnosisResultView getLatestResult(Long userId) {
-        DiagnosisResult result = diagnosisResultRepository.findLatestByUserId(userId)
-                .orElseThrow(() -> new LmsException(LmsErrorCode.DIAGNOSIS_RESULT_NOT_FOUND));
+    public List<DiagnosisResultView> getLatestResultsByCountry(Long userId) {
+        List<DiagnosisResult> results = diagnosisResultRepository.findLatestResultsByCountry(userId);
 
-        return toResultView(result, List.of());
+        if (results.isEmpty()) {
+            throw new LmsException(LmsErrorCode.DIAGNOSIS_RESULT_NOT_FOUND);
+        }
+
+        return results.stream()
+                .map(result -> toResultView(result, List.of()))
+                .toList();
     }
 
-    @Override
-    @Transactional(readOnly = true)
-    public Page<DiagnosisResultSummary> getMyResults(Long userId, Pageable pageable) {
-        return diagnosisResultRepository.findByUserId(userId, pageable)
-                .map(result -> DiagnosisResultSummary.from(
-                        result,
-                        findCountryName(result.countryId()),
-                        toLevelName(result.level())
-                ));
-    }
 
     @Override
     @Transactional(readOnly = true)

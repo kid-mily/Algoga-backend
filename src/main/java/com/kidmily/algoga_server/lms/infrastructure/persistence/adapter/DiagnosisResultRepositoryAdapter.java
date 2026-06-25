@@ -5,12 +5,9 @@ import com.kidmily.algoga_server.lms.domain.repository.DiagnosisResultRepository
 import com.kidmily.algoga_server.lms.infrastructure.persistence.entity.DiagnosisResultJpaEntity;
 import com.kidmily.algoga_server.lms.infrastructure.persistence.repository.SpringDataDiagnosisResultRepository;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
-import java.util.Optional;
 
 @Repository
 @RequiredArgsConstructor
@@ -33,16 +30,13 @@ public class DiagnosisResultRepositoryAdapter implements DiagnosisResultReposito
     }
 
     @Override
-    public Optional<DiagnosisResult> findLatestByUserId(Long userId) {
-        return springDataDiagnosisResultRepository.findFirstByUserIdOrderByCreatedAtDesc(userId)
-                .map(this::toDomain);
+    public List<DiagnosisResult> findLatestResultsByCountry(Long userId) {
+        return springDataDiagnosisResultRepository.findLatestByUserIdGroupByCountry(userId)
+                .stream()
+                .map(this::toDomain)
+                .toList();
     }
 
-    @Override
-    public Page<DiagnosisResult> findByUserId(Long userId, Pageable pageable) {
-        return springDataDiagnosisResultRepository.findByUserIdOrderByCreatedAtDesc(userId, pageable)
-                .map(this::toDomain);
-    }
 
     @Override
     public List<DiagnosisResult> findForAdmin(Long userId, Long countryId) {

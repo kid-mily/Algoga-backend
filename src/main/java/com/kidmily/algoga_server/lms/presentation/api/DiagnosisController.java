@@ -20,11 +20,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
-import com.kidmily.algoga_server.global.common.api.response.PageResponse;
-import com.kidmily.algoga_server.lms.presentation.response.DiagnosisResultSummaryResponse;
-import org.springdoc.core.annotations.ParameterObject;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
 
 import java.util.List;
 
@@ -127,7 +122,7 @@ public class DiagnosisController {
             "DIAGNOSIS_RESULT_NOT_FOUND"
     })
     @GetMapping("/me/latest")
-    public ResponseEntity<ApiResponse<DiagnosisResultResponse>> getMyLatestDiagnosisResult(
+    public ResponseEntity<ApiResponse<List<DiagnosisResultResponse>>> getMyLatestDiagnosisResult(
             @AuthenticationPrincipal Object userDetails
     ) {
         Long currentUserId = CurrentUserIdResolver.resolveRequired(userDetails);
@@ -136,33 +131,14 @@ public class DiagnosisController {
                 ApiResponse.success(
                         "MY_DIAGNOSIS_RESULT_FOUND",
                         "내 최신 진단평가 결과 조회에 성공했습니다.",
-                        DiagnosisResultResponse.from(diagnosisUseCase.getLatestResult(currentUserId))
+                        diagnosisUseCase.getLatestResultsByCountry(currentUserId)
+                                .stream()
+                                .map(DiagnosisResultResponse::from)
+                                .toList()
                 )
         );
     }
 
-    @Operation(summary = "내 진단평가 결과 목록 조회")
-    @ApiErrorCodeExample(domain = LmsErrorCode.class, value = {
-            "DIAGNOSIS_LOGIN_REQUIRED"
-    })
-    @GetMapping("/me/results")
-    public ResponseEntity<ApiResponse<PageResponse<DiagnosisResultSummaryResponse>>> getMyDiagnosisResults(
-            @AuthenticationPrincipal Object userDetails,
-            @ParameterObject Pageable pageable
-    ) {
-        Long currentUserId = CurrentUserIdResolver.resolveRequired(userDetails);
-
-        Page<DiagnosisResultSummaryResponse> response = diagnosisUseCase.getMyResults(currentUserId, pageable)
-                .map(DiagnosisResultSummaryResponse::from);
-
-        return ResponseEntity.ok(
-                ApiResponse.success(
-                        "MY_DIAGNOSIS_RESULTS_FOUND",
-                        "내 진단평가 결과 목록 조회에 성공했습니다.",
-                        PageResponse.from(response)
-                )
-        );
-    }
 
     private SubmitDiagnosisAnswerCommand toCommand(DiagnosisAnswerRequest request) {
         return new SubmitDiagnosisAnswerCommand(
