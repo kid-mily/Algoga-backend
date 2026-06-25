@@ -195,7 +195,13 @@ public class AuthService implements SocialLoginProcessor {
 
         log.info("로그인 성공 [아이디: {}]", user.getUsername());
 
-        return new AuthTokenResponse(accessToken, refreshToken, user.getRequiresPasswordChange());
+        return new AuthTokenResponse(
+                accessToken,
+                refreshToken,
+                user.getRequiresPasswordChange(),
+                user.getNickname(),
+                user.getProfileImageUrl()
+        );
     }
 
     // 5. 아이디 찾기
