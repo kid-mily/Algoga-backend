@@ -5,10 +5,7 @@ import com.kidmily.algoga_server.lms.application.command.SubmitDiagnosisCommand;
 import com.kidmily.algoga_server.lms.application.command.UpdateDiagnosisQuestionCommand;
 import com.kidmily.algoga_server.lms.application.result.AdminDiagnosisResult;
 import com.kidmily.algoga_server.lms.application.result.DiagnosisQuestionResult;
-import com.kidmily.algoga_server.lms.application.result.DiagnosisResultSummary;
 import com.kidmily.algoga_server.lms.application.result.DiagnosisResultView;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
 
 import java.util.List;
 
@@ -24,9 +21,8 @@ public interface DiagnosisUseCase {
 
     DiagnosisResultView submitResult(SubmitDiagnosisCommand command);
 
-    DiagnosisResultView getLatestResult(Long userId);
+    List<DiagnosisResultView> getLatestResultsByCountry(Long userId);
 
-    Page<DiagnosisResultSummary> getMyResults(Long userId, Pageable pageable);
 
     List<AdminDiagnosisResult> getAdminResults(Long userId, Long countryId);
 
