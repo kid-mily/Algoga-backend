@@ -21,4 +21,5 @@ public interface ChatUseCase {
     void leaveRoom(Long roomId, Long userId);
     List<Long> getRoomMemberIds(Long roomId);
     int getUnreadCount(Long roomId, Long userId);
+    String getNickname(Long userId);
 }
