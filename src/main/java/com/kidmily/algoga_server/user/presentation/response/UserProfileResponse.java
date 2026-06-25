@@ -7,6 +7,9 @@ import lombok.Builder;
 @Builder
 @Schema(description = "유저 프로필 조회 응답")
 public record UserProfileResponse(
+        @Schema(description = "유저 ID", example = "1")
+        Long userId,
+
         @Schema(description = "아이디", example = "test0606")
         String username,
 
@@ -40,6 +43,7 @@ public record UserProfileResponse(
     // User 엔티티를 받아서 DTO로 변환하는 정적 팩토리 메서드
     public static UserProfileResponse from(User user) {
         return UserProfileResponse.builder()
+                .userId(user.getId())
                 .username(user.getUsername())
                 .password("********")
                 .name(user.getName())
