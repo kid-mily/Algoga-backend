@@ -121,7 +121,9 @@ public class UserService {
         return new AuthTokenResponse(
                 newToken,
                 null,
-                user.getRequiresPasswordChange()
+                user.getRequiresPasswordChange(),
+                user.getNickname(),
+                targetImageUrl
         );
     }
 
