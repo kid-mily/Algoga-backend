@@ -7,6 +7,7 @@ import com.kidmily.algoga_server.lms.application.command.SubmitQuizCommand;
 import com.kidmily.algoga_server.lms.application.command.UpdateQuizCommand;
 import com.kidmily.algoga_server.lms.application.result.CourseCompletionResult;
 import com.kidmily.algoga_server.lms.application.result.QuizResult;
+import com.kidmily.algoga_server.lms.application.result.QuizSubmissionAnswerResult;
 import com.kidmily.algoga_server.lms.application.result.QuizSubmissionResult;
 import com.kidmily.algoga_server.lms.application.result.QuizSubmitResult;
 import com.kidmily.algoga_server.lms.application.result.WrongQuizAnswerResult;
@@ -15,12 +16,14 @@ import com.kidmily.algoga_server.lms.domain.model.Chapter;
 import com.kidmily.algoga_server.lms.domain.model.CourseCompletion;
 import com.kidmily.algoga_server.lms.domain.model.Quiz;
 import com.kidmily.algoga_server.lms.domain.model.QuizSubmission;
+import com.kidmily.algoga_server.lms.domain.model.QuizSubmissionAnswer;
 import com.kidmily.algoga_server.lms.domain.repository.ChapterRepository;
 import com.kidmily.algoga_server.lms.domain.repository.CourseCompletionRepository;
 import com.kidmily.algoga_server.lms.domain.repository.CourseRepository;
 import com.kidmily.algoga_server.lms.domain.repository.EnrollmentRepository;
 import com.kidmily.algoga_server.lms.domain.repository.LearningProgressRepository;
 import com.kidmily.algoga_server.lms.domain.repository.QuizRepository;
+import com.kidmily.algoga_server.lms.domain.repository.QuizSubmissionAnswerRepository;
 import com.kidmily.algoga_server.lms.domain.repository.QuizSubmissionRepository;
 import com.kidmily.algoga_server.lms.exception.LmsErrorCode;
 import com.kidmily.algoga_server.lms.exception.LmsException;
@@ -50,6 +53,7 @@ public class QuizService implements QuizUseCase {
     private final EnrollmentRepository enrollmentRepository;
     private final QuizRepository quizRepository;
     private final QuizSubmissionRepository quizSubmissionRepository;
+    private final QuizSubmissionAnswerRepository quizSubmissionAnswerRepository;
     private final CourseCompletionRepository courseCompletionRepository;
     private final ApplicationEventPublisher eventPublisher;
 
@@ -168,13 +172,15 @@ public class QuizService implements QuizUseCase {
 
         int score = calculateScore(correctCount, quizzes.size());
 
-        quizSubmissionRepository.save(QuizSubmission.create(
+        QuizSubmission savedSubmission = quizSubmissionRepository.save(QuizSubmission.create(
                 command.userId(),
                 command.courseId(),
                 quizzes.size(),
                 correctCount,
                 score
         ));
+
+        saveSubmissionAnswers(savedSubmission.getId(), command.answers(), quizMap);
 
         CourseCompletionResult completion = completeCourseIfNeeded(
                 command.userId(),
@@ -202,7 +208,30 @@ public class QuizService implements QuizUseCase {
         QuizSubmission submission = quizSubmissionRepository.findByUserIdAndCourseId(userId, courseId)
                 .orElseThrow(() -> new LmsException(LmsErrorCode.QUIZ_NOT_SUBMITTED));
 
-        return QuizSubmissionResult.from(submission);
+        List<QuizSubmissionAnswerResult> answers = quizSubmissionAnswerRepository.findBySubmissionId(submission.getId())
+                .stream()
+                .map(QuizSubmissionAnswerResult::from)
+                .toList();
+
+        return QuizSubmissionResult.from(submission, answers);
+    }
+
+    private void saveSubmissionAnswers(
+            Long submissionId,
+            List<SubmitQuizAnswerCommand> submittedAnswers,
+            Map<Long, Quiz> quizMap
+    ) {
+        quizSubmissionAnswerRepository.deleteBySubmissionId(submissionId);
+
+        List<QuizSubmissionAnswer> answers = submittedAnswers.stream()
+                .map(answer -> QuizSubmissionAnswer.create(
+                        submissionId,
+                        quizMap.get(answer.quizId()),
+                        answer.selectedOption()
+                ))
+                .toList();
+
+        quizSubmissionAnswerRepository.saveAll(answers);
     }
 
     private CourseCompletionResult completeCourseIfNeeded(Long userId, Long courseId) {

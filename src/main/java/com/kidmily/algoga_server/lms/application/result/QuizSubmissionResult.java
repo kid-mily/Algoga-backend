@@ -3,6 +3,7 @@ package com.kidmily.algoga_server.lms.application.result;
 import com.kidmily.algoga_server.lms.domain.model.QuizSubmission;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 public record QuizSubmissionResult(
         Long submissionId,
@@ -11,9 +12,13 @@ public record QuizSubmissionResult(
         int totalCount,
         int correctCount,
         int score,
-        LocalDateTime submittedAt
+        LocalDateTime submittedAt,
+        List<QuizSubmissionAnswerResult> answers
 ) {
-    public static QuizSubmissionResult from(QuizSubmission submission) {
+    public static QuizSubmissionResult from(
+            QuizSubmission submission,
+            List<QuizSubmissionAnswerResult> answers
+    ) {
         return new QuizSubmissionResult(
                 submission.getId(),
                 submission.getUserId(),
@@ -21,7 +26,8 @@ public record QuizSubmissionResult(
                 submission.getTotalCount(),
                 submission.getCorrectCount(),
                 submission.getScore(),
-                submission.getSubmittedAt()
+                submission.getSubmittedAt(),
+                answers
         );
     }
 }
