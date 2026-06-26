@@ -13,6 +13,7 @@ import com.kidmily.algoga_server.chat.domain.repository.ChatRoomRepository;
 import com.kidmily.algoga_server.chat.exception.ChatErrorCode;
 import com.kidmily.algoga_server.chat.exception.ChatException;
 import com.kidmily.algoga_server.chat.presentation.api.response.ChatMessageResponse;
+import com.kidmily.algoga_server.chat.presentation.api.response.ChatRoomMemberResponse;
 import com.kidmily.algoga_server.chat.presentation.api.response.ChatRoomResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -48,8 +49,8 @@ public class ChatService implements ChatUseCase {
         return chatRoomMemberRepository
                 .findDirectRoomIdByUserIds(command.requesterId(), command.targetUserId())
                 .flatMap(chatRoomRepository::findById)
-                .map(room -> ChatRoomResponse.of(room, partnerNickname, partnerProfile, null, null, 0))
-                .orElseGet(() -> ChatRoomResponse.of(createNewRoom(command), partnerNickname, partnerProfile, null, null, 0));
+                .map(room -> ChatRoomResponse.of(room, partnerNickname, partnerProfile, null, null, 0, 2))
+                .orElseGet(() -> ChatRoomResponse.of(createNewRoom(command), partnerNickname, partnerProfile, null, null, 0, 2));
     }
 
     @Override
@@ -64,6 +65,7 @@ public class ChatService implements ChatUseCase {
                 .map(room -> {
                     Optional<ChatMessage> lastMsg = chatMessageRepository.findLastByRoomId(room.getId());
                     int unreadCount = (int) chatMessageReadRepository.countUnreadByRoomIdAndUserId(room.getId(), userId);
+                    int memberCount = (int) chatRoomMemberRepository.countByRoomId(room.getId());
 
                     String displayName = room.getRoomName();
                     String profileImageUrl = null;
@@ -87,7 +89,8 @@ public class ChatService implements ChatUseCase {
                             profileImageUrl,
                             lastMsg.map(ChatMessage::getContent).orElse(null),
                             lastMsg.map(ChatMessage::getCreatedAt).orElse(null),
-                            unreadCount
+                            unreadCount,
+                            memberCount
                     );
                 })
                 .toList();
@@ -171,7 +174,7 @@ public class ChatService implements ChatUseCase {
                 chatRoomMemberRepository.save(ChatRoomMember.create(chatRoom.getId(), targetUserId))
         );
 
-        return ChatRoomResponse.of(chatRoom, command.roomName(), null, null, null, 0);
+        return ChatRoomResponse.of(chatRoom, command.roomName(), null, null, null, 0, command.targetUserIds().size() + 1);
     }
 
     @Override
@@ -234,5 +237,24 @@ public class ChatService implements ChatUseCase {
     @Transactional(readOnly = true)
     public String getNickname(Long userId) {
         return userPort.getNickname(userId);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<ChatRoomMemberResponse> getRoomMembers(Long roomId, Long userId) {
+        // 요청자가 해당 방의 멤버인지 검증
+        chatRoomMemberRepository.findByRoomIdAndUserId(roomId, userId)
+                .orElseThrow(() -> new ChatException(ChatErrorCode.CHAT_NOT_MEMBER));
+
+        return chatRoomMemberRepository.findByRoomId(roomId).stream()
+                .map(member -> {
+                    Long memberId = member.getUserId();
+                    return ChatRoomMemberResponse.of(
+                            memberId,
+                            userPort.getNickname(memberId),
+                            userPort.getProfileImageUrl(memberId)
+                    );
+                })
+                .toList();
     }
 }
