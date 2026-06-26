@@ -12,6 +12,7 @@ public interface JpaNoticeRepository extends JpaRepository<NoticeEntity, Long> {
     List<NoticeEntity> findTop5ByOrderByCreatedAtDesc();
     
     // 🌟 List 대신 Page 로 반환 타입 변경
+    List<NoticeEntity> findTop3ByOrderByCreatedAtDesc();
     Page<NoticeEntity> findAllByOrderByCreatedAtDesc(Pageable pageable);
     Page<NoticeEntity> findByTypeOrderByCreatedAtDesc(NoticeTagType type, Pageable pageable);
 }

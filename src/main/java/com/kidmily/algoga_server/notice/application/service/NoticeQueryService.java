@@ -38,10 +38,11 @@ public class    NoticeQueryService implements NoticeQueryUseCase {
     private static final DateTimeFormatter TIME_FORMATTER = DateTimeFormatter.ofPattern("HH:mm").withZone(SEOUL_ZONE);
     private static final DateTimeFormatter FULL_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss").withZone(SEOUL_ZONE);
 
-    @Cacheable(cacheNames = NoticeCacheType.Const.NOTICE_MAIN, key = "'top5'")
+    @Cacheable(cacheNames = NoticeCacheType.Const.NOTICE_MAIN, key = "'top3'")
     @Override
     public List<NoticeMainResponse> getNoticeMain() {
-        return noticeRepository.findTop5Notices().stream()
+        // 🌟 호출 메서드 findTop3Notices 로 변경
+        return noticeRepository.findTop3Notices().stream()
                 .map(notice -> new NoticeMainResponse(
                         notice.getNoticeId(),
                         notice.getType(),

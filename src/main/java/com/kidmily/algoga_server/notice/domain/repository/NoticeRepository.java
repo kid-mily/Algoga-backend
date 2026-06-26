@@ -12,7 +12,7 @@ public interface NoticeRepository {
     Optional<Notice> findById(Long noticeId);
     void deleteById(Long noticeId);
 
-    List<Notice> findTop5Notices();
+    List<Notice> findTop3Notices();
     
     // 🌟 List 대신 Page 반환
     Page<Notice> findAll(int page, int size);

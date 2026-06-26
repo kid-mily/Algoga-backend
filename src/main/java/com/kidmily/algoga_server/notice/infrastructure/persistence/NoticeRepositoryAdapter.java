@@ -40,8 +40,8 @@ public class NoticeRepositoryAdapter implements NoticeRepository {
     }
 
     @Override
-    public List<Notice> findTop5Notices() {
-        return jpaNoticeRepository.findTop5ByOrderByCreatedAtDesc().stream()
+    public List<Notice> findTop3Notices() {
+        return jpaNoticeRepository.findTop3ByOrderByCreatedAtDesc().stream()
                 .map(noticeMapper::toDomain)
                 .collect(Collectors.toList());
     }
