@@ -7,7 +7,7 @@ import com.kidmily.algoga_server.friend.domain.model.RelationStatus;
 import com.kidmily.algoga_server.friend.domain.repository.FriendRepository;
 import com.kidmily.algoga_server.friend.exception.FriendErrorCode;
 import com.kidmily.algoga_server.friend.exception.FriendException;
-import com.kidmily.algoga_server.friend.settings.cache.FriendCacheType;
+// import com.kidmily.algoga_server.friend.settings.cache.FriendCacheType;
 import com.kidmily.algoga_server.user.domain.User;
 import com.kidmily.algoga_server.user.domain.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -27,23 +27,34 @@ FriendQueryService implements FriendQueryUseCase {
     private final FriendRepository friendRepository;
     private final UserRepository userRepository;
 
-    @Cacheable(cacheNames = FriendCacheType.Const.FRIEND_LIST, key = "#myId")
     @Override
     public List<FriendView> getFriends(Long myId) {
+        // 1. 수락된 친구 관계 목록 가져오기 (쿼리 1번)
         List<FriendRelation> relations = friendRepository.findAcceptedFriends(myId);
 
-        return relations.stream().map(relation -> {
-                    Long friendUserId = relation.getRequesterId().equals(myId) ? relation.getReceiverId() : relation.getRequesterId();
-                    User friend = userRepository.findById(friendUserId).orElseThrow();
+        if (relations.isEmpty()) {
+            return List.of(); // 친구가 없으면 바로 리턴하여 쿼리 방지
+        }
 
-                    return new FriendView(
-                            relation.getId(),
-                            friend.getId(),
-                            friend.getNickname(),
-                            friend.getPersonalCode(),
-                            friend.getProfileImageUrl()
-                    );
-                })
+        // 2. 친구들의 ID만 리스트로 추출
+        List<Long> friendIds = relations.stream()
+                .map(rel -> rel.getRequesterId().equals(myId) ? rel.getReceiverId() : rel.getRequesterId())
+                .toList();
+
+        // 3. User 엔티티들을 IN 쿼리로 한 번에 싹 다 가져오기 (쿼리 1번) -> 총 쿼리 2번으로 끝!
+        // JPA의 findAllById는 내부적으로 WHERE user_id IN (1, 2, 3...) 쿼리를 날립니다.
+        List<User> friends = userRepository.findAllById(friendIds);
+
+        // 4. 조립 및 정렬
+        return friends.stream()
+                .map(friend -> new FriendView(
+                        // relationId가 필요하다면 relations 리스트에서 매칭시켜야 합니다.
+                        relations.stream().filter(r -> r.getRequesterId().equals(friend.getId()) || r.getReceiverId().equals(friend.getId())).findFirst().get().getId(),
+                        friend.getId(),
+                        friend.getNickname(),
+                        friend.getPersonalCode(),
+                        friend.getProfileImageUrl()
+                ))
                 .sorted((a, b) -> a.nickname().compareToIgnoreCase(b.nickname()))
                 .collect(Collectors.toList());
     }

@@ -10,7 +10,11 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "friend_relations")
+// 아래처럼 indexes 옵션을 추가해주세요!
+@Table(name = "friend_relations", indexes = {
+        @Index(name = "idx_requester_status", columnList = "requesterId, status"),
+        @Index(name = "idx_receiver_status", columnList = "receiverId, status")
+})
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
