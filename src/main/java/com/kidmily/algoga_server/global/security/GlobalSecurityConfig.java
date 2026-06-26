@@ -86,11 +86,12 @@ public class GlobalSecurityConfig {
         CorsConfiguration configuration = new CorsConfiguration();
 
         // 🚨 프론트엔드 도메인을 정확히 명시해야 브라우저가 허용합니다 (와일드카드 * 금지)
-        configuration.setAllowedOrigins(List.of(
+        configuration.setAllowedOriginPatterns(List.of(
                 "http://localhost:17000",
                 "http://127.0.0.1:17000",
                 "https://kidmily.kro.kr",
-                "https://algoga.kro.kr"// 추후 운영 프론트엔드 도메인도 여기에 추가
+                "https://algoga.kro.kr",
+                "https://*.vercel.app" // '프로젝트명' 자리에 무엇이 오든 허용
         ));
 
         configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
