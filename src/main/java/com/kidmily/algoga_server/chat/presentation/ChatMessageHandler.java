@@ -2,7 +2,9 @@ package com.kidmily.algoga_server.chat.presentation;
 
 import com.kidmily.algoga_server.chat.application.command.SendChatMessageCommand;
 import com.kidmily.algoga_server.chat.application.usecase.ChatUseCase;
+import com.kidmily.algoga_server.chat.presentation.api.request.TypingRequest;
 import com.kidmily.algoga_server.chat.presentation.api.response.ChatMessageResponse;
+import com.kidmily.algoga_server.chat.presentation.api.response.TypingResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.messaging.handler.annotation.DestinationVariable;
@@ -62,6 +64,24 @@ public class ChatMessageHandler {
                 "/topic/chat/rooms/" + roomId + "/read",
                 new ReadEventPayload(roomId, userId)
         );
+    }
+
+    @MessageMapping("/chat/rooms/{roomId}/typing")
+    public void handleTyping(@DestinationVariable Long roomId,
+                             @Payload TypingRequest request,
+                             SimpMessageHeaderAccessor headerAccessor) {
+        Long userId = (Long) headerAccessor.getSessionAttributes().get("userId");
+        String nickname = chatUseCase.getNickname(userId);
+
+        // 본인 제외한 멤버에게만 전송
+        chatUseCase.getRoomMemberIds(roomId).stream()
+                .filter(memberId -> !memberId.equals(userId))
+                .forEach(memberId ->
+                        messagingTemplate.convertAndSend(
+                                "/topic/users/" + memberId + "/typing",
+                                new TypingResponse(userId, nickname, request.isTyping())
+                        )
+                );
     }
 
     public record SendMessagePayload(String content) {}
