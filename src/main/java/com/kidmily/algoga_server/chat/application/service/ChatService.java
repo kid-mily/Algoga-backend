@@ -28,6 +28,8 @@ import java.util.Optional;
 @RequiredArgsConstructor
 public class ChatService implements ChatUseCase {
 
+    private static final long SYSTEM_SENDER_ID = 0L;
+
     private final ChatRoomRepository chatRoomRepository;
     private final ChatRoomMemberRepository chatRoomMemberRepository;
     private final ChatMessageRepository chatMessageRepository;
@@ -174,18 +176,36 @@ public class ChatService implements ChatUseCase {
 
     @Override
     @Transactional
-    public void leaveRoom(Long roomId, Long userId) {
+    public Optional<ChatMessageResponse> leaveRoom(Long roomId, Long userId) {
         log.info("[ChatService] 채팅방 나가기 - roomId: {}, userId: {}", roomId, userId);
 
         chatRoomMemberRepository.findByRoomIdAndUserId(roomId, userId)
                 .orElseThrow(() -> new ChatException(ChatErrorCode.CHAT_NOT_MEMBER));
 
+        // 나가는 사람 닉네임은 멤버 삭제 전에 확보
+        String leaverNickname = userPort.getNickname(userId);
+
         chatRoomMemberRepository.deleteByRoomIdAndUserId(roomId, userId);
         chatMessageReadRepository.deleteByRoomIdAndUserId(roomId, userId);
 
+        // 마지막 멤버였으면 방 삭제 후 종료 (알릴 대상 없음)
         if (chatRoomMemberRepository.countByRoomId(roomId) == 0) {
             chatRoomRepository.softDelete(roomId);
+            return Optional.empty();
         }
+
+        // 시스템 메시지 저장 (senderId = 0 → 프론트가 시스템 메시지로 렌더)
+        ChatMessage systemMessage = chatMessageRepository.save(
+                ChatMessage.create(roomId, SYSTEM_SENDER_ID, leaverNickname + "님이 나갔습니다.")
+        );
+
+        // 남은 멤버 전원 미읽음 레코드 생성
+        List<ChatMessageRead> reads = chatRoomMemberRepository.findByRoomId(roomId).stream()
+                .map(member -> ChatMessageRead.create(systemMessage.getId(), member.getUserId()))
+                .toList();
+        chatMessageReadRepository.saveAll(reads);
+
+        return Optional.of(ChatMessageResponse.of(systemMessage, "", null, reads.size()));
     }
 
     private ChatRoom createNewRoom(CreateChatRoomCommand command) {

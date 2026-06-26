@@ -18,7 +18,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
-import java.time.LocalDateTime;
+import com.kidmily.algoga_server.chat.presentation.ChatMessageHandler;
 
 import java.util.List;
 
@@ -95,25 +95,20 @@ public class ChatController {
     ) {
         Long currentUserId = userDetails.getUser().getId();
 
-        // 나가기 전에 닉네임 조회 (나가면 멤버에서 삭제되므로)
-        String nickname = chatUseCase.getNickname(currentUserId);
+        chatUseCase.leaveRoom(roomId, currentUserId).ifPresent(systemMessage -> {
+            // 1) 방에 남은 구독자에게 시스템 메시지 실시간 전송 (DB에 저장된 메시지 그대로)
+            messagingTemplate.convertAndSend("/topic/chat/rooms/" + roomId, systemMessage);
 
-        chatUseCase.leaveRoom(roomId, currentUserId);
-
-        // 남은 멤버에게 시스템 메시지 브로드캐스트 (senderId=0 → 시스템 메시지 구분)
-        messagingTemplate.convertAndSend(
-                "/topic/chat/rooms/" + roomId,
-                new ChatMessageResponse(
-                        null,                       // messageId (DB 저장 안 함)
-                        roomId,
-                        0L,                         // senderId = 0 → 시스템 메시지 표식
-                        "시스템",                    // senderNickname
-                        null,                       // senderProfileImageUrl
-                        nickname + "님이 나갔습니다.", // content
-                        0,                          // unreadCount
-                        LocalDateTime.now()         // createdAt
-                )
-        );
+            // 2) 남은 멤버 각자의 개인 채널로 목록 갱신 알림
+            chatUseCase.getRoomMemberIds(roomId).forEach(memberId -> {
+                int unreadCount = chatUseCase.getUnreadCount(roomId, memberId);
+                messagingTemplate.convertAndSend(
+                        "/topic/users/" + memberId,
+                        new ChatMessageHandler.RoomNotification(
+                                roomId, systemMessage.content(), systemMessage.createdAt(), unreadCount)
+                );
+            });
+        });
 
         return ResponseEntity.ok(ApiResponse.success("CHAT_ROOM_LEFT", "채팅방을 나갔습니다.", null));
     }
