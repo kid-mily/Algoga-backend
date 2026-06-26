@@ -6,6 +6,7 @@ import com.kidmily.algoga_server.chat.application.usecase.ChatUseCase;
 import com.kidmily.algoga_server.chat.presentation.api.request.CreateChatRoomRequest;
 import com.kidmily.algoga_server.chat.presentation.api.request.CreateGroupChatRoomRequest;
 import com.kidmily.algoga_server.chat.presentation.api.response.ChatMessageResponse;
+import com.kidmily.algoga_server.chat.presentation.api.response.ChatRoomMemberResponse;
 import com.kidmily.algoga_server.chat.presentation.api.response.ChatRoomResponse;
 import com.kidmily.algoga_server.global.common.api.response.ApiResponse;
 import com.kidmily.algoga_server.user.settings.CustomUserDetails;
@@ -111,5 +112,19 @@ public class ChatController {
         });
 
         return ResponseEntity.ok(ApiResponse.success("CHAT_ROOM_LEFT", "채팅방을 나갔습니다.", null));
+    }
+
+    @GetMapping("/rooms/{roomId}/members")
+    @Operation(summary = "채팅방 멤버 조회", description = "채팅방에 참여 중인 멤버 목록을 조회합니다.")
+    public ResponseEntity<ApiResponse<List<ChatRoomMemberResponse>>> getRoomMembers(
+            @Parameter(description = "채팅방 ID", example = "1")
+            @PathVariable Long roomId,
+            @AuthenticationPrincipal CustomUserDetails userDetails
+    ) {
+        Long currentUserId = userDetails.getUser().getId();
+
+        List<ChatRoomMemberResponse> response = chatUseCase.getRoomMembers(roomId, currentUserId);
+
+        return ResponseEntity.ok(ApiResponse.success("CHAT_ROOM_MEMBERS_FOUND", "채팅방 멤버 조회에 성공했습니다.", response));
     }
 }

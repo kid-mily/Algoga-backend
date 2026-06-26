@@ -31,22 +31,25 @@ public record ChatRoomResponse(
         LocalDateTime lastMessageAt,
 
         @Schema(description = "안 읽은 메시지 수")
-        int unreadCount
+        int unreadCount,
+
+        @Schema(description = "채팅방 멤버 수", example = "3")
+        int memberCount
 
 
 ) {
     public static ChatRoomResponse from(ChatRoom chatRoom) {
         return new ChatRoomResponse(
                 chatRoom.getId(), chatRoom.getType(), chatRoom.getCreatedAt(),
-                chatRoom.getRoomName(), null, null, null, 0
+                chatRoom.getRoomName(), null, null, null, 0, 0
         );
     }
 
     public static ChatRoomResponse of(ChatRoom room, String roomName, String profileImageUrl,
-                                      String lastMessage, LocalDateTime lastMessageAt, int unreadCount) {
+                                      String lastMessage, LocalDateTime lastMessageAt, int unreadCount, int memberCount) {
         return new ChatRoomResponse(
                 room.getId(), room.getType(), room.getCreatedAt(),
-                roomName, profileImageUrl, lastMessage, lastMessageAt, unreadCount
+                roomName, profileImageUrl, lastMessage, lastMessageAt, unreadCount, memberCount
         );
     }
 

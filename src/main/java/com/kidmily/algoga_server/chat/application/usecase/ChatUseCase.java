@@ -6,6 +6,7 @@ import com.kidmily.algoga_server.chat.application.command.SendChatMessageCommand
 import com.kidmily.algoga_server.chat.domain.model.ChatMessage;
 import com.kidmily.algoga_server.chat.domain.model.ChatRoom;
 import com.kidmily.algoga_server.chat.presentation.api.response.ChatMessageResponse;
+import com.kidmily.algoga_server.chat.presentation.api.response.ChatRoomMemberResponse;
 import com.kidmily.algoga_server.chat.presentation.api.response.ChatRoomResponse;
 
 import java.util.List;
@@ -23,4 +24,5 @@ public interface ChatUseCase {
     List<Long> getRoomMemberIds(Long roomId);
     int getUnreadCount(Long roomId, Long userId);
     String getNickname(Long userId);
+    List<ChatRoomMemberResponse> getRoomMembers(Long roomId, Long userId);
 }
