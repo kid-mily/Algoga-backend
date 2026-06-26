@@ -11,10 +11,10 @@ import java.util.List;
 @Schema(description = "그룹 채팅방 개설 요청")
 public record CreateGroupChatRoomRequest(
 
-        @Schema(description = "초대할 유저 ID 목록 (본인 제외, 최소 2명)", example = "[2, 3, 4]")
+        @Schema(description = "초대할 유저 ID 목록 (본인 제외, 최소 2명, 최대 99명 / 본인 포함 최대 100명)", example = "[2, 3, 4]")
         @NotNull(message = "초대할 유저 목록은 필수입니다.")
         @NotEmpty(message = "초대할 유저는 최소 2명 이상이어야 합니다.")
-        @Size(min = 2, message = "초대할 유저는 최소 2명 이상이어야 합니다.")
+        @Size(min = 2, max = 99, message = "초대할 유저는 2명 이상 99명 이하여야 합니다.")
         List<Long> targetUserIds,
 
         @NotBlank

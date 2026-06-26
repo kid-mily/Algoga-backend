@@ -285,6 +285,13 @@ public class ChatService implements ChatUseCase {
 
     /** 그룹방에 멤버 추가 — 같은 방 유지 */
     private ChatRoomResponse addToExistingGroup(ChatRoom room, List<Long> targetUserIds) {
+        // 현재 인원 + 신규 추가 인원이 최대치를 넘는지 도메인에서 검증
+        long currentCount = chatRoomMemberRepository.countByRoomId(room.getId());
+        long newCount = targetUserIds.stream()
+                .filter(id -> !chatRoomMemberRepository.existsByRoomIdAndUserId(room.getId(), id))
+                .count();
+        room.validateCanAddMembers((int) currentCount, (int) newCount);
+
         for (Long targetUserId : targetUserIds) {
             if (!chatRoomMemberRepository.existsByRoomIdAndUserId(room.getId(), targetUserId)) {
                 chatRoomMemberRepository.save(ChatRoomMember.create(room.getId(), targetUserId));
@@ -293,6 +300,8 @@ public class ChatService implements ChatUseCase {
         int memberCount = (int) chatRoomMemberRepository.countByRoomId(room.getId());
         return ChatRoomResponse.of(room, room.getRoomName(), null, null, null, 0, memberCount);
     }
+
+
 
     /** 1:1방에서 멤버 추가 — 원본은 그대로 두고 새 그룹방 생성 */
     private ChatRoomResponse createGroupFromDirect(Long directRoomId, Long requesterId, List<Long> targetUserIds) {
@@ -338,4 +347,6 @@ public class ChatService implements ChatUseCase {
 
         chatRoomRepository.updateRoomName(roomId, roomName);
     }
+
+
 }
