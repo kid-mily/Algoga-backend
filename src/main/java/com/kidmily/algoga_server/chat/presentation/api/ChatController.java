@@ -3,8 +3,10 @@ package com.kidmily.algoga_server.chat.presentation.api;
 import com.kidmily.algoga_server.chat.application.command.CreateChatRoomCommand;
 import com.kidmily.algoga_server.chat.application.command.CreateGroupChatRoomCommand;
 import com.kidmily.algoga_server.chat.application.usecase.ChatUseCase;
+import com.kidmily.algoga_server.chat.presentation.api.request.AddChatMembersRequest;
 import com.kidmily.algoga_server.chat.presentation.api.request.CreateChatRoomRequest;
 import com.kidmily.algoga_server.chat.presentation.api.request.CreateGroupChatRoomRequest;
+import com.kidmily.algoga_server.chat.presentation.api.request.RenameChatRoomRequest;
 import com.kidmily.algoga_server.chat.presentation.api.response.ChatMessageResponse;
 import com.kidmily.algoga_server.chat.presentation.api.response.ChatRoomMemberResponse;
 import com.kidmily.algoga_server.chat.presentation.api.response.ChatRoomResponse;
@@ -126,5 +128,36 @@ public class ChatController {
         List<ChatRoomMemberResponse> response = chatUseCase.getRoomMembers(roomId, currentUserId);
 
         return ResponseEntity.ok(ApiResponse.success("CHAT_ROOM_MEMBERS_FOUND", "채팅방 멤버 조회에 성공했습니다.", response));
+    }
+
+    @PostMapping("/rooms/{roomId}/members")
+    @Operation(summary = "채팅방 멤버 추가",
+            description = "채팅방에 멤버를 추가합니다. 1:1 채팅방은 원본을 유지하고 새 그룹 채팅방이 생성됩니다.")
+    public ResponseEntity<ApiResponse<ChatRoomResponse>> addMembers(
+            @Parameter(description = "채팅방 ID", example = "1")
+            @PathVariable Long roomId,
+            @AuthenticationPrincipal CustomUserDetails userDetails,
+            @Valid @RequestBody AddChatMembersRequest request
+    ) {
+        Long currentUserId = userDetails.getUser().getId();
+
+        ChatRoomResponse response = chatUseCase.addMembers(roomId, currentUserId, request.targetUserIds());
+
+        return ResponseEntity.ok(ApiResponse.success("CHAT_MEMBERS_ADDED", "채팅방 멤버를 추가했습니다.", response));
+    }
+
+    @PatchMapping("/rooms/{roomId}/name")
+    @Operation(summary = "채팅방 이름 변경", description = "그룹 채팅방의 이름을 변경합니다. (1:1 채팅방 불가)")
+    public ResponseEntity<ApiResponse<Void>> renameRoom(
+            @Parameter(description = "채팅방 ID", example = "1")
+            @PathVariable Long roomId,
+            @AuthenticationPrincipal CustomUserDetails userDetails,
+            @Valid @RequestBody RenameChatRoomRequest request
+    ) {
+        Long currentUserId = userDetails.getUser().getId();
+
+        chatUseCase.renameRoom(roomId, currentUserId, request.roomName());
+
+        return ResponseEntity.ok(ApiResponse.success("CHAT_ROOM_RENAMED", "채팅방 이름을 변경했습니다.", null));
     }
 }

@@ -257,4 +257,85 @@ public class ChatService implements ChatUseCase {
                 })
                 .toList();
     }
+
+    @Override
+    @Transactional
+    public ChatRoomResponse addMembers(Long roomId, Long requesterId, List<Long> targetUserIds) {
+        // 요청자가 방 멤버인지 검증
+        chatRoomMemberRepository.findByRoomIdAndUserId(roomId, requesterId)
+                .orElseThrow(() -> new ChatException(ChatErrorCode.CHAT_NOT_MEMBER));
+
+        ChatRoom room = chatRoomRepository.findById(roomId)
+                .orElseThrow(() -> new ChatException(ChatErrorCode.CHAT_ROOM_NOT_FOUND));
+
+        // 추가할 유저 존재 검증
+        targetUserIds.forEach(targetUserId ->
+                userPort.findUserIdById(targetUserId)
+                        .orElseThrow(() -> new ChatException(ChatErrorCode.CHAT_USER_NOT_FOUND))
+        );
+
+        if (room.getType() == ChatRoomType.GROUP) {
+            // 그룹방: 같은 방에 멤버만 추가 (히스토리 유지)
+            return addToExistingGroup(room, targetUserIds);
+        } else {
+            // 1:1방: 원본 유지 + 새 그룹방 생성 (대화 0부터)
+            return createGroupFromDirect(roomId, requesterId, targetUserIds);
+        }
+    }
+
+    /** 그룹방에 멤버 추가 — 같은 방 유지 */
+    private ChatRoomResponse addToExistingGroup(ChatRoom room, List<Long> targetUserIds) {
+        for (Long targetUserId : targetUserIds) {
+            if (!chatRoomMemberRepository.existsByRoomIdAndUserId(room.getId(), targetUserId)) {
+                chatRoomMemberRepository.save(ChatRoomMember.create(room.getId(), targetUserId));
+            }
+        }
+        int memberCount = (int) chatRoomMemberRepository.countByRoomId(room.getId());
+        return ChatRoomResponse.of(room, room.getRoomName(), null, null, null, 0, memberCount);
+    }
+
+    /** 1:1방에서 멤버 추가 — 원본은 그대로 두고 새 그룹방 생성 */
+    private ChatRoomResponse createGroupFromDirect(Long directRoomId, Long requesterId, List<Long> targetUserIds) {
+        // 기존 1:1방 멤버(나 + 상대) + 새로 추가할 멤버 = 합집합 (중복 제거)
+        java.util.LinkedHashSet<Long> allMemberIds = new java.util.LinkedHashSet<>();
+        chatRoomMemberRepository.findByRoomId(directRoomId)
+                .forEach(m -> allMemberIds.add(m.getUserId()));
+        allMemberIds.addAll(targetUserIds);
+
+        String groupName = generateGroupName(allMemberIds);
+
+        ChatRoom newRoom = chatRoomRepository.save(
+                ChatRoom.create(ChatRoomType.GROUP, groupName, allMemberIds.size())
+        );
+        allMemberIds.forEach(memberId ->
+                chatRoomMemberRepository.save(ChatRoomMember.create(newRoom.getId(), memberId))
+        );
+
+        return ChatRoomResponse.of(newRoom, groupName, null, null, null, 0, allMemberIds.size());
+    }
+
+    private String generateGroupName(java.util.Collection<Long> memberIds) {
+        String joined = memberIds.stream()
+                .map(userPort::getNickname)
+                .collect(java.util.stream.Collectors.joining(", "));
+        return joined.length() > 20 ? joined.substring(0, 20) : joined;
+    }
+
+    @Override
+    @Transactional
+    public void renameRoom(Long roomId, Long requesterId, String roomName) {
+        // 요청자가 방 멤버인지 검증
+        chatRoomMemberRepository.findByRoomIdAndUserId(roomId, requesterId)
+                .orElseThrow(() -> new ChatException(ChatErrorCode.CHAT_NOT_MEMBER));
+
+        ChatRoom room = chatRoomRepository.findById(roomId)
+                .orElseThrow(() -> new ChatException(ChatErrorCode.CHAT_ROOM_NOT_FOUND));
+
+        // 1:1방은 이름 변경 불가 (상대 닉네임이 동적 표시되므로)
+        if (room.getType() == ChatRoomType.DIRECT) {
+            throw new ChatException(ChatErrorCode.CHAT_DIRECT_RENAME_NOT_ALLOWED);
+        }
+
+        chatRoomRepository.updateRoomName(roomId, roomName);
+    }
 }

@@ -11,5 +11,7 @@ public interface SpringDataChatRoomRepository extends JpaRepository<ChatRoomJpaE
     @Modifying(clearAutomatically = true)
     @Query("UPDATE ChatRoomJpaEntity r SET r.isDeleted = true WHERE r.id = :roomId")
     void softDeleteById(@Param("roomId") Long roomId);
-
+    @Modifying(clearAutomatically = true)
+    @Query("UPDATE ChatRoomJpaEntity r SET r.roomName = :roomName WHERE r.id = :roomId")
+    void updateRoomName(@Param("roomId") Long roomId, @Param("roomName") String roomName);
 }
