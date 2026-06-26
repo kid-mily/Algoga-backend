@@ -9,6 +9,7 @@ import com.kidmily.algoga_server.chat.presentation.api.response.ChatMessageRespo
 import com.kidmily.algoga_server.chat.presentation.api.response.ChatRoomResponse;
 
 import java.util.List;
+import java.util.Optional;
 
 public interface ChatUseCase {
 
@@ -18,7 +19,7 @@ public interface ChatUseCase {
     void markAsRead(Long roomId, Long userId);
     List<ChatRoomResponse> getRooms(Long userId);
     ChatRoomResponse createGroupRoom(CreateGroupChatRoomCommand command);
-    void leaveRoom(Long roomId, Long userId);
+    Optional<ChatMessageResponse> leaveRoom(Long roomId, Long userId);
     List<Long> getRoomMemberIds(Long roomId);
     int getUnreadCount(Long roomId, Long userId);
     String getNickname(Long userId);
