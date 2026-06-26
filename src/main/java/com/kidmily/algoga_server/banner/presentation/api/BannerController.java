@@ -66,7 +66,7 @@ public class BannerController {
     }
 
     @PreAuthorize("hasAnyRole('CS_MANAGER', 'SUPER_ADMIN')")
-    @PostMapping(value = "/register", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @PostMapping(value = "/admin/register", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @Operation(summary = "배너 등록")
     @ApiErrorCodeExample(domain = BannerErrorCode.class, value = {"TEXT_LENGTH_EXCEEDED"})
     public ResponseEntity<ApiResponse<CreateBannerResponse>> registerBanner(
@@ -87,7 +87,7 @@ public class BannerController {
     }
 
     @PreAuthorize("hasAnyRole('CS_MANAGER', 'SUPER_ADMIN')")
-    @PutMapping(value = "/modify", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @PutMapping(value = "/admin/modify", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @Operation(summary = "배너 수정")
     @ApiErrorCodeExample(domain = BannerErrorCode.class, value = {"BANNER_NOT_FOUND"})
     public ResponseEntity<Void> modifyBanner(
@@ -107,7 +107,7 @@ public class BannerController {
     }
 
     @PreAuthorize("hasAnyRole('CS_MANAGER', 'SUPER_ADMIN')")
-    @DeleteMapping("/delete/{bannerId}")
+    @DeleteMapping("/admin/delete/{bannerId}")
     @Operation(summary = "배너 삭제")
     @ApiErrorCodeExample(domain = BannerErrorCode.class, value = {"BANNER_NOT_FOUND"})
     public ResponseEntity<Void> deleteBanner(
