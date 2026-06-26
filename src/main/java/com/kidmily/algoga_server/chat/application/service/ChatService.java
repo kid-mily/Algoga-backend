@@ -288,6 +288,7 @@ public class ChatService implements ChatUseCase {
         // 현재 인원 + 신규 추가 인원이 최대치를 넘는지 도메인에서 검증
         long currentCount = chatRoomMemberRepository.countByRoomId(room.getId());
         long newCount = targetUserIds.stream()
+                .distinct()
                 .filter(id -> !chatRoomMemberRepository.existsByRoomIdAndUserId(room.getId(), id))
                 .count();
         room.validateCanAddMembers((int) currentCount, (int) newCount);
