@@ -16,7 +16,9 @@ public enum ChatErrorCode {
     CHAT_USER_NOT_FOUND(HttpStatus.NOT_FOUND, "CHAT_006", "존재하지 않는 유저입니다."),
     CHAT_ROOM_NAME_BLANK(HttpStatus.BAD_REQUEST, "CHAT_007", "채팅방 이름은 필수입니다."),
     CHAT_ROOM_NAME_TOO_LONG(HttpStatus.BAD_REQUEST, "CHAT_008", "채팅방 이름은 20자 이내여야 합니다."),
-    CHAT_GROUP_MIN_MEMBERS(HttpStatus.BAD_REQUEST, "CHAT_009", "그룹 채팅방은 2명 이상 초대해야 합니다.");
+    CHAT_GROUP_MIN_MEMBERS(HttpStatus.BAD_REQUEST, "CHAT_009", "그룹 채팅방은 2명 이상 초대해야 합니다."),
+    CHAT_DIRECT_RENAME_NOT_ALLOWED(HttpStatus.BAD_REQUEST, "CHAT_010", "1:1 채팅방은 이름을 변경할 수 없습니다."),
+    CHAT_GROUP_MAX_MEMBERS(HttpStatus.BAD_REQUEST, "CHAT_011", "그룹 채팅방은 최대 100명까지 가능합니다.");
 
     private final HttpStatus httpStatus;
     private final String code;

@@ -25,4 +25,6 @@ public interface ChatUseCase {
     int getUnreadCount(Long roomId, Long userId);
     String getNickname(Long userId);
     List<ChatRoomMemberResponse> getRoomMembers(Long roomId, Long userId);
+    ChatRoomResponse addMembers(Long roomId, Long requesterId, List<Long> targetUserIds);
+    void renameRoom(Long roomId, Long requesterId, String roomName);
 }

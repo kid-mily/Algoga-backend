@@ -18,6 +18,7 @@ public class ChatRoom {
     private boolean isDeleted;
     private String roomName;
     private static final int MAX_ROOM_NAME_LENGTH = 20;
+    private static final int MAX_GROUP_MEMBERS = 100;
 
     private ChatRoom(ChatRoomType type, String roomName) {
         this.type = type;
@@ -45,6 +46,9 @@ public class ChatRoom {
         if (invitedCount < 2) {
             throw new ChatException(ChatErrorCode.CHAT_GROUP_MIN_MEMBERS);
         }
+        if (invitedCount > MAX_GROUP_MEMBERS) {
+            throw new ChatException(ChatErrorCode.CHAT_GROUP_MAX_MEMBERS);
+        }
     }
 
     public static ChatRoom reconstitute(Long id, ChatRoomType type, LocalDateTime createdAt, boolean isDeleted, String roomName) {
@@ -53,6 +57,13 @@ public class ChatRoom {
 
     public void delete() {
         this.isDeleted = true;
+
+    }
+
+    public void validateCanAddMembers(int currentCount, int addCount) {
+        if (currentCount + addCount > MAX_GROUP_MEMBERS) {
+            throw new ChatException(ChatErrorCode.CHAT_GROUP_MAX_MEMBERS);
+        }
     }
 
     private void validateRoomName(String roomName) {

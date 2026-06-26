@@ -35,5 +35,8 @@ public class ChatRoomRepositoryAdapter implements ChatRoomRepository {
         springDataRepository.softDeleteById(roomId);
     }
 
-
+    @Override
+    public void updateRoomName(Long roomId, String roomName) {
+        springDataRepository.updateRoomName(roomId, roomName);
+    }
 }

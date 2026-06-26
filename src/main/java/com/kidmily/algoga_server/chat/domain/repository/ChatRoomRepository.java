@@ -8,6 +8,6 @@ public interface ChatRoomRepository {
     ChatRoom save(ChatRoom chatRoom);
     Optional<ChatRoom> findById(Long id);
     void softDelete(Long roomId);
-
+    void updateRoomName(Long roomId, String roomName);
 
 }
