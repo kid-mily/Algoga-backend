@@ -1,10 +1,13 @@
 package com.kidmily.algoga_server.global.common.api.response;
 
+import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import io.swagger.v3.oas.annotations.media.Schema;
 import org.springframework.data.domain.Page;
 
 import java.util.List;
 
+
+@JsonTypeInfo(use = JsonTypeInfo.Id.CLASS, property = "@class")
 @Schema(description = "페이지 응답")
 public record PageResponse<T>(
 

@@ -1,7 +1,9 @@
 package com.kidmily.algoga_server.banner.presentation.api.response;
 
+import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import io.swagger.v3.oas.annotations.media.Schema;
 
+@JsonTypeInfo(use = JsonTypeInfo.Id.CLASS, property = "@class")
 @Schema(description = "배너 메인 화면 조회 응답 DTO")
 public record BannerResponse(
         @Schema(description = "배너 ID", example = "1")
