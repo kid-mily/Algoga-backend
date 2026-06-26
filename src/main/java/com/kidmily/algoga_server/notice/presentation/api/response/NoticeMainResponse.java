@@ -1,8 +1,10 @@
 package com.kidmily.algoga_server.notice.presentation.api.response;
 
+import com.fasterxml.jackson.annotation.JsonTypeInfo; // 🌟 추가
 import com.kidmily.algoga_server.notice.presentation.NoticeTagType;
 import io.swagger.v3.oas.annotations.media.Schema;
 
+@JsonTypeInfo(use = JsonTypeInfo.Id.CLASS, property = "@class") // 🌟 추가
 @Schema(description = "메인 화면 공지사항 목록 응답 DTO")
 public record NoticeMainResponse(
         @Schema(description = "공지사항 ID", example = "1")
