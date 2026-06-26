@@ -113,6 +113,8 @@ public class AuthService implements SocialLoginProcessor {
             throw new AuthException(AuthErrorCode.EMAIL_NOT_VERIFIED);
         }
 
+        Long referrerUserId = resolveReferrerUserId(request.referralCode());
+
         User user = User.builder()
                 .username(request.username())
                 .email(email)
@@ -136,7 +138,11 @@ public class AuthService implements SocialLoginProcessor {
                 .termsMarketingAgreed(request.termsMarketingAgreed())
                 .build();
         User savedUser = userRepository.save(user);
-        eventPublisher.publishEvent(new UserSignedUpEvent(savedUser.getId()));
+        eventPublisher.publishEvent(new UserSignedUpEvent(
+                savedUser.getId(),
+                referrerUserId,
+                normalizeReferralCode(request.referralCode())
+        ));
 
         // 가입이 성공적으로 끝났으니, "인증 완료" 포스트잇도 떼서 버립니다! (청소)
         redisTemplate.delete("AUTH_SUCCESS:" + email);
@@ -299,6 +305,8 @@ public class AuthService implements SocialLoginProcessor {
         // 3. 요구사항 명세 반영: 소셜 유저용 더미(랜덤) 비밀번호 생성
         String dummyPassword = UUID.randomUUID().toString();
 
+        Long referrerUserId = resolveReferrerUserId(request.referralCode());
+
         // 4. 유저 엔티티 생성 및 저장
         User user = User.builder()
                 .username(username)
@@ -324,8 +332,12 @@ public class AuthService implements SocialLoginProcessor {
                 .build();
 
         User savedUser = userRepository.save(user);
-        eventPublisher.publishEvent(new UserSignedUpEvent(savedUser.getId()));
-        log.info("[Signup] UserSignedUpEvent published. userId={}", savedUser.getId());
+        eventPublisher.publishEvent(new UserSignedUpEvent(
+                savedUser.getId(),
+                referrerUserId,
+                normalizeReferralCode(request.referralCode())
+        ));
+        log.info("[Signup] UserSignedUpEvent published. userId={}, referrerUserId={}", savedUser.getId(), referrerUserId);
 
         log.info("소셜 신규 회원가입 완료 [아이디(이메일): {}, 소셜: {}]",
                 user.getUsername(), user.getSocialType());
@@ -368,6 +380,26 @@ public class AuthService implements SocialLoginProcessor {
                     .build().toUriString();
             return new SocialAuthResult(redirectUrl, null, null);
         }
+    }
+
+    private Long resolveReferrerUserId(String referralCode) {
+        String normalizedReferralCode = normalizeReferralCode(referralCode);
+        if (normalizedReferralCode == null) {
+            return null;
+        }
+
+        return userRepository.findByPersonalCode(normalizedReferralCode)
+                .filter(referrer -> !referrer.isDeleted())
+                .map(User::getId)
+                .orElseThrow(() -> new AuthException(AuthErrorCode.INVALID_REFERRAL_CODE));
+    }
+
+    private String normalizeReferralCode(String referralCode) {
+        if (referralCode == null || referralCode.isBlank()) {
+            return null;
+        }
+
+        return referralCode.trim();
     }
 
     // 🌟 중복 없는 6자리 고유 코드를 생성하는 내부 메서드
