@@ -155,10 +155,10 @@ public class AuthService implements SocialLoginProcessor {
         return !userRepository.existsByUsername(username);
     }
 
-    // 4. 일반 로그인
+    // 4. 일반 로그인 (로그인 병목 최적화 적용 (트랜잭션 분리))
     public AuthTokenResponse login(AuthLoginRequest request) {
-        User user = userRepository.findByUsername(request.username())
-                .orElseThrow(() -> new UserException(UserErrorCode.NOT_FOUND_USER));
+        // [1] DB 조회 (별도 트랜잭션 호출)
+        User user = findUserByUsername(request.username());
 
         if (user.isDeleted()) throw new UserException(UserErrorCode.DELETED_USER);
         if (user.isAccountLocked()) {
@@ -166,16 +166,16 @@ public class AuthService implements SocialLoginProcessor {
             throw new UserException(UserErrorCode.ACCOUNT_LOCKED);
         }
 
-        // 🌟 블랙리스트 여부 확인하여 로그인 원천 차단
+        // 🌟 블랙리스트 여부 확인
         String isBlacklisted = redisTemplate.opsForValue().get("BLACKLIST:" + user.getEmail());
         if ("true".equals(isBlacklisted)) {
             log.warn("블랙리스트 유저의 로그인 시도 차단 [아이디: {}]", user.getUsername());
             throw new AuthException(AuthErrorCode.BLACKLISTED_USER);
         }
 
+        // [2] 🌟 BCrypt 연산 (트랜잭션 밖에서 실행 - 커넥션 점유 X)
         if (!passwordEncoder.matches(request.password(), user.getPassword())) {
-            user.increaseLoginFailure();
-            userRepository.save(user);
+            updateLoginFailure(user); // [분리된 수정 트랜잭션 호출]
 
             if (user.isAccountLocked()) {
                 log.warn("비밀번호 5회 연속 오류로 계정 잠금 처리됨 [아이디: {}]", user.getUsername());
@@ -185,13 +185,13 @@ public class AuthService implements SocialLoginProcessor {
             throw new UserException(UserErrorCode.INVALID_PASSWORD);
         }
 
-        user.resetLoginFailure();
-        userRepository.save(user);
+        // [3] 성공 처리 (분리된 수정 트랜잭션 호출)
+        resetLoginFailure(user);
 
         String accessToken = globalJwtProvider.createUserAccessToken(user.getEmail());
         String refreshToken = globalJwtProvider.createUserRefreshToken(user.getEmail());
 
-        // Redis에 Refresh Token 저장 (만료시간 7일)
+        // Redis에 Refresh Token 저장
         redisTemplate.opsForValue().set(
                 "RT:" + user.getEmail(),
                 refreshToken,
@@ -208,6 +208,28 @@ public class AuthService implements SocialLoginProcessor {
                 user.getNickname(),
                 user.getProfileImageUrl()
         );
+    }
+
+    // ---------------------------------------------------------
+    // 트랜잭션이 필요한 조각들 (이 메서드들은 반드시 protected 여야 프록시가 작동합니다!)
+    // ---------------------------------------------------------
+
+    @Transactional(readOnly = true)
+    protected User findUserByUsername(String username) {
+        return userRepository.findByUsername(username)
+                .orElseThrow(() -> new UserException(UserErrorCode.NOT_FOUND_USER));
+    }
+
+    @Transactional
+    protected void updateLoginFailure(User user) {
+        user.increaseLoginFailure();
+        userRepository.save(user); // 🌟 save 로직 유지!
+    }
+
+    @Transactional
+    protected void resetLoginFailure(User user) {
+        user.resetLoginFailure();
+        userRepository.save(user); // 🌟 save 로직 유지!
     }
 
     // 5. 아이디 찾기
