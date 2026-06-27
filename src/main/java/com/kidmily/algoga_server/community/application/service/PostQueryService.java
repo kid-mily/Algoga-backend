@@ -35,17 +35,29 @@ public class PostQueryService implements PostQueryUseCase {
     private static final int POPULAR_COUNTRY_TAG_LIMIT = 5;
     private final CommunityQueryPolicy communityQueryPolicy;
     private final ViewCountPort viewCountPort;
+    private final PostCacheService postCacheService;
+
 
     @Override
-    public PostResponse getPost(Long postId) {   // @Transactional 제거
+    public PostResponse getPost(Long postId) {
         log.info("[PostQueryService] 게시글 단건 조회 요청 - postId: {}", postId);
 
+        // 1) 조회수는 항상 실시간 증가 (캐시 안 탐)
+        viewCountPort.increment(postId);
+
+        // 2) 본문/댓글/좋아요는 캐시에서 가져옴 (별도 빈 호출 → 프록시 적용)
+        PostResponse cached = postCacheService.getCachedPostContent(postId);
+
+        // 3) 실시간 조회수만 덮어쓰기
+        int viewCount = cached.viewCount() + (int) viewCountPort.getCurrentCount(postId);
+
+        return cached.withViewCount(viewCount);
+    }
+
+    // 캐시에 저장될 본문 (viewCount=0 placeholder) — PostCacheService가 호출
+    public PostResponse buildPostResponseWithoutViewCount(Long postId) {
         Post post = postRepository.findById(postId)
                 .orElseThrow(() -> new PostException(PostErrorCode.POST_NOT_FOUND));
-        
-
-        // Redis로 교체
-        viewCountPort.increment(postId);
 
         Long likeCount = likeDislikeRepository.countLikes(TargetType.POST, postId);
         Long dislikeCount = likeDislikeRepository.countDislikes(TargetType.POST, postId);
@@ -66,9 +78,6 @@ public class PostQueryService implements PostQueryUseCase {
         List<TagResponse> tags = Stream.concat(countryStream,
                 Stream.concat(categoryStream, freeTagStream)).toList();
 
-        // view_count = DB값 + Redis 미반영값 합산 (Integer 타입 맞춰 int 캐스팅)
-        int viewCount = post.getViewCount() + (int) viewCountPort.getCurrentCount(postId);
-
         return new PostResponse(
                 post.getId(),
                 post.getAuthorId(),
@@ -80,7 +89,7 @@ public class PostQueryService implements PostQueryUseCase {
                 post.getCountryId(),
                 countryName,
                 post.getImageUrls(),
-                viewCount,          // int — PostResponse의 Integer와 호환
+                0,                      // viewCount placeholder (캐시엔 0으로 저장)
                 likeCount,
                 dislikeCount,
                 (long) comments.size(),

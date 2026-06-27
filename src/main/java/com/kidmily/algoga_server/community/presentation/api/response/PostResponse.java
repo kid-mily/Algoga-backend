@@ -57,4 +57,13 @@ public record PostResponse(
         LocalDateTime createdAt
 
 
-) {}
+) {
+        // viewCount만 교체한 복사본
+        public PostResponse withViewCount(Integer newViewCount) {
+                return new PostResponse(
+                        postId, authorId, authorNickname, authorProfileImageUrl, tags,
+                        title, content, countryId, countryName, imageUrls,
+                        newViewCount, likeCount, dislikeCount, commentCount, comments, createdAt);
+        }
+
+}
