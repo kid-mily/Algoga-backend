@@ -188,5 +188,76 @@
       ],
       "options": { "showTime": true, "showLabels": false, "sortOrder": "Descending" }
     }
-  ]
+  ,
+    {
+      "id": 104,
+      "type": "row",
+      "title": "서비스 상태 (Health)",
+      "gridPos": { "x": 0, "y": 38, "w": 24, "h": 1 },
+      "collapsed": false
+    },
+    {
+      "id": 9,
+      "title": "DB 커넥션 풀 상태 (Health)",
+      "description": "커넥션 타임아웃이 발생하거나 Pending이 지속되면 DB 연결 이상 신호입니다.",
+      "type": "stat",
+      "gridPos": { "x": 0, "y": 39, "w": 6, "h": 4 },
+      "targets": [
+        {
+          "datasource": { "type": "prometheus", "uid": "prometheus_ds" },
+          "expr": "hikaricp_connections_timeout_total{application=\"algoga-server\"}",
+          "legendFormat": "커넥션 타임아웃"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "thresholds": {
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "red", "value": 1 }
+            ]
+          }
+        }
+      },
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"] } }
+    },
+    {
+      "id": 10,
+      "title": "DB 전체 커넥션",
+      "type": "stat",
+      "gridPos": { "x": 6, "y": 39, "w": 6, "h": 4 },
+      "targets": [
+        {
+          "datasource": { "type": "prometheus", "uid": "prometheus_ds" },
+          "expr": "hikaricp_connections{application=\"algoga-server\"}",
+          "legendFormat": "전체"
+        }
+      ],
+      "fieldConfig": { "defaults": { "unit": "short" } },
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"] } }
+    },
+    {
+      "id": 11,
+      "title": "DB Active / Idle / Pending",
+      "type": "timeseries",
+      "gridPos": { "x": 12, "y": 39, "w": 12, "h": 4 },
+      "targets": [
+        {
+          "datasource": { "type": "prometheus", "uid": "prometheus_ds" },
+          "expr": "hikaricp_connections_active{application=\"algoga-server\"}",
+          "legendFormat": "Active"
+        },
+        {
+          "datasource": { "type": "prometheus", "uid": "prometheus_ds" },
+          "expr": "hikaricp_connections_idle{application=\"algoga-server\"}",
+          "legendFormat": "Idle"
+        },
+        {
+          "datasource": { "type": "prometheus", "uid": "prometheus_ds" },
+          "expr": "hikaricp_connections_pending{application=\"algoga-server\"}",
+          "legendFormat": "Pending"
+        }
+      ]
+    }]
 }
