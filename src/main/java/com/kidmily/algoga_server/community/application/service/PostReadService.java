@@ -39,8 +39,8 @@ public class PostReadService {
         Long likeCount = likeDislikeRepository.countLikes(TargetType.POST, postId);
         Long dislikeCount = likeDislikeRepository.countDislikes(TargetType.POST, postId);
 
-        List<CommentResponse> comments = toCommentTree(
-                commentRepository.findActiveCommentsByPostId(postId));
+       List<Comment> activeComments = commentRepository.findActiveCommentsByPostId(postId);
+       List<CommentResponse> comments = toCommentTree(activeComments);
 
         String countryName = communityQueryPolicy.resolveCountryName(post.getCountryId());
 
@@ -62,7 +62,7 @@ public class PostReadService {
                 post.getCountryId(), countryName, post.getImageUrls(),
                 0,
                 likeCount, dislikeCount,
-                (long) comments.size(), comments, post.getCreatedAt());
+                (long) activeComments.size(), comments, post.getCreatedAt());
     }
 
     private List<CommentResponse> toCommentTree(List<Comment> comments) {
