@@ -66,7 +66,7 @@ public class ChatService implements ChatUseCase {
 
     @Override
     @Cacheable(cacheNames = ChatCacheType.Const.CHAT_ROOMS, key = "#userId")
-    //@Transactional(readOnly = true)
+    @Transactional(readOnly = true)
     public List<ChatRoomResponse> getRooms(Long userId) {
         log.info("[ChatService] 채팅방 목록 조회 - userId: {}", userId);
 
@@ -215,6 +215,7 @@ public class ChatService implements ChatUseCase {
         // 마지막 멤버였으면 방 삭제 후 종료 (알릴 대상 없음)
         if (chatRoomMemberRepository.countByRoomId(roomId) == 0) {
             chatRoomRepository.softDelete(roomId);
+            evictChatRoomsCache(userId);
             return Optional.empty();
         }
 
@@ -299,13 +300,15 @@ public class ChatService implements ChatUseCase {
 
         if (room.getType() == ChatRoomType.GROUP) {
             ChatRoomResponse response = addToExistingGroup(room, targetUserIds);
-            evictChatRoomsCache(requesterId);
-            targetUserIds.forEach(this::evictChatRoomsCache);
+            // 방의 현재 전체 멤버 전원 무효화 (기존 멤버 포함)
+            chatRoomMemberRepository.findByRoomId(roomId)
+                    .forEach(m -> evictChatRoomsCache(m.getUserId()));
             return response;
         } else {
             ChatRoomResponse response = createGroupFromDirect(roomId, requesterId, targetUserIds);
-            evictChatRoomsCache(requesterId);
-            targetUserIds.forEach(this::evictChatRoomsCache);
+            // 새 그룹방 전체 멤버 무효화 (원래 1:1 상대 포함)
+            chatRoomMemberRepository.findByRoomId(response.roomId())
+                    .forEach(m -> evictChatRoomsCache(m.getUserId()));
             return response;
         }
     }
