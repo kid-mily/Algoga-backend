@@ -41,16 +41,11 @@ export const options = {
 };
 
 export function setup() {
-    const res = http.get(`${BASE_URL}/api/v1/posts`);
-    const posts = res.json('data.posts');
-
-    if (!posts || posts.length === 0) {
-        console.error('게시글 목록이 비어있습니다. DB 데이터를 확인하세요.');
-        return { postIds: [1] };
+    const postIds = [];
+    for (let i = 70; i <= 10069; i++) {
+        postIds.push(i);
     }
-
-    const postIds = posts.map(p => p.postId);
-    console.log(`수집된 게시글 ID: ${postIds.length}개 (${postIds[0]} ~ ${postIds[postIds.length - 1]})`);
+    console.log(`게시글 ID 범위: ${postIds[0]} ~ ${postIds[postIds.length - 1]} (총 ${postIds.length}개)`);
     return { postIds };
 }
 
