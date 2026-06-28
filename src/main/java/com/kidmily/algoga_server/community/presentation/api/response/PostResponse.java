@@ -1,10 +1,12 @@
 package com.kidmily.algoga_server.community.presentation.api.response;
 
+import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.time.LocalDateTime;
 import java.util.List;
 
+@JsonTypeInfo(use = JsonTypeInfo.Id.CLASS, property = "@class")
 @Schema(description = "게시글 상세 조회 응답")
 public record PostResponse(
 
@@ -57,4 +59,13 @@ public record PostResponse(
         LocalDateTime createdAt
 
 
-) {}
+) {
+        // viewCount만 교체한 복사본
+        public PostResponse withViewCount(Integer newViewCount) {
+                return new PostResponse(
+                        postId, authorId, authorNickname, authorProfileImageUrl, tags,
+                        title, content, countryId, countryName, imageUrls,
+                        newViewCount, likeCount, dislikeCount, commentCount, comments, createdAt);
+        }
+
+}

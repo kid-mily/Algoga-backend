@@ -12,9 +12,11 @@ import com.kidmily.algoga_server.community.domain.repository.PostRepository;
 import com.kidmily.algoga_server.community.exception.PostErrorCode;
 import com.kidmily.algoga_server.community.exception.PostException;
 import com.kidmily.algoga_server.community.settings.CommunityStorageSettings;
+import com.kidmily.algoga_server.community.settings.cache.CommunityCacheType;
 import com.kidmily.algoga_server.global.port.out.FileStoragePort;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -79,6 +81,7 @@ public class PostCommandService implements PostCommandUseCase {
     }
 
     @Override
+    @CacheEvict(cacheNames = CommunityCacheType.Const.POST_DETAIL, key = "#command.postId()")
     public Long handle(UpdatePostCommand command) {
         log.info("[PostCommandService] 게시글 수정 요청 수신 - postId: {}, requesterId: {}",
                 command.postId(), command.requesterId());
@@ -126,6 +129,7 @@ public class PostCommandService implements PostCommandUseCase {
     }
 
     @Override
+    @CacheEvict(cacheNames = CommunityCacheType.Const.POST_DETAIL, key = "#command.postId()")
     public void handle(DeletePostCommand command) {
         log.info("[PostCommandService] 게시글 삭제 요청 수신 - postId: {}, requesterId: {}",
                 command.postId(), command.requesterId());
@@ -144,6 +148,7 @@ public class PostCommandService implements PostCommandUseCase {
     }
 
     @Override
+    @CacheEvict(cacheNames = CommunityCacheType.Const.POST_DETAIL, key = "#command.postId()")
     public void handle(AdminDeletePostCommand command) {
         log.info("[PostCommandService] 게시글 삭제 요청 수신 (관리자) - postId: {}", command.postId());
 

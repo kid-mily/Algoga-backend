@@ -25,5 +25,7 @@ public interface PostRepository {
     // 신규: 인기 나라 태그 (게시글 수 상위 N개)
     List<CountryTagCount> findTopCountryTags(int limit);
 
+    void increaseViewCount(Long postId, long count);
+
     List<Post> findExpiredDeletedPosts(LocalDateTime threshold);
 }
