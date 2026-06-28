@@ -35,7 +35,7 @@ public class PostQueryService implements PostQueryUseCase {
     private static final int POPULAR_COUNTRY_TAG_LIMIT = 5;
     private final CommunityQueryPolicy communityQueryPolicy;
     private final ViewCountPort viewCountPort;
-    private final PostCacheService postCacheService;
+    private final PostReadService postReadService;
 
 
     @Override
@@ -46,7 +46,7 @@ public class PostQueryService implements PostQueryUseCase {
         viewCountPort.increment(postId);
 
         // 2) 본문/댓글/좋아요는 캐시에서 가져옴 (별도 빈 호출 → 프록시 적용)
-        PostResponse cached = postCacheService.getCachedPostContent(postId);
+        PostResponse cached = postReadService.getPostContentOnly(postId);
 
         // 3) 실시간 조회수만 덮어쓰기
         int viewCount = cached.viewCount() + (int) viewCountPort.getCurrentCount(postId);
@@ -54,49 +54,6 @@ public class PostQueryService implements PostQueryUseCase {
         return cached.withViewCount(viewCount);
     }
 
-    // 캐시에 저장될 본문 (viewCount=0 placeholder) — PostCacheService가 호출
-    public PostResponse buildPostResponseWithoutViewCount(Long postId) {
-        Post post = postRepository.findById(postId)
-                .orElseThrow(() -> new PostException(PostErrorCode.POST_NOT_FOUND));
-
-        Long likeCount = likeDislikeRepository.countLikes(TargetType.POST, postId);
-        Long dislikeCount = likeDislikeRepository.countDislikes(TargetType.POST, postId);
-
-        List<CommentResponse> comments = toCommentTree(
-                commentRepository.findActiveCommentsByPostId(postId)
-        );
-
-        String countryName = communityQueryPolicy.resolveCountryName(post.getCountryId());
-
-        Stream<TagResponse> countryStream = countryName != null ?
-                Stream.of(TagResponse.fromCountry(post.getCountryId(), countryName)) : Stream.empty();
-        Stream<TagResponse> categoryStream = post.getCategory() != null ?
-                Stream.of(TagResponse.fromCategory(post.getCategory())) : Stream.empty();
-        Stream<TagResponse> freeTagStream = post.getFreeTags() != null ?
-                post.getFreeTags().stream().map(TagResponse::fromFreeTag) : Stream.empty();
-
-        List<TagResponse> tags = Stream.concat(countryStream,
-                Stream.concat(categoryStream, freeTagStream)).toList();
-
-        return new PostResponse(
-                post.getId(),
-                post.getAuthorId(),
-                communityQueryPolicy.resolveNickname(post.getAuthorId()),
-                communityQueryPolicy.resolveProfileImageUrl(post.getAuthorId()),
-                tags,
-                post.getTitle(),
-                post.getContent(),
-                post.getCountryId(),
-                countryName,
-                post.getImageUrls(),
-                0,                      // viewCount placeholder (캐시엔 0으로 저장)
-                likeCount,
-                dislikeCount,
-                (long) comments.size(),
-                comments,
-                post.getCreatedAt()
-        );
-    }
 
     @Override
     public List<PostTagType> getCategories() {
@@ -229,8 +186,8 @@ public class PostQueryService implements PostQueryUseCase {
                                         communityQueryPolicy.resolveProfileImageUrl(r.getUserId()),
                                         r.getContent(),
                                         r.getCreatedAt(),
-                                        likeDislikeRepository.countLikes(TargetType.COMMENT, c.getCommentId()),
-                                        likeDislikeRepository.countDislikes(TargetType.COMMENT, c.getCommentId()),
+                                        likeDislikeRepository.countLikes(TargetType.COMMENT, r.getCommentId()),
+                                        likeDislikeRepository.countDislikes(TargetType.COMMENT, r.getCommentId()),
                                         List.of()
                                 ))
                                 .toList()

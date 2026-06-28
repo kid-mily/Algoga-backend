@@ -10,8 +10,11 @@ import com.kidmily.algoga_server.community.domain.repository.PostRepository;
 import com.kidmily.algoga_server.community.exception.CommentException;
 import com.kidmily.algoga_server.community.exception.PostErrorCode;
 import com.kidmily.algoga_server.community.exception.PostException;
+import com.kidmily.algoga_server.community.settings.cache.CommunityCacheType;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.Cache;
+import org.springframework.cache.CacheManager;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -24,8 +27,9 @@ import java.util.Optional;
 public class ReactionCommandService implements ReactionCommandUseCase {
 
     private final LikeDislikeRepository likeDislikeRepository;
-    private final PostRepository postRepository;         // ← 추가
-    private final CommentRepository commentRepository;   //
+    private final PostRepository postRepository;
+    private final CommentRepository commentRepository;
+    private final CacheManager cacheManager;
 
     @Override
     public ReactionResult handle(ToggleReactionCommand command) {
@@ -76,6 +80,14 @@ public class ReactionCommandService implements ReactionCommandUseCase {
 
         Long likeCount = likeDislikeRepository.countLikes(command.targetType(), command.targetId());
         Long dislikeCount = likeDislikeRepository.countDislikes(command.targetType(), command.targetId());
+
+        // 게시글 좋아요일 때만 해당 게시글 캐시 무효화
+        if (command.targetType() == TargetType.POST) {
+            Cache cache = cacheManager.getCache(CommunityCacheType.Const.POST_DETAIL);
+            if (cache != null) {
+                cache.evict(command.targetId());   // targetId == postId
+            }
+        }
 
         return new ReactionResult(status, likeCount, dislikeCount);
     }
