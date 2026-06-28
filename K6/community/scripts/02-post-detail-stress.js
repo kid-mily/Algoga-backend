@@ -41,11 +41,8 @@ export const options = {
 };
 
 export function setup() {
-    const postIds = [];
-    for (let i = 70; i <= 10069; i++) {
-        postIds.push(i);
-    }
-    console.log(`게시글 ID 범위: ${postIds[0]} ~ ${postIds[postIds.length - 1]} (총 ${postIds.length}개)`);
+    // 댓글 있는 테스트 게시글 10개 고정
+    const postIds = [70, 71, 72, 73, 74, 75, 76, 77, 78, 79];
     return { postIds };
 }
 
