@@ -42,14 +42,17 @@ public class PostQueryService implements PostQueryUseCase {
     public PostResponse getPost(Long postId) {
         log.info("[PostQueryService] 게시글 단건 조회 요청 - postId: {}", postId);
 
+        Post post = postRepository.findById(postId)
+                .orElseThrow(() -> new PostException(PostErrorCode.POST_NOT_FOUND));
+
         // 1) 조회수는 항상 실시간 증가 (캐시 안 탐)
         viewCountPort.increment(postId);
 
         // 2) 본문/댓글/좋아요는 캐시에서 가져옴 (별도 빈 호출 → 프록시 적용)
         PostResponse cached = postReadService.getPostContentOnly(postId);
 
-        // 3) 실시간 조회수만 덮어쓰기
-        int viewCount = cached.viewCount() + (int) viewCountPort.getCurrentCount(postId);
+        // 3) DB 누적 조회수 + Redis 미반영분 합산
+        int viewCount = post.getViewCount() + (int) viewCountPort.getCurrentCount(postId);
 
         return cached.withViewCount(viewCount);
     }

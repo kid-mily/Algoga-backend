@@ -98,6 +98,8 @@ public class CommentCommandService implements CommentCommandUseCase {
 
         log.info("[CommentCommandService] 댓글 작성 완료 - commentId: {}", savedComment.getCommentId());
 
+        evictPostCache(command.postId());
+
         return savedComment;
     }
 
