@@ -66,7 +66,7 @@ public class ChatService implements ChatUseCase {
 
     @Override
     @Cacheable(cacheNames = ChatCacheType.Const.CHAT_ROOMS, key = "#userId")
-    @Transactional(readOnly = true)
+    //@Transactional(readOnly = true)
     public List<ChatRoomResponse> getRooms(Long userId) {
         log.info("[ChatService] 채팅방 목록 조회 - userId: {}", userId);
 
@@ -105,7 +105,7 @@ public class ChatService implements ChatUseCase {
                             memberCount
                     );
                 })
-                .toList();
+                .collect(java.util.stream.Collectors.toList());
     }
 
     @Override
