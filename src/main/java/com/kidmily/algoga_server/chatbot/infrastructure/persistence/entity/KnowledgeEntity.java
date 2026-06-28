@@ -8,33 +8,29 @@ import lombok.NoArgsConstructor;
 import java.time.Instant;
 
 @Entity
-@Table(name = "judgment_questions")
+@Table(name = "knowledges")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class JudgmentQuestionEntity {
+public class KnowledgeEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long judgmentQuestionId;
+    private Long knowledgeId;
 
     @Column(nullable = false)
     private Long managerId;
 
     @Column(nullable = false, columnDefinition = "TEXT")
-    private String question;
-
-    @Column(nullable = false, columnDefinition = "TEXT")
-    private String answer;
+    private String content;
 
     @Column(nullable = false, updatable = false)
     private Instant createdAt;
 
     @Builder
-    public JudgmentQuestionEntity(Long judgmentQuestionId, Long managerId, String question, String answer, Instant createdAt) {
-        this.judgmentQuestionId = judgmentQuestionId;
+    public KnowledgeEntity(Long knowledgeId, Long managerId, String content, Instant createdAt) {
+        this.knowledgeId = knowledgeId;
         this.managerId = managerId;
-        this.question = question;
-        this.answer = answer;
+        this.content = content;
         this.createdAt = createdAt;
     }
 }

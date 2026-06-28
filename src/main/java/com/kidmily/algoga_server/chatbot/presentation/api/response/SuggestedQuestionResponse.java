@@ -1,4 +1,3 @@
-// chatbot/presentation/api/response/SuggestedQuestionResponse.java
 package com.kidmily.algoga_server.chatbot.presentation.api.response;
 
 import io.swagger.v3.oas.annotations.media.Schema;

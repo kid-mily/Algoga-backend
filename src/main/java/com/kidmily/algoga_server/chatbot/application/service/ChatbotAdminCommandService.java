@@ -1,48 +1,60 @@
-// chatbot/application/service/ChatbotAdminCommandService.java
 package com.kidmily.algoga_server.chatbot.application.service;
 
-import com.kidmily.algoga_server.chatbot.application.command.RegisterJudgmentQuestionCommand;
+import com.kidmily.algoga_server.chatbot.application.command.RegisterKnowledgeCommand;
 import com.kidmily.algoga_server.chatbot.application.command.RegisterSuggestedQuestionCommand;
-import com.kidmily.algoga_server.chatbot.application.command.UpdateJudgmentQuestionCommand;
 import com.kidmily.algoga_server.chatbot.application.command.UpdateSuggestedQuestionCommand;
 import com.kidmily.algoga_server.chatbot.application.usecase.ChatbotAdminCommandUseCase;
-import com.kidmily.algoga_server.chatbot.domain.model.JudgmentQuestion;
+import com.kidmily.algoga_server.chatbot.domain.model.ExpectedQuery;
+import com.kidmily.algoga_server.chatbot.domain.model.Knowledge;
 import com.kidmily.algoga_server.chatbot.domain.model.SuggestedQuestion;
-import com.kidmily.algoga_server.chatbot.domain.repository.JudgmentQuestionRepository;
+import com.kidmily.algoga_server.chatbot.domain.repository.ExpectedQueryRepository;
+import com.kidmily.algoga_server.chatbot.domain.repository.KnowledgeRepository;
 import com.kidmily.algoga_server.chatbot.domain.repository.SuggestedQuestionRepository;
 import com.kidmily.algoga_server.chatbot.exception.ChatbotErrorCode;
 import com.kidmily.algoga_server.chatbot.exception.ChatbotException;
 import lombok.RequiredArgsConstructor;
+import org.springframework.ai.document.Document;
+import org.springframework.ai.vectorstore.VectorStore;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
 public class ChatbotAdminCommandService implements ChatbotAdminCommandUseCase {
 
-    private final JudgmentQuestionRepository judgmentQuestionRepository;
+    private final KnowledgeRepository knowledgeRepository;
+    private final ExpectedQueryRepository expectedQueryRepository;
     private final SuggestedQuestionRepository suggestedQuestionRepository;
+    private final VectorStore vectorStore;
 
     @Override
     @Transactional
-    public void registerJudgmentQuestion(RegisterJudgmentQuestionCommand command) {
-        judgmentQuestionRepository.save(JudgmentQuestion.create(command.managerId(), command.question(), command.answer()));
-    }
+    public void registerKnowledge(RegisterKnowledgeCommand command) {
+        Knowledge savedKnowledge = knowledgeRepository.save(
+                Knowledge.create(command.managerId(), command.content())
+        );
 
-    @Override
-    @Transactional
-    public void updateJudgmentQuestion(UpdateJudgmentQuestionCommand command) {
-        JudgmentQuestion jq = judgmentQuestionRepository.findById(command.judgmentQuestionId())
-                // 🌟 수정됨: ChatbotException 교체
-                .orElseThrow(() -> new ChatbotException(ChatbotErrorCode.JUDGMENT_QUESTION_NOT_FOUND));
-        jq.update(command.question(), command.answer());
-        judgmentQuestionRepository.save(jq);
-    }
+        List<ExpectedQuery> savedQueries = command.expectedQueries().stream()
+                .map(queryText -> ExpectedQuery.create(savedKnowledge.getKnowledgeId(), queryText))
+                .map(expectedQueryRepository::save)
+                .toList();
 
-    @Override
-    @Transactional
-    public void deleteJudgmentQuestion(Long judgmentQuestionId) {
-        judgmentQuestionRepository.deleteById(judgmentQuestionId);
+        List<Document> documents = savedQueries.stream()
+                .map(query -> new Document(
+                        String.valueOf(query.getExpectedQueryId()),
+                        query.getQueryText(),
+                        Map.of(
+                                "knowledgeId", savedKnowledge.getKnowledgeId(),
+                                "answer", savedKnowledge.getContent()
+                        )
+                ))
+                .collect(Collectors.toList());
+
+        vectorStore.add(documents); 
     }
 
     @Override
@@ -55,7 +67,6 @@ public class ChatbotAdminCommandService implements ChatbotAdminCommandUseCase {
     @Transactional
     public void updateSuggestedQuestion(UpdateSuggestedQuestionCommand command) {
         SuggestedQuestion sq = suggestedQuestionRepository.findById(command.suggestedQuestionId())
-                // 🌟 수정됨: ChatbotException 교체
                 .orElseThrow(() -> new ChatbotException(ChatbotErrorCode.SUGGESTED_QUESTION_NOT_FOUND));
         sq.update(command.question(), command.answer());
         suggestedQuestionRepository.save(sq);

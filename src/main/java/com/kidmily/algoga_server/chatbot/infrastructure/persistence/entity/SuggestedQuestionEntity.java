@@ -1,4 +1,3 @@
-// chatbot/infrastructure/persistence/entity/SuggestedQuestionEntity.java
 package com.kidmily.algoga_server.chatbot.infrastructure.persistence.entity;
 
 import jakarta.persistence.*;
@@ -23,7 +22,7 @@ public class SuggestedQuestionEntity {
     @Column(nullable = false, columnDefinition = "TEXT")
     private String answer;
 
-    @Builder // 🌟 빌더 추가
+    @Builder
     public SuggestedQuestionEntity(Long suggestedQuestionId, String question, String answer) {
         this.suggestedQuestionId = suggestedQuestionId;
         this.question = question;
