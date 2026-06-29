@@ -91,7 +91,8 @@ public class GlobalSecurityConfig {
                 "http://127.0.0.1:17000",
                 "https://kidmily.kro.kr",
                 "https://algoga.kro.kr",
-                "https://*.vercel.app" // '프로젝트명' 자리에 무엇이 오든 허용
+                "https://*.vercel.app", // '프로젝트명' 자리에 무엇이 오든 허용
+                "https://algoga-frontend-2ror4n538-jia41.vercel.app"
         ));
 
         configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
