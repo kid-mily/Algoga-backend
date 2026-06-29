@@ -9,6 +9,7 @@ import com.kidmily.algoga_server.lms.domain.repository.*;
 import com.kidmily.algoga_server.lms.exception.LmsErrorCode;
 import com.kidmily.algoga_server.lms.exception.LmsException;
 import com.kidmily.algoga_server.lms.settings.LmsStorageSettings;
+import com.kidmily.algoga_server.lms.settings.cache.LmsCacheType;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -17,6 +18,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import com.kidmily.algoga_server.global.event.CourseCompletionCompletedEvent;
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.cache.annotation.CacheEvict;
 
 import org.springframework.data.domain.PageImpl;
 import java.time.LocalDateTime;
@@ -42,8 +44,10 @@ public class CourseService implements CourseUseCase {
     private final CourseFileStoragePort fileStoragePort;
     private final LmsStorageSettings storageSettings;
     private final ApplicationEventPublisher eventPublisher;
+    private final PublishedCourseListCacheService publishedCourseListCacheService;
 
     @Override
+    @CacheEvict(cacheNames = LmsCacheType.Const.PUBLIC_COURSE_LIST, allEntries = true)
     public Long createCourse(CreateCourseCommand command) {
         validateCountry(command.countryId());
         validateMaxRewardMileage(command.maxRewardMileage());
@@ -131,6 +135,7 @@ public class CourseService implements CourseUseCase {
     }
 
     @Override
+    @CacheEvict(cacheNames = LmsCacheType.Const.PUBLIC_COURSE_LIST, allEntries = true)
     public CourseResult updateCourse(Long courseId, UpdateCourseCommand command) {
         validateMaxRewardMileage(command.maxRewardMileage());
 
@@ -176,6 +181,7 @@ public class CourseService implements CourseUseCase {
     }
 
     @Override
+    @CacheEvict(cacheNames = LmsCacheType.Const.PUBLIC_COURSE_LIST, allEntries = true)
     public void deleteCourse(Long courseId) {
         findCourse(courseId);
 
@@ -412,10 +418,7 @@ public class CourseService implements CourseUseCase {
     @Override
     @Transactional(readOnly = true)
     public List<CourseResult> getPublishedCoursesByCountry(Long countryId) {
-        validateCountry(countryId);
-        return courseRepository.findPublishedByCountryId(countryId).stream()
-                .map(CourseResult::from)
-                .toList();
+        return publishedCourseListCacheService.getPublishedCoursesByCountry(countryId).courses();
     }
 
     @Override
