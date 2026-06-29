@@ -18,6 +18,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseCookie;
@@ -25,6 +26,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
+@Slf4j
 @Tag(name = "Auth", description = "회원 인증 API")
 @RestController
 
@@ -58,7 +60,7 @@ public class AuthController {
     @io.swagger.v3.oas.annotations.responses.ApiResponses({
             @io.swagger.v3.oas.annotations.responses.ApiResponse(
                     responseCode = "200",
-                    description = "정상 처리 (data가 true면 사용 가능, false면 이미 사용 중인 중복 아이디)"
+                    description = "정상 처리 (data가 tr  ue면 사용 가능, false면 이미 사용 중인 중복 아이디)"
             )
     })
     @GetMapping("/username/check")
@@ -87,14 +89,18 @@ public class AuthController {
     public ApiResponse<Void> login(@RequestBody @Valid AuthLoginRequest request, HttpServletResponse response) {
         AuthTokenResponse tokenResponse = authService.login(request);
 
-        ResponseCookie accessCookie = ResponseCookie.from("accessToken", tokenResponse.accessToken())
-                .httpOnly(true).secure(true).path("/").maxAge(30 * 60).sameSite("None").build();
-
-        ResponseCookie refreshCookie = ResponseCookie.from("refreshToken", tokenResponse.refreshToken())
-                .httpOnly(true).secure(true).path("/").maxAge(7 * 24 * 60 * 60).sameSite("None").build();
-
-        response.addHeader(HttpHeaders.SET_COOKIE, accessCookie.toString());
-        response.addHeader(HttpHeaders.SET_COOKIE, refreshCookie.toString());
+//        ResponseCookie accessCookie = ResponseCookie.from("accessToken", tokenResponse.accessToken())
+//                .httpOnly(true).secure(true).path("/").maxAge(30 * 60).sameSite("None").build();
+//
+//        ResponseCookie refreshCookie = ResponseCookie.from("refreshToken", tokenResponse.refreshToken())
+//                .httpOnly(true).secure(true).path("/").maxAge(7 * 24 * 60 * 60).sameSite("None").build();
+//
+//        response.addHeader(HttpHeaders.SET_COOKIE, accessCookie.toString());
+//        response.addHeader(HttpHeaders.SET_COOKIE, refreshCookie.toString());
+        // 🌟 공통 메서드 호출 (깔끔!)
+        response.addHeader(HttpHeaders.SET_COOKIE, globalJwtProvider.createCookie("accessToken", tokenResponse.accessToken()).toString());
+        response.addHeader(HttpHeaders.SET_COOKIE, globalJwtProvider.createCookie("refreshToken", tokenResponse.refreshToken()).toString());
+        log.info("응답 헤더에 AccessToken / RefreshToken 쿠키 세팅 완료.");
 
         return ApiResponse.success("AUTH_LOGIN_SUCCESS", "로그인에 성공했습니다.", null);
     }
@@ -150,9 +156,25 @@ public class AuthController {
         }
 
         // 쿠키 만료시간을 0으로 만들어 브라우저에서 삭제되게 함
-        ResponseCookie deleteAccessCookie = ResponseCookie.from("accessToken", "").path("/").maxAge(0).build();
-        ResponseCookie deleteRefreshCookie = ResponseCookie.from("refreshToken", "").path("/").maxAge(0).build();
+        ResponseCookie deleteAccessCookie = globalJwtProvider.createCookie("accessToken", "");
+        deleteAccessCookie = ResponseCookie.from(deleteAccessCookie.getName(), "")
+                .domain(deleteAccessCookie.getDomain())
+                .path(deleteAccessCookie.getPath())
+                .secure(deleteAccessCookie.isSecure())
+                .sameSite(deleteAccessCookie.getSameSite())
+                .httpOnly(true)
+                .maxAge(0) // 🌟 여기서 만료시켜서 지워버림!
+                .build();
 
+        ResponseCookie deleteRefreshCookie = globalJwtProvider.createCookie("refreshToken", "");
+        deleteRefreshCookie = ResponseCookie.from(deleteRefreshCookie.getName(), "")
+                .domain(deleteRefreshCookie.getDomain())
+                .path(deleteRefreshCookie.getPath())
+                .secure(deleteRefreshCookie.isSecure())
+                .sameSite(deleteRefreshCookie.getSameSite())
+                .httpOnly(true)
+                .maxAge(0) // 🌟 여기서 만료!
+                .build();
         response.addHeader(HttpHeaders.SET_COOKIE, deleteAccessCookie.toString());
         response.addHeader(HttpHeaders.SET_COOKIE, deleteRefreshCookie.toString());
 
@@ -218,15 +240,17 @@ public class AuthController {
         String newAccessToken = authService.refreshAccessToken(email, refreshToken);
 
         // 4. 새로 발급받은 엑세스 토큰을 다시 HttpOnly 쿠키로 예쁘게 구워서 줍니다.
-        ResponseCookie accessCookie = ResponseCookie.from("accessToken", newAccessToken)
-                .httpOnly(true)
-                .secure(true) // HTTPS 적용 시 true
-                .path("/")
-                .maxAge(30 * 60) // 30분
-                .sameSite("None")
-                .build();
-
-        response.addHeader(HttpHeaders.SET_COOKIE, accessCookie.toString());
+//        ResponseCookie accessCookie = ResponseCookie.from("accessToken", newAccessToken)
+//                .httpOnly(true)
+//                .secure(true) // HTTPS 적용 시 true
+//                .path("/")
+//                .maxAge(30 * 60) // 30분
+//                .sameSite("None")
+//                .build();
+//
+//        response.addHeader(HttpHeaders.SET_COOKIE, accessCookie.toString());
+        // 🌟 공통 메서드 호출
+        response.addHeader(HttpHeaders.SET_COOKIE, globalJwtProvider.createCookie("accessToken", newAccessToken).toString());
 
         return ApiResponse.success("AUTH_REFRESH_SUCCESS", "토큰이 성공적으로 재발급되었습니다.", null);
     }

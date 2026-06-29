@@ -17,15 +17,20 @@
     },
     {
       "id": 1,
-      "title": "친구 목록 조회 API 호출 수 (TPS)",
+      "title": "친구 조회 API 처리 결과 (🔥성공 vs 에러)",
       "type": "timeseries",
-      "description": "유저들 간의 관계 조회 API 트래픽 변화량입니다. (k6 부하 테스트 유입량)",
+      "description": "최적화 전 부하가 심해지면 500 에러(빨간선)가 치솟습니다. 캐시 적용 후에는 500 에러 없이 200 OK(초록선)만 유지되어야 합니다.",
       "gridPos": { "x": 0, "y": 1, "w": 12, "h": 8 },
       "targets": [
         {
           "datasource": { "type": "prometheus", "uid": "prometheus_ds" },
-          "expr": "sum(rate(http_server_requests_seconds_count{uri=\"/api/v1/friends\"}[1m]))",
-          "legendFormat": "친구조회 TPS"
+          "expr": "sum(rate(http_server_requests_seconds_count{uri=\"/api/v1/friends\", status=\"200\"}[1m]))",
+          "legendFormat": "성공 (200 OK)"
+        },
+        {
+          "datasource": { "type": "prometheus", "uid": "prometheus_ds" },
+          "expr": "sum(rate(http_server_requests_seconds_count{uri=\"/api/v1/friends\", status=\"500\"}[1m]))",
+          "legendFormat": "DB 타임아웃 에러 (500 ERROR)"
         }
       ],
       "fieldConfig": { "defaults": { "unit": "reqps" } }
