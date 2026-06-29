@@ -10,6 +10,8 @@ public interface SpringDataChapterRepository extends JpaRepository<ChapterJpaEnt
 
     List<ChapterJpaEntity> findByCourseIdAndDeletedFalseOrderByOrderNumAsc(Long courseId);
 
+    List<ChapterJpaEntity> findByCourseIdInAndDeletedFalseOrderByCourseIdAscOrderNumAsc(List<Long> courseIds);
+
     Optional<ChapterJpaEntity> findByIdAndCourseIdAndDeletedFalse(Long id, Long courseId);
 
     long countByCourseIdAndDeletedFalse(Long courseId);
@@ -22,3 +24,4 @@ public interface SpringDataChapterRepository extends JpaRepository<ChapterJpaEnt
             Long id
     );
 }
+

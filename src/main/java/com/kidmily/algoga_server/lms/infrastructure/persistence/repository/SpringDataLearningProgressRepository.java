@@ -14,7 +14,10 @@ public interface SpringDataLearningProgressRepository extends JpaRepository<Lear
 
     List<LearningProgressJpaEntity> findByUserIdAndCourseId(Long userId, Long courseId);
 
+    List<LearningProgressJpaEntity> findByUserIdAndCourseIdIn(Long userId, List<Long> courseIds);
+
     List<LearningProgressJpaEntity> findByCourseId(Long courseId);
 
     boolean existsByUserIdAndChapterIdAndCompletedTrue(Long userId, Long chapterId);
 }
+

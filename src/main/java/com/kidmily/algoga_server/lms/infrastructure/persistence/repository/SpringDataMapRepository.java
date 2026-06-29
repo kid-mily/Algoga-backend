@@ -13,4 +13,6 @@ public interface SpringDataMapRepository extends JpaRepository<CountryJpaEntity,
     List<CountryJpaEntity> findByContinentCodeIgnoreCaseAndActiveTrueOrderByNameAsc(String continentCode);
 
     Optional<CountryJpaEntity> findByIdAndActiveTrue(Long id);
+
+    List<CountryJpaEntity> findByIdInAndActiveTrue(List<Long> ids);
 }

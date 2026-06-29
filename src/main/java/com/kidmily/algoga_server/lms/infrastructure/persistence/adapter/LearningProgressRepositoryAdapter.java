@@ -74,6 +74,18 @@ public class LearningProgressRepositoryAdapter implements LearningProgressReposi
     }
 
     @Override
+    public List<LearningProgress> findByUserIdAndCourseIdIn(Long userId, List<Long> courseIds) {
+        if (courseIds == null || courseIds.isEmpty()) {
+            return List.of();
+        }
+
+        return springDataLearningProgressRepository.findByUserIdAndCourseIdIn(userId, courseIds)
+                .stream()
+                .map(this::toDomain)
+                .toList();
+    }
+
+    @Override
     public List<LearningProgress> findByCourseId(Long courseId) {
         return springDataLearningProgressRepository.findByCourseId(courseId)
                 .stream()
@@ -104,3 +116,4 @@ public class LearningProgressRepositoryAdapter implements LearningProgressReposi
         );
     }
 }
+
