@@ -15,6 +15,8 @@ public interface CourseRepository {
 
     Optional<Course> findById(Long id);
 
+    List<Course> findBasicByIdIn(List<Long> ids);
+
     Optional<Course> findByIdAndDeletedFalse(Long id);
 
     Page<Course> findAllByDeletedFalse(Pageable pageable);
@@ -48,3 +50,5 @@ public interface CourseRepository {
 
     Map<Long, Long> countPublishedByCountryIds(List<Long> countryIds);
 }
+
+

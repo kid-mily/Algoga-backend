@@ -41,6 +41,18 @@ public class ChapterRepositoryAdapter implements ChapterRepository {
     }
 
     @Override
+    public List<Chapter> findByCourseIdIn(List<Long> courseIds) {
+        if (courseIds == null || courseIds.isEmpty()) {
+            return List.of();
+        }
+
+        return springDataChapterRepository.findByCourseIdInAndDeletedFalseOrderByCourseIdAscOrderNumAsc(courseIds)
+                .stream()
+                .map(this::toDomain)
+                .toList();
+    }
+
+    @Override
     public Optional<Chapter> findByIdAndCourseId(Long chapterId, Long courseId) {
         return springDataChapterRepository.findByIdAndCourseIdAndDeletedFalse(chapterId, courseId)
                 .map(this::toDomain);
@@ -119,3 +131,4 @@ public class ChapterRepositoryAdapter implements ChapterRepository {
         );
     }
 }
+

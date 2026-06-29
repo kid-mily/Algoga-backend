@@ -7,7 +7,10 @@ import com.kidmily.algoga_server.lms.infrastructure.persistence.repository.Sprin
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 
+import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 @Repository
 @RequiredArgsConstructor
@@ -55,6 +58,17 @@ public class QuizSubmissionRepositoryAdapter implements QuizSubmissionRepository
     }
 
     @Override
+    public Set<Long> findSubmittedCourseIdsByUserIdAndCourseIds(Long userId, List<Long> courseIds) {
+        if (courseIds == null || courseIds.isEmpty()) {
+            return Set.of();
+        }
+
+        return new LinkedHashSet<>(
+                springDataQuizSubmissionRepository.findSubmittedCourseIdsByUserIdAndCourseIds(userId, courseIds)
+        );
+    }
+
+    @Override
     public boolean existsByUserIdAndCourseId(
             Long userId,
             Long courseId
@@ -74,3 +88,4 @@ public class QuizSubmissionRepositoryAdapter implements QuizSubmissionRepository
         );
     }
 }
+

@@ -23,6 +23,8 @@ import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.data.domain.PageImpl;
 import java.time.LocalDateTime;
 import java.util.*;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -234,20 +236,17 @@ public class CourseService implements CourseUseCase {
     @Override
     @Transactional(readOnly = true)
     public Page<MyCourseResult> getMyCourses(Long userId, Pageable pageable) {
-        List<MyCourseResult> courses = enrollmentRepository.findByUserId(userId).stream()
-                .map(enrollment -> enrollment.getCourseId())
-                .distinct()
-                .map(courseId -> createMyCourseResult(userId, courseId))
-                .flatMap(Optional::stream)
-                .toList();
+        Page<Enrollment> enrollmentPage = enrollmentRepository.findByUserId(userId, pageable);
+        List<Enrollment> enrollments = enrollmentPage.getContent();
 
-        int start = (int) Math.min(pageable.getOffset(), courses.size());
-        int end = Math.min(start + pageable.getPageSize(), courses.size());
+        if (enrollments.isEmpty()) {
+            return new PageImpl<>(List.of(), pageable, enrollmentPage.getTotalElements());
+        }
 
         return new PageImpl<>(
-                courses.subList(start, end),
+                createMyCourseResults(userId, enrollments),
                 pageable,
-                courses.size()
+                enrollmentPage.getTotalElements()
         );
     }
 
@@ -641,61 +640,140 @@ public class CourseService implements CourseUseCase {
         ));
     }
 
-    private Optional<MyCourseResult> createMyCourseResult(Long userId, Long courseId) {
-        Optional<Course> optionalCourse = courseRepository.findById(courseId);
+    private List<MyCourseResult> createMyCourseResults(Long userId, List<Enrollment> enrollments) {
+        List<Long> courseIds = enrollments.stream()
+                .map(Enrollment::getCourseId)
+                .toList();
 
-        if (optionalCourse.isEmpty()) {
-            return Optional.empty();
+        Map<Long, Course> coursesById = courseRepository.findBasicByIdIn(courseIds).stream()
+                .collect(Collectors.toMap(
+                        Course::getId,
+                        Function.identity(),
+                        (first, second) -> first,
+                        LinkedHashMap::new
+                ));
+
+        Map<Long, List<Chapter>> chaptersByCourseId = chapterRepository.findByCourseIdIn(courseIds).stream()
+                .collect(Collectors.groupingBy(
+                        Chapter::getCourseId,
+                        LinkedHashMap::new,
+                        Collectors.toList()
+                ));
+
+        Map<Long, List<LearningProgress>> progressesByCourseId = learningProgressRepository
+                .findByUserIdAndCourseIdIn(userId, courseIds)
+                .stream()
+                .collect(Collectors.groupingBy(
+                        LearningProgress::getCourseId,
+                        LinkedHashMap::new,
+                        Collectors.toList()
+                ));
+
+        Map<Long, Long> studentCountsByCourseId = enrollmentRepository.countByCourseIds(courseIds);
+        Map<Long, Double> averageRatingsByCourseId = courseReviewRepository.findAverageRatingsByCourseIds(courseIds);
+        Set<Long> quizSubmittedCourseIds = quizSubmissionRepository.findSubmittedCourseIdsByUserIdAndCourseIds(
+                userId,
+                courseIds
+        );
+        Set<Long> reviewedCourseIds = courseReviewRepository.findReviewedCourseIdsByUserIdAndCourseIds(
+                userId,
+                courseIds
+        );
+
+        Map<Long, CourseCompletion> completionsByCourseId = courseCompletionRepository
+                .findByUserIdAndCourseIdIn(userId, courseIds)
+                .stream()
+                .collect(Collectors.toMap(
+                        CourseCompletion::getCourseId,
+                        Function.identity(),
+                        (first, second) -> first,
+                        LinkedHashMap::new
+                ));
+
+        Map<Long, Enrollment> enrollmentsByCourseId = enrollments.stream()
+                .collect(Collectors.toMap(
+                        Enrollment::getCourseId,
+                        Function.identity(),
+                        (first, second) -> first,
+                        LinkedHashMap::new
+                ));
+
+        Map<Long, Country> countriesById = mapCountriesById(coursesById.values());
+
+        return courseIds.stream()
+                .map(courseId -> createMyCourseResult(
+                        courseId,
+                        coursesById.get(courseId),
+                        enrollmentsByCourseId.get(courseId),
+                        chaptersByCourseId.getOrDefault(courseId, List.of()),
+                        progressesByCourseId.getOrDefault(courseId, List.of()),
+                        studentCountsByCourseId.getOrDefault(courseId, 0L),
+                        averageRatingsByCourseId.getOrDefault(courseId, 0.0),
+                        completionsByCourseId.get(courseId),
+                        quizSubmittedCourseIds.contains(courseId),
+                        reviewedCourseIds.contains(courseId),
+                        countriesById
+                ))
+                .flatMap(Optional::stream)
+                .toList();
+    }
+
+    private Map<Long, Country> mapCountriesById(Collection<Course> courses) {
+        List<Long> countryIds = courses.stream()
+                .map(Course::getCountryId)
+                .filter(Objects::nonNull)
+                .distinct()
+                .toList();
+
+        if (countryIds.isEmpty()) {
+            return Map.of();
         }
 
-        Course course = optionalCourse.get();
+        return mapRepository.findActiveCountriesByIds(countryIds).stream()
+                .collect(Collectors.toMap(
+                        Country::getId,
+                        Function.identity(),
+                        (first, second) -> first,
+                        LinkedHashMap::new
+                ));
+    }
 
-        List<Chapter> chapters = chapterRepository.findByCourseId(courseId);
-        List<LearningProgress> progresses = learningProgressRepository.findByUserIdAndCourseId(userId, courseId);
+    private Optional<MyCourseResult> createMyCourseResult(
+            Long courseId,
+            Course course,
+            Enrollment enrollment,
+            List<Chapter> chapters,
+            List<LearningProgress> progresses,
+            long studentCount,
+            double averageRating,
+            CourseCompletion completion,
+            boolean quizSubmitted,
+            boolean reviewWritten,
+            Map<Long, Country> countriesById
+    ) {
+        if (course == null) {
+            return Optional.empty();
+        }
 
         int totalChapterCount = chapters.size();
         int completedChapterCount = calculateCompletedChapterCount(progresses);
         int progressRate = calculateCourseProgressRate(chapters, progresses);
         int totalDurationSeconds = calculateTotalDurationSeconds(chapters);
-
-        long studentCount = enrollmentRepository.countByCourseId(courseId);
-
-        double averageRating = calculateAverageRating(courseReviewRepository.findByCourseId(courseId));
-        Optional<CourseCompletion> optionalCompletion = courseCompletionRepository.findByUserIdAndCourseId(userId, courseId);
-
-        boolean completed = optionalCompletion.isPresent();
-        boolean quizSubmitted = quizSubmissionRepository.existsByUserIdAndCourseId(userId, courseId);
-        boolean reviewWritten = courseReviewRepository.existsByUserIdAndCourseIdAndDeletedFalse(userId, courseId);
+        boolean completed = completion != null;
         String learningStatus = completed ? "COMPLETED" : "IN_PROGRESS";
-
-        String certificateCode = optionalCompletion
-                .map(CourseCompletion::getCertificateCode)
-                .orElse(null);
-
-        var completedAt = optionalCompletion
-                .map(CourseCompletion::getCompletedAt)
-                .orElse(null);
-
-        var accessExpiresAt = enrollmentRepository.findByUserIdAndCourseId(userId, courseId)
-                .map(enrollment -> enrollment.getAccessExpiresAt())
-                .orElse(null);
-
+        String certificateCode = completed ? completion.getCertificateCode() : null;
+        var completedAt = completed ? completion.getCompletedAt() : null;
+        var accessExpiresAt = enrollment == null ? null : enrollment.getAccessExpiresAt();
         String certificateDownloadUrl = completed
                 ? "/api/v1/courses/" + course.getId() + "/certificate"
                 : null;
 
-        Optional<Country> country = mapRepository.findActiveCountryById(course.getCountryId());
-
-        String continentCode = country
-                .map(Country::getContinentCode)
-                .orElse(null);
-
-        String countryName = country
-                .map(Country::getName)
-                .orElse(null);
+        Country country = countriesById.get(course.getCountryId());
+        String continentCode = country == null ? null : country.getContinentCode();
+        String countryName = country == null ? null : country.getName();
 
         return Optional.of(new MyCourseResult(
-                course.getId(),
+                courseId,
                 course.getTitle(),
                 course.getThumbnailUrl(),
                 course.getCountryId(),
@@ -850,3 +928,5 @@ public class CourseService implements CourseUseCase {
         }
     }
 }
+
+

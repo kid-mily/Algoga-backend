@@ -11,6 +11,8 @@ public interface ChapterRepository {
 
     List<Chapter> findByCourseId(Long courseId);
 
+    List<Chapter> findByCourseIdIn(List<Long> courseIds);
+
     Optional<Chapter> findByIdAndCourseId(Long chapterId, Long courseId);
 
     Optional<Chapter> updateBasicInfo(
@@ -35,3 +37,4 @@ public interface ChapterRepository {
             Long chapterId
     );
 }
+
