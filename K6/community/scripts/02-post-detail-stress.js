@@ -41,16 +41,8 @@ export const options = {
 };
 
 export function setup() {
-    const res = http.get(`${BASE_URL}/api/v1/posts`);
-    const posts = res.json('data.posts');
-
-    if (!posts || posts.length === 0) {
-        console.error('게시글 목록이 비어있습니다. DB 데이터를 확인하세요.');
-        return { postIds: [1] };
-    }
-
-    const postIds = posts.map(p => p.postId);
-    console.log(`수집된 게시글 ID: ${postIds.length}개 (${postIds[0]} ~ ${postIds[postIds.length - 1]})`);
+    // 댓글 있는 테스트 게시글 10개 고정
+    const postIds = [70, 71, 72, 73, 74, 75, 76, 77, 78, 79];
     return { postIds };
 }
 

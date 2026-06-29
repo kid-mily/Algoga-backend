@@ -4,6 +4,7 @@ import com.kidmily.algoga_server.community.application.policy.CommunityQueryPoli
 import com.kidmily.algoga_server.community.application.usecase.PostQueryUseCase;
 import com.kidmily.algoga_server.community.domain.model.Comment;
 import com.kidmily.algoga_server.community.domain.model.Post;
+import com.kidmily.algoga_server.community.domain.port.ViewCountPort;
 import com.kidmily.algoga_server.community.domain.repository.CommentRepository;
 import com.kidmily.algoga_server.community.domain.repository.LikeDislikeRepository;
 import com.kidmily.algoga_server.community.domain.repository.PostRepository;
@@ -33,63 +34,29 @@ public class PostQueryService implements PostQueryUseCase {
     private static final int PAGE_SIZE = 10;
     private static final int POPULAR_COUNTRY_TAG_LIMIT = 5;
     private final CommunityQueryPolicy communityQueryPolicy;
+    private final ViewCountPort viewCountPort;
+    private final PostReadService postReadService;
+
 
     @Override
-    @Transactional
     public PostResponse getPost(Long postId) {
         log.info("[PostQueryService] 게시글 단건 조회 요청 - postId: {}", postId);
 
         Post post = postRepository.findById(postId)
                 .orElseThrow(() -> new PostException(PostErrorCode.POST_NOT_FOUND));
 
+        // 1) 조회수는 항상 실시간 증가 (캐시 안 탐)
+        viewCountPort.increment(postId);
 
-        // 조회수 증가
-        post.increaseViewCount();
-        postRepository.update(post);
+        // 2) 본문/댓글/좋아요는 캐시에서 가져옴 (별도 빈 호출 → 프록시 적용)
+        PostResponse cached = postReadService.getPostContentOnly(postId);
 
-        // 좋아요/싫어요 수 카운트
-        Long likeCount = likeDislikeRepository.countLikes(TargetType.POST, postId);
-        Long dislikeCount = likeDislikeRepository.countDislikes(TargetType.POST, postId);
+        // 3) DB 누적 조회수 + Redis 미반영분 합산
+        int viewCount = post.getViewCount() + (int) viewCountPort.getCurrentCount(postId);
 
-
-        List<CommentResponse> comments = toCommentTree(
-                commentRepository.findActiveCommentsByPostId(postId)
-        );
-
-
-        String countryName = communityQueryPolicy.resolveCountryName(post.getCountryId());
-
-        Stream<TagResponse> countryStream = countryName != null ?
-                Stream.of(TagResponse.fromCountry(post.getCountryId(), countryName)) : Stream.empty();
-
-        Stream<TagResponse> categoryStream = post.getCategory() != null ?
-                Stream.of(TagResponse.fromCategory(post.getCategory())) : Stream.empty();
-
-        Stream<TagResponse> freeTagStream = post.getFreeTags() != null ?
-                post.getFreeTags().stream().map(TagResponse::fromFreeTag) : Stream.empty();
-
-        List<TagResponse> tags = Stream.concat(countryStream,
-                Stream.concat(categoryStream, freeTagStream)).toList();
-
-        return new PostResponse(
-                post.getId(),
-                post.getAuthorId(),
-                communityQueryPolicy.resolveNickname(post.getAuthorId()),
-                communityQueryPolicy.resolveProfileImageUrl(post.getAuthorId()),
-                tags,
-                post.getTitle(),
-                post.getContent(),
-                post.getCountryId(),
-                countryName,
-                post.getImageUrls(),
-                post.getViewCount(),
-                likeCount,
-                dislikeCount,
-                (long) comments.size(),
-                comments,
-                post.getCreatedAt()
-        );
+        return cached.withViewCount(viewCount);
     }
+
 
     @Override
     public List<PostTagType> getCategories() {
@@ -222,8 +189,8 @@ public class PostQueryService implements PostQueryUseCase {
                                         communityQueryPolicy.resolveProfileImageUrl(r.getUserId()),
                                         r.getContent(),
                                         r.getCreatedAt(),
-                                        likeDislikeRepository.countLikes(TargetType.COMMENT, c.getCommentId()),
-                                        likeDislikeRepository.countDislikes(TargetType.COMMENT, c.getCommentId()),
+                                        likeDislikeRepository.countLikes(TargetType.COMMENT, r.getCommentId()),
+                                        likeDislikeRepository.countDislikes(TargetType.COMMENT, r.getCommentId()),
                                         List.of()
                                 ))
                                 .toList()

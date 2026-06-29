@@ -20,20 +20,24 @@ const USER_COUNT = Number(__ENV.USER_COUNT || 20);
 export const options = {
     summaryTrendStats: ['avg', 'min', 'med', 'max', 'p(90)', 'p(95)', 'p(99)'],
     scenarios: {
-        post_detail_baseline: {
-            executor: 'ramping-vus',
-            startVUs: 0,
-            stages: [
-                { duration: '30s', target: USER_COUNT },
-                { duration: '1m',  target: USER_COUNT },
-                { duration: '30s', target: 0 },
-            ],
-            gracefulRampDown: '10s',
+        warmup: {
+            executor: 'constant-vus',
+            vus: USER_COUNT,
+            duration: '1m',
+            gracefulStop: '0s',
+            tags: { phase: 'warmup' },
+        },
+        measured: {
+            executor: 'constant-vus',
+            vus: USER_COUNT,
+            duration: '2m',
+            startTime: '1m',
+            tags: { phase: 'measured' },
         },
     },
     thresholds: {
-        http_req_failed: ['rate<0.01'],
-        'http_req_duration{type:post-detail}': ['p(95)<300'],
+        'http_req_failed{phase:measured}': ['rate<0.01'],
+        'http_req_duration{phase:measured}': ['p(95)<300'],
     },
 };
 

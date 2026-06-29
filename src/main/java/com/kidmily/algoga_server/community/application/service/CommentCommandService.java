@@ -15,10 +15,13 @@ import com.kidmily.algoga_server.community.domain.repository.PostRepository;
 import com.kidmily.algoga_server.community.exception.CommentException;
 import com.kidmily.algoga_server.community.exception.PostErrorCode;
 import com.kidmily.algoga_server.community.exception.PostException;
+import com.kidmily.algoga_server.community.settings.cache.CommunityCacheType;
 import com.kidmily.algoga_server.notification.domain.event.CommentRepliedEvent;
 import com.kidmily.algoga_server.notification.domain.event.PostCommentedEvent;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.Cache;
+import org.springframework.cache.CacheManager;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -33,6 +36,7 @@ public class CommentCommandService implements CommentCommandUseCase {
     private final DeleteCommentPolicy deleteCommentPolicy;
     private final ApplicationEventPublisher eventPublisher;
     private final CommunityQueryPolicy communityQueryPolicy;
+    private final CacheManager cacheManager;
 
     // 댓글 작성
     @Override
@@ -94,6 +98,8 @@ public class CommentCommandService implements CommentCommandUseCase {
 
         log.info("[CommentCommandService] 댓글 작성 완료 - commentId: {}", savedComment.getCommentId());
 
+        evictPostCache(command.postId());
+
         return savedComment;
     }
 
@@ -110,6 +116,7 @@ public class CommentCommandService implements CommentCommandUseCase {
         Comment updatedComment = commentRepository.update(comment);
 
         log.info("[CommentCommandService] 댓글 수정 완료 - commentId: {}", updatedComment.getCommentId());
+        evictPostCache(comment.getPostId());
         return updatedComment;
     }
 
@@ -124,6 +131,8 @@ public class CommentCommandService implements CommentCommandUseCase {
 
         deleteCommentPolicy.execute(comment, command.userId());
 
+        evictPostCache(comment.getPostId());
+
         log.info("[CommentCommandService] 댓글 삭제 완료 - commentId: {}", command.commentId());
     }
 
@@ -137,6 +146,16 @@ public class CommentCommandService implements CommentCommandUseCase {
 
         deleteCommentPolicy.executeByAdmin(comment);
 
+        evictPostCache(comment.getPostId());
+
         log.info("[CommentCommandService] 댓글 삭제 완료 (관리자) - commentId: {}", command.commentId());
+    }
+
+    // 공통 헬퍼
+    private void evictPostCache(Long postId) {
+        Cache cache = cacheManager.getCache(CommunityCacheType.Const.POST_DETAIL);
+        if (cache != null) {
+            cache.evict(postId);
+        }
     }
 }
