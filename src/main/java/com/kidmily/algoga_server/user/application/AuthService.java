@@ -200,7 +200,8 @@ public class AuthService implements SocialLoginProcessor {
                 TimeUnit.MILLISECONDS
         );
 
-        log.info("로그인 성공 [아이디: {}]", user.getUsername());
+        log.info("로그인 로직 통과 및 토큰 생성 완료 [아이디: {}, AccessToken: {}...]",
+                user.getUsername(), accessToken.substring(0, 15));
 
         return new AuthTokenResponse(
                 accessToken,

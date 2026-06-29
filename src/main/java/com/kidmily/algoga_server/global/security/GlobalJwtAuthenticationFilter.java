@@ -120,6 +120,7 @@ public class GlobalJwtAuthenticationFilter extends OncePerRequestFilter {
         else {
             for (Cookie cookie : request.getCookies()) {
                 if ("accessToken".equals(cookie.getName())) {
+                    log.info("요청(Request)에서 AccessToken 쿠키 읽기 성공: {}...", cookie.getValue().substring(0, 15));
                     return cookie.getValue();
                 }
             }

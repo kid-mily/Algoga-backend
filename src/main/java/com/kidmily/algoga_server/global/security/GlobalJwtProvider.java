@@ -5,6 +5,7 @@ import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
 import jakarta.annotation.PostConstruct;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.ResponseCookie;
 import org.springframework.stereotype.Component;
 
 import javax.crypto.SecretKey;
@@ -50,6 +51,17 @@ public class GlobalJwtProvider {
                 .expiration(new Date(System.currentTimeMillis() + refreshTokenExpiration))
                 .signWith(key)
                 .compact();
+    }
+
+    public ResponseCookie createCookie(String key, String token) {
+        return ResponseCookie.from(key, token)
+                .httpOnly(true)
+                .secure(true)           // 배포 시 true, 로컬 개발 시 false
+                .path("/")
+                .domain(".kidmily.kro.kr")  // 🌟 상위 도메인 적용
+                .sameSite("None")       // 🌟 크로스 도메인 허용
+                .maxAge(604800000)      // 필요한 만료 시간
+                .build();
     }
 
     // ==========================================
