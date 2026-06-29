@@ -35,7 +35,6 @@ import java.util.concurrent.TimeUnit;
 @Slf4j
 @Service
 @RequiredArgsConstructor
-@Transactional
 public class AuthService implements SocialLoginProcessor {
 
     private final UserRepository userRepository;
@@ -94,6 +93,7 @@ public class AuthService implements SocialLoginProcessor {
     }
 
     // 회원가입
+    @Transactional
     public void signup(AuthSignupRequest request) {
         String email = request.email().toLowerCase();
 
@@ -151,6 +151,7 @@ public class AuthService implements SocialLoginProcessor {
     }
 
     // 아이디 중복 확인 로직
+    @Transactional(readOnly = true)
     public boolean isUsernameAvailable(String username) {
         return !userRepository.existsByUsername(username);
     }
@@ -223,16 +224,17 @@ public class AuthService implements SocialLoginProcessor {
     @Transactional
     protected void updateLoginFailure(User user) {
         user.increaseLoginFailure();
-        userRepository.save(user); // 🌟 save 로직 유지!
+        userRepository.save(user);
     }
 
     @Transactional
     protected void resetLoginFailure(User user) {
         user.resetLoginFailure();
-        userRepository.save(user); // 🌟 save 로직 유지!
+        userRepository.save(user);
     }
 
     // 5. 아이디 찾기
+    @Transactional(readOnly = true)
     public FindIdResponse findId(FindIdRequest request) {
         User user = userRepository.findByNameAndEmail(request.name(), request.email().toLowerCase())
                 .orElseThrow(() -> new UserException(UserErrorCode.NOT_FOUND_USER));
@@ -246,6 +248,7 @@ public class AuthService implements SocialLoginProcessor {
     }
 
     // 6. 비밀번호 찾기
+    @Transactional
     public void findPassword(FindPasswordRequest request) {
         User user = userRepository.findByUsernameAndEmail(request.username(), request.email().toLowerCase())
                 .orElseThrow(() -> new UserException(UserErrorCode.NOT_FOUND_USER));
@@ -271,6 +274,7 @@ public class AuthService implements SocialLoginProcessor {
     }
 
     // 7. 비밀번호 강제 변경
+    @Transactional
     public void resetPassword(String email, ResetPasswordRequest request) {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new UserException(UserErrorCode.NOT_FOUND_USER));
@@ -313,6 +317,7 @@ public class AuthService implements SocialLoginProcessor {
     }
 
     // 소셜 전용 추가정보 회원가입
+    @Transactional
     public void socialSignup(AuthSocialSignupRequest request) {
         String email = request.email().toLowerCase();
 
