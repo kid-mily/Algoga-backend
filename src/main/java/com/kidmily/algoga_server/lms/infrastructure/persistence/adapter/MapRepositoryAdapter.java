@@ -38,6 +38,18 @@ public class MapRepositoryAdapter implements MapRepository {
                 .map(this::toDomain);
     }
 
+    @Override
+    public List<Country> findActiveCountriesByIds(List<Long> countryIds) {
+        if (countryIds == null || countryIds.isEmpty()) {
+            return List.of();
+        }
+
+        return springDataMapRepository.findByIdInAndActiveTrue(countryIds)
+                .stream()
+                .map(this::toDomain)
+                .toList();
+    }
+
     private Country toDomain(CountryJpaEntity entity) {
         return Country.withId(
                 entity.getId(),
@@ -49,3 +61,4 @@ public class MapRepositoryAdapter implements MapRepository {
         );
     }
 }
+

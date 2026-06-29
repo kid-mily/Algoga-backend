@@ -45,6 +45,17 @@ public class CourseRepositoryAdapter implements CourseRepository {
     }
 
     @Override
+    public List<Course> findBasicByIdIn(List<Long> ids) {
+        if (ids == null || ids.isEmpty()) {
+            return List.of();
+        }
+
+        return springDataCourseRepository.findByIdIn(ids).stream()
+                .map(this::toBasicDomain)
+                .toList();
+    }
+
+    @Override
     public Optional<Course> findByIdAndDeletedFalse(Long id) {
         return springDataCourseRepository.findByIdAndDeletedFalse(id)
                 .map(courseMapper::toDomain);
@@ -160,4 +171,23 @@ public class CourseRepositoryAdapter implements CourseRepository {
 
         return result;
     }
+    private Course toBasicDomain(CourseJpaEntity entity) {
+        return Course.withId(
+                entity.getId(),
+                entity.getCountryId(),
+                entity.getManagerId(),
+                entity.getTitle(),
+                entity.getDescription(),
+                entity.getPrice(),
+                entity.getMaxRewardMileage(),
+                entity.getThumbnailUrl(),
+                entity.getFileUrl(),
+                entity.getLevel(),
+                entity.getStatus(),
+                entity.isDeleted(),
+                List.of()
+        );
+    }
 }
+
+

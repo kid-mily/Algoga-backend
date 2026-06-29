@@ -7,6 +7,7 @@ import com.kidmily.algoga_server.lms.infrastructure.persistence.repository.Sprin
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
 import java.util.Optional;
 
 @Repository
@@ -39,6 +40,18 @@ public class CourseCompletionRepositoryAdapter implements CourseCompletionReposi
     }
 
     @Override
+    public List<CourseCompletion> findByUserIdAndCourseIdIn(Long userId, List<Long> courseIds) {
+        if (courseIds == null || courseIds.isEmpty()) {
+            return List.of();
+        }
+
+        return springDataCourseCompletionRepository.findByUserIdAndCourseIdIn(userId, courseIds)
+                .stream()
+                .map(this::toDomain)
+                .toList();
+    }
+
+    @Override
     public boolean existsByUserIdAndCourseId(
             Long userId,
             Long courseId
@@ -56,3 +69,4 @@ public class CourseCompletionRepositoryAdapter implements CourseCompletionReposi
         );
     }
 }
+

@@ -15,7 +15,10 @@ public interface LearningProgressRepository {
 
     List<LearningProgress> findByUserIdAndCourseId(Long userId, Long courseId);
 
+    List<LearningProgress> findByUserIdAndCourseIdIn(Long userId, List<Long> courseIds);
+
     List<LearningProgress> findByCourseId(Long courseId);
 
     boolean existsCompletedByUserIdAndChapterId(Long userId, Long chapterId);
 }
+

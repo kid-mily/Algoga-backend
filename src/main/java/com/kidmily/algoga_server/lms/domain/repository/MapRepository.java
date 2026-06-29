@@ -13,5 +13,5 @@ public interface MapRepository {
 
     Optional<Country> findActiveCountryById(Long countryId);
 
-
+    List<Country> findActiveCountriesByIds(List<Long> countryIds);
 }

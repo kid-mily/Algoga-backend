@@ -5,9 +5,13 @@ import com.kidmily.algoga_server.lms.domain.repository.EnrollmentRepository;
 import com.kidmily.algoga_server.lms.infrastructure.persistence.entity.EnrollmentJpaEntity;
 import com.kidmily.algoga_server.lms.infrastructure.persistence.repository.SpringDataEnrollmentRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Repository;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 @Repository
@@ -47,6 +51,12 @@ public class EnrollmentRepositoryAdapter implements EnrollmentRepository {
     }
 
     @Override
+    public Page<Enrollment> findByUserId(Long userId, Pageable pageable) {
+        return springDataEnrollmentRepository.findByUserIdOrderByEnrolledAtDescIdDesc(userId, pageable)
+                .map(this::toDomain);
+    }
+
+    @Override
     public List<Enrollment> findByCourseId(Long courseId) {
         return springDataEnrollmentRepository.findByCourseId(courseId).stream()
                 .map(this::toDomain)
@@ -61,6 +71,19 @@ public class EnrollmentRepositoryAdapter implements EnrollmentRepository {
     @Override
     public long countByCourseId(Long courseId) {
         return springDataEnrollmentRepository.countByCourseId(courseId);
+    }
+
+    @Override
+    public Map<Long, Long> countByCourseIds(List<Long> courseIds) {
+        if (courseIds == null || courseIds.isEmpty()) {
+            return Map.of();
+        }
+
+        Map<Long, Long> result = new HashMap<>();
+        for (Object[] row : springDataEnrollmentRepository.countByCourseIds(courseIds)) {
+            result.put((Long) row[0], (Long) row[1]);
+        }
+        return result;
     }
 
     private Enrollment toDomain(EnrollmentJpaEntity entity) {
