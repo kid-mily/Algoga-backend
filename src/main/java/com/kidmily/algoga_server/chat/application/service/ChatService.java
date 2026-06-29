@@ -15,8 +15,12 @@ import com.kidmily.algoga_server.chat.exception.ChatException;
 import com.kidmily.algoga_server.chat.presentation.api.response.ChatMessageResponse;
 import com.kidmily.algoga_server.chat.presentation.api.response.ChatRoomMemberResponse;
 import com.kidmily.algoga_server.chat.presentation.api.response.ChatRoomResponse;
+import com.kidmily.algoga_server.chat.settings.cache.ChatCacheType;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.Cache;
+import org.springframework.cache.CacheManager;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -36,6 +40,7 @@ public class ChatService implements ChatUseCase {
     private final ChatMessageRepository chatMessageRepository;
     private final ChatMessageReadRepository chatMessageReadRepository;
     private final UserPort userPort;
+    private final CacheManager cacheManager;
 
     @Override
     @Transactional
@@ -50,10 +55,17 @@ public class ChatService implements ChatUseCase {
                 .findDirectRoomIdByUserIds(command.requesterId(), command.targetUserId())
                 .flatMap(chatRoomRepository::findById)
                 .map(room -> ChatRoomResponse.of(room, partnerNickname, partnerProfile, null, null, 0, 2))
-                .orElseGet(() -> ChatRoomResponse.of(createNewRoom(command), partnerNickname, partnerProfile, null, null, 0, 2));
+                .orElseGet(() -> {
+                    ChatRoom newRoom = createNewRoom(command);
+                    // 새 방 생성 시 양쪽 유저 캐시 무효화
+                    evictChatRoomsCache(command.requesterId());
+                    evictChatRoomsCache(command.targetUserId());
+                    return ChatRoomResponse.of(newRoom, partnerNickname, partnerProfile, null, null, 0, 2);
+                });
     }
 
     @Override
+    @Cacheable(cacheNames = ChatCacheType.Const.CHAT_ROOMS, key = "#userId")
     @Transactional(readOnly = true)
     public List<ChatRoomResponse> getRooms(Long userId) {
         log.info("[ChatService] 채팅방 목록 조회 - userId: {}", userId);
@@ -93,7 +105,7 @@ public class ChatService implements ChatUseCase {
                             memberCount
                     );
                 })
-                .toList();
+                .collect(java.util.stream.Collectors.toList());
     }
 
     @Override
@@ -116,12 +128,16 @@ public class ChatService implements ChatUseCase {
         // 방금 생성된 미읽음 레코드 수 = 안 읽은 사람 수 (실시간 브로드캐스트용 정확한 값)
         int unreadCount = reads.size();
 
+        chatRoomMemberRepository.findByRoomId(command.roomId())
+                .forEach(member -> evictChatRoomsCache(member.getUserId()));
+
         return ChatMessageResponse.of(
                 message,
                 userPort.getNickname(command.senderId()),
                 userPort.getProfileImageUrl(command.senderId()),
                 unreadCount
         );
+
     }
 
     @Override
@@ -131,6 +147,7 @@ public class ChatService implements ChatUseCase {
                 .orElseThrow(() -> new ChatException(ChatErrorCode.CHAT_NOT_MEMBER));
 
         chatMessageReadRepository.markAllAsRead(roomId, userId);
+        evictChatRoomsCache(userId);
     }
 
     @Override
@@ -140,6 +157,7 @@ public class ChatService implements ChatUseCase {
                 .orElseThrow(() -> new ChatException(ChatErrorCode.CHAT_NOT_MEMBER));
 
         chatMessageReadRepository.markAllAsRead(roomId, userId);
+        evictChatRoomsCache(userId);
 
         java.util.Map<Long, String> nameCache = new java.util.HashMap<>();
         java.util.Map<Long, String> profileCache = new java.util.HashMap<>();
@@ -174,6 +192,9 @@ public class ChatService implements ChatUseCase {
                 chatRoomMemberRepository.save(ChatRoomMember.create(chatRoom.getId(), targetUserId))
         );
 
+        evictChatRoomsCache(command.requesterId());
+        command.targetUserIds().forEach(this::evictChatRoomsCache);
+
         return ChatRoomResponse.of(chatRoom, command.roomName(), null, null, null, 0, command.targetUserIds().size() + 1);
     }
 
@@ -194,6 +215,7 @@ public class ChatService implements ChatUseCase {
         // 마지막 멤버였으면 방 삭제 후 종료 (알릴 대상 없음)
         if (chatRoomMemberRepository.countByRoomId(roomId) == 0) {
             chatRoomRepository.softDelete(roomId);
+            evictChatRoomsCache(userId);
             return Optional.empty();
         }
 
@@ -207,6 +229,10 @@ public class ChatService implements ChatUseCase {
                 .map(member -> ChatMessageRead.create(systemMessage.getId(), member.getUserId()))
                 .toList();
         chatMessageReadRepository.saveAll(reads);
+
+        evictChatRoomsCache(userId);
+
+        reads.forEach(read -> evictChatRoomsCache(read.getUserId()));
 
         return Optional.of(ChatMessageResponse.of(systemMessage, "", null, reads.size()));
     }
@@ -261,25 +287,29 @@ public class ChatService implements ChatUseCase {
     @Override
     @Transactional
     public ChatRoomResponse addMembers(Long roomId, Long requesterId, List<Long> targetUserIds) {
-        // 요청자가 방 멤버인지 검증
         chatRoomMemberRepository.findByRoomIdAndUserId(roomId, requesterId)
                 .orElseThrow(() -> new ChatException(ChatErrorCode.CHAT_NOT_MEMBER));
 
         ChatRoom room = chatRoomRepository.findById(roomId)
                 .orElseThrow(() -> new ChatException(ChatErrorCode.CHAT_ROOM_NOT_FOUND));
 
-        // 추가할 유저 존재 검증
         targetUserIds.forEach(targetUserId ->
                 userPort.findUserIdById(targetUserId)
                         .orElseThrow(() -> new ChatException(ChatErrorCode.CHAT_USER_NOT_FOUND))
         );
 
         if (room.getType() == ChatRoomType.GROUP) {
-            // 그룹방: 같은 방에 멤버만 추가 (히스토리 유지)
-            return addToExistingGroup(room, targetUserIds);
+            ChatRoomResponse response = addToExistingGroup(room, targetUserIds);
+            // 방의 현재 전체 멤버 전원 무효화 (기존 멤버 포함)
+            chatRoomMemberRepository.findByRoomId(roomId)
+                    .forEach(m -> evictChatRoomsCache(m.getUserId()));
+            return response;
         } else {
-            // 1:1방: 원본 유지 + 새 그룹방 생성 (대화 0부터)
-            return createGroupFromDirect(roomId, requesterId, targetUserIds);
+            ChatRoomResponse response = createGroupFromDirect(roomId, requesterId, targetUserIds);
+            // 새 그룹방 전체 멤버 무효화 (원래 1:1 상대 포함)
+            chatRoomMemberRepository.findByRoomId(response.roomId())
+                    .forEach(m -> evictChatRoomsCache(m.getUserId()));
+            return response;
         }
     }
 
@@ -347,6 +377,17 @@ public class ChatService implements ChatUseCase {
         }
 
         chatRoomRepository.updateRoomName(roomId, roomName);
+
+        chatRoomMemberRepository.findByRoomId(roomId)
+                .forEach(member -> evictChatRoomsCache(member.getUserId()));
+    }
+
+    // 공통 헬퍼
+    private void evictChatRoomsCache(Long userId) {
+        Cache cache = cacheManager.getCache(ChatCacheType.Const.CHAT_ROOMS);
+        if (cache != null) {
+            cache.evict(userId);
+        }
     }
 
 

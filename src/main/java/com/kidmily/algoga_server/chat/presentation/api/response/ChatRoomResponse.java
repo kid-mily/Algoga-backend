@@ -1,11 +1,13 @@
 package com.kidmily.algoga_server.chat.presentation.api.response;
 
+import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import com.kidmily.algoga_server.chat.domain.model.ChatRoom;
 import com.kidmily.algoga_server.chat.domain.model.ChatRoomType;
 import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.time.LocalDateTime;
 
+@JsonTypeInfo(use = JsonTypeInfo.Id.CLASS, property = "@class")
 @Schema(description = "채팅방 응답")
 public record ChatRoomResponse(
 
