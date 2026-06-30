@@ -35,6 +35,7 @@ public class CourseService implements CourseUseCase {
     private final CourseRepository courseRepository;
     private final ChapterRepository chapterRepository;
     private final LearningProgressRepository learningProgressRepository;
+    private final LearningProgressCachePort learningProgressCachePort;
     private final CourseCompletionRepository courseCompletionRepository;
     private final QuizSubmissionRepository quizSubmissionRepository;
     private final CourseReviewRepository courseReviewRepository;
@@ -260,14 +261,7 @@ public class CourseService implements CourseUseCase {
         Course course = findCourseIncludingDeleted(courseId);
 
         List<Chapter> chapters = chapterRepository.findByCourseId(courseId);
-        List<LearningProgress> progresses = learningProgressRepository.findByUserIdAndCourseId(userId, courseId);
-
-        Map<Long, LearningProgress> progressByChapterId = progresses.stream()
-                .collect(java.util.stream.Collectors.toMap(
-                        LearningProgress::getChapterId,
-                        progress -> progress,
-                        (first, second) -> first
-                ));
+        Map<Long, LearningProgress> progressByChapterId = loadProgressMapWithCache(userId, courseId, chapters);
 
         List<CourseClassroomChapterResult> chapterResults = new java.util.ArrayList<>();
         boolean previousChaptersCompleted = true;
@@ -564,16 +558,112 @@ public class CourseService implements CourseUseCase {
         }
 
         List<Long> incompleteChapterIds = chapters.stream()
-                .filter(chapter -> !learningProgressRepository.existsCompletedByUserIdAndChapterId(
-                        userId,
-                        chapter.getId()
-                ))
+                .filter(chapter -> !loadProgressWithCache(userId, courseId, chapter.getId())
+                        .map(LearningProgress::isCompleted)
+                        .orElse(false))
                 .map(Chapter::getId)
                 .toList();
 
         if (!incompleteChapterIds.isEmpty()) {
             throw new LmsException(LmsErrorCode.QUIZ_LOCKED);
         }
+    }
+
+    private Map<Long, LearningProgress> loadProgressMapWithCache(
+            Long userId,
+            Long courseId,
+            List<Chapter> chapters
+    ) {
+        Map<Long, LearningProgress> progressByChapterId = learningProgressRepository.findByUserIdAndCourseId(userId, courseId)
+                .stream()
+                .collect(Collectors.toMap(
+                        LearningProgress::getChapterId,
+                        Function.identity(),
+                        this::newerProgress,
+                        LinkedHashMap::new
+                ));
+
+        for (Chapter chapter : chapters) {
+            loadCachedProgress(userId, courseId, chapter.getId())
+                    .ifPresent(cachedProgress -> progressByChapterId.merge(
+                            chapter.getId(),
+                            cachedProgress,
+                            this::newerProgress
+                    ));
+        }
+
+        return progressByChapterId;
+    }
+
+    private Optional<LearningProgress> loadProgressWithCache(
+            Long userId,
+            Long courseId,
+            Long chapterId
+    ) {
+        Optional<LearningProgress> cachedProgress = loadCachedProgress(userId, courseId, chapterId);
+        Optional<LearningProgress> dbProgress = learningProgressRepository.findByUserIdAndChapterId(userId, chapterId);
+
+        if (cachedProgress.isPresent() && dbProgress.isPresent()) {
+            return Optional.of(newerProgress(dbProgress.get(), cachedProgress.get()));
+        }
+
+        return cachedProgress.or(() -> dbProgress);
+    }
+
+    private List<LearningProgress> mergeProgressesWithCache(
+            Long userId,
+            Long courseId,
+            List<Chapter> chapters,
+            List<LearningProgress> dbProgresses
+    ) {
+        Map<Long, LearningProgress> progressByChapterId = dbProgresses.stream()
+                .collect(Collectors.toMap(
+                        LearningProgress::getChapterId,
+                        Function.identity(),
+                        this::newerProgress,
+                        LinkedHashMap::new
+                ));
+
+        for (Chapter chapter : chapters) {
+            loadCachedProgress(userId, courseId, chapter.getId())
+                    .ifPresent(cachedProgress -> progressByChapterId.merge(
+                            chapter.getId(),
+                            cachedProgress,
+                            this::newerProgress
+                    ));
+        }
+
+        return new ArrayList<>(progressByChapterId.values());
+    }
+
+    private Optional<LearningProgress> loadCachedProgress(
+            Long userId,
+            Long courseId,
+            Long chapterId
+    ) {
+        try {
+            return learningProgressCachePort.find(userId, courseId, chapterId);
+        } catch (RuntimeException exception) {
+            log.warn("[CourseService] Failed to read cached learning progress. userId={}, courseId={}, chapterId={}",
+                    userId, courseId, chapterId, exception);
+            return Optional.empty();
+        }
+    }
+
+    private LearningProgress newerProgress(
+            LearningProgress first,
+            LearningProgress second
+    ) {
+        if (second.getWatchedSeconds() > first.getWatchedSeconds()) {
+            return second;
+        }
+
+        if (second.getWatchedSeconds() == first.getWatchedSeconds()
+                && second.getProgressRate() > first.getProgressRate()) {
+            return second;
+        }
+
+        return first;
     }
 
     private void validateQuizSubmitted(Long userId, Long courseId) {
@@ -599,10 +689,16 @@ public class CourseService implements CourseUseCase {
                 userId,
                 course.getId()
         );
+        List<LearningProgress> mergedProgresses = mergeProgressesWithCache(
+                userId,
+                course.getId(),
+                chapters,
+                progresses
+        );
 
         int totalChapterCount = chapters.size();
-        int completedChapterCount = calculateCompletedChapterCount(progresses);
-        int progressRate = calculateCourseProgressRate(chapters, progresses);
+        int completedChapterCount = calculateCompletedChapterCount(mergedProgresses);
+        int progressRate = calculateCourseProgressRate(chapters, mergedProgresses);
 
         Optional<CourseCompletion> optionalCompletion = courseCompletionRepository.findByUserIdAndCourseId(
                 userId,
@@ -706,7 +802,12 @@ public class CourseService implements CourseUseCase {
                         coursesById.get(courseId),
                         enrollmentsByCourseId.get(courseId),
                         chaptersByCourseId.getOrDefault(courseId, List.of()),
-                        progressesByCourseId.getOrDefault(courseId, List.of()),
+                        mergeProgressesWithCache(
+                                userId,
+                                courseId,
+                                chaptersByCourseId.getOrDefault(courseId, List.of()),
+                                progressesByCourseId.getOrDefault(courseId, List.of())
+                        ),
                         studentCountsByCourseId.getOrDefault(courseId, 0L),
                         averageRatingsByCourseId.getOrDefault(courseId, 0.0),
                         completionsByCourseId.get(courseId),
