@@ -75,7 +75,7 @@ public class LearningProgressService implements LearningProgressUseCase {
 
         LearningProgress savedProgress = upsertProgressWithWriteBehind(command, chapter);
 
-        Map<Long, LearningProgress> progressByChapterId = loadProgressMap(command.userId(), command.courseId());
+        Map<Long, LearningProgress> progressByChapterId = loadProgressMap(command.userId(), command.courseId(), chapters);
         progressByChapterId.put(savedProgress.getChapterId(), savedProgress);
 
         Long nextChapterId = findNextChapterId(chapters, chapter);
@@ -279,16 +279,49 @@ public class LearningProgressService implements LearningProgressUseCase {
                 });
     }
 
-    private Map<Long, LearningProgress> loadProgressMap(Long userId, Long courseId) {
+    private Map<Long, LearningProgress> loadProgressMap(Long userId, Long courseId, List<Chapter> chapters) {
         Map<Long, LearningProgress> progressByChapterId = learningProgressRepository.findByUserIdAndCourseId(userId, courseId)
                 .stream()
                 .collect(Collectors.toMap(
                         LearningProgress::getChapterId,
                         Function.identity(),
-                        (first, second) -> first
+                        this::newerProgress
                 ));
 
+        for (Chapter chapter : chapters) {
+            findCachedProgress(userId, courseId, chapter.getId())
+                    .ifPresent(cachedProgress -> progressByChapterId.merge(
+                            chapter.getId(),
+                            cachedProgress,
+                            this::newerProgress
+                    ));
+        }
+
         return new HashMap<>(progressByChapterId);
+    }
+
+    private Optional<LearningProgress> findCachedProgress(Long userId, Long courseId, Long chapterId) {
+        try {
+            return learningProgressCachePort.find(userId, courseId, chapterId);
+        } catch (RuntimeException exception) {
+            log.warn("[Learning Progress Command] Redis read failed while merging course progress. userId={}, courseId={}, chapterId={}",
+                    userId, courseId, chapterId, exception);
+            meterRegistry.counter("algoga_lms_progress_cache_error_total", "operation", "read").increment();
+            return Optional.empty();
+        }
+    }
+
+    private LearningProgress newerProgress(LearningProgress first, LearningProgress second) {
+        if (second.getWatchedSeconds() > first.getWatchedSeconds()) {
+            return second;
+        }
+
+        if (second.getWatchedSeconds() == first.getWatchedSeconds()
+                && second.getProgressRate() > first.getProgressRate()) {
+            return second;
+        }
+
+        return first;
     }
 
     private Optional<LearningProgress> findProgress(Long userId, Long courseId, Long chapterId) {
