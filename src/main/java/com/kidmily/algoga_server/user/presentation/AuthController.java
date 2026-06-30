@@ -155,28 +155,9 @@ public class AuthController {
             authService.logout(email);
         }
 
-        // 쿠키 만료시간을 0으로 만들어 브라우저에서 삭제되게 함
-        ResponseCookie deleteAccessCookie = globalJwtProvider.createCookie("accessToken", "");
-        deleteAccessCookie = ResponseCookie.from(deleteAccessCookie.getName(), "")
-                .domain(deleteAccessCookie.getDomain())
-                .path(deleteAccessCookie.getPath())
-                .secure(deleteAccessCookie.isSecure())
-                .sameSite(deleteAccessCookie.getSameSite())
-                .httpOnly(true)
-                .maxAge(0) // 🌟 여기서 만료시켜서 지워버림!
-                .build();
-
-        ResponseCookie deleteRefreshCookie = globalJwtProvider.createCookie("refreshToken", "");
-        deleteRefreshCookie = ResponseCookie.from(deleteRefreshCookie.getName(), "")
-                .domain(deleteRefreshCookie.getDomain())
-                .path(deleteRefreshCookie.getPath())
-                .secure(deleteRefreshCookie.isSecure())
-                .sameSite(deleteRefreshCookie.getSameSite())
-                .httpOnly(true)
-                .maxAge(0) // 🌟 여기서 만료!
-                .build();
-        response.addHeader(HttpHeaders.SET_COOKIE, deleteAccessCookie.toString());
-        response.addHeader(HttpHeaders.SET_COOKIE, deleteRefreshCookie.toString());
+        // 🌟 깔끔하게 리팩토링: 이제 컨트롤러는 내부 속성을 몰라도 됩니다.
+        response.addHeader(HttpHeaders.SET_COOKIE, globalJwtProvider.deleteCookie("accessToken").toString());
+        response.addHeader(HttpHeaders.SET_COOKIE, globalJwtProvider.deleteCookie("refreshToken").toString());
 
         return ApiResponse.success("AUTH_LOGOUT_SUCCESS", "로그아웃이 완료되었습니다.");
     }
