@@ -58,7 +58,7 @@ public class GlobalJwtProvider {
                 .httpOnly(true)
                 .secure(true)           // 배포 시 true, 로컬 개발 시 false
                 .path("/")
-                .domain(".kidmily.kro.kr")  // 🌟 상위 도메인 적용
+                .domain(".algoga.kro.kr")  // 🌟 상위 도메인 적용
                 .sameSite("None")       // 🌟 크로스 도메인 허용
                 .maxAge(604800000)      // 필요한 만료 시간
                 .build();
