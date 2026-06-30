@@ -5,6 +5,7 @@ import com.kidmily.algoga_server.lms.application.command.CreateQuizCommand;
 import com.kidmily.algoga_server.lms.application.command.SubmitQuizAnswerCommand;
 import com.kidmily.algoga_server.lms.application.command.SubmitQuizCommand;
 import com.kidmily.algoga_server.lms.application.command.UpdateQuizCommand;
+import com.kidmily.algoga_server.lms.application.port.LearningProgressCachePort;
 import com.kidmily.algoga_server.lms.application.result.CourseCompletionResult;
 import com.kidmily.algoga_server.lms.application.result.QuizResult;
 import com.kidmily.algoga_server.lms.application.result.QuizSubmissionAnswerResult;
@@ -14,6 +15,7 @@ import com.kidmily.algoga_server.lms.application.result.WrongQuizAnswerResult;
 import com.kidmily.algoga_server.lms.application.usecase.QuizUseCase;
 import com.kidmily.algoga_server.lms.domain.model.Chapter;
 import com.kidmily.algoga_server.lms.domain.model.CourseCompletion;
+import com.kidmily.algoga_server.lms.domain.model.LearningProgress;
 import com.kidmily.algoga_server.lms.domain.model.Quiz;
 import com.kidmily.algoga_server.lms.domain.model.QuizSubmission;
 import com.kidmily.algoga_server.lms.domain.model.QuizSubmissionAnswer;
@@ -50,6 +52,7 @@ public class QuizService implements QuizUseCase {
     private final CourseRepository courseRepository;
     private final ChapterRepository chapterRepository;
     private final LearningProgressRepository learningProgressRepository;
+    private final LearningProgressCachePort learningProgressCachePort;
     private final EnrollmentRepository enrollmentRepository;
     private final QuizRepository quizRepository;
     private final QuizSubmissionRepository quizSubmissionRepository;
@@ -286,8 +289,9 @@ public class QuizService implements QuizUseCase {
         }
 
         List<Long> incompleteChapterIds = chapters.stream()
-                .filter(chapter -> !learningProgressRepository.existsCompletedByUserIdAndChapterId(
+                .filter(chapter -> !isChapterCompleted(
                         userId,
+                        courseId,
                         chapter.getId()
                 ))
                 .map(Chapter::getId)
@@ -295,6 +299,24 @@ public class QuizService implements QuizUseCase {
 
         if (!incompleteChapterIds.isEmpty()) {
             throw new LmsException(LmsErrorCode.QUIZ_LOCKED);
+        }
+    }
+
+    private boolean isChapterCompleted(Long userId, Long courseId, Long chapterId) {
+        Optional<LearningProgress> cachedProgress = findCachedProgress(userId, courseId, chapterId);
+
+        if (cachedProgress.map(LearningProgress::isCompleted).orElse(false)) {
+            return true;
+        }
+
+        return learningProgressRepository.existsCompletedByUserIdAndChapterId(userId, chapterId);
+    }
+
+    private Optional<LearningProgress> findCachedProgress(Long userId, Long courseId, Long chapterId) {
+        try {
+            return learningProgressCachePort.find(userId, courseId, chapterId);
+        } catch (RuntimeException exception) {
+            return Optional.empty();
         }
     }
 
