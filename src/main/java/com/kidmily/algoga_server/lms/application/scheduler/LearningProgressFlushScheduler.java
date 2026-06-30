@@ -2,13 +2,11 @@ package com.kidmily.algoga_server.lms.application.scheduler;
 
 import com.kidmily.algoga_server.lms.application.port.LearningProgressCachePort;
 import com.kidmily.algoga_server.lms.domain.model.LearningProgress;
-import com.kidmily.algoga_server.lms.domain.repository.LearningProgressRepository;
 import io.micrometer.core.instrument.MeterRegistry;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -18,11 +16,10 @@ import java.util.List;
 public class LearningProgressFlushScheduler {
 
     private final LearningProgressCachePort learningProgressCachePort;
-    private final LearningProgressRepository learningProgressRepository;
+    private final LearningProgressFlushWriter learningProgressFlushWriter;
     private final MeterRegistry meterRegistry;
 
     @Scheduled(fixedDelayString = "${lms.progress.flush-interval-ms:30000}")
-    @Transactional
     public void flushDirtyProgresses() {
         List<LearningProgress> dirtyProgresses;
         try {
@@ -40,7 +37,7 @@ public class LearningProgressFlushScheduler {
         int flushedCount = 0;
         for (LearningProgress dirtyProgress : dirtyProgresses) {
             try {
-                LearningProgress savedProgress = learningProgressRepository.save(dirtyProgress);
+                LearningProgress savedProgress = learningProgressFlushWriter.save(dirtyProgress);
                 learningProgressCachePort.markFlushed(savedProgress);
                 flushedCount++;
             } catch (RuntimeException exception) {
