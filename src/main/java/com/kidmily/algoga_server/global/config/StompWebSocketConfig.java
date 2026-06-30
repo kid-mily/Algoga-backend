@@ -31,7 +31,8 @@ public class StompWebSocketConfig implements WebSocketMessageBrokerConfigurer {
                         "http://localhost:17000",
                         "http://127.0.0.1:17000",
                         "https://kidmily.kro.kr",
-                        "https://*.vercel.app"
+                        "https://*.vercel.app",
+                        "https://algoga.kro.kr"
                 )
                 .addInterceptors(jwtHandshakeInterceptor);
                 //.withSockJS();
