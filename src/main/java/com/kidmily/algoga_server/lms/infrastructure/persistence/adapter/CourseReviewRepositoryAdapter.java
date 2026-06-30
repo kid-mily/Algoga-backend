@@ -8,8 +8,12 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 
 import java.time.LocalDateTime;
+import java.util.HashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 
 @Repository
 @RequiredArgsConstructor
@@ -87,6 +91,32 @@ public class CourseReviewRepositoryAdapter implements CourseReviewRepository {
     }
 
     @Override
+    public Map<Long, Double> findAverageRatingsByCourseIds(List<Long> courseIds) {
+        if (courseIds == null || courseIds.isEmpty()) {
+            return Map.of();
+        }
+
+        Map<Long, Double> result = new HashMap<>();
+        for (Object[] row : springDataCourseReviewRepository.findAverageRatingsByCourseIds(courseIds)) {
+            Long courseId = (Long) row[0];
+            Double average = ((Number) row[1]).doubleValue();
+            result.put(courseId, Math.round(average * 10.0) / 10.0);
+        }
+        return result;
+    }
+
+    @Override
+    public Set<Long> findReviewedCourseIdsByUserIdAndCourseIds(Long userId, List<Long> courseIds) {
+        if (courseIds == null || courseIds.isEmpty()) {
+            return Set.of();
+        }
+
+        return new LinkedHashSet<>(
+                springDataCourseReviewRepository.findReviewedCourseIdsByUserIdAndCourseIds(userId, courseIds)
+        );
+    }
+
+    @Override
     public boolean existsByUserIdAndCourseIdAndDeletedFalse(
             Long userId,
             Long courseId
@@ -113,3 +143,5 @@ public class CourseReviewRepositoryAdapter implements CourseReviewRepository {
         );
     }
 }
+
+

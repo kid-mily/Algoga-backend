@@ -14,6 +14,8 @@ public interface SpringDataCourseRepository extends JpaRepository<CourseJpaEntit
 
     Optional<CourseJpaEntity> findByIdAndDeletedFalse(Long id);
 
+    List<CourseJpaEntity> findByIdIn(List<Long> ids);
+
     Page<CourseJpaEntity> findByDeletedFalseOrderByIdDesc(Pageable pageable);
 
     Page<CourseJpaEntity> findByDeletedFalseAndCountryIdInOrderByIdDesc(
@@ -57,3 +59,4 @@ public interface SpringDataCourseRepository extends JpaRepository<CourseJpaEntit
             @Param("status") String status
     );
 }
+

@@ -4,7 +4,9 @@ import com.kidmily.algoga_server.lms.domain.model.CourseReview;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 
 public interface CourseReviewRepository {
 
@@ -17,6 +19,10 @@ public interface CourseReviewRepository {
     List<CourseReview> findByCourseId(Long courseId);
 
     List<CourseReview> findAllByCourseId(Long courseId);
+
+    Map<Long, Double> findAverageRatingsByCourseIds(List<Long> courseIds);
+
+    Set<Long> findReviewedCourseIdsByUserIdAndCourseIds(Long userId, List<Long> courseIds);
 
     boolean existsByUserIdAndCourseIdAndDeletedFalse(Long userId, Long courseId);
 
