@@ -27,7 +27,14 @@ public class VectorKnowledgeRetrievalAdapter implements KnowledgeRetrievalPort {
                 .topK(1)
                 .build();
 
-        List<Document> results = vectorStore.similaritySearch(searchRequest);
+        List<Document> results;
+        try {
+            // DB 통신 중 예외 발생 가능성이 있는 부분
+            results = vectorStore.similaritySearch(searchRequest);
+        } catch (Exception e) {
+            log.error("[Vector DB 통신 에러] ❌ DB 연결 또는 검색 중 오류 발생. 안전하게 빈 값을 반환합니다: {}", e.getMessage());
+            return ""; // 빈 값 반환 시 서비스 레이어에서 도메인 외 질문으로 취급하여 시스템 장애 방지
+        }
 
         if (results.isEmpty()) {
             log.warn("[Vector DB 차단] ❌ DB에 저장된 예상 질문 데이터가 단 하나도 없습니다.");

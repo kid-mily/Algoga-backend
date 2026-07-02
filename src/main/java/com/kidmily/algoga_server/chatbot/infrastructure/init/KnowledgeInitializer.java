@@ -27,7 +27,7 @@ public class KnowledgeInitializer {
 
     @EventListener(ApplicationReadyEvent.class)
     public void initializeKnowledgeOnStartup() {
-        log.info("[RAG 지식 동기화] 🚀 DB 데이터를 읽어 Redis 캐시를 최신 상태로 덮어씌웁니다...");
+        try {log.info("[RAG 지식 동기화] 🚀 DB 데이터를 읽어 Redis 캐시를 최신 상태로 덮어씌웁니다...");
 
         List<KnowledgeEntity> knowledges = knowledgeRepository.findAll();
         List<ExpectedQueryEntity> expectedQueries = expectedQueryRepository.findAll();
@@ -64,5 +64,9 @@ public class KnowledgeInitializer {
         vectorStore.add(documents);
 
         log.info("[RAG 지 동기화 완료] ✅ 총 {}개의 정책 기반 예상 질문이 Redis Vector DB에 최신화되었습니다.", documents.size());
+    } catch (Exception e) {
+            // MySQL이나 Redis에 연결할 수 없어도 서버가 다운되지 않도록 예외를 잡아서 로깅만 처리
+            log.error("[RAG 지식 동기화 실패] ❌ DB 연동 실패로 인해 지식 동기화를 건너뛰고 서버 실행을 계속합니다. 원인: {}", e.getMessage());
+        }
     }
 }
