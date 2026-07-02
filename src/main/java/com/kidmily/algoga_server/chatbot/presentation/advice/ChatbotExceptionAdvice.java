@@ -1,4 +1,3 @@
-// chatbot/presentation/advice/ChatbotExceptionAdvice.java
 package com.kidmily.algoga_server.chatbot.presentation.advice;
 
 import com.kidmily.algoga_server.chatbot.exception.ChatbotException;
@@ -19,7 +18,6 @@ public class ChatbotExceptionAdvice implements CommonExceptionAdvice {
         return log;
     }
 
-    // 🌟 ChatbotException이 발생하면 공통 비즈니스 예외 처리기로 위임하여 표준화된 에러를 반환합니다.
     @ExceptionHandler(ChatbotException.class)
     public ResponseEntity<ErrorResponse> handleChatbotException(ChatbotException e) {
         return handleBusinessException(e);

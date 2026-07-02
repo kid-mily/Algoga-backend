@@ -1,16 +1,15 @@
-// chatbot/presentation/api/ChatbotController.java
 package com.kidmily.algoga_server.chatbot.presentation.api;
 
 import com.kidmily.algoga_server.chatbot.application.command.AskChatbotCommand;
 import com.kidmily.algoga_server.chatbot.application.usecase.ChatbotCommandUseCase;
 import com.kidmily.algoga_server.chatbot.application.usecase.ChatbotQueryUseCase;
-import com.kidmily.algoga_server.chatbot.exception.ChatbotErrorCode; // 🌟 추가됨
+import com.kidmily.algoga_server.chatbot.exception.ChatbotErrorCode;
 import com.kidmily.algoga_server.chatbot.presentation.api.request.AskChatbotRequest;
 import com.kidmily.algoga_server.chatbot.presentation.api.request.AskSuggestedRequest;
 import com.kidmily.algoga_server.chatbot.presentation.api.response.ChatbotAnswerResponse;
 import com.kidmily.algoga_server.chatbot.presentation.api.response.SuggestedQuestionResponse;
 import com.kidmily.algoga_server.chatbot.presentation.api.response.UnifiedChatHistoryResponse;
-import com.kidmily.algoga_server.global.annotation.swagger.ApiErrorCodeExample; // 🌟 추가됨
+import com.kidmily.algoga_server.global.annotation.swagger.ApiErrorCodeExample;
 import com.kidmily.algoga_server.global.common.api.response.ApiResponse;
 import com.kidmily.algoga_server.global.common.api.response.PageResponse;
 import com.kidmily.algoga_server.user.settings.CustomUserDetails;
@@ -54,7 +53,7 @@ public class ChatbotController {
 
     @PostMapping("/suggested-questions/ask")
     @Operation(summary = "조회용 예상 질문 답변 요청")
-    @ApiErrorCodeExample(domain = ChatbotErrorCode.class, value = {"SUGGESTED_QUESTION_NOT_FOUND"}) // 🌟 스웨거 에러 추가
+    @ApiErrorCodeExample(domain = ChatbotErrorCode.class, value = {"SUGGESTED_QUESTION_NOT_FOUND"})
     public ResponseEntity<ApiResponse<ChatbotAnswerResponse>> askSuggestedQuestion(@Valid @RequestBody AskSuggestedRequest request) {
         return ResponseEntity.ok(ApiResponse.success("SUGGESTED_ANSWERED", "성공", chatbotCommandUseCase.askSuggestedQuestion(request.suggestedQuestionId())));
     }
@@ -65,7 +64,7 @@ public class ChatbotController {
             "DAILY_USAGE_LIMIT_EXCEEDED",
             "LLM_SERVER_ERROR",
             "VECTOR_DB_ERROR"
-    }) // 🌟 스웨거 에러 추가
+    })
     public ResponseEntity<ApiResponse<ChatbotAnswerResponse>> askToChatbot(
             @Valid @RequestBody AskChatbotRequest request,
             @AuthenticationPrincipal CustomUserDetails userDetails
