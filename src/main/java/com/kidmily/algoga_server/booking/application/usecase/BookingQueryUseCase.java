@@ -10,5 +10,7 @@ public interface BookingQueryUseCase {
 
     List<BookingResponse> getMyBookings(Long userId);
 
+    List<BookingResponse> getMyBookingsByCountry(Long userId, Long countryId);
+
     boolean hasActiveBooking(Long userId);
 }

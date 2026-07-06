@@ -1,5 +1,7 @@
 package com.kidmily.algoga_server.booking.application.service;
 
+import com.kidmily.algoga_server.accommodation.domain.model.Accommodation;
+import com.kidmily.algoga_server.accommodation.domain.repository.AccommodationRepository;
 import com.kidmily.algoga_server.booking.application.usecase.BookingQueryUseCase;
 import com.kidmily.algoga_server.booking.domain.model.Booking;
 import com.kidmily.algoga_server.booking.domain.model.BookingStatus;
@@ -15,6 +17,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -23,6 +27,7 @@ import java.util.List;
 public class BookingQueryService implements BookingQueryUseCase {
 
     private final BookingRepository bookingRepository;
+    private final AccommodationRepository accommodationRepository;
 
     @Override
     public BookingResponse getBooking(Long bookingId) {
@@ -40,6 +45,27 @@ public class BookingQueryService implements BookingQueryUseCase {
         log.info("[BookingQueryService] 내 예약 목록 조회 - userId: {}", userId);
         return bookingRepository.findByUserId(userId)
                 .stream()
+                .map(this::toResponse)
+                .toList();
+    }
+
+    @Override
+    public List<BookingResponse> getMyBookingsByCountry(Long userId, Long countryId) {
+        log.info("[BookingQueryService] 나라별 내 예약 목록 조회 - userId: {}, countryId: {}", userId, countryId);
+
+        // 해당 나라에 속한 숙소 ID 집합 (booking엔 countryId가 없어 accommodation을 거쳐 매핑)
+        Set<Long> accommodationIdsInCountry = accommodationRepository.findByCountryId(countryId)
+                .stream()
+                .map(Accommodation::getId)
+                .collect(Collectors.toSet());
+
+        if (accommodationIdsInCountry.isEmpty()) {
+            return List.of();
+        }
+
+        return bookingRepository.findByUserId(userId)
+                .stream()
+                .filter(booking -> accommodationIdsInCountry.contains(booking.getAccommodationId()))
                 .map(this::toResponse)
                 .toList();
     }

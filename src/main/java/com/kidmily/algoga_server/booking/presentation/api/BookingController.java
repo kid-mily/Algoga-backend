@@ -64,12 +64,18 @@ public class BookingController {
     }
 
     @GetMapping("/api/v1/bookings/me")
-    @Operation(summary = "내 예약 목록 조회", description = "로그인한 유저의 전체 예약 목록을 조회합니다.")
+    @Operation(summary = "내 예약 목록 조회",
+            description = "로그인한 유저의 예약 목록을 조회합니다. countryId를 지정하면 해당 나라의 예약만 필터링합니다. "
+                    + "(마이페이지 패키지 결제 버튼 게이팅용 — 예약 상태로 결제/잔금/숨김 판단)")
     public ResponseEntity<ApiResponse<List<BookingResponse>>> getMyBookings(
+            @Parameter(description = "나라 ID (선택). 지정 시 해당 나라 예약만 조회", example = "1")
+            @RequestParam(required = false) Long countryId,
             @AuthenticationPrincipal CustomUserDetails userDetails
     ) {
         Long userId = userDetails.getUser().getId();
-        List<BookingResponse> response = bookingQueryUseCase.getMyBookings(userId);
+        List<BookingResponse> response = (countryId == null)
+                ? bookingQueryUseCase.getMyBookings(userId)
+                : bookingQueryUseCase.getMyBookingsByCountry(userId, countryId);
         return ResponseEntity.ok(ApiResponse.success("MY_BOOKINGS_FOUND", "내 예약 목록 조회에 성공했습니다.", response));
     }
 
