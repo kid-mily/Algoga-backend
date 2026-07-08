@@ -4,10 +4,11 @@ import com.kidmily.algoga_server.chatbot.infrastructure.persistence.entity.Expec
 import com.kidmily.algoga_server.chatbot.infrastructure.persistence.entity.KnowledgeEntity;
 import com.kidmily.algoga_server.chatbot.infrastructure.persistence.repository.JpaExpectedQueryRepository;
 import com.kidmily.algoga_server.chatbot.infrastructure.persistence.repository.JpaKnowledgeRepository;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.document.Document;
 import org.springframework.ai.vectorstore.VectorStore;
+import org.springframework.beans.factory.ObjectProvider;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Component;
@@ -18,16 +19,30 @@ import java.util.stream.Collectors;
 
 @Slf4j
 @Component
-@RequiredArgsConstructor
 public class KnowledgeInitializer {
 
     private final JpaKnowledgeRepository knowledgeRepository;
     private final JpaExpectedQueryRepository expectedQueryRepository;
-    private final VectorStore vectorStore;
+    // ObjectProvider로 주입: 기동 시 VectorStore(및 Ollama 연동)를 강제 초기화하지 않기 위함.
+    // 실제 사용 시점(getObject)에만 초기화되며, 실패해도 아래 try/catch가 흡수한다.
+    // VectorStore 빈이 2개이므로 지식 검색용 빈을 Qualifier로 지정한다.
+    private final ObjectProvider<VectorStore> vectorStoreProvider;
+
+    public KnowledgeInitializer(
+            JpaKnowledgeRepository knowledgeRepository,
+            JpaExpectedQueryRepository expectedQueryRepository,
+            @Qualifier("vectorStore") ObjectProvider<VectorStore> vectorStoreProvider) {
+        this.knowledgeRepository = knowledgeRepository;
+        this.expectedQueryRepository = expectedQueryRepository;
+        this.vectorStoreProvider = vectorStoreProvider;
+    }
 
     @EventListener(ApplicationReadyEvent.class)
     public void initializeKnowledgeOnStartup() {
         try {log.info("[RAG 지식 동기화] 🚀 DB 데이터를 읽어 Redis 캐시를 최신 상태로 덮어씌웁니다...");
+
+        // 이 시점에 VectorStore가 최초 초기화된다(Ollama/Redis 연동). 실패해도 catch에서 흡수한다.
+        VectorStore vectorStore = vectorStoreProvider.getObject();
 
         List<KnowledgeEntity> knowledges = knowledgeRepository.findAll();
         List<ExpectedQueryEntity> expectedQueries = expectedQueryRepository.findAll();

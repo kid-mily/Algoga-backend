@@ -1,22 +1,31 @@
 package com.kidmily.algoga_server.chatbot.infrastructure.llm;
 
 import com.kidmily.algoga_server.chatbot.application.port.out.KnowledgeRetrievalPort;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.document.Document;
 import org.springframework.ai.vectorstore.SearchRequest;
 import org.springframework.ai.vectorstore.VectorStore;
+import org.springframework.beans.factory.ObjectProvider;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
 
 @Slf4j
 @Component
-@RequiredArgsConstructor
 public class VectorKnowledgeRetrievalAdapter implements KnowledgeRetrievalPort {
 
-    private final VectorStore vectorStore;
+    // ObjectProvider로 주입받아 실제 사용 시점(getObject)에만 VectorStore를 생성한다.
+    // 이렇게 해야 기동 시 이 어댑터가 만들어질 때 Lazy VectorStore를 강제로 즉시 초기화하지 않아,
+    // Ollama/Redis가 없어도 서버 기동이 실패하지 않는다.
+    // VectorStore 빈이 2개(vectorStore, semanticCacheStore)이므로 지식 검색용 빈을 Qualifier로 지정한다.
+    private final ObjectProvider<VectorStore> vectorStoreProvider;
     private static final double RAG_THRESHOLD = 0.85;
+
+    public VectorKnowledgeRetrievalAdapter(
+            @Qualifier("vectorStore") ObjectProvider<VectorStore> vectorStoreProvider) {
+        this.vectorStoreProvider = vectorStoreProvider;
+    }
 
     @Override
     public String retrieveRelevantKnowledge(String question) {
@@ -29,8 +38,8 @@ public class VectorKnowledgeRetrievalAdapter implements KnowledgeRetrievalPort {
 
         List<Document> results;
         try {
-            // DB 통신 중 예외 발생 가능성이 있는 부분
-            results = vectorStore.similaritySearch(searchRequest);
+            // DB 통신 중 예외 발생 가능성이 있는 부분 (VectorStore Lazy 초기화도 이 시점에 수행됨)
+            results = vectorStoreProvider.getObject().similaritySearch(searchRequest);
         } catch (Exception e) {
             log.error("[Vector DB 통신 에러] ❌ DB 연결 또는 검색 중 오류 발생. 안전하게 빈 값을 반환합니다: {}", e.getMessage());
             return ""; // 빈 값 반환 시 서비스 레이어에서 도메인 외 질문으로 취급하여 시스템 장애 방지
