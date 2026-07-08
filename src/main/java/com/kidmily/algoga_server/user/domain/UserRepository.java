@@ -51,4 +51,13 @@ public interface UserRepository extends JpaRepository<User, Long> {
             "WHERE u.isDeleted = false " +
             "GROUP BY u.signupPath")
     List<SignupPathStat> countUsersBySignupPath();
+
+    // 통계매니저 코호트 분석용: 탈퇴 안 한 유저의 id + 가입일시만 가볍게 조회
+    interface SignupInfo {
+        Long getUserId();
+        LocalDateTime getCreatedAt();
+    }
+
+    @Query("SELECT u.id AS userId, u.createdAt AS createdAt FROM User u WHERE u.isDeleted = false")
+    List<SignupInfo> findActiveSignupInfos();
 }
