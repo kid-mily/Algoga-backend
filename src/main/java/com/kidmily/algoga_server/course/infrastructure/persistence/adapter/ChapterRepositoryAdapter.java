@@ -1,9 +1,9 @@
-package com.kidmily.algoga_server.lms.infrastructure.persistence.adapter;
+package com.kidmily.algoga_server.course.infrastructure.persistence.adapter;
 
-import com.kidmily.algoga_server.lms.domain.model.Chapter;
-import com.kidmily.algoga_server.lms.domain.repository.ChapterRepository;
-import com.kidmily.algoga_server.lms.infrastructure.persistence.entity.ChapterJpaEntity;
-import com.kidmily.algoga_server.lms.infrastructure.persistence.repository.SpringDataChapterRepository;
+import com.kidmily.algoga_server.course.domain.model.Chapter;
+import com.kidmily.algoga_server.course.domain.repository.ChapterRepository;
+import com.kidmily.algoga_server.course.infrastructure.persistence.entity.ChapterJpaEntity;
+import com.kidmily.algoga_server.course.infrastructure.persistence.repository.SpringDataChapterRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 

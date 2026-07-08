@@ -1,4 +1,6 @@
-package com.kidmily.algoga_server.lms.domain.model;
+package com.kidmily.algoga_server.course.domain.model;
+
+import com.kidmily.algoga_server.lms.domain.model.CourseFile;
 
 import java.util.ArrayList;
 import java.util.List;
