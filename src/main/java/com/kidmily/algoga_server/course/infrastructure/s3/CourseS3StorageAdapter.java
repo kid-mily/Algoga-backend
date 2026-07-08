@@ -1,9 +1,9 @@
-package com.kidmily.algoga_server.lms.infrastructure.s3;
+package com.kidmily.algoga_server.course.infrastructure.s3;
 
 import com.kidmily.algoga_server.global.exception.BusinessException;
 import com.kidmily.algoga_server.global.exception.GlobalErrorCode;
-import com.kidmily.algoga_server.lms.application.port.CourseFileStoragePort;
-import com.kidmily.algoga_server.lms.application.port.UploadFile;
+import com.kidmily.algoga_server.course.application.port.CourseFileStoragePort;
+import com.kidmily.algoga_server.course.application.port.UploadFile;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;

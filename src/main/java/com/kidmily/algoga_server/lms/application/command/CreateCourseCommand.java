@@ -1,6 +1,6 @@
 package com.kidmily.algoga_server.lms.application.command;
 
-import com.kidmily.algoga_server.lms.application.port.UploadFile;
+import com.kidmily.algoga_server.course.application.port.UploadFile;
 
 import java.util.List;
 

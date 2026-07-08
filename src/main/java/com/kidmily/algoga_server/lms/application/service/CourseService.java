@@ -1,5 +1,7 @@
 package com.kidmily.algoga_server.lms.application.service;
 
+import com.kidmily.algoga_server.course.application.port.CourseFileStoragePort;
+import com.kidmily.algoga_server.course.application.port.UploadFile;
 import com.kidmily.algoga_server.course.domain.model.Chapter;
 import com.kidmily.algoga_server.course.domain.model.Course;
 import com.kidmily.algoga_server.course.domain.model.CourseFile;
