@@ -37,7 +37,8 @@ public class PackageCommandService implements PackageCommandUseCase {
         TravelPackage travelPackage = TravelPackage.create(
                 command.countryId(), command.accommodationId(), command.name(),
                 command.description(), imageUrl, command.price(),
-                command.flightDestination(), command.checkInDate(), command.checkOutDate()
+                command.flightDestination(), command.airline(),
+                command.checkInDate(), command.checkOutDate()
         );
         TravelPackage saved = packageRepository.save(travelPackage);
         log.info("[PackageCommandService] 패키지 생성 완료 - id: {}", saved.getId());
@@ -62,7 +63,7 @@ public class PackageCommandService implements PackageCommandUseCase {
         }
 
         travelPackage.update(command.accommodationId(), command.name(), command.description(),
-                targetImageUrl, command.price(), command.flightDestination(),
+                targetImageUrl, command.price(), command.flightDestination(), command.airline(),
                 command.checkInDate(), command.checkOutDate());
         packageRepository.save(travelPackage);
     }

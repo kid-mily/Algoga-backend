@@ -17,6 +17,7 @@ public class PackageMapper {
                 travelPackage.getImageUrl(),
                 travelPackage.getPrice(),
                 travelPackage.getFlightDestination(),
+                travelPackage.getAirline(),
                 travelPackage.getCheckInDate(),
                 travelPackage.getCheckOutDate()
         );
@@ -32,6 +33,7 @@ public class PackageMapper {
                 entity.getImageUrl(),
                 entity.getPrice(),
                 entity.getFlightDestination(),
+                entity.getAirline(),
                 entity.getCheckInDate(),
                 entity.getCheckOutDate()
         );

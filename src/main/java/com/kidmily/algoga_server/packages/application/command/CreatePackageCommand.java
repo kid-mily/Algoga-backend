@@ -12,6 +12,7 @@ public record CreatePackageCommand(
         MultipartFile image,
         int price,
         String flightDestination,
+        String airline,
         LocalDate checkInDate,
         LocalDate checkOutDate
 ) {}

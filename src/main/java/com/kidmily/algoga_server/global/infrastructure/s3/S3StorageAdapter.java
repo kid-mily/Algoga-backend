@@ -25,6 +25,11 @@ public class S3StorageAdapter implements FileStoragePort {
     @Value("${cloud.aws.s3.endpoint}")
     private String endpoint;
 
+    // 브라우저에 노출할 공개 접근 주소. 내부 endpoint(MinIO localhost 등)와 다를 수 있어 분리한다.
+    // 미설정 시 endpoint와 동일하게 동작한다.
+    @Value("${cloud.aws.s3.public-url:${cloud.aws.s3.endpoint}}")
+    private String publicUrl;
+
     public S3StorageAdapter(S3Client s3Client) {
         this.s3Client = s3Client;
     }
@@ -50,8 +55,8 @@ public class S3StorageAdapter implements FileStoragePort {
 
             s3Client.putObject(putObjectRequest, RequestBody.fromInputStream(file.getInputStream(), file.getSize()));
 
-            // 저장된 이미지의 전체 URL 반환
-            return endpoint + "/" + bucketName + "/" + savedFilename;
+            // 저장된 이미지의 공개 접근 URL 반환 (브라우저에서 로드 가능한 주소)
+            return publicUrl + "/" + bucketName + "/" + savedFilename;
 
         } catch (IOException e) {
             log.error("[S3 Upload Error] 파일 업로드 실패: {}", e.getMessage(), e);
@@ -64,10 +69,13 @@ public class S3StorageAdapter implements FileStoragePort {
         if (fileUrl == null || fileUrl.isBlank()) return;
 
         try {
-            // URL에서 S3 Key(경로)만 추출
-            String prefix = endpoint + "/" + bucketName + "/";
-            if (fileUrl.startsWith(prefix)) {
-                String key = fileUrl.substring(prefix.length());
+            // URL에서 S3 Key(경로)만 추출.
+            // endpoint/public-url이 달라지거나 과거 저장분(구 endpoint 기준)이 섞여도
+            // 버킷 경로("/{bucket}/") 기준으로 잘라 키를 안전하게 추출한다.
+            String marker = "/" + bucketName + "/";
+            int idx = fileUrl.indexOf(marker);
+            if (idx >= 0) {
+                String key = fileUrl.substring(idx + marker.length());
 
                 s3Client.deleteObject(DeleteObjectRequest.builder()
                         .bucket(bucketName) // 파라미터로 받은 명시적 버킷 사용
@@ -89,7 +97,7 @@ public class S3StorageAdapter implements FileStoragePort {
                     .build();
 
             s3Client.putObject(putObjectRequest, RequestBody.fromFile(file));
-            return endpoint + "/" + bucketName + "/" + targetS3Key;
+            return publicUrl + "/" + bucketName + "/" + targetS3Key;
         } catch (Exception e) {
             log.error("[S3 Async Upload Error] 비동기 파일 업로드 실패: {}", e.getMessage(), e);
             throw new BusinessException(GlobalErrorCode.SERVER_ERROR);
