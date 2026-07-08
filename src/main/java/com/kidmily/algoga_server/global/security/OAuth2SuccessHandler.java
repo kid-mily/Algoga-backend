@@ -8,7 +8,6 @@ import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpHeaders;
-import org.springframework.http.ResponseCookie;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.security.web.authentication.SimpleUrlAuthenticationSuccessHandler;
@@ -22,6 +21,7 @@ import java.io.IOException;
 public class OAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHandler {
 
     private final SocialLoginProcessor socialLoginProcessor;
+    private final GlobalJwtProvider globalJwtProvider;
 
     @Override
     public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response, Authentication authentication) throws IOException, ServletException {
@@ -39,25 +39,11 @@ public class OAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
         SocialAuthResult authResult = socialLoginProcessor.processLoginAndGetRedirectUrl(email, name, socialType);
 
         if (authResult.accessToken() != null && authResult.refreshToken() != null) {
-            // 🌟 클라우드(HTTPS) 서버와 로컬(HTTP) 간의 쿠키 전송을 위한 설정
-            ResponseCookie accessCookie = ResponseCookie.from("accessToken", authResult.accessToken())
-                    .httpOnly(true)
-                    .secure(true) // 🚨 무조건 true! (SameSite=None의 필수 조건)
-                    .path("/")
-                    .maxAge(30 * 60)
-                    .sameSite("None") // 🚨 크로스 도메인 통신을 허용
-                    .build();
-
-            ResponseCookie refreshCookie = ResponseCookie.from("refreshToken", authResult.refreshToken())
-                    .httpOnly(true)
-                    .secure(true) // 🚨 무조건 true!
-                    .path("/")
-                    .maxAge(7 * 24 * 60 * 60)
-                    .sameSite("None") // 🚨 크로스 도메인 허용
-                    .build();
-
-            response.addHeader(HttpHeaders.SET_COOKIE, accessCookie.toString());
-            response.addHeader(HttpHeaders.SET_COOKIE, refreshCookie.toString());
+            // 🌟 일반 로그인/로그아웃과 동일한 쿠키 속성(domain 포함)을 쓰도록 공통 메서드로 통일
+            //    (domain이 다르면 브라우저가 별개의 쿠키로 취급해서, 로그아웃해도 이 쿠키가 안 지워지고
+            //     이후 일반 로그인 쿠키와 함께 남아있다가 인증에 잘못 쓰이는 문제가 있었음)
+            response.addHeader(HttpHeaders.SET_COOKIE, globalJwtProvider.createCookie("accessToken", authResult.accessToken()).toString());
+            response.addHeader(HttpHeaders.SET_COOKIE, globalJwtProvider.createCookie("refreshToken", authResult.refreshToken()).toString());
         }
 
         log.info("소셜 로그인 처리 완료. 다음 경로로 이동합니다: {}", authResult.redirectUrl());
