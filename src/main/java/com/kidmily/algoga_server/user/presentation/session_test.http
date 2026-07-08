@@ -1,0 +1,90 @@
+### [변수 설정]
+@host = http://localhost:15000
+
+### 1. 로그인 (토큰은 body가 아니라 Set-Cookie로 내려오므로 헤더에서 직접 파싱)
+# 이미 가입된 계정 정보로 바꿔서 실행하세요. (userMyPage_test.http에서 만든 algoga4298 계정 재사용 가능)
+POST {{host}}/api/v1/auth/login
+Content-Type: application/json
+
+{
+  "username": "algoga4298",
+  "password": "password123"
+}
+
+> {%
+    const cookies = response.headers.valuesOf("Set-Cookie");
+    cookies.forEach(function (cookie) {
+        const match = cookie.match(/^(accessToken|refreshToken)=([^;]+)/);
+        if (match) {
+            client.global.set(match[1], match[2]);
+            client.log("✅ " + match[1] + " 저장됨");
+        }
+    });
+
+    client.test("로그인 성공 및 토큰 추출 확인", function () {
+        client.assert(response.status === 200, "Response status is not 200");
+        client.assert(client.global.get("accessToken"), "accessToken 쿠키를 응답 헤더에서 찾지 못했습니다.");
+    });
+%}
+
+### 2. 세션 만료 정보 조회 (로그인 직후 -> 남은 시간이 accessToken 만료 시간에 가까워야 함)
+GET {{host}}/api/v1/auth/session
+Cookie: accessToken={{accessToken}}
+
+> {%
+    client.test("세션 조회 성공", function () {
+        client.assert(response.status === 200, "Response status is not 200");
+        client.assert(response.body.data.remainingSeconds > 0, "remainingSeconds가 0 이하입니다.");
+    });
+    client.log("⏳ 만료 시각: " + response.body.data.expiresAt);
+    client.log("⏳ 남은 시간(초): " + response.body.data.remainingSeconds);
+%}
+
+### 3. 세션 연장 (Refresh Token으로 AccessToken 재발급)
+POST {{host}}/api/v1/auth/refresh
+Cookie: refreshToken={{refreshToken}}
+
+> {%
+    const cookies = response.headers.valuesOf("Set-Cookie");
+    cookies.forEach(function (cookie) {
+        const match = cookie.match(/^accessToken=([^;]+)/);
+        if (match) {
+            client.global.set("accessToken", match[1]);
+            client.log("🔄 새 accessToken 저장됨");
+        }
+    });
+
+    client.test("세션 연장(토큰 재발급) 성공", function () {
+        client.assert(response.status === 200, "Response status is not 200");
+    });
+%}
+
+### 4. 연장 후 세션 만료 정보 재조회 (남은 시간이 다시 초기값 근처로 리셋됐는지 확인)
+GET {{host}}/api/v1/auth/session
+Cookie: accessToken={{accessToken}}
+
+> {%
+    client.test("연장 후 세션 조회 성공", function () {
+        client.assert(response.status === 200, "Response status is not 200");
+    });
+    client.log("⏳ 연장 후 남은 시간(초): " + response.body.data.remainingSeconds);
+%}
+
+### 5. 예외 테스트 - 쿠키 없이 조회 시 401 확인
+GET {{host}}/api/v1/auth/session
+
+> {%
+    client.test("토큰 없을 때 401 확인", function () {
+        client.assert(response.status === 401, "Response status is not 401");
+    });
+%}
+
+### 6. 예외 테스트 - 잘못된 토큰으로 조회 시 401 확인
+GET {{host}}/api/v1/auth/session
+Cookie: accessToken=invalid.token.value
+
+> {%
+    client.test("잘못된 토큰일 때 401 확인", function () {
+        client.assert(response.status === 401, "Response status is not 401");
+    });
+%}
