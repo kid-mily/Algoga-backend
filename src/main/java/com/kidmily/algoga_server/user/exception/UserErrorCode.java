@@ -23,6 +23,9 @@ public enum UserErrorCode implements BaseErrorCode {
     DELETED_USER(HttpStatus.FORBIDDEN, "USER_007", "탈퇴한 계정입니다."),
     ACCOUNT_LOCKED(HttpStatus.FORBIDDEN, "USER_008", "비밀번호 5회 오류로 인해 5분간 계정이 잠겼습니다."),
     UNAUTHORIZED_PASSWORD_RESET(HttpStatus.FORBIDDEN, "USER_009", "비밀번호 변경(초기화) 대상자가 아닙니다."), // 임시 비번 강제 변경 방어용
+    EMAIL_NOT_VERIFIED(HttpStatus.BAD_REQUEST, "USER_012", "이메일 인증이 완료되지 않았습니다."),
+    SOCIAL_USER_PASSWORD_CHANGE_NOT_ALLOWED(HttpStatus.BAD_REQUEST, "USER_013", "소셜 로그인 유저는 비밀번호를 변경할 수 없습니다."),
+    PASSWORD_SAME_AS_OLD(HttpStatus.BAD_REQUEST, "USER_014", "새 비밀번호는 현재 비밀번호와 다르게 설정해야 합니다."),
 
     // 탈퇴 검증용 에러 코드 2개 추가
     ACTIVE_BOOKING_EXISTS(HttpStatus.BAD_REQUEST, "USER_010", "진행 중인 예약이 있어 탈퇴할 수 없습니다."),

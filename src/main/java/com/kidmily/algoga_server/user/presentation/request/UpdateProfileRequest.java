@@ -14,8 +14,8 @@ public record UpdateProfileRequest(
 
         // MultipartFile에는 @Parameter를 붙여서 스웨거가 파일로 인식하게 합니다.
         @Parameter(description = "프로필 이미지 파일")
-        MultipartFile profileImage,
+        MultipartFile profileImage
 
-        @Schema(description = "이메일", example = "new@algoga.com")
-        String email
+//        @Schema(description = "이메일", example = "new@algoga.com")
+//        String email
 ) {}

@@ -107,6 +107,11 @@ public class AuthService implements SocialLoginProcessor {
             throw new AuthException(AuthErrorCode.DUPLICATE_USERNAME);
         }
 
+        // 전화번호 중복 검사 추가
+        if (userRepository.existsByPhone(request. phone())) {
+            throw new UserException(UserErrorCode.ALREADY_EXISTS_PHONE); // 해당 에러코드 정의 필요
+        }
+
         // 이메일 인증
         String isVerified = redisTemplate.opsForValue().get("AUTH_SUCCESS:" + email);
         if (isVerified == null || !isVerified.equals("true")) {

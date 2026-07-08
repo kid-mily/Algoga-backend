@@ -43,6 +43,8 @@ public interface UserRepository extends JpaRepository<User, Long> {
         Long getCount();
     }
 
+    boolean existsByPhone(String phone);
+
     // DB에게 "가입경로별로 그룹 묶어서 숫자 세서 줘!" 라고 명령합니다. (탈퇴한 유저는 제외)
     @Query("SELECT u.signupPath AS path, COUNT(u) AS count " +
             "FROM User u " +
