@@ -1,0 +1,114 @@
+### [변수 설정]
+@host = http://localhost:15000
+
+### 1. 이메일 인증번호 발송 요청
+# (주의) 하연님이 메일을 확인할 수 있는 '진짜 이메일'을 적어주세요!
+POST {{host}}/api/v1/auth/email/send-code
+Content-Type: application/json
+
+{
+  "email": "algoga4298@gmail.com"
+}
+
+> {%
+    client.test("Request executed successfully", function() {
+        client.assert(response.status === 200, "Response status is not 200");
+    });
+%}
+
+
+### 2. 이메일 인증번호 확인
+# 💡 위 API를 실행하고 실제 메일함으로 날아온 6자리 숫자를 "code"에 적고 실행하세요!
+POST {{host}}/api/v1/auth/email/verify-code
+Content-Type: application/json
+
+{
+  "email": "algoga4298@gmail.com",
+  "code": "954167"
+}
+
+> {%
+    client.test("Request executed successfully", function() {
+        client.assert(response.status === 200, "Response status is not 200");
+    });
+%}
+
+### 1. 테스트용 신규 회원가입 (전화번호 중복 체크 확인용)
+# 먼저 회원가입을 정상적으로 진행하여 DB에 유저와 전화번호를 등록합니다.
+POST {{host}}/api/v1/auth/signup
+Content-Type: application/json
+
+{
+  "username": "algoga4298",
+  "email": "algoga4298@gmail.com",
+  "password": "password123",
+  "name": "알고가라",
+  "phone": "010-1234-2464",
+  "birthDate": "2000-01-01",
+  "gender": "MALE",
+  "nickname": "알고가조아",
+  "termsServiceAgreed": true,
+  "termsPrivacyAgreed": true,
+  "termsMarketingAgreed": false
+}
+
+### 2. 일반 로그인 (토큰은 body가 아니라 Set-Cookie로 내려오므로 헤더에서 직접 파싱)
+POST {{host}}/api/v1/auth/login
+Content-Type: application/json
+
+{
+  "username": "algoga4298",
+  "password": "password123"
+}
+
+> {%
+    // 🌟 로그인 응답은 body.data가 없고(null), accessToken/refreshToken이
+    //    Set-Cookie 응답 헤더로만 내려옵니다. 그리고 이 쿠키는
+    //    domain=".kidmily.kro.kr" + secure=true 라서 localhost에서는
+    //    클라이언트가 자동으로 저장/재전송해주지 않습니다.
+    //    -> 헤더를 직접 읽어서 값만 뽑아 전역 변수로 저장합니다.
+    const cookies = response.headers.valuesOf("Set-Cookie");
+    cookies.forEach(function (cookie) {
+        const match = cookie.match(/^(accessToken|refreshToken)=([^;]+)/);
+        if (match) {
+            client.global.set(match[1], match[2]);
+            client.log("✅ " + match[1] + " 저장됨: " + match[2]);
+        }
+    });
+
+    client.test("로그인 성공 및 토큰 추출 확인", function () {
+        client.assert(response.status === 200, "Response status is not 200");
+        client.assert(client.global.get("accessToken"), "accessToken 쿠키를 응답 헤더에서 찾지 못했습니다.");
+    });
+%}
+
+### 3. 마이페이지 정보 수정 전 이메일 인증코드 발송
+# 🌟 서버는 Authorization 헤더가 아니라 Cookie의 accessToken만 읽으므로 Cookie 헤더로 보냅니다.
+POST {{host}}/api/v1/users/me/email/send-code
+Cookie: accessToken={{accessToken}}
+
+### 4. 이메일 인증코드 검증
+# 🌟 여기도 Cookie 헤더로 보내야 인증이 통과됩니다.
+POST {{host}}/api/v1/users/me/email/verify
+Cookie: accessToken={{accessToken}}
+Content-Type: application/json
+
+{
+  "code": "705654"
+}
+
+### 5. 내 프로필 수정 실행
+# 🌟 서버가 consumes = multipart/form-data 로 고정돼 있어 JSON body는 415 에러가 납니다.
+PATCH {{host}}/api/v1/users/me
+Cookie: accessToken={{accessToken}}
+Content-Type: multipart/form-data; boundary=WebAppBoundary
+
+--WebAppBoundary
+Content-Disposition: form-data; name="nickname"
+
+새로운닉네임
+--WebAppBoundary
+Content-Disposition: form-data; name="phone"
+
+010-1234-1735
+--WebAppBoundary--

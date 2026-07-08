@@ -43,10 +43,21 @@ public interface UserRepository extends JpaRepository<User, Long> {
         Long getCount();
     }
 
+    boolean existsByPhone(String phone);
+
     // DB에게 "가입경로별로 그룹 묶어서 숫자 세서 줘!" 라고 명령합니다. (탈퇴한 유저는 제외)
     @Query("SELECT u.signupPath AS path, COUNT(u) AS count " +
             "FROM User u " +
             "WHERE u.isDeleted = false " +
             "GROUP BY u.signupPath")
     List<SignupPathStat> countUsersBySignupPath();
+
+    // 통계매니저 코호트 분석용: 탈퇴 안 한 유저의 id + 가입일시만 가볍게 조회
+    interface SignupInfo {
+        Long getUserId();
+        LocalDateTime getCreatedAt();
+    }
+
+    @Query("SELECT u.id AS userId, u.createdAt AS createdAt FROM User u WHERE u.isDeleted = false")
+    List<SignupInfo> findActiveSignupInfos();
 }

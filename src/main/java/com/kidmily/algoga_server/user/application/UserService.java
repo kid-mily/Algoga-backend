@@ -3,11 +3,15 @@ package com.kidmily.algoga_server.user.application;
 import com.kidmily.algoga_server.booking.application.usecase.BookingQueryUseCase;
 import com.kidmily.algoga_server.friend.domain.model.RelationStatus;
 import com.kidmily.algoga_server.friend.domain.repository.FriendRepository;
+import com.kidmily.algoga_server.global.infrastructure.mail.EmailSender;
 import com.kidmily.algoga_server.global.port.out.FileStoragePort;
 import com.kidmily.algoga_server.global.security.GlobalJwtProvider;
 import com.kidmily.algoga_server.refund.application.usecase.RefundQueryUseCase;
+import com.kidmily.algoga_server.user.domain.SocialType;
 import com.kidmily.algoga_server.user.domain.User;
 import com.kidmily.algoga_server.user.domain.UserRepository;
+import com.kidmily.algoga_server.user.exception.AuthErrorCode;
+import com.kidmily.algoga_server.user.exception.AuthException;
 import com.kidmily.algoga_server.user.exception.UserErrorCode;
 import com.kidmily.algoga_server.user.exception.UserException;
 import com.kidmily.algoga_server.user.presentation.request.UpdatePasswordRequest;
@@ -54,6 +58,9 @@ public class UserService {
     private final BookingQueryUseCase bookingQueryUseCase;
     private final RefundQueryUseCase refundQueryUseCase;
 
+    // 마이페이지 이메일 인증
+    private final EmailSender emailSender;
+
     // 내 프로필 조회
     @Transactional(readOnly = true)
     public UserProfileResponse getMyProfile(String email) {
@@ -62,18 +69,38 @@ public class UserService {
         return UserProfileResponse.from(user);
     }
 
-    // 정보 수정 진입 전 비밀번호 검증
-    @Transactional(readOnly = true)
-    public void verifyPassword(String email, VerifyPasswordRequest request) {
+    // 1. 마이페이지 본인확인용 이메일 발송
+    public void sendMyPageVerificationCode(String email) {
+        // 이미 로그인된 유저의 이메일이므로 유저 존재 여부만 확인
         User user = userRepository.findByEmailAndIsDeletedFalse(email)
                 .orElseThrow(() -> new UserException(UserErrorCode.NOT_FOUND_USER));
 
-        if (!passwordEncoder.matches(request.password(), user.getPassword())) {
-            log.warn("정보 수정 진입 전 비밀번호 검증 실패 [이메일: {}]", email);
-            throw new UserException(UserErrorCode.INVALID_PASSWORD);
+        String code = String.valueOf((int) (Math.random() * 899999) + 100000);
+        redisTemplate.opsForValue().set("MYPAGE_AUTH_CODE:" + email, code, 3, TimeUnit.MINUTES);
+
+        String subject = "[ALGOGA] 마이페이지 본인확인 인증번호";
+        String body = "안녕하세요, ALGOGA입니다.\n\n"
+                + "정보 수정을 위한 본인확인 인증번호는 다음과 같습니다.\n"
+                + "인증번호 : [" + code + "]\n\n"
+                + "3분 이내에 입력해 주세요.";
+
+        emailSender.sendEmail(email, subject, body);
+        log.info("마이페이지 본인확인 인증번호 발송 완료 [요청 이메일: {}]", email);
+    }
+
+    // 2. 마이페이지 본인확인 인증번호 검증
+    public void verifyMyPageEmailCode(String email, String code) {
+        String savedCode = redisTemplate.opsForValue().get("MYPAGE_AUTH_CODE:" + email);
+
+        if (savedCode == null || !savedCode.equals(code)) {
+            throw new AuthException(AuthErrorCode.EMAIL_AUTH_CODE_MISMATCH);
         }
 
-        log.info("정보 수정 진입 전 비밀번호 검증 성공 [이메일: {}]", email);
+        redisTemplate.delete("MYPAGE_AUTH_CODE:" + email);
+        // 인증 성공 마커를 30분간 유지 (이 마커가 있어야 정보 수정/비번 변경 가능)
+        redisTemplate.opsForValue().set("MYPAGE_AUTH_SUCCESS:" + email, "true", 30, TimeUnit.MINUTES);
+
+        log.info("마이페이지 이메일 인증 성공 [이메일: {}]", email);
     }
 
     // 내 프로필 수정
@@ -82,17 +109,17 @@ public class UserService {
         User user = userRepository.findByEmailAndIsDeletedFalse(email)
                 .orElseThrow(() -> new UserException(UserErrorCode.NOT_FOUND_USER));
 
-        String newEmail = (request.email() != null) ? request.email() : user.getEmail();
+        // 1. 이메일 인증 완료 여부 확인 (필수)
+        String isVerified = redisTemplate.opsForValue().get("MYPAGE_AUTH_SUCCESS:" + email);
+        if (!"true".equals(isVerified)) {
+            throw new UserException(UserErrorCode.EMAIL_NOT_VERIFIED);
+        }
 
-        // 이메일 변경 시 중복 체크
-        if (!newEmail.equals(user.getEmail())) {
-            if (userRepository.existsByEmail(newEmail)) {
-
-                log.warn("프로필 수정 중 이메일 중복 발생 [기존: {}, 변경 시도: {}]", user.getEmail(), newEmail);
-                throw new UserException(UserErrorCode.ALREADY_EXISTS_EMAIL);
+        // 2. 전화번호 중복 체크 (기존 번호와 다를 때만 체크)
+        if (request.phone() != null && !request.phone().equals(user.getPhone())) {
+            if (userRepository.existsByPhone(request.phone())) {
+                throw new UserException(UserErrorCode.ALREADY_EXISTS_PHONE);
             }
-
-            log.info("회원 이메일 변경 진행 [기존: {} -> 새 이메일: {}]", user.getEmail(), newEmail);
         }
 
         // S3 이미지 스토리지 업로드 분기 처리 로직
@@ -108,15 +135,18 @@ public class UserService {
                     storageSettings.getBucketName(),
                     storageSettings.getDirectory()
             );
-            log.info("회원 프로필 이미지 S3 업로드 완료 [이메일: {}]", newEmail);
+            log.info("회원 프로필 이미지 S3 업로드 완료 [이메일: {}]", email);
         }
 
         // Entity 내부 값 업데이트 (Dirty Checking 유도)
-        user.updateProfile(request.nickname(), request.phone(), targetImageUrl, newEmail);
+        user.updateProfile(request.nickname(), request.phone(), targetImageUrl, email);
 
-        String newToken = globalJwtProvider.createUserAccessToken(newEmail);
+        String newToken = globalJwtProvider.createUserAccessToken(email);
 
-        log.info("프로필 정보 수정 완료 [이메일: {}]", newEmail);
+        log.info("프로필 정보 수정 완료 [이메일: {}]", email);
+
+        // 4. 정보 수정이 끝났으니 인증 성공 마커(Redis) 삭제
+        redisTemplate.delete("MYPAGE_AUTH_SUCCESS:" + email);
 
         return new AuthTokenResponse(
                 newToken,
@@ -133,16 +163,35 @@ public class UserService {
         User user = userRepository.findByEmailAndIsDeletedFalse(email)
                 .orElseThrow(() -> new UserException(UserErrorCode.NOT_FOUND_USER));
 
-        // 기존 비밀번호가 맞는지 확인
+        // 1. 이메일 인증 완료 여부 확인 (비밀번호 변경 시에도 필수)
+        String isVerified = redisTemplate.opsForValue().get("MYPAGE_AUTH_SUCCESS:" + email);
+        if (!"true".equals(isVerified)) {
+            throw new UserException(UserErrorCode.EMAIL_NOT_VERIFIED);
+        }
+
+        // 2. 소셜 로그인 유저 방어
+        if (user.getSocialType() != SocialType.LOCAL) { // LOCAL이 아닌 유저는 변경 불가
+            throw new UserException(UserErrorCode.SOCIAL_USER_PASSWORD_CHANGE_NOT_ALLOWED);
+        }
+
+        // 3. 기존 비밀번호가 맞는지 확인 (기존 로직 유지)
         if (!passwordEncoder.matches(request.currentPassword(), user.getPassword())) {
             log.warn("비밀번호 변경 실패: 현재 비밀번호 불일치 [이메일: {}]", email);
             throw new UserException(UserErrorCode.INVALID_PASSWORD);
         }
 
-        // 새 비밀번호 암호화 후 변경
+        // 4. 기존 비밀번호와 새 비밀번호가 같은지 확인
+        if (passwordEncoder.matches(request.newPassword(), user.getPassword())) {
+            throw new UserException(UserErrorCode.PASSWORD_SAME_AS_OLD);
+        }
+
+        // 5. 새 비밀번호 암호화 후 변경 (기존 로직 유지)
         user.updatePassword(passwordEncoder.encode(request.newPassword()));
 
         log.info("회원 비밀번호 변경 완료 [이메일: {}]", email);
+
+        // 6. 보안을 위해 비밀번호 변경 후 인증 상태 초기화
+        redisTemplate.delete("MYPAGE_AUTH_SUCCESS:" + email);
     }
 
     // 회원 탈퇴 (Soft Delete)
@@ -186,13 +235,13 @@ public class UserService {
                 .toList();
     }
 
-    // 🌟 관리자용: 전체 유저 리스트 조회 로직
+    // 관리자용: 전체 유저 리스트 조회 로직
     @Transactional(readOnly = true)
     public Page<User> getAdminUserListRaw(Pageable pageable) {
         return userRepository.findByIsDeletedFalse(pageable);
     }
 
-    // 🌟 관리자용: 특정 유저 상세 조회 (기본 정보 + 로그인상태 + 친구 목록)
+    // 관리자용: 특정 유저 상세 조회 (기본 정보 + 로그인상태 + 친구 목록)
     @Transactional(readOnly = true)
     public User getAdminUserDetailRaw(Long targetUserId) {
         return userRepository.findById(targetUserId)

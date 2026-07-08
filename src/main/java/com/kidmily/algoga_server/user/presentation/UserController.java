@@ -1,9 +1,13 @@
 package com.kidmily.algoga_server.user.presentation;
 
+import com.kidmily.algoga_server.global.annotation.swagger.ApiErrorCodeExample;
 import com.kidmily.algoga_server.global.common.api.response.ApiResponse;
 import com.kidmily.algoga_server.user.application.UserService;
+import com.kidmily.algoga_server.user.exception.AuthErrorCode;
+import com.kidmily.algoga_server.user.exception.UserErrorCode;
 import com.kidmily.algoga_server.user.presentation.request.UpdatePasswordRequest;
 import com.kidmily.algoga_server.user.presentation.request.UpdateProfileRequest;
+import com.kidmily.algoga_server.user.presentation.request.VerifyEmailCodeRequest;
 import com.kidmily.algoga_server.user.presentation.request.VerifyPasswordRequest;
 import com.kidmily.algoga_server.user.presentation.response.AuthTokenResponse;
 import com.kidmily.algoga_server.user.presentation.response.UserProfileResponse;
@@ -37,14 +41,30 @@ public class UserController {
         return ApiResponse.success("USER_PROFILE_SUCCESS", "프로필 조회를 성공했습니다.", response);
     }
 
-    // 비밀번호 확인 (정보 수정 진입 전)
-    @Operation(summary = "정보 수정 진입 전 비밀번호 확인", description = "사용자가 입력한 현재 비밀번호가 올바른지 검증합니다.")
-    @PostMapping("/me/verify-password")
-    public ApiResponse<Void> verifyPassword(
-            @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails,
-            @Valid @RequestBody VerifyPasswordRequest request) {
-        userService.verifyPassword(userDetails.getUsername(), request);
-        return ApiResponse.success("USER_VERIFY_PW_SUCCESS", "비밀번호가 확인되었습니다.");
+    @Operation(
+            summary = "정보 수정 진입 전 이메일 인증코드 발송",
+            description = "사용자 본인 확인을 위해 가입된 이메일로 6자리 인증코드를 발송합니다."
+    )
+    @ApiErrorCodeExample(domain = UserErrorCode.class, value = {"NOT_FOUND_USER"})
+    @PostMapping("/me/email/send-code")
+    public ApiResponse<Void> sendMyPageAuthCode(@Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails) {
+
+        userService.sendMyPageVerificationCode(userDetails.getUsername());
+
+        return ApiResponse.success("MYPAGE_AUTH_CODE_SENT", "인증번호가 발송되었습니다.");
+    }
+
+    @Operation(
+            summary = "정보 수정 진입 전 이메일 인증코드 검증",
+            description = "발송된 이메일 인증코드가 올바른지 검증하여 정보 수정 권한을 부여합니다."
+    )
+    @ApiErrorCodeExample(domain = AuthErrorCode.class, value = {"EMAIL_AUTH_CODE_MISMATCH"})
+    @PostMapping("/me/email/verify")
+    public ApiResponse<Void> verifyMyPageAuthCode(@Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails, @RequestBody VerifyEmailCodeRequest request) {
+
+        userService.verifyMyPageEmailCode(userDetails.getUsername(), request.code());
+
+        return ApiResponse.success("MYPAGE_AUTH_VERIFIED", "본인 인증이 완료되었습니다.");
     }
 
     // 프로필 정보 업데이트
