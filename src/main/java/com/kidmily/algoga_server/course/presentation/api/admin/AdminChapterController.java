@@ -1,4 +1,4 @@
-package com.kidmily.algoga_server.lms.presentation.api.admin;
+package com.kidmily.algoga_server.course.presentation.api.admin;
 
 import com.kidmily.algoga_server.global.annotation.swagger.ApiErrorCodeExample;
 import com.kidmily.algoga_server.global.common.api.response.ApiResponse;

@@ -6,7 +6,7 @@ import com.kidmily.algoga_server.benefit.domain.repository.MileageHistoryReposit
 import com.kidmily.algoga_server.benefit.domain.repository.UserCouponRepository;
 import com.kidmily.algoga_server.booking.domain.repository.BookingRepository;
 import com.kidmily.algoga_server.global.exception.BusinessException;
-import com.kidmily.algoga_server.lms.domain.model.Course;
+import com.kidmily.algoga_server.course.domain.model.Course;
 import com.kidmily.algoga_server.lms.domain.repository.CourseRepository;
 import com.kidmily.algoga_server.payment.domain.repository.PaymentRepository;
 import com.kidmily.algoga_server.payment.infrastructure.pdf.ConfirmationPdfGenerator;

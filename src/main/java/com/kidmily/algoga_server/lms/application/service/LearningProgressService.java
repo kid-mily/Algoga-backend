@@ -6,10 +6,10 @@ import com.kidmily.algoga_server.lms.application.result.CourseClassroomChapterRe
 import com.kidmily.algoga_server.lms.application.result.CourseClassroomResult;
 import com.kidmily.algoga_server.lms.application.result.LearningProgressResult;
 import com.kidmily.algoga_server.lms.application.usecase.LearningProgressUseCase;
-import com.kidmily.algoga_server.lms.domain.model.Chapter;
-import com.kidmily.algoga_server.lms.domain.model.Course;
+import com.kidmily.algoga_server.course.domain.model.Chapter;
+import com.kidmily.algoga_server.course.domain.model.Course;
 import com.kidmily.algoga_server.lms.domain.model.LearningProgress;
-import com.kidmily.algoga_server.lms.domain.repository.ChapterRepository;
+import com.kidmily.algoga_server.course.domain.repository.ChapterRepository;
 import com.kidmily.algoga_server.lms.domain.repository.CourseRepository;
 import com.kidmily.algoga_server.lms.domain.repository.EnrollmentRepository;
 import com.kidmily.algoga_server.lms.domain.repository.LearningProgressRepository;

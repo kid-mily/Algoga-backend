@@ -1,7 +1,7 @@
 package com.kidmily.algoga_server.lms.infrastructure.persistence;
 
 import com.kidmily.algoga_server.lms.domain.model.Country;
-import com.kidmily.algoga_server.lms.domain.repository.CountryRepository;
+import com.kidmily.algoga_server.course.domain.repository.CountryRepository;
 import com.kidmily.algoga_server.lms.infrastructure.mapper.CountryMapper;
 import com.kidmily.algoga_server.lms.infrastructure.persistence.repository.SpringDataCountryRepository;
 import lombok.RequiredArgsConstructor;

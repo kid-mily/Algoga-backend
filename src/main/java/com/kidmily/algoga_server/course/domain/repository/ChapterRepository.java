@@ -1,6 +1,6 @@
-package com.kidmily.algoga_server.lms.domain.repository;
+package com.kidmily.algoga_server.course.domain.repository;
 
-import com.kidmily.algoga_server.lms.domain.model.Chapter;
+import com.kidmily.algoga_server.course.domain.model.Chapter;
 
 import java.util.List;
 import java.util.Optional;

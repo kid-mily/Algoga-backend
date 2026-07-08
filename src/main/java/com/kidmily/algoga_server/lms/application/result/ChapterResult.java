@@ -1,6 +1,6 @@
 package com.kidmily.algoga_server.lms.application.result;
 
-import com.kidmily.algoga_server.lms.domain.model.Chapter;
+import com.kidmily.algoga_server.course.domain.model.Chapter;
 
 public record ChapterResult(
         Long chapterId,
