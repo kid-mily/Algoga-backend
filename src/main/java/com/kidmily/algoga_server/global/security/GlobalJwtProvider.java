@@ -121,6 +121,11 @@ public class GlobalJwtProvider {
                 .parseSignedClaims(token).getPayload().getSubject();
     }
 
+    public Date getExpiration(String token) {
+        return Jwts.parser().verifyWith(key).build()
+                .parseSignedClaims(token).getPayload().getExpiration();
+    }
+
     // 어드민 전용 클레임 추출
     public Long getAdminId(String token) {
         return Jwts.parser().verifyWith(key).build()

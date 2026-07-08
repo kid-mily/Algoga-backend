@@ -10,6 +10,7 @@ import com.kidmily.algoga_server.user.exception.UserErrorCode;
 import com.kidmily.algoga_server.user.presentation.request.*;
 import com.kidmily.algoga_server.user.presentation.response.AuthTokenResponse;
 import com.kidmily.algoga_server.user.presentation.response.FindIdResponse;
+import com.kidmily.algoga_server.user.presentation.response.SessionResponse;
 import com.kidmily.algoga_server.user.settings.CustomUserDetails;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -25,6 +26,8 @@ import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.Date;
 
 @Slf4j
 @Tag(name = "Auth", description = "회원 인증 API")
@@ -234,6 +237,35 @@ public class AuthController {
         response.addHeader(HttpHeaders.SET_COOKIE, globalJwtProvider.createCookie("accessToken", newAccessToken).toString());
 
         return ApiResponse.success("AUTH_REFRESH_SUCCESS", "토큰이 성공적으로 재발급되었습니다.", null);
+    }
+
+    // 로그인 세션 만료 정보 조회 (프론트 카운트다운 / 세션 연장 버튼용)
+    @Operation(summary = "로그인 세션 만료 정보 조회", description = "AccessToken 쿠키를 읽어 만료 시각과 남은 유효 시간(초)을 반환합니다.")
+    @ApiErrorCodeExample(domain = AuthErrorCode.class, value = {"INVALID_TOKEN"})
+    @GetMapping("/session")
+    public ApiResponse<SessionResponse> getSession(HttpServletRequest request) {
+        String accessToken = null;
+        if (request.getCookies() != null) {
+            for (Cookie cookie : request.getCookies()) {
+                if ("accessToken".equals(cookie.getName())) {
+                    accessToken = cookie.getValue();
+                    break;
+                }
+            }
+        }
+
+        if (accessToken == null || !globalJwtProvider.validateToken(accessToken)) {
+            throw new AuthException(AuthErrorCode.INVALID_TOKEN);
+        }
+
+        Date expiration = globalJwtProvider.getExpiration(accessToken);
+        long remainingSeconds = Math.max(0, (expiration.getTime() - System.currentTimeMillis()) / 1000);
+
+        return ApiResponse.success(
+                "AUTH_SESSION_INFO",
+                "세션 만료 정보를 조회했습니다.",
+                new SessionResponse(expiration.toInstant(), remainingSeconds)
+        );
     }
 
 }
