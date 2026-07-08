@@ -14,4 +14,6 @@ public interface LectureToTripStatsUseCase {
     LectureToTripByLectureResponse getByLecture(LocalDate from, LocalDate to);
 
     List<LectureCountryResponse> getByCountry(LocalDate from, LocalDate to);
+
+    byte[] getByCountryCsv(LocalDate from, LocalDate to);
 }

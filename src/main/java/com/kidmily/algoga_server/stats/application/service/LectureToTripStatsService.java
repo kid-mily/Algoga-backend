@@ -101,6 +101,25 @@ public class LectureToTripStatsService implements LectureToTripStatsUseCase {
                 .toList();
     }
 
+    @Override
+    @Transactional(readOnly = true)
+    public byte[] getByCountryCsv(LocalDate from, LocalDate to) {
+        List<LectureCountryResponse> rows = getByCountry(from, to);
+
+        java.io.ByteArrayOutputStream baos = new java.io.ByteArrayOutputStream();
+        baos.write(new byte[]{(byte) 0xEF, (byte) 0xBB, (byte) 0xBF}, 0, 3); // Excel UTF-8 BOM
+
+        try (java.io.PrintWriter writer = new java.io.PrintWriter(
+                new java.io.OutputStreamWriter(baos, java.nio.charset.StandardCharsets.UTF_8))) {
+            writer.println("여행지국가,강의구매자,완강자,패키지전환자,전환율(%)");
+            for (LectureCountryResponse r : rows) {
+                writer.printf("%s,%d,%d,%d,%.2f%n",
+                        r.countryName(), r.buyers(), r.completed(), r.converted(), r.conversionRate());
+            }
+        }
+        return baos.toByteArray();
+    }
+
     // ── 핵심: 단과 구매 레코드 구성 ──────────────────────
 
     private List<Purchase> buildPurchases(LocalDate from, LocalDate to) {

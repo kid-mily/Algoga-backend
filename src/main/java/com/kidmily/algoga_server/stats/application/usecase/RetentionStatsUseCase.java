@@ -11,4 +11,6 @@ public interface RetentionStatsUseCase {
     RetentionSummaryResponse getSummary(LocalDate from, LocalDate to);
 
     List<TopCustomerResponse> getTopCustomers(LocalDate from, LocalDate to);
+
+    byte[] getTopCustomersCsv(LocalDate from, LocalDate to);
 }

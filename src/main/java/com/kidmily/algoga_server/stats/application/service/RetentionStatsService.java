@@ -99,6 +99,30 @@ public class RetentionStatsService implements RetentionStatsUseCase {
         return result;
     }
 
+    @Override
+    @Transactional(readOnly = true)
+    public byte[] getTopCustomersCsv(LocalDate from, LocalDate to) {
+        List<TopCustomerResponse> rows = getTopCustomers(from, to);
+
+        java.io.ByteArrayOutputStream baos = new java.io.ByteArrayOutputStream();
+        baos.write(new byte[]{(byte) 0xEF, (byte) 0xBB, (byte) 0xBF}, 0, 3); // Excel UTF-8 BOM
+
+        try (java.io.PrintWriter writer = new java.io.PrintWriter(
+                new java.io.OutputStreamWriter(baos, java.nio.charset.StandardCharsets.UTF_8))) {
+            writer.println("순위,고객명,예약수,누적결제액,최근여행지,평균구매간격(일)");
+            for (TopCustomerResponse r : rows) {
+                writer.printf("%d,%s,%d,%d,%s,%s%n",
+                        r.rank(),
+                        r.userName() == null ? "-" : r.userName(),
+                        r.bookingCount(),
+                        r.totalPaid(),
+                        r.recentDestination() == null ? "-" : r.recentDestination(),
+                        r.avgIntervalDays() == null ? "-" : r.avgIntervalDays());
+            }
+        }
+        return baos.toByteArray();
+    }
+
     // ── 내부 헬퍼 ──────────────────────────────────────
 
     private Map<Long, List<Booking>> bookingsByUser(LocalDate from, LocalDate to) {
