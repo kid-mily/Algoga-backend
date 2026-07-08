@@ -54,13 +54,19 @@ public class GlobalJwtProvider {
     }
 
     public ResponseCookie createCookie(String key, String token) {
+        // 🌟 쿠키 만료 시간을 실제 토큰 종류(accessToken/refreshToken)의 만료 시간과 맞춤
+        //    (예전엔 무조건 604800000"초"(약 19년)로 고정돼 있었음 - refresh-token-expiration 값(ms)을 그대로 초 단위에 넣은 실수)
+        long maxAgeSeconds = "refreshToken".equals(key)
+                ? refreshTokenExpiration / 1000
+                : accessTokenExpiration / 1000;
+
         return ResponseCookie.from(key, token)
                 .httpOnly(true)
                 .secure(true)           // 배포 시 true, 로컬 개발 시 false
                 .path("/")
                 .domain(".kidmily.kro.kr")  // 🌟 상위 도메인 적용
                 .sameSite("None")       // 🌟 크로스 도메인 허용
-                .maxAge(604800000)      // 필요한 만료 시간
+                .maxAge(maxAgeSeconds)
                 .build();
     }
 
