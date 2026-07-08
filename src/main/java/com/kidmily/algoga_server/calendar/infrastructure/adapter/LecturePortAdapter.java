@@ -1,7 +1,7 @@
 package com.kidmily.algoga_server.calendar.infrastructure.adapter;
 
 import com.kidmily.algoga_server.calendar.application.port.LecturePort;
-import com.kidmily.algoga_server.lms.domain.repository.CourseRepository;
+import com.kidmily.algoga_server.course.domain.repository.CourseRepository;
 import com.kidmily.algoga_server.payment.domain.model.Payment;
 import com.kidmily.algoga_server.payment.domain.model.PaymentStatus;
 import com.kidmily.algoga_server.payment.domain.repository.PaymentRepository;

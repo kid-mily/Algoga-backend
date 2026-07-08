@@ -4,7 +4,7 @@ import com.kidmily.algoga_server.accommodation.domain.repository.AccommodationRe
 import com.kidmily.algoga_server.benefit.domain.repository.MileageHistoryRepository;
 import com.kidmily.algoga_server.benefit.domain.repository.UserCouponRepository;
 import com.kidmily.algoga_server.booking.domain.repository.BookingRepository;
-import com.kidmily.algoga_server.lms.domain.repository.CourseRepository;
+import com.kidmily.algoga_server.course.domain.repository.CourseRepository;
 import com.kidmily.algoga_server.payment.domain.model.Payment;
 import com.kidmily.algoga_server.payment.domain.model.PaymentStatus;
 import com.kidmily.algoga_server.payment.domain.model.PaymentType;

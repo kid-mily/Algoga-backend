@@ -12,7 +12,7 @@ import com.kidmily.algoga_server.course.domain.repository.ChapterRepository;
 import com.kidmily.algoga_server.lms.domain.repository.CourseCompletionRepository;
 import com.kidmily.algoga_server.lms.domain.repository.CourseQnaCommentRepository;
 import com.kidmily.algoga_server.lms.domain.repository.CourseQnaRepository;
-import com.kidmily.algoga_server.lms.domain.repository.CourseRepository;
+import com.kidmily.algoga_server.course.domain.repository.CourseRepository;
 import com.kidmily.algoga_server.lms.domain.repository.CourseReviewRepository;
 import com.kidmily.algoga_server.lms.domain.repository.EnrollmentRepository;
 import com.kidmily.algoga_server.lms.domain.repository.LearningProgressRepository;

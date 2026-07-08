@@ -6,6 +6,7 @@ import com.kidmily.algoga_server.course.domain.model.Chapter;
 import com.kidmily.algoga_server.course.domain.model.Course;
 import com.kidmily.algoga_server.course.domain.model.CourseFile;
 import com.kidmily.algoga_server.course.domain.repository.ChapterRepository;
+import com.kidmily.algoga_server.course.domain.repository.CourseRepository;
 import com.kidmily.algoga_server.lms.application.command.*;
 import com.kidmily.algoga_server.lms.application.port.*;
 import com.kidmily.algoga_server.lms.application.result.*;

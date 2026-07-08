@@ -1,7 +1,7 @@
 package com.kidmily.algoga_server.community.infrastructure.persistence;
 
 import com.kidmily.algoga_server.community.application.port.CoursePort;
-import com.kidmily.algoga_server.lms.domain.repository.CourseRepository;
+import com.kidmily.algoga_server.course.domain.repository.CourseRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 

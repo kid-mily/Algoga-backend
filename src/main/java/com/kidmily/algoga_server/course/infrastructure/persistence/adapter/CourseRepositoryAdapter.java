@@ -2,7 +2,7 @@ package com.kidmily.algoga_server.course.infrastructure.persistence.adapter;
 
 import com.kidmily.algoga_server.course.domain.model.Course;
 import com.kidmily.algoga_server.course.domain.model.CourseFile;
-import com.kidmily.algoga_server.lms.domain.repository.CourseRepository;
+import com.kidmily.algoga_server.course.domain.repository.CourseRepository;
 import com.kidmily.algoga_server.course.infrastructure.mapper.CourseMapper;
 import com.kidmily.algoga_server.course.infrastructure.persistence.entity.CourseJpaEntity;
 import com.kidmily.algoga_server.course.infrastructure.persistence.repository.SpringDataCourseRepository;

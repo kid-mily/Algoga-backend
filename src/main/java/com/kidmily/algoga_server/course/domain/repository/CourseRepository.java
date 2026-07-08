@@ -1,4 +1,4 @@
-package com.kidmily.algoga_server.lms.domain.repository;
+package com.kidmily.algoga_server.course.domain.repository;
 
 import com.kidmily.algoga_server.course.domain.model.Course;
 import com.kidmily.algoga_server.course.domain.model.CourseFile;
