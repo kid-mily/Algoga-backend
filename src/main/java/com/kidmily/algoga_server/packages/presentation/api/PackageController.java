@@ -83,8 +83,10 @@ public class PackageController {
             "- `image` 파트: 패키지 대표 이미지 파일 (필수)\n\n" +
             "**⚠️ 항공편 관련 주의사항**\n" +
             "`flightInfo` 전체가 아니라 목적지 공항코드만 `flightDestination`에 입력하면 됩니다.\n" +
-            "예) 도쿄 → `\"flightDestination\": \"NRT\"` (flightInfo.arrival 값)\n\n" +
-            "항공편 상세 정보는 조회 시점에 실시간으로 자동으로 채워집니다."
+            "예) 도쿄 → `\"flightDestination\": \"NRT\"` (flightInfo.arrival 값)\n" +
+            "`airline`에는 노출할 항공사명을 입력합니다. 예) `\"airline\": \"제주항공\"`\n" +
+            "조회 시 해당 항공사의 실시간 운항편을 우선 매칭하며, 일치 편이 없으면 첫 운항편으로 폴백합니다.\n\n" +
+            "항공편 상세 정보(시각/가격)는 조회 시점에 실시간으로 자동으로 채워집니다."
     )
     public ResponseEntity<ApiResponse<Long>> create(
             @RequestPart("data")
@@ -95,7 +97,8 @@ public class PackageController {
         Long id = packageCommandUseCase.create(new CreatePackageCommand(
                 request.countryId(), request.accommodationId(), request.name(),
                 request.description(), image, request.price(),
-                request.flightDestination(), request.checkInDate(), request.checkOutDate()
+                request.flightDestination(), request.airline(),
+                request.checkInDate(), request.checkOutDate()
         ));
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(ApiResponse.created("PACKAGE_CREATED", "패키지가 등록됐습니다.", id));
@@ -118,7 +121,7 @@ public class PackageController {
     ) {
         packageCommandUseCase.update(packageId, new UpdatePackageCommand(
                 request.accommodationId(), request.name(), request.description(), image,
-                request.price(), request.flightDestination(),
+                request.price(), request.flightDestination(), request.airline(),
                 request.checkInDate(), request.checkOutDate()
         ));
         return ResponseEntity.ok(ApiResponse.success("PACKAGE_UPDATED", "패키지가 수정됐습니다."));

@@ -119,6 +119,10 @@ cloud:
   aws:
     s3:
       endpoint: ${S3_ENDPOINT}
+      # 브라우저에 노출할 공개 접근 주소. 미설정 시 endpoint를 그대로 사용.
+      # MinIO 내부주소(localhost:9000 등)로 저장되면 브라우저에서 이미지 로드가 안 되므로,
+      # 운영에서는 공개 도메인/버킷 주소로 S3_PUBLIC_URL을 주입할 것.
+      public-url: ${S3_PUBLIC_URL:${S3_ENDPOINT}}
     credentials:
       access-key: ${AWS_ACCESS_KEY}
       secret-key: ${AWS_SECRET_KEY}

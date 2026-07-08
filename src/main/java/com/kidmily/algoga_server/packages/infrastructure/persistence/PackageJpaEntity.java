@@ -39,6 +39,9 @@ public class PackageJpaEntity {
     @Column(name = "flight_destination", nullable = false)
     private String flightDestination;
 
+    @Column(name = "airline")
+    private String airline;
+
     @Column(name = "check_in_date", nullable = false)
     private LocalDate checkInDate;
 
@@ -47,7 +50,7 @@ public class PackageJpaEntity {
 
     public PackageJpaEntity(Long id, Long countryId, Long accommodationId, String name,
                             String description, String imageUrl, int price,
-                            String flightDestination, LocalDate checkInDate, LocalDate checkOutDate) {
+                            String flightDestination, String airline, LocalDate checkInDate, LocalDate checkOutDate) {
         this.id = id;
         this.countryId = countryId;
         this.accommodationId = accommodationId;
@@ -56,6 +59,7 @@ public class PackageJpaEntity {
         this.imageUrl = imageUrl;
         this.price = price;
         this.flightDestination = flightDestination;
+        this.airline = airline;
         this.checkInDate = checkInDate;
         this.checkOutDate = checkOutDate;
     }

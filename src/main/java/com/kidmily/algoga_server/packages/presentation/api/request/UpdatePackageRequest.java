@@ -12,6 +12,7 @@ public record UpdatePackageRequest(
         String description,
         @Positive int price,
         @NotBlank String flightDestination,
+        @NotBlank String airline,
         @NotNull LocalDate checkInDate,
         @NotNull LocalDate checkOutDate
 ) {}
