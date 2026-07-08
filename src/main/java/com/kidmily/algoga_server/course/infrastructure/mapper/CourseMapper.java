@@ -1,8 +1,8 @@
-package com.kidmily.algoga_server.lms.infrastructure.mapper;
+package com.kidmily.algoga_server.course.infrastructure.mapper;
 
 import com.kidmily.algoga_server.course.domain.model.Chapter;
 import com.kidmily.algoga_server.course.domain.model.Course;
-import com.kidmily.algoga_server.lms.domain.model.CourseFile;
+import com.kidmily.algoga_server.course.domain.model.CourseFile;
 import com.kidmily.algoga_server.course.infrastructure.persistence.entity.ChapterJpaEntity;
 import com.kidmily.algoga_server.lms.infrastructure.persistence.entity.CourseFileJpaEntity;
 import com.kidmily.algoga_server.course.infrastructure.persistence.entity.CourseJpaEntity;
