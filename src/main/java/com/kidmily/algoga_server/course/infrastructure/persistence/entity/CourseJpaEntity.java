@@ -1,5 +1,6 @@
-package com.kidmily.algoga_server.lms.infrastructure.persistence.entity;
+package com.kidmily.algoga_server.course.infrastructure.persistence.entity;
 
+import com.kidmily.algoga_server.lms.infrastructure.persistence.entity.CourseFileJpaEntity;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;

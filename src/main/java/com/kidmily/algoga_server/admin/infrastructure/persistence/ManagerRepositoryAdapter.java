@@ -15,6 +15,9 @@ import java.util.Optional;
 @RequiredArgsConstructor
 public class ManagerRepositoryAdapter implements ManagerRepository {
 
+    // super_admin의 pk (전체 조회 및 검색에서 제외)
+    private static final Long SUPER_ADMIN_ID = 1L;
+
     private final SpringDataManagerRepository jpaRepository;
     private final ManagerMapper managerMapper; // 🌟 MapStruct 매퍼 주입
 
@@ -49,13 +52,13 @@ public class ManagerRepositoryAdapter implements ManagerRepository {
 
     @Override
     public List<Manager> findAll() {
-        return jpaRepository.findAll().stream()
+        return jpaRepository.findAllExcludingId(SUPER_ADMIN_ID).stream()
                 .map(managerMapper::toDomain).toList();
     }
 
     @Override
     public List<Manager> searchByKeyword(String keyword) {
-        return jpaRepository.findByLoginIdContainingOrNameContaining(keyword, keyword)
+        return jpaRepository.searchByKeywordExcludingId(keyword, SUPER_ADMIN_ID)
                 .stream().map(managerMapper::toDomain).toList();
     }
 }
