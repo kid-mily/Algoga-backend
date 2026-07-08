@@ -12,9 +12,10 @@ import com.kidmily.algoga_server.chatbot.domain.repository.KnowledgeRepository;
 import com.kidmily.algoga_server.chatbot.domain.repository.SuggestedQuestionRepository;
 import com.kidmily.algoga_server.chatbot.exception.ChatbotErrorCode;
 import com.kidmily.algoga_server.chatbot.exception.ChatbotException;
-import lombok.RequiredArgsConstructor;
 import org.springframework.ai.document.Document;
 import org.springframework.ai.vectorstore.VectorStore;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -23,13 +24,25 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 @Service
-@RequiredArgsConstructor
 public class ChatbotAdminCommandService implements ChatbotAdminCommandUseCase {
 
     private final KnowledgeRepository knowledgeRepository;
     private final ExpectedQueryRepository expectedQueryRepository;
     private final SuggestedQuestionRepository suggestedQuestionRepository;
     private final VectorStore vectorStore;
+
+    // @Lazy: 기동 시 이 서비스 생성으로 인해 vectorStore(Ollama 연동)가 강제 초기화되지 않도록 지연 프록시 주입.
+    // 관리자 지식 등록 요청 시점에 초기화되며, Ollama가 없으면 그 요청만 실패하고 서버 기동/기타 기능은 영향 없다.
+    public ChatbotAdminCommandService(
+            KnowledgeRepository knowledgeRepository,
+            ExpectedQueryRepository expectedQueryRepository,
+            SuggestedQuestionRepository suggestedQuestionRepository,
+            @Lazy @Qualifier("vectorStore") VectorStore vectorStore) {
+        this.knowledgeRepository = knowledgeRepository;
+        this.expectedQueryRepository = expectedQueryRepository;
+        this.suggestedQuestionRepository = suggestedQuestionRepository;
+        this.vectorStore = vectorStore;
+    }
 
     @Override
     @Transactional

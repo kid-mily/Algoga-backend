@@ -7,6 +7,7 @@ import org.springframework.ai.document.Document;
 import org.springframework.ai.vectorstore.SearchRequest;
 import org.springframework.ai.vectorstore.VectorStore;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -21,7 +22,8 @@ public class PerformanceTestService {
 
     public PerformanceTestService(
             KnowledgeRetrievalPort knowledgeRetrievalPort,
-            @Qualifier("semanticCacheStore") VectorStore semanticCacheStore) {
+            // @Lazy: 기동 시 semanticCacheStore(Ollama 연동)를 강제 초기화하지 않도록 지연 프록시 주입
+            @Lazy @Qualifier("semanticCacheStore") VectorStore semanticCacheStore) {
         this.knowledgeRetrievalPort = knowledgeRetrievalPort;
         this.semanticCacheStore = semanticCacheStore;
     }

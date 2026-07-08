@@ -16,6 +16,7 @@ import org.springframework.ai.document.Document;
 import org.springframework.ai.vectorstore.SearchRequest;
 import org.springframework.ai.vectorstore.VectorStore;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import redis.clients.jedis.JedisPooled;
@@ -45,7 +46,9 @@ public class ChatbotCommandService implements ChatbotCommandUseCase {
             MainLlmPort mainLlmPort,
             ChatLogRepository chatLogRepository,
             SuggestedQuestionRepository suggestedQuestionRepository,
-            @Qualifier("semanticCacheStore") VectorStore semanticCacheStore,
+            // @Lazy: 기동 시 이 서비스가 생성될 때 semanticCacheStore(및 Ollama 연동)를 강제 초기화하지 않도록
+            // 지연 프록시를 주입한다. 실제 캐시 접근 시점에 초기화되며, 실패해도 호출부 try/catch가 흡수한다.
+            @Lazy @Qualifier("semanticCacheStore") VectorStore semanticCacheStore,
             JedisPooled jedisPooled) {
         this.knowledgeRetrievalPort = knowledgeRetrievalPort;
         this.mainLlmPort = mainLlmPort;
