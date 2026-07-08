@@ -1,6 +1,6 @@
 package com.kidmily.algoga_server.lms.presentation.response;
 
-import com.kidmily.algoga_server.lms.application.result.ChapterResult;
+import com.kidmily.algoga_server.course.application.result.ChapterResult;
 import io.swagger.v3.oas.annotations.media.Schema;
 
 @Schema(description = "관리자 챕터 응답")

@@ -1,10 +1,10 @@
-package com.kidmily.algoga_server.lms.application.service;
+package com.kidmily.algoga_server.course.application.service;
 
 import com.kidmily.algoga_server.global.port.out.FileStoragePort;
-import com.kidmily.algoga_server.lms.application.command.CreateChapterCommand;
-import com.kidmily.algoga_server.lms.application.command.UpdateChapterCommand;
-import com.kidmily.algoga_server.lms.application.result.ChapterResult;
-import com.kidmily.algoga_server.lms.application.usecase.ChapterUseCase;
+import com.kidmily.algoga_server.course.application.command.CreateChapterCommand;
+import com.kidmily.algoga_server.course.application.command.UpdateChapterCommand;
+import com.kidmily.algoga_server.course.application.result.ChapterResult;
+import com.kidmily.algoga_server.course.application.usecase.ChapterUseCase;
 import com.kidmily.algoga_server.course.domain.model.Chapter;
 import com.kidmily.algoga_server.course.domain.repository.ChapterRepository;
 import com.kidmily.algoga_server.lms.domain.repository.CourseRepository;
