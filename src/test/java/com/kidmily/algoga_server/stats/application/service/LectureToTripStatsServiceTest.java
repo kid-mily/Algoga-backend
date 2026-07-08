@@ -5,8 +5,8 @@ import com.kidmily.algoga_server.accommodation.domain.repository.AccommodationRe
 import com.kidmily.algoga_server.booking.domain.model.Booking;
 import com.kidmily.algoga_server.booking.domain.model.BookingStatus;
 import com.kidmily.algoga_server.booking.domain.repository.BookingRepository;
-import com.kidmily.algoga_server.lms.domain.model.Course;
-import com.kidmily.algoga_server.lms.domain.repository.CountryRepository;
+import com.kidmily.algoga_server.course.domain.model.Course;
+import com.kidmily.algoga_server.course.domain.repository.CountryRepository;
 import com.kidmily.algoga_server.lms.domain.repository.CourseCompletionRepository;
 import com.kidmily.algoga_server.lms.domain.repository.CourseRepository;
 import com.kidmily.algoga_server.payment.domain.model.Payment;
