@@ -10,6 +10,9 @@ public record ScheduleResponse(
         @Schema(description = "캘린더 ID", example = "1")
         Long scheduleId,
 
+        @Schema(description = "원본 데이터 ID (예약ID/항공ID/강의ID) — 클릭 시 이동 대상", example = "42")
+        Long referenceId,
+
         @Schema(description = "일정 제목", example = "도쿄 3박 4일 패키지")
         String title,
 
