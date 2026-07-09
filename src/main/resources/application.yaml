@@ -209,8 +209,12 @@ resilience4j:
         timeout-duration: 10s
         cancel-running-future: true
 
-# 동적 TTL 자동 조정 (DynamicTtlScheduler) — 캐시 히트율 보고 TTL 자동 확장/축소
 algoga:
+  # 여권 등 민감 정보 암호화 대칭키
+  # 로컬 실행용 기본값을 두되, 운영에서는 반드시 PASSPORT_ENCRYPTION_KEY 환경변수로 덮어써야 한다.
+  crypto:
+    secret-key: ${PASSPORT_ENCRYPTION_KEY:algoga-local-dev-passport-encryption-key-change-me}
+  # 동적 TTL 자동 조정 (DynamicTtlScheduler) — 캐시 히트율 보고 TTL 자동 확장/축소
   cache:
     dynamic-ttl:
       enabled: true           # false 로 끄면 TTL 고정(baseline) 동작

@@ -50,6 +50,8 @@ public class GlobalSecurityConfig {
                         // 3. [401 에러 유도] 유저 관련 API는 반드시 로그인(인증) 필수!
                         .requestMatchers("/api/v1/users/**").authenticated()
                         .requestMatchers("/api/v1/chat/**").authenticated()
+                        // 여권 정보는 민감 개인정보이므로 반드시 로그인(인증) 필수
+                        .requestMatchers("/api/v1/passports/**").authenticated()
                         // 모든 경로에 대해 일단 통과(permitAll)시키도록
                         // (세부 권한은 각 컨트롤러의 @PreAuthorize에서 처리)
                         .anyRequest().permitAll()
