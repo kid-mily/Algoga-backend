@@ -2,6 +2,7 @@ package com.kidmily.algoga_server.stats.presentation;
 
 import com.kidmily.algoga_server.global.common.api.response.ApiResponse;
 import com.kidmily.algoga_server.stats.application.usecase.RetentionStatsUseCase;
+import com.kidmily.algoga_server.stats.presentation.api.response.CohortResponse;
 import com.kidmily.algoga_server.stats.presentation.api.response.RetentionSummaryResponse;
 import com.kidmily.algoga_server.stats.presentation.api.response.TopCustomerResponse;
 import io.swagger.v3.oas.annotations.Operation;
@@ -51,6 +52,19 @@ public class RetentionStatsController {
         return ResponseEntity.ok(ApiResponse.success(
                 "TOP_CUSTOMERS", "상위 고객 조회에 성공했습니다.",
                 retentionStatsUseCase.getTopCustomers(from, to)));
+    }
+
+    @GetMapping("/cohort")
+    @Operation(summary = "[어드민] 가입월 코호트 분석",
+            description = "가입월별 코호트의 시간에 따른 누적 구매 전환율(히트맵)과 누적매출을 조회합니다. "
+                    + "행=가입월, 열=가입 후 경과 개월(M0~M11). 미래 시점(미관측)은 null로 내려갑니다.")
+    public ResponseEntity<ApiResponse<CohortResponse>> getCohort(
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to
+    ) {
+        return ResponseEntity.ok(ApiResponse.success(
+                "RETENTION_COHORT", "코호트 분석 조회에 성공했습니다.",
+                retentionStatsUseCase.getCohort(from, to)));
     }
 
     @GetMapping("/top-customers/csv")

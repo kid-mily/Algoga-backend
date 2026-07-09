@@ -1,5 +1,6 @@
 package com.kidmily.algoga_server.stats.application.usecase;
 
+import com.kidmily.algoga_server.stats.presentation.api.response.CohortResponse;
 import com.kidmily.algoga_server.stats.presentation.api.response.RetentionSummaryResponse;
 import com.kidmily.algoga_server.stats.presentation.api.response.TopCustomerResponse;
 
@@ -13,4 +14,6 @@ public interface RetentionStatsUseCase {
     List<TopCustomerResponse> getTopCustomers(LocalDate from, LocalDate to);
 
     byte[] getTopCustomersCsv(LocalDate from, LocalDate to);
+
+    CohortResponse getCohort(LocalDate from, LocalDate to);
 }

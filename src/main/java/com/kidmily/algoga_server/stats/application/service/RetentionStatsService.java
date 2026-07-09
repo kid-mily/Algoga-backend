@@ -8,14 +8,17 @@ import com.kidmily.algoga_server.payment.domain.model.Payment;
 import com.kidmily.algoga_server.payment.domain.model.PaymentStatus;
 import com.kidmily.algoga_server.payment.domain.repository.PaymentRepository;
 import com.kidmily.algoga_server.stats.application.usecase.RetentionStatsUseCase;
+import com.kidmily.algoga_server.stats.presentation.api.response.CohortResponse;
 import com.kidmily.algoga_server.stats.presentation.api.response.RetentionSummaryResponse;
 import com.kidmily.algoga_server.stats.presentation.api.response.TopCustomerResponse;
+import com.kidmily.algoga_server.user.domain.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.time.YearMonth;
 import java.time.temporal.ChronoUnit;
 import java.time.LocalDate;
 import java.util.*;
@@ -24,7 +27,7 @@ import java.util.stream.Collectors;
 /*
  * ⑤ 재구매·고객가치(LTV) 통계
  * - 재구매율/ARPU/평균구매간격/상위10% 집중도 + 상위 고객 리스트 (bookings·payments by user_id)
- * - 코호트 히트맵은 users.created_at 필요 → UserRepository 메서드 추가 후 별도 구현 (미포함)
+ * - 가입월 코호트 히트맵(누적 구매 전환율) + 코호트 누적매출 (UserRepository.findActiveSignupInfos 사용)
  */
 @Slf4j
 @Service
@@ -32,10 +35,12 @@ import java.util.stream.Collectors;
 public class RetentionStatsService implements RetentionStatsUseCase {
 
     private static final int TOP_CUSTOMER_LIMIT = 10;
+    private static final int COHORT_MAX_MONTHS = 12; // 가입 후 최대 12개월(M0~M11) 추적
 
     private final BookingRepository bookingRepository;
     private final PaymentRepository paymentRepository;
     private final AccommodationRepository accommodationRepository;
+    private final UserRepository userRepository;
 
     @Override
     @Transactional(readOnly = true)
@@ -121,6 +126,93 @@ public class RetentionStatsService implements RetentionStatsUseCase {
             }
         }
         return baos.toByteArray();
+    }
+
+    /*
+     * 가입월 코호트 분석 (히트맵 + 누적매출)
+     * - 행 = 가입월(from~to 사이에 가입한 코호트), 열 = 가입 후 경과 개월(M0~M11)
+     * - 히트맵 값 = 그 코호트 중 해당 시점까지 1건 이상 결제한 누적 유저 비율(%) — 첫 결제 시점 기준 누적, 단조증가
+     * - 누적매출 = 그 코호트의 해당 시점까지 누적 결제액(원)
+     * - 아직 도래하지 않은 미래 시점(현재월 기준 관측 불가)은 null로 비워 정직하게 표시
+     */
+    @Override
+    @Transactional(readOnly = true)
+    public CohortResponse getCohort(LocalDate from, LocalDate to) {
+        YearMonth fromMonth = YearMonth.from(from);
+        YearMonth toMonth = YearMonth.from(to);
+        YearMonth nowMonth = YearMonth.now();
+
+        // 1) 가입월별 코호트 유저 묶기 (from~to 사이 가입자만)
+        Map<Long, YearMonth> cohortByUser = new HashMap<>();
+        Map<YearMonth, List<Long>> usersByCohort = new TreeMap<>();
+        for (UserRepository.SignupInfo s : userRepository.findActiveSignupInfos()) {
+            if (s.getCreatedAt() == null) continue;
+            YearMonth signupMonth = YearMonth.from(s.getCreatedAt());
+            if (signupMonth.isBefore(fromMonth) || signupMonth.isAfter(toMonth)) continue;
+            cohortByUser.put(s.getUserId(), signupMonth);
+            usersByCohort.computeIfAbsent(signupMonth, k -> new ArrayList<>()).add(s.getUserId());
+        }
+        if (usersByCohort.isEmpty()) {
+            return new CohortResponse(COHORT_MAX_MONTHS, List.of());
+        }
+
+        // 2) 코호트 유저들의 성공 결제를 가장 이른 코호트월부터 현재까지 조회
+        LocalDate earliest = usersByCohort.keySet().iterator().next().atDay(1); // TreeMap → 최소 키
+        List<Payment> payments = paymentRepository
+                .findByCreatedAtBetween(earliest.atStartOfDay(), LocalDate.now().plusDays(1).atStartOfDay())
+                .stream()
+                .filter(p -> p.getStatus() == PaymentStatus.SUCCESS
+                        && p.getUserId() != null
+                        && p.getCreatedAt() != null
+                        && cohortByUser.containsKey(p.getUserId()))
+                .toList();
+
+        // 3) 유저별 첫 결제 경과월 + 코호트×경과월 결제액 집계
+        Map<Long, Integer> firstPurchaseOffset = new HashMap<>();
+        Map<YearMonth, long[]> revenueByCohortOffset = new HashMap<>();
+        for (Payment p : payments) {
+            YearMonth signupMonth = cohortByUser.get(p.getUserId());
+            int offset = (int) ChronoUnit.MONTHS.between(signupMonth, YearMonth.from(p.getCreatedAt()));
+            if (offset < 0 || offset >= COHORT_MAX_MONTHS) continue;
+            revenueByCohortOffset.computeIfAbsent(signupMonth, k -> new long[COHORT_MAX_MONTHS])[offset] += p.getAmount();
+            firstPurchaseOffset.merge(p.getUserId(), offset, Math::min);
+        }
+
+        // 4) 행 구성
+        List<CohortResponse.CohortRow> rows = new ArrayList<>();
+        for (Map.Entry<YearMonth, List<Long>> entry : usersByCohort.entrySet()) {
+            YearMonth cohort = entry.getKey();
+            List<Long> users = entry.getValue();
+            int size = users.size();
+            int observable = Math.min(COHORT_MAX_MONTHS,
+                    (int) ChronoUnit.MONTHS.between(cohort, nowMonth) + 1);
+            if (observable < 1) observable = 1;
+
+            int[] firstAtOffset = new int[COHORT_MAX_MONTHS];
+            for (Long userId : users) {
+                Integer offset = firstPurchaseOffset.get(userId);
+                if (offset != null) firstAtOffset[offset]++;
+            }
+            long[] perOffsetRevenue = revenueByCohortOffset.getOrDefault(cohort, new long[COHORT_MAX_MONTHS]);
+
+            List<Double> retentionRate = new ArrayList<>(COHORT_MAX_MONTHS);
+            List<Long> cumulativeRevenue = new ArrayList<>(COHORT_MAX_MONTHS);
+            int cumConverted = 0;
+            long cumRevenue = 0;
+            for (int k = 0; k < COHORT_MAX_MONTHS; k++) {
+                cumConverted += firstAtOffset[k];
+                cumRevenue += perOffsetRevenue[k];
+                if (k < observable) {
+                    retentionRate.add(Math.round((double) cumConverted / size * 10000.0) / 100.0);
+                    cumulativeRevenue.add(cumRevenue);
+                } else {
+                    retentionRate.add(null);      // 미래 시점 → 빈 칸
+                    cumulativeRevenue.add(null);
+                }
+            }
+            rows.add(new CohortResponse.CohortRow(cohort.toString(), size, retentionRate, cumulativeRevenue));
+        }
+        return new CohortResponse(COHORT_MAX_MONTHS, rows);
     }
 
     // ── 내부 헬퍼 ──────────────────────────────────────
