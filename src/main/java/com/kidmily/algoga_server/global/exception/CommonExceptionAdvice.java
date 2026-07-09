@@ -1,6 +1,8 @@
 package com.kidmily.algoga_server.global.exception;
 
+import com.kidmily.algoga_server.global.common.api.response.AccountLockedErrorResponse;
 import com.kidmily.algoga_server.global.common.api.response.ErrorResponse;
+import com.kidmily.algoga_server.global.common.api.response.InvalidPasswordErrorResponse;
 import com.kidmily.algoga_server.global.filter.TraceIdFilter;
 import io.micrometer.core.instrument.MeterRegistry;
 import jakarta.servlet.http.HttpServletRequest;
@@ -55,6 +57,51 @@ public interface CommonExceptionAdvice {
                 errorCode.getCode(),
                 errorCode.getMessage(),
                 traceId
+        );
+
+        return ResponseEntity.status(errorCode.getStatus()).body(response);
+    }
+
+    // 1-1. 계정 잠금 에러 (BusinessException보다 먼저 매칭되도록 별도 핸들러로 분리 - 잠금 해제까지 남은 시간을 함께 내려줌)
+    @ExceptionHandler(AccountLockedException.class)
+    default ResponseEntity<AccountLockedErrorResponse> handleAccountLockedException(AccountLockedException e) {
+        String traceId = getOrCreateTraceId();
+        BaseErrorCode errorCode = e.getErrorCode();
+
+        getLogger().warn("[AccountLockedException] traceId: {}, code: {}, remainingSeconds: {}",
+                traceId, errorCode.getCode(), e.getRemainingSeconds());
+        recordApiError("account_locked");
+
+        AccountLockedErrorResponse response = new AccountLockedErrorResponse(
+                Instant.now(),
+                errorCode.getStatus().value(),
+                errorCode.getCode(),
+                errorCode.getMessage(),
+                traceId,
+                e.getRemainingSeconds()
+        );
+
+        return ResponseEntity.status(errorCode.getStatus()).body(response);
+    }
+
+    // 1-2. 비밀번호 오류 (BusinessException보다 먼저 매칭되도록 별도 핸들러로 분리 - 누적 실패 횟수를 함께 내려줌)
+    @ExceptionHandler(InvalidPasswordException.class)
+    default ResponseEntity<InvalidPasswordErrorResponse> handleInvalidPasswordException(InvalidPasswordException e) {
+        String traceId = getOrCreateTraceId();
+        BaseErrorCode errorCode = e.getErrorCode();
+
+        getLogger().warn("[InvalidPasswordException] traceId: {}, code: {}, failCount: {}/{}",
+                traceId, errorCode.getCode(), e.getFailCount(), e.getMaxAttempts());
+        recordApiError("invalid_password");
+
+        InvalidPasswordErrorResponse response = new InvalidPasswordErrorResponse(
+                Instant.now(),
+                errorCode.getStatus().value(),
+                errorCode.getCode(),
+                errorCode.getMessage(),
+                traceId,
+                e.getFailCount(),
+                e.getMaxAttempts()
         );
 
         return ResponseEntity.status(errorCode.getStatus()).body(response);

@@ -1,0 +1,125 @@
+### [변수 설정]
+@host = http://localhost:15000
+
+### 0. 테스트용 계정 회원가입 (최초 1회만 실행하면 됨. 재실행 시 중복 에러나면 그냥 건너뛰기)
+POST {{host}}/api/v1/auth/signup
+Content-Type: application/json
+
+{
+  "username": "locktest01",
+  "email": "locktest01@algoga.com",
+  "password": "password123",
+  "name": "잠금테스트",
+  "phone": "010-2353-6666",
+  "birthDate": "2000-01-01",
+  "gender": "MALE",
+  "nickname": "잠금테스트",
+  "termsServiceAgreed": true,
+  "termsPrivacyAgreed": true,
+  "termsMarketingAgreed": false
+}
+
+### 1. 비밀번호 틀린 로그인 시도 #1 -> 400 INVALID_PASSWORD (USER_006) 기대
+POST {{host}}/api/v1/auth/login
+Content-Type: application/json
+
+{
+  "username": "locktest01",
+  "password": "wrong-password"
+}
+
+> {%
+    client.test("1회차: 400 INVALID_PASSWORD", function () {
+        client.assert(response.status === 400, "상태 코드가 400이 아닙니다: " + response.status);
+        client.assert(response.body.errorCode === "USER_006", "errorCode가 USER_006이 아닙니다: " + response.body.errorCode);
+    });
+%}
+
+### 2. 비밀번호 틀린 로그인 시도 #2
+POST {{host}}/api/v1/auth/login
+Content-Type: application/json
+
+{
+  "username": "locktest01",
+  "password": "wrong-password"
+}
+
+### 3. 비밀번호 틀린 로그인 시도 #3
+POST {{host}}/api/v1/auth/login
+Content-Type: application/json
+
+{
+  "username": "locktest01",
+  "password": "wrong-password"
+}
+
+### 4. 비밀번호 틀린 로그인 시도 #4
+POST {{host}}/api/v1/auth/login
+Content-Type: application/json
+
+{
+  "username": "locktest01",
+  "password": "wrong-password"
+}
+
+### 5. 비밀번호 틀린 로그인 시도 #5 (5번째 실패 -> 이 시점에 계정이 잠김. 응답 자체는 여전히 400 INVALID_PASSWORD)
+POST {{host}}/api/v1/auth/login
+Content-Type: application/json
+
+{
+  "username": "locktest01",
+  "password": "wrong-password"
+}
+
+> {%
+    client.test("5회차: 400 INVALID_PASSWORD (이 시점에 서버 내부적으로 잠금 처리됨)", function () {
+        client.assert(response.status === 400, "상태 코드가 400이 아닙니다: " + response.status);
+    });
+%}
+
+### 6. 잠긴 상태에서 "올바른" 비밀번호로 로그인 시도 -> 그래도 403 ACCOUNT_LOCKED + remainingSeconds 응답 확인
+POST {{host}}/api/v1/auth/login
+Content-Type: application/json
+
+{
+  "username": "locktest01",
+  "password": "password123"
+}
+
+> {%
+    client.test("잠금 상태 확인: 403 USER_008 + remainingSeconds 포함", function () {
+        client.assert(response.status === 403, "상태 코드가 403이 아닙니다: " + response.status);
+        client.assert(response.body.errorCode === "USER_008", "errorCode가 USER_008이 아닙니다: " + response.body.errorCode);
+        client.assert(response.body.remainingSeconds !== undefined, "remainingSeconds 필드가 없습니다.");
+        client.assert(response.body.remainingSeconds > 0, "remainingSeconds가 0 이하입니다.");
+    });
+    client.log("🔒 잠금 해제까지 남은 시간(초): " + response.body.remainingSeconds);
+%}
+
+### 7. 몇 초 뒤 다시 조회 -> remainingSeconds가 줄어들었는지 확인 (수동으로 몇 초 기다렸다가 실행)
+POST {{host}}/api/v1/auth/login
+Content-Type: application/json
+
+{
+  "username": "locktest01",
+  "password": "password123"
+}
+
+> {%
+    client.log("🔒 잠금 해제까지 남은 시간(초): " + response.body.remainingSeconds);
+%}
+
+### 8. 5분(300초) 이상 기다린 뒤 재실행 -> 잠금 자동 해제되어 정상 로그인 성공(200)해야 함
+POST {{host}}/api/v1/auth/login
+Content-Type: application/json
+
+{
+  "username": "locktest01",
+  "password": "password123"
+}
+
+> {%
+    client.test("5분 경과 후 잠금 자동 해제 및 로그인 성공", function () {
+        client.assert(response.status === 200, "상태 코드가 200이 아닙니다: " + response.status);
+    });
+%}
