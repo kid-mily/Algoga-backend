@@ -6,6 +6,9 @@ import com.kidmily.algoga_server.friend.domain.repository.FriendRepository;
 import com.kidmily.algoga_server.global.infrastructure.mail.EmailSender;
 import com.kidmily.algoga_server.global.port.out.FileStoragePort;
 import com.kidmily.algoga_server.global.security.GlobalJwtProvider;
+import com.kidmily.algoga_server.payment.domain.model.Payment;
+import com.kidmily.algoga_server.payment.domain.model.PaymentStatus;
+import com.kidmily.algoga_server.payment.domain.repository.PaymentRepository;
 import com.kidmily.algoga_server.refund.application.usecase.RefundQueryUseCase;
 import com.kidmily.algoga_server.user.domain.SocialType;
 import com.kidmily.algoga_server.user.domain.User;
@@ -19,6 +22,7 @@ import com.kidmily.algoga_server.user.presentation.request.UpdateProfileRequest;
 import com.kidmily.algoga_server.user.presentation.request.VerifyPasswordRequest;
 import com.kidmily.algoga_server.user.presentation.response.AdminUserListResponse;
 import com.kidmily.algoga_server.user.presentation.response.AuthTokenResponse;
+import com.kidmily.algoga_server.user.presentation.response.SignupPathRevenueResponse;
 import com.kidmily.algoga_server.user.presentation.response.SignupPathStatResponse;
 import com.kidmily.algoga_server.user.presentation.response.UserProfileResponse;
 import com.kidmily.algoga_server.user.settings.UserStorageSettings;
@@ -33,8 +37,11 @@ import org.springframework.web.multipart.MultipartFile;
 import com.kidmily.algoga_server.global.event.UserWithdrawnEvent;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.redis.core.RedisTemplate;
+import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -57,6 +64,9 @@ public class UserService {
     // 소프트딜리트
     private final BookingQueryUseCase bookingQueryUseCase;
     private final RefundQueryUseCase refundQueryUseCase;
+
+    // 통계매니저 - 유입 경로별 순매출 통계용 (payment 도메인의 포트만 참조, payment 쪽 파일은 건드리지 않음)
+    private final PaymentRepository paymentRepository;
 
     // 마이페이지 이메일 인증
     private final EmailSender emailSender;
@@ -232,6 +242,42 @@ public class UserService {
     public List<SignupPathStatResponse> getSignupPathStats() {
         return userRepository.countUsersBySignupPath().stream()
                 .map(SignupPathStatResponse::from)
+                .toList();
+    }
+
+    // 가입 경로별 순매출 통계 조회 (통계매니저용)
+    @Transactional(readOnly = true)
+    public List<SignupPathRevenueResponse> getSignupPathRevenueStats(LocalDateTime from, LocalDateTime to) {
+        // 1. 결제 성공 건만 조회 (payment 도메인 포트를 통해서만 접근)
+        List<Payment> successPayments = paymentRepository.findByCreatedAtBetween(from, to).stream()
+                .filter(payment -> payment.getStatus() == PaymentStatus.SUCCESS)
+                .toList();
+
+        if (successPayments.isEmpty()) {
+            return List.of();
+        }
+
+        // 2. 결제한 유저들의 가입 경로만 배치로 조회 (N+1 방지)
+        List<Long> payerIds = successPayments.stream()
+                .map(Payment::getUserId)
+                .distinct()
+                .toList();
+
+        Map<Long, String> signupPathByUserId = userRepository.findAllById(payerIds).stream()
+                .collect(Collectors.toMap(User::getId, User::getSignupPath));
+
+        // 3. 가입 경로별로 결제 금액 합산 (탈퇴 등으로 유저를 못 찾거나 경로가 비어있으면 "기타")
+        Map<String, Long> revenueByPath = successPayments.stream()
+                .collect(Collectors.groupingBy(
+                        payment -> {
+                            String path = signupPathByUserId.get(payment.getUserId());
+                            return (path != null && !path.isBlank()) ? path : "기타";
+                        },
+                        Collectors.summingLong(Payment::getAmount)
+                ));
+
+        return revenueByPath.entrySet().stream()
+                .map(entry -> new SignupPathRevenueResponse(entry.getKey(), entry.getValue()))
                 .toList();
     }
 
