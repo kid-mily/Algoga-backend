@@ -49,6 +49,7 @@ public class CalendarQueryService implements CalendarQueryUseCase {
 
         return new ScheduleResponse(
                 calendar.getCalendarId(),
+                calendar.getReferenceId(),
                 title,
                 calendar.getType(),
                 calendar.getEventDate(),
@@ -67,9 +68,10 @@ public class CalendarQueryService implements CalendarQueryUseCase {
             }
 
             return List.of(
-                    new ScheduleResponse(calendar.getCalendarId(), title,
+                    new ScheduleResponse(calendar.getCalendarId(), calendar.getReferenceId(), title,
                             CalendarType.LECTURE_START, startDate, calculateDDay(startDate)),
-                    new ScheduleResponse(calendar.getCalendarId(), title,
+
+                    new ScheduleResponse(calendar.getCalendarId(), calendar.getReferenceId(), title,
                             CalendarType.LECTURE_END, endDate, calculateDDay(endDate))
             );
         }
