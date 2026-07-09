@@ -20,6 +20,7 @@ public class Booking {
     private int balancePrice;
     private String bookingNumber;
     private String flightInfo;
+    private String returnFlightInfo;
     private LocalDate checkInDate;
     private LocalDate checkOutDate;
     private int nights;
@@ -28,7 +29,7 @@ public class Booking {
 
     public static Booking create(Long accommodationId, Long userId, int totalPrice,
                                  int depositPrice, int balancePrice, String bookingNumber,
-                                 String flightInfo, LocalDate checkInDate,
+                                 String flightInfo, String returnFlightInfo, LocalDate checkInDate,
                                  LocalDate checkOutDate, int nights) {
         Booking booking = new Booking();
         booking.accommodationId = accommodationId;
@@ -39,6 +40,7 @@ public class Booking {
         booking.balancePrice = balancePrice;
         booking.bookingNumber = bookingNumber;
         booking.flightInfo = flightInfo;
+        booking.returnFlightInfo = returnFlightInfo;
         booking.checkInDate = checkInDate;
         booking.checkOutDate = checkOutDate;
         booking.nights = nights;
@@ -51,6 +53,7 @@ public class Booking {
                                        BookingStatus status, int totalPrice,
                                        int depositPrice, int balancePrice,
                                        String bookingNumber, String flightInfo,
+                                       String returnFlightInfo,
                                        LocalDate checkInDate, LocalDate checkOutDate,
                                        int nights, LocalDateTime createdAt,
                                        LocalDateTime updatedAt) {
@@ -64,6 +67,7 @@ public class Booking {
         booking.balancePrice = balancePrice;
         booking.bookingNumber = bookingNumber;
         booking.flightInfo = flightInfo;
+        booking.returnFlightInfo = returnFlightInfo;
         booking.checkInDate = checkInDate;
         booking.checkOutDate = checkOutDate;
         booking.nights = nights;

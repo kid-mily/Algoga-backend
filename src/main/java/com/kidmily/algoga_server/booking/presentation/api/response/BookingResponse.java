@@ -33,8 +33,11 @@ public record BookingResponse(
         @Schema(description = "예약 번호", example = "BK-20260523-00001")
         String bookingNumber,
 
-        @Schema(description = "항공편 정보 (JSON)")
+        @Schema(description = "가는편 항공편 정보 (JSON)")
         String flightInfo,
+
+        @Schema(description = "오는편 항공편 정보 (JSON). 패키지 예약이 아니거나 미전달 시 null")
+        String returnFlightInfo,
 
         @Schema(description = "체크인 날짜", example = "2026-07-01")
         LocalDate checkInDate,

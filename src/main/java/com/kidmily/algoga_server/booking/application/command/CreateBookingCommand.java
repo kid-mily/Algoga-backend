@@ -6,6 +6,7 @@ public record CreateBookingCommand(
         Long accommodationId,
         Long userId,
         String flightInfo,
+        String returnFlightInfo,
         int flightPrice,
         LocalDate checkInDate,
         LocalDate checkOutDate

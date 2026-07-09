@@ -72,7 +72,7 @@ class BookingCommandServiceTest {
         Booking booking = Booking.reconstitute(
                 1L, 1L, 1L, BookingStatus.PENDING,
                 100000, 50000, 50000,
-                "BK-001", null, null, null, 3, null, null
+                "BK-001", null, null, null, null, 3, null, null
         );
         when(bookingRepository.findById(1L)).thenReturn(Optional.of(booking));
 
