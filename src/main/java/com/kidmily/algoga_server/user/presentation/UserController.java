@@ -2,6 +2,7 @@ package com.kidmily.algoga_server.user.presentation;
 
 import com.kidmily.algoga_server.global.annotation.swagger.ApiErrorCodeExample;
 import com.kidmily.algoga_server.global.common.api.response.ApiResponse;
+import com.kidmily.algoga_server.global.security.GlobalJwtProvider;
 import com.kidmily.algoga_server.user.application.UserService;
 import com.kidmily.algoga_server.user.exception.AuthErrorCode;
 import com.kidmily.algoga_server.user.exception.UserErrorCode;
@@ -20,7 +21,6 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
-import org.springframework.http.ResponseCookie;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
@@ -31,6 +31,7 @@ import org.springframework.web.bind.annotation.*;
 public class UserController {
 
     private final UserService userService;
+    private final GlobalJwtProvider globalJwtProvider;
 
     // 내 프로필 조회
     @Operation(summary = "내 프로필 상세 조회", description = "로그인한 유저의 전체 정보를 조회합니다.")
@@ -96,25 +97,9 @@ public class UserController {
             @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails, HttpServletResponse response) {
         userService.withdraw(userDetails.getUsername());
 
-        // 수명이 0초인 '빈 쿠키'를 생성해서 브라우저로 덮어쓰기 명령 (쿠키 폭파)
-        ResponseCookie deleteAccessCookie = ResponseCookie.from("accessToken", "")
-                .path("/")
-                .maxAge(0) // 수명을 0으로 줘서 즉시 삭제시킴
-                .httpOnly(true)
-                .secure(true)
-                .sameSite("None") // HTTPS 연동 환경에 맞게
-                .build();
-
-        ResponseCookie deleteRefreshCookie = ResponseCookie.from("refreshToken", "")
-                .path("/")
-                .maxAge(0)
-                .httpOnly(true)
-                .secure(true)
-                .sameSite("None")
-                .build();
-
-        response.addHeader(HttpHeaders.SET_COOKIE, deleteAccessCookie.toString());
-        response.addHeader(HttpHeaders.SET_COOKIE, deleteRefreshCookie.toString());
+        // 🌟 로그인/로그아웃과 동일한 domain 속성으로 쿠키를 지워야 실제로 삭제됨 (domain 불일치 시 삭제 안 되는 문제 방지)
+        response.addHeader(HttpHeaders.SET_COOKIE, globalJwtProvider.deleteCookie("accessToken").toString());
+        response.addHeader(HttpHeaders.SET_COOKIE, globalJwtProvider.deleteCookie("refreshToken").toString());
 
         return ApiResponse.success("USER_WITHDRAW_SUCCESS", "회원 탈퇴가 완료되었습니다.");
     }

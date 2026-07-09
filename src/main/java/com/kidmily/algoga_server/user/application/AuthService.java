@@ -1,6 +1,8 @@
 package com.kidmily.algoga_server.user.application;
 
 import com.kidmily.algoga_server.global.event.UserSignedUpEvent;
+import com.kidmily.algoga_server.global.exception.AccountLockedException;
+import com.kidmily.algoga_server.global.exception.InvalidPasswordException;
 import com.kidmily.algoga_server.global.infrastructure.mail.EmailSender;
 import com.kidmily.algoga_server.global.security.GlobalJwtProvider;
 import com.kidmily.algoga_server.global.security.dto.SocialAuthResult;
@@ -28,6 +30,7 @@ import org.springframework.web.util.UriComponentsBuilder;
 
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
+import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
@@ -168,8 +171,9 @@ public class AuthService implements SocialLoginProcessor {
 
         if (user.isDeleted()) throw new UserException(UserErrorCode.DELETED_USER);
         if (user.isAccountLocked()) {
-            log.warn("잠긴 계정에 로그인 시도 발생 [아이디: {}]", user.getUsername());
-            throw new UserException(UserErrorCode.ACCOUNT_LOCKED);
+            long remainingSeconds = Duration.between(LocalDateTime.now(), user.getLockedUntil()).getSeconds();
+            log.warn("잠긴 계정에 로그인 시도 발생 [아이디: {}, 남은 시간: {}초]", user.getUsername(), remainingSeconds);
+            throw new AccountLockedException(UserErrorCode.ACCOUNT_LOCKED, remainingSeconds);
         }
 
         // 🌟 블랙리스트 여부 확인
@@ -184,11 +188,15 @@ public class AuthService implements SocialLoginProcessor {
             updateLoginFailure(user); // [분리된 수정 트랜잭션 호출]
 
             if (user.isAccountLocked()) {
+                // 🌟 이번 시도로 막 잠긴 경우: "비밀번호 틀림" 대신 바로 "계정 잠김"으로 안내
+                long remainingSeconds = Duration.between(LocalDateTime.now(), user.getLockedUntil()).getSeconds();
                 log.warn("비밀번호 5회 연속 오류로 계정 잠금 처리됨 [아이디: {}]", user.getUsername());
-            } else {
-                log.warn("비밀번호 입력 오류 [아이디: {}, 누적 실패: {}/5]", user.getUsername(), user.getLoginFailCount());
+                throw new AccountLockedException(UserErrorCode.ACCOUNT_LOCKED, remainingSeconds);
             }
-            throw new UserException(UserErrorCode.INVALID_PASSWORD);
+
+            log.warn("비밀번호 입력 오류 [아이디: {}, 누적 실패: {}/{}]",
+                    user.getUsername(), user.getLoginFailCount(), User.MAX_LOGIN_FAIL_COUNT);
+            throw new InvalidPasswordException(UserErrorCode.INVALID_PASSWORD, user.getLoginFailCount(), User.MAX_LOGIN_FAIL_COUNT);
         }
 
         // [3] 성공 처리 (분리된 수정 트랜잭션 호출)

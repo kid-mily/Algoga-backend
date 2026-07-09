@@ -124,10 +124,12 @@ public class User {
         this.phone = this.phone + deleteStr;
     }
 
+    public static final int MAX_LOGIN_FAIL_COUNT = 5;
+
     // 실패 횟수 증가 및 잠금 처리
     public void increaseLoginFailure() {
         this.loginFailCount++;
-        if (this.loginFailCount >= 5) {
+        if (this.loginFailCount >= MAX_LOGIN_FAIL_COUNT) {
             this.lockedUntil = LocalDateTime.now().plusMinutes(5); // 5분 잠금
         }
     }

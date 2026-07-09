@@ -24,6 +24,10 @@ public class GlobalJwtProvider {
     @Value("${jwt.refresh-token-expiration}")
     private long refreshTokenExpiration;
 
+    // 🌟 배포 도메인은 .env(COOKIE_DOMAIN)로 주입. 로컬은 값을 안 넣으면 빈 문자열 -> Domain 속성 자체를 생략(host-only 쿠키)해서 localhost에서도 쿠키가 정상 동작함
+    @Value("${jwt.cookie-domain}")
+    private String cookieDomain;
+
     private SecretKey key;
 
     @PostConstruct
@@ -60,25 +64,36 @@ public class GlobalJwtProvider {
                 ? refreshTokenExpiration / 1000
                 : accessTokenExpiration / 1000;
 
-        return ResponseCookie.from(key, token)
+        ResponseCookie.ResponseCookieBuilder builder = ResponseCookie.from(key, token)
                 .httpOnly(true)
                 .secure(true)           // 배포 시 true, 로컬 개발 시 false
                 .path("/")
-                .domain(".kidmily.kro.kr")  // 🌟 상위 도메인 적용
                 .sameSite("None")       // 🌟 크로스 도메인 허용
-                .maxAge(maxAgeSeconds)
-                .build();
+                .maxAge(maxAgeSeconds);
+
+        // 🌟 COOKIE_DOMAIN이 설정된 경우(배포 환경)만 domain 속성을 붙임.
+        //    로컬(값 없음)은 domain 속성 자체를 생략해서 host-only 쿠키로 동작 -> localhost에서도 정상 저장/전송됨
+        if (!cookieDomain.isBlank()) {
+            builder.domain(cookieDomain);
+        }
+
+        return builder.build();
     }
 
     public ResponseCookie deleteCookie(String key) {
-        return ResponseCookie.from(key, "")
+        ResponseCookie.ResponseCookieBuilder builder = ResponseCookie.from(key, "")
                 .httpOnly(true)
                 .secure(true)
                 .path("/")
-                .domain(".kidmily.kro.kr") // 🌟 생성 시 사용한 도메인과 완벽하게 일치시킴
                 .sameSite("None")
-                .maxAge(0)                // 🌟 수명을 0으로 주어 즉시 삭제 유도
-                .build();
+                .maxAge(0);                // 🌟 수명을 0으로 주어 즉시 삭제 유도
+
+        // 🌟 생성 시 사용한 domain 설정과 완벽하게 일치시켜야 삭제가 됨
+        if (!cookieDomain.isBlank()) {
+            builder.domain(cookieDomain);
+        }
+
+        return builder.build();
     }
 
     // ==========================================
