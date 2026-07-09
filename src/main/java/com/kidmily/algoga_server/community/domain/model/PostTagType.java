@@ -12,7 +12,7 @@ public enum PostTagType {
     QUESTION("질문"),
     COMPANION("동행 구해요"),
     COUNTRY("나라"),
-    LECTURE("수강강의"),
+    LECTURE("강의후기"),
     FREE("자유(커스텀태그)");
 
     // 한글 명칭을 저장할 변수 (final로 안전하게 보호)
