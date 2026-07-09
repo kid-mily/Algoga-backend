@@ -35,7 +35,7 @@ jobs:
             tmux send-keys -t kidmily "java -jar $JAR_PATH" C-m
 
   # ---------------------------------------------------------
-  # 2. 신규 배포: Docker 빌드 후 AWS ECR & ECS 배포
+  # 2. 신규 배포: Spring Boot Docker 빌드 후 AWS ECR & ECS 배포
   # ---------------------------------------------------------
   deploy-ecs:
     runs-on: ubuntu-latest
@@ -43,7 +43,7 @@ jobs:
       - name: Checkout Source Code
         uses: actions/checkout@v3
 
-      # GitHub 서버에 Java 환경 세팅
+      # GitHub 서버에 Java 17 환경 세팅
       - name: Set up JDK 17
         uses: actions/setup-java@v3
         with:
@@ -58,7 +58,7 @@ jobs:
           # 빌드된 여러 jar 중 plain을 제외한 진짜 실행용 jar를 app.jar로 복사 (도커 빌드용)
           cp $(ls build/libs/*.jar | grep -v 'plain' | tail -n 1) app.jar
 
-      # AWS 자격 증명 설정 (GitHub Secrets 사용)
+      # AWS 자격 증명 설정
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v2
         with:
@@ -71,24 +71,24 @@ jobs:
         id: login-ecr
         uses: aws-actions/amazon-ecr-login@v1
 
-      # Docker 이미지 빌드 및 ECR 업로드
+      # Docker 이미지 빌드 및 지정하신 ECR(team02/spring-boot-app)로 업로드
       - name: Build, tag, and push image to Amazon ECR
         id: build-image
         env:
           ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-          ECR_REPOSITORY: team02-01-repo
+          ECR_REPOSITORY: team02/spring-boot-app
           IMAGE_TAG: ${{ github.sha }}
         run: |
           docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
           docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
           echo "image=$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG" >> $GITHUB_OUTPUT
 
-      # AWS에서 최신 작업 정의(Task Definition) 파일 다운로드
+      # AWS에서 최신 작업 정의(Task Definition) 파일 실시간 다운로드
       - name: Download latest task definition
         run: |
           aws ecs describe-task-definition --task-definition team02-01-task --query taskDefinition > task-definition.json
 
-      # 다운받은 작업 정의 파일에 방금 올린 새 이미지 주소 덮어쓰기
+      # 다운받은 작업 정의 파일에 방금 올린 새 ECR 이미지 주소 덮어쓰기
       - name: Fill in the new image ID in the Amazon ECS task definition
         id: task-def
         uses: aws-actions/amazon-ecs-render-task-definition@v1
