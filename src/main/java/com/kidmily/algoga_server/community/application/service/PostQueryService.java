@@ -39,19 +39,21 @@ public class PostQueryService implements PostQueryUseCase {
 
 
     @Override
-    public PostResponse getPost(Long postId) {
+    public PostResponse getPost(Long postId, String viewerKey) {
         log.info("[PostQueryService] 게시글 단건 조회 요청 - postId: {}", postId);
 
         Post post = postRepository.findById(postId)
                 .orElseThrow(() -> new PostException(PostErrorCode.POST_NOT_FOUND));
 
-        // 1) 조회수는 항상 실시간 증가 (캐시 안 탐)
-        viewCountPort.increment(postId);
+        // 1) 6시간 내 첫 조회일 때만 조회수 증가
+        if (viewCountPort.markViewedIfAbsent(postId, viewerKey)) {
+            viewCountPort.increment(postId);
+        }
 
-        // 2) 본문/댓글/좋아요는 캐시에서 가져옴 (별도 빈 호출 → 프록시 적용)
+        // 2) 본문/댓글/좋아요는 캐시에서
         PostResponse cached = postReadService.getPostContentOnly(postId);
 
-        // 3) DB 누적 조회수 + Redis 미반영분 합산
+        // 3) DB 누적 + Redis 미반영분 합산
         int viewCount = post.getViewCount() + (int) viewCountPort.getCurrentCount(postId);
 
         return cached.withViewCount(viewCount);

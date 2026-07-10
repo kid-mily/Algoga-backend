@@ -27,6 +27,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+import jakarta.servlet.http.HttpServletRequest;
 
 
 import java.util.List;
@@ -194,14 +195,25 @@ public class CommunityController {
 
     // 게시글 상세 조회
     @GetMapping("/{postId}")
-    @Operation(summary = "게시글 단건 조회", description = "게시글 ID로 상세 정보를 조회합니다. 조회수가 +1 증가합니다.")
+    @Operation(summary = "게시글 단건 조회", description = "게시글 ID로 상세 정보를 조회합니다. 동일 사용자는 6시간에 1회만 조회수가 증가합니다.")
     @ApiErrorCodeExample(domain = PostErrorCode.class, value = {"POST_NOT_FOUND"})
     public ResponseEntity<ApiResponse<PostResponse>> getPost(
             @Parameter(description = "게시글 ID", example = "1")
-            @PathVariable Long postId
+            @PathVariable Long postId,
+            @AuthenticationPrincipal Object principal,   // ▼ 추가
+            HttpServletRequest request                   // ▼ 추가
     ) {
-        PostResponse responseData = postQueryUseCase.getPost(postId);
+        String viewerKey = resolveViewerKey(principal, request);
+        PostResponse responseData = postQueryUseCase.getPost(postId, viewerKey);
         return ResponseEntity.ok(ApiResponse.success("POST_FOUND", "게시글 조회에 성공했습니다.", responseData));
+    }
+
+    // 식별자 추출 헬퍼 (로그인 → userId, 비로그인 → IP)
+    private String resolveViewerKey(Object principal, HttpServletRequest request) {
+        if (principal instanceof CustomUserDetails userDetails) {
+            return "USER_" + userDetails.getUser().getId();
+        }
+        return "IP_" + request.getRemoteAddr();
     }
 
     // 댓글 작성
