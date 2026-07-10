@@ -39,10 +39,14 @@ public class BookingController {
             @AuthenticationPrincipal CustomUserDetails userDetails
     ) throws Exception {
         Long userId = userDetails.getUser().getId();
+        String returnFlightInfoJson = request.returnFlightInfo() == null
+                ? null
+                : objectMapper.writeValueAsString(request.returnFlightInfo());
         CreateBookingCommand command = new CreateBookingCommand(
                 request.accommodationId(),
                 userId,
                 objectMapper.writeValueAsString(request.flightInfo()),
+                returnFlightInfoJson,
                 request.flightPrice(),
                 request.checkInDate(),
                 request.checkOutDate()

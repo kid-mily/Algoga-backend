@@ -88,6 +88,7 @@ public class BookingQueryService implements BookingQueryUseCase {
                 booking.getBalancePrice(),
                 booking.getBookingNumber(),
                 booking.getFlightInfo(),
+                booking.getReturnFlightInfo(),
                 booking.getCheckInDate(),
                 booking.getCheckOutDate(),
                 booking.getNights(),

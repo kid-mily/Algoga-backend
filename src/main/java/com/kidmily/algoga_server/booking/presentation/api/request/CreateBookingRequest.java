@@ -11,11 +11,14 @@ public record CreateBookingRequest(
         @NotNull(message = "숙소 ID는 필수입니다.")
         Long accommodationId,
 
-        @Schema(description = "항공편 정보")
+        @Schema(description = "가는편 항공편 정보")
         @NotNull(message = "항공편 정보는 필수입니다.")
         FlightInfoRequest flightInfo,
 
-        @Schema(description = "항공편 가격", example = "200000")
+        @Schema(description = "오는편 항공편 정보 (패키지 예약 시 패키지의 returnFlightInfo를 그대로 전달. 없으면 생략 가능)")
+        FlightInfoRequest returnFlightInfo,
+
+        @Schema(description = "항공편 가격 (왕복 합산가)", example = "600000")
         @Positive
         int flightPrice,
 

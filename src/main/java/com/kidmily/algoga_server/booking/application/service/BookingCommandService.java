@@ -22,6 +22,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
+import java.time.temporal.ChronoUnit;
 
 @Slf4j
 @Service
@@ -48,7 +49,12 @@ public class BookingCommandService implements BookingCommandUseCase {
                     return new BusinessException(BookingErrorCode.PACKAGE_NOT_AVAILABLE);
                 });
 
-        int accommodationPrice = accommodation.getPricePerNight() * accommodation.getNights();
+        // 청구 박수는 패키지 날짜(checkOut - checkIn) 기준으로 계산한다.
+        // 숙소 고정 nights를 쓰면 "1박2일 패키지인데 숙소 고정 3박치 청구"처럼 표시 박수와 청구가 어긋난다.
+        int nights = (int) ChronoUnit.DAYS.between(command.checkInDate(), command.checkOutDate());
+        if (nights < 1) nights = 1; // 방어: 같은 날/역전 시 최소 1박
+
+        int accommodationPrice = accommodation.getPricePerNight() * nights;
         int totalPrice = command.flightPrice() + accommodationPrice;
         int depositPrice = (int) (totalPrice * DEPOSIT_RATE);
         int balancePrice = totalPrice - depositPrice;
@@ -63,9 +69,10 @@ public class BookingCommandService implements BookingCommandUseCase {
                 balancePrice,
                 bookingNumber,
                 command.flightInfo(),
+                command.returnFlightInfo(),
                 command.checkInDate(),
                 command.checkOutDate(),
-                accommodation.getNights()
+                nights
         );
 
         Booking savedBooking = bookingRepository.save(booking);
