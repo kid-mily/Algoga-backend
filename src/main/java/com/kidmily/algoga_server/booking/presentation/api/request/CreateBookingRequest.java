@@ -2,6 +2,8 @@ package com.kidmily.algoga_server.booking.presentation.api.request;
 
 import com.kidmily.algoga_server.booking.domain.model.BookingSource;
 import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.media.Schema.AccessMode;
+import jakarta.validation.constraints.AssertTrue;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
 import java.time.LocalDate;
@@ -38,4 +40,17 @@ public record CreateBookingRequest(
                 + "COMPLETION=완강 후 마이페이지 모달(완강 필수·일시불 고정). 미전달 시 LOUNGE로 처리",
                 example = "LOUNGE")
         BookingSource bookingSource
-) {}
+) {
+    /**
+     * 여권 유효성 교차검증: 여권 만료일이 귀국일(checkOutDate)보다 빠르면 안 된다.
+     * 여권/만료일/귀국일 중 하나라도 없으면 이 검증은 통과(필수 여부는 별도 영역).
+     */
+    @Schema(hidden = true, accessMode = AccessMode.READ_ONLY)
+    @AssertTrue(message = "여권 만료일이 귀국일보다 빠릅니다. 여행 종료일까지 유효한 여권이 필요합니다.")
+    public boolean isPassportValidForTravel() {
+        if (passengerInfo == null || passengerInfo.passportExpiry() == null || checkOutDate == null) {
+            return true;
+        }
+        return !passengerInfo.passportExpiry().isBefore(checkOutDate);
+    }
+}
