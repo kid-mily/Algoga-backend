@@ -1,4 +1,4 @@
-package com.kidmily.algoga_server.lms.domain.model;
+package com.kidmily.algoga_server.course.domain.model;
 
 import java.util.Arrays;
 import java.util.Optional;

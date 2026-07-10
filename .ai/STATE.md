@@ -8,7 +8,7 @@
 
 ## Current Work
 
-- LMS/Course clean architecture refactor is paused after several safe package-split commits.
+- LMS/Course clean architecture refactor is active again in small package-split commits.
 - A short urgent stats support task was completed for the statistics manager.
 - Next active work should resume the LMS/Course refactor after checking compile/test impact from latest `develop` merges.
 
@@ -26,12 +26,12 @@
   - Moved Chapter application layer into the `course` package.
   - Moved `CourseRepository` port into `course.domain.repository` and updated known main/test imports.
   - Added `CourseCompletionRepository.countByCourseIds(List<Long> courseIds)` for statistics manager lecture completion-rate support.
-  - Updated booking main code import after latest `develop` merge introduced an old `CourseRepository` import.
+  - Updated booking main/test imports after latest `develop` merge introduced old `CourseRepository` imports.
   - Verified Java compilation with `./gradlew clean compileJava` before the latest booking import follow-up.
   - Pushed branch `feature/course-clean-architecture-refactor` to origin.
 - In progress:
   - Keep branch aligned with latest `develop` while refactor is in progress.
-  - Confirm remaining old package references before continuing the next split.
+  - Current small split moves Course value objects (`CourseLevel`, `CourseStatus`) into `course.domain.model`.
 - Waiting:
   - PR review/merge status for `[Feat] 강의별 수료자 수 집계 메서드 추가`.
 
@@ -39,16 +39,13 @@
 
 - `git status` showed only `docker-compose.yml` as untracked before updating these `.ai` files.
 - Actual tracked docs are now committed in the branch, so `.ai` files can be edited and committed normally.
-- Actual code still has at least one old test import detected:
-  - `src/test/java/com/kidmily/algoga_server/booking/application/service/BookingCommandServiceTest.java`
-  - `import com.kidmily.algoga_server.lms.domain.repository.CourseRepository;`
-- Main code old `CourseRepository` import was fixed in `BookingCommandService.java` and pushed.
+- Old `CourseRepository` imports in booking main/test code were fixed and pushed.
 
 ## Next Steps
 
-1. Run/search before new refactor work:
-   - `rg "lms\.domain\.repository\.CourseRepository" src/main/java src/test/java`
-2. Fix remaining old imports caused by the CourseRepository move, starting with `BookingCommandServiceTest` if still present.
+1. Finish current small refactor slice: move `CourseLevel` and `CourseStatus` to `course.domain.model` and verify imports.
+2. Run/search before broader refactor work:
+   - `rg "lms\.domain\.repository\.CourseRepository|lms\.domain\.model\.CourseLevel|lms\.domain\.model\.CourseStatus" src/main/java src/test/java`
 3. Run verification:
    - `./gradlew clean compileJava`
    - Consider `./gradlew test` or at least test compilation if practical.
