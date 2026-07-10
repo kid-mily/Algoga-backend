@@ -1,9 +1,8 @@
-package com.kidmily.algoga_server.lms.application.command;
+package com.kidmily.algoga_server.course.application.command;
 
 import org.springframework.web.multipart.MultipartFile;
 
-public record CreateChapterCommand(
-        Long courseId,
+public record UpdateChapterCommand(
         String title,
         String description,
         MultipartFile videoFile,

@@ -1,6 +1,6 @@
 package com.kidmily.algoga_server.notification.infrastructure.adapter;
 
-import com.kidmily.algoga_server.lms.domain.repository.CourseRepository;
+import com.kidmily.algoga_server.course.domain.repository.CourseRepository;
 import com.kidmily.algoga_server.notification.application.port.CoursePort;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;

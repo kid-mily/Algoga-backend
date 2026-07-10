@@ -7,7 +7,7 @@ import com.kidmily.algoga_server.global.common.api.response.PageResponse;
 import com.kidmily.algoga_server.global.exception.GlobalErrorCode;
 import com.kidmily.algoga_server.lms.application.command.CreateCourseCommand;
 import com.kidmily.algoga_server.lms.application.command.UpdateCourseCommand;
-import com.kidmily.algoga_server.lms.application.port.UploadFile;
+import com.kidmily.algoga_server.course.application.port.UploadFile;
 import com.kidmily.algoga_server.lms.application.usecase.CourseUseCase;
 import com.kidmily.algoga_server.lms.exception.LmsErrorCode;
 import com.kidmily.algoga_server.lms.exception.LmsException;

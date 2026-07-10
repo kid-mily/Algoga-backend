@@ -14,7 +14,7 @@ import java.util.Optional;
 @RequiredArgsConstructor
 public class LmsCourseAdapter implements LmsCoursePort {
 
-    private static final String COURSE_REPOSITORY = "com.kidmily.algoga_server.lms.domain.repository.CourseRepository";
+    private static final String COURSE_REPOSITORY = "com.kidmily.algoga_server.course.domain.repository.CourseRepository";
     private static final String COURSE_COMPLETION_REPOSITORY = "com.kidmily.algoga_server.lms.domain.repository.CourseCompletionRepository";
     private static final String QUIZ_SUBMISSION_REPOSITORY = "com.kidmily.algoga_server.lms.domain.repository.QuizSubmissionRepository";
     private static final String ENROLLMENT_REPOSITORY = "com.kidmily.algoga_server.lms.domain.repository.EnrollmentRepository";

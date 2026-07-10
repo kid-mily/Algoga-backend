@@ -2,7 +2,7 @@ package com.kidmily.algoga_server.lms.application.service;
 
 import com.kidmily.algoga_server.lms.application.result.CourseResult;
 import com.kidmily.algoga_server.lms.application.result.PublishedCourseListCacheResult;
-import com.kidmily.algoga_server.lms.domain.repository.CourseRepository;
+import com.kidmily.algoga_server.course.domain.repository.CourseRepository;
 import com.kidmily.algoga_server.lms.domain.repository.MapRepository;
 import com.kidmily.algoga_server.lms.exception.LmsErrorCode;
 import com.kidmily.algoga_server.lms.exception.LmsException;

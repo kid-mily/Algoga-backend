@@ -1,4 +1,4 @@
-package com.kidmily.algoga_server.lms.application.port;
+package com.kidmily.algoga_server.course.application.port;
 
 public interface CourseFileStoragePort {
 

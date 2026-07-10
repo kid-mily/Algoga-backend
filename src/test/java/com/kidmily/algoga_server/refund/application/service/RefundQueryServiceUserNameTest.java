@@ -2,7 +2,7 @@ package com.kidmily.algoga_server.refund.application.service;
 
 import com.kidmily.algoga_server.accommodation.domain.repository.AccommodationRepository;
 import com.kidmily.algoga_server.booking.domain.repository.BookingRepository;
-import com.kidmily.algoga_server.lms.domain.repository.CourseRepository;
+import com.kidmily.algoga_server.course.domain.repository.CourseRepository;
 import com.kidmily.algoga_server.payment.domain.repository.PaymentRepository;
 import com.kidmily.algoga_server.refund.domain.model.RefundRequest;
 import com.kidmily.algoga_server.refund.domain.repository.RefundRepository;

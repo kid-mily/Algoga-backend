@@ -7,7 +7,9 @@ import com.kidmily.algoga_server.lms.infrastructure.persistence.repository.Sprin
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 @Repository
@@ -57,6 +59,19 @@ public class CourseCompletionRepositoryAdapter implements CourseCompletionReposi
             Long courseId
     ) {
         return springDataCourseCompletionRepository.existsByUserIdAndCourseId(userId, courseId);
+    }
+
+    @Override
+    public Map<Long, Long> countByCourseIds(List<Long> courseIds) {
+        if (courseIds == null || courseIds.isEmpty()) {
+            return Map.of();
+        }
+
+        Map<Long, Long> result = new HashMap<>();
+        for (Object[] row : springDataCourseCompletionRepository.countByCourseIds(courseIds)) {
+            result.put((Long) row[0], (Long) row[1]);
+        }
+        return result;
     }
 
     private CourseCompletion toDomain(CourseCompletionJpaEntity entity) {

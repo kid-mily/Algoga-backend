@@ -1,6 +1,6 @@
 package com.kidmily.algoga_server.lms.application.result;
 
-import com.kidmily.algoga_server.lms.domain.model.CourseFile;
+import com.kidmily.algoga_server.course.domain.model.CourseFile;
 
 public record CourseFileResult(
         String fileUrl,

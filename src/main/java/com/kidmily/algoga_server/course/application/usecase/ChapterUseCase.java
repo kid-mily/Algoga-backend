@@ -1,8 +1,8 @@
-package com.kidmily.algoga_server.lms.application.usecase;
+package com.kidmily.algoga_server.course.application.usecase;
 
-import com.kidmily.algoga_server.lms.application.command.CreateChapterCommand;
-import com.kidmily.algoga_server.lms.application.command.UpdateChapterCommand;
-import com.kidmily.algoga_server.lms.application.result.ChapterResult;
+import com.kidmily.algoga_server.course.application.command.CreateChapterCommand;
+import com.kidmily.algoga_server.course.application.command.UpdateChapterCommand;
+import com.kidmily.algoga_server.course.application.result.ChapterResult;
 
 import java.util.List;
 
