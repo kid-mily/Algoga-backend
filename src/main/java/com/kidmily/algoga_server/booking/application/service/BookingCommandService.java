@@ -16,7 +16,7 @@ import com.kidmily.algoga_server.course.domain.model.Course;
 import com.kidmily.algoga_server.global.exception.BusinessException;
 import com.kidmily.algoga_server.global.lock.DistributedLock;
 import com.kidmily.algoga_server.lms.domain.repository.CourseCompletionRepository;
-import com.kidmily.algoga_server.lms.domain.repository.CourseRepository;
+import com.kidmily.algoga_server.course.domain.repository.CourseRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.CacheEvict;
