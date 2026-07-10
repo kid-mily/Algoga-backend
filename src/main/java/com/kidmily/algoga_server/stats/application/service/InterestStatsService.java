@@ -1,7 +1,7 @@
 package com.kidmily.algoga_server.stats.application.service;
 
 import com.kidmily.algoga_server.course.domain.model.Course;
-import com.kidmily.algoga_server.course.domain.repository.CountryRepository;
+import com.kidmily.algoga_server.country.domain.repository.CountryRepository;
 import com.kidmily.algoga_server.course.domain.repository.CourseRepository;
 import com.kidmily.algoga_server.lms.domain.repository.CourseCompletionRepository;
 import com.kidmily.algoga_server.lms.domain.repository.EnrollmentRepository;

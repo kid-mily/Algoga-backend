@@ -1,6 +1,6 @@
 package com.kidmily.algoga_server.lms.domain.repository;
 
-import com.kidmily.algoga_server.lms.domain.model.Country;
+import com.kidmily.algoga_server.country.domain.model.Country;
 
 import java.util.List;
 import java.util.Optional;

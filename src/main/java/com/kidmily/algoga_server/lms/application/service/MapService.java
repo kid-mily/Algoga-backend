@@ -2,7 +2,7 @@ package com.kidmily.algoga_server.lms.application.service;
 
 import com.kidmily.algoga_server.lms.application.result.CountryResult;
 import com.kidmily.algoga_server.lms.application.usecase.MapUseCase;
-import com.kidmily.algoga_server.lms.domain.model.Country;
+import com.kidmily.algoga_server.country.domain.model.Country;
 import com.kidmily.algoga_server.lms.domain.repository.MapRepository;
 import com.kidmily.algoga_server.lms.exception.LmsErrorCode;
 import com.kidmily.algoga_server.lms.exception.LmsException;
