@@ -1,6 +1,6 @@
 package com.kidmily.algoga_server.lms.application.result;
 
-import com.kidmily.algoga_server.lms.domain.model.Country;
+import com.kidmily.algoga_server.country.domain.model.Country;
 
 public record CountryResult(
         Long countryId,

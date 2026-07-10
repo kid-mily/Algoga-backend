@@ -1,7 +1,7 @@
-package com.kidmily.algoga_server.lms.infrastructure.mapper;
+package com.kidmily.algoga_server.country.infrastructure.mapper;
 
-import com.kidmily.algoga_server.lms.domain.model.Country;
-import com.kidmily.algoga_server.lms.infrastructure.persistence.entity.CountryJpaEntity;
+import com.kidmily.algoga_server.country.domain.model.Country;
+import com.kidmily.algoga_server.country.infrastructure.persistence.entity.CountryJpaEntity;
 import org.springframework.stereotype.Component;
 
 @Component
