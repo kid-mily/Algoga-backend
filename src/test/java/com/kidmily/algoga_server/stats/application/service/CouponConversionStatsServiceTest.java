@@ -1,0 +1,66 @@
+package com.kidmily.algoga_server.stats.application.service;
+
+import com.kidmily.algoga_server.benefit.domain.model.UserCoupon;
+import com.kidmily.algoga_server.benefit.domain.repository.UserCouponRepository;
+import com.kidmily.algoga_server.booking.domain.model.Booking;
+import com.kidmily.algoga_server.booking.domain.repository.BookingRepository;
+import com.kidmily.algoga_server.stats.presentation.api.response.CouponConversionResponse;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+
+import java.time.LocalDate;
+import java.util.List;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.lenient;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+
+@ExtendWith(MockitoExtension.class)
+class CouponConversionStatsServiceTest {
+
+    @Mock private UserCouponRepository userCouponRepository;
+    @Mock private BookingRepository bookingRepository;
+
+    @InjectMocks
+    private CouponConversionStatsService service;
+
+    private UserCoupon coupon(Long userId, String status) {
+        UserCoupon c = mock(UserCoupon.class);
+        when(c.getStatus()).thenReturn(status);
+        lenient().when(c.getUserId()).thenReturn(userId); // ISSUED는 userId 조회 전에 걸러짐
+        return c;
+    }
+
+    private Booking booking(Long userId) {
+        Booking b = mock(Booking.class);
+        when(b.getUserId()).thenReturn(userId);
+        return b;
+    }
+
+    @Test
+    @DisplayName("쿠폰 USED 유저 중 예약까지 간 비율을 계산한다")
+    void 쿠폰_예약_전환율() {
+        // USED: user1,2,3 / ISSUED: user4(제외) — mock은 when() 밖에서 먼저 생성
+        UserCoupon c1 = coupon(1L, "USED");
+        UserCoupon c2 = coupon(2L, "USED");
+        UserCoupon c3 = coupon(3L, "USED");
+        UserCoupon c4 = coupon(4L, "ISSUED");
+        when(userCouponRepository.findAll()).thenReturn(List.of(c1, c2, c3, c4));
+        // 예약한 유저: 1,2 (3은 미예약)
+        Booking b1 = booking(1L);
+        Booking b2 = booking(2L);
+        when(bookingRepository.findByCreatedAtBetween(any(), any())).thenReturn(List.of(b1, b2));
+
+        CouponConversionResponse res = service.getConversion(LocalDate.of(2026, 1, 1), LocalDate.of(2026, 12, 31));
+
+        assertEquals(3, res.couponUsedUsers());   // USED 3명
+        assertEquals(2, res.convertedUsers());     // 예약한 1,2
+        assertEquals(66.67, res.conversionRate()); // 2/3
+    }
+}
