@@ -176,19 +176,19 @@ public class AuthService implements SocialLoginProcessor {
             throw new AccountLockedException(UserErrorCode.ACCOUNT_LOCKED, remainingSeconds);
         }
 
-        // 🌟 블랙리스트 여부 확인
+        // 블랙리스트 여부 확인
         String isBlacklisted = redisTemplate.opsForValue().get("BLACKLIST:" + user.getEmail());
         if ("true".equals(isBlacklisted)) {
             log.warn("블랙리스트 유저의 로그인 시도 차단 [아이디: {}]", user.getUsername());
             throw new AuthException(AuthErrorCode.BLACKLISTED_USER);
         }
 
-        // [2] 🌟 BCrypt 연산 (트랜잭션 밖에서 실행 - 커넥션 점유 X)
+        // [2] BCrypt 연산 (트랜잭션 밖에서 실행 - 커넥션 점유 X)
         if (!passwordEncoder.matches(request.password(), user.getPassword())) {
             updateLoginFailure(user); // [분리된 수정 트랜잭션 호출]
 
             if (user.isAccountLocked()) {
-                // 🌟 이번 시도로 막 잠긴 경우: "비밀번호 틀림" 대신 바로 "계정 잠김"으로 안내
+                // 이번 시도로 막 잠긴 경우: "비밀번호 틀림" 대신 바로 "계정 잠김"으로 안내
                 long remainingSeconds = Duration.between(LocalDateTime.now(), user.getLockedUntil()).getSeconds();
                 log.warn("비밀번호 5회 연속 오류로 계정 잠금 처리됨 [아이디: {}]", user.getUsername());
                 throw new AccountLockedException(UserErrorCode.ACCOUNT_LOCKED, remainingSeconds);
@@ -298,6 +298,12 @@ public class AuthService implements SocialLoginProcessor {
             throw new UserException(UserErrorCode.INVALID_PASSWORD);
         }
 
+        // 새 비밀번호가 임시비번 발급 전(잊어버렸던) 원래 비밀번호와 같으면 변경 거부
+        if (user.getPreviousPassword() != null
+                && passwordEncoder.matches(request.newPassword(), user.getPreviousPassword())) {
+            throw new UserException(UserErrorCode.PASSWORD_SAME_AS_OLD);
+        }
+
         String encodedNewPassword = passwordEncoder.encode(request.newPassword());
         user.changePassword(encodedNewPassword);
         userRepository.save(user);
@@ -314,7 +320,7 @@ public class AuthService implements SocialLoginProcessor {
 
     // 토큰 재발급을 위한 검증 메서드
     public String refreshAccessToken(String email, String refreshToken) {
-        // 🌟 블랙리스트 여부 확인하여 재발급 차단
+        // 블랙리스트 여부 확인하여 재발급 차단
         String isBlacklisted = redisTemplate.opsForValue().get("BLACKLIST:" + email);
         if ("true".equals(isBlacklisted)) {
             log.warn("블랙리스트 유저의 토큰 재발급 시도 차단 [이메일: {}]", email);
@@ -384,14 +390,14 @@ public class AuthService implements SocialLoginProcessor {
                 user.getUsername(), user.getSocialType());
     }
 
-    // 🌟 소셜로그인 리다이렉트 및 토큰 발급 (최신 쿠키 전용 버전)
+    // 소셜로그인 리다이렉트 및 토큰 발급 (최신 쿠키 전용 버전)
     @Override
     public SocialAuthResult processLoginAndGetRedirectUrl(String email, String name, String socialType) {
         // 이미 가입된 유저인지 DB 확인
         boolean isExistingUser = userRepository.findByEmailAndIsDeletedFalse(email).isPresent();
 
         if (isExistingUser) {
-            // 🌟 블랙리스트 여부 확인
+            // 블랙리스트 여부 확인
             String isBlacklisted = redisTemplate.opsForValue().get("BLACKLIST:" + email);
             if ("true".equals(isBlacklisted)) {
                 log.warn("블랙리스트 유저의 소셜 로그인 시도 차단 [이메일: {}]", email);
@@ -443,7 +449,7 @@ public class AuthService implements SocialLoginProcessor {
         return referralCode.trim();
     }
 
-    // 🌟 중복 없는 6자리 고유 코드를 생성하는 내부 메서드
+    // 중복 없는 6자리 고유 코드를 생성하는 내부 메서드
     private String generateUniquePersonalCode() {
         String personalCode;
         do {
