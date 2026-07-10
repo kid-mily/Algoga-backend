@@ -17,9 +17,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
-import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.web.bind.annotation.*;
-import java.time.LocalDateTime;
 import java.util.List;
 
 @Tag(name = "Admin-User", description = "관리자 전용 유저 관리 및 통계 API")
@@ -39,19 +37,6 @@ public class UserAdminController {
     public ApiResponse<List<SignupPathStatResponse>> getSignupPathStats() {
         List<SignupPathStatResponse> stats = userService.getSignupPathStats();
         return ApiResponse.success("STAT_SIGNUP_PATH_SUCCESS", "유저 가입 경로 통계 조회 성공", stats);
-    }
-
-    @Operation(summary = "유입 경로별 순매출 통계", description = "가입 경로별로 결제 성공 금액 합계를 조회합니다. from/to를 안 넣으면 전체 기간을 조회합니다.")
-    @GetMapping("/statistics/signup-paths/revenue")
-    public ApiResponse<List<SignupPathRevenueResponse>> getSignupPathRevenueStats(
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime from,
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime to) {
-
-        LocalDateTime rangeFrom = (from != null) ? from : LocalDateTime.of(2000, 1, 1, 0, 0);
-        LocalDateTime rangeTo = (to != null) ? to : LocalDateTime.now();
-
-        List<SignupPathRevenueResponse> stats = userService.getSignupPathRevenueStats(rangeFrom, rangeTo);
-        return ApiResponse.success("STAT_SIGNUP_PATH_REVENUE_SUCCESS", "유입 경로별 순매출 통계 조회 성공", stats);
     }
 
     @Operation(summary = "유저 리스트 전체 조회 (관리자용)")

@@ -60,4 +60,14 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
     @Query("SELECT u.id AS userId, u.createdAt AS createdAt FROM User u WHERE u.isDeleted = false")
     List<SignupInfo> findActiveSignupInfos();
+
+    // 통계매니저 유입경로별 매출 조인용: 결제(payments) 도메인 쪽에서 직접 join할 수 있도록 유저별 가입경로 원본 제공
+    interface SignupPathInfo {
+        Long getUserId();
+        String getSignupPath();
+    }
+
+    @Query("SELECT u.id AS userId, u.signupPath AS signupPath " +
+            "FROM User u WHERE u.isDeleted = false")
+    List<SignupPathInfo> findActiveSignupPathInfos();
 }
