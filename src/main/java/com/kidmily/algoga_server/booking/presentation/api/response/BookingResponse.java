@@ -48,6 +48,9 @@ public record BookingResponse(
         @Schema(description = "숙박 박수", example = "3")
         int nights,
 
+        @Schema(description = "분할(선금/잔금) 결제 허용 여부. false면 일시불만 가능(완강 후 예약)", example = "true")
+        boolean installmentAllowed,
+
         @Schema(description = "예약 생성일시")
         LocalDateTime createdAt
 ) {

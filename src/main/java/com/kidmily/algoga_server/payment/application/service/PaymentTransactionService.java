@@ -71,6 +71,13 @@ public class PaymentTransactionService {
                     return new BusinessException(PaymentErrorCode.BOOKING_NOT_FOUND);
                 });
 
+        // 완강 후 예약(installmentAllowed=false)은 분할(DEPOSIT/BALANCE) 불가, 일시불(FULL)만 허용
+        if (!booking.isInstallmentAllowed() && command.paymentType() != PaymentType.FULL) {
+            log.warn("[PaymentTransactionService] 일시불 전용 예약에 분할 결제 시도 - bookingId: {}, type: {}",
+                    command.bookingId(), command.paymentType());
+            throw new BusinessException(PaymentErrorCode.INSTALLMENT_NOT_ALLOWED);
+        }
+
         String idempotencyKey = generateIdempotencyKey(command.bookingId(), command.paymentType());
         paymentRepository.findByIdempotencyKey(idempotencyKey).ifPresent(p -> {
             if (p.getStatus() == PaymentStatus.SUCCESS) {

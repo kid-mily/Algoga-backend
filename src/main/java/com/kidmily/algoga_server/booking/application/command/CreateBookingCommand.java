@@ -1,5 +1,7 @@
 package com.kidmily.algoga_server.booking.application.command;
 
+import com.kidmily.algoga_server.booking.domain.model.BookingSource;
+
 import java.time.LocalDate;
 
 public record CreateBookingCommand(
@@ -9,6 +11,7 @@ public record CreateBookingCommand(
         String returnFlightInfo,
         int flightPrice,
         LocalDate checkInDate,
-        LocalDate checkOutDate
+        LocalDate checkOutDate,
+        BookingSource bookingSource
 ) {
 }

@@ -24,13 +24,14 @@ public class Booking {
     private LocalDate checkInDate;
     private LocalDate checkOutDate;
     private int nights;
+    private boolean installmentAllowed; // 분할(선금/잔금) 결제 허용 여부. 완강 후 경로(COMPLETION)면 false(일시불만)
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 
     public static Booking create(Long accommodationId, Long userId, int totalPrice,
                                  int depositPrice, int balancePrice, String bookingNumber,
                                  String flightInfo, String returnFlightInfo, LocalDate checkInDate,
-                                 LocalDate checkOutDate, int nights) {
+                                 LocalDate checkOutDate, int nights, boolean installmentAllowed) {
         Booking booking = new Booking();
         booking.accommodationId = accommodationId;
         booking.userId = userId;
@@ -44,6 +45,7 @@ public class Booking {
         booking.checkInDate = checkInDate;
         booking.checkOutDate = checkOutDate;
         booking.nights = nights;
+        booking.installmentAllowed = installmentAllowed;
         booking.createdAt = LocalDateTime.now();
         booking.updatedAt = LocalDateTime.now();
         return booking;
@@ -55,8 +57,8 @@ public class Booking {
                                        String bookingNumber, String flightInfo,
                                        String returnFlightInfo,
                                        LocalDate checkInDate, LocalDate checkOutDate,
-                                       int nights, LocalDateTime createdAt,
-                                       LocalDateTime updatedAt) {
+                                       int nights, boolean installmentAllowed,
+                                       LocalDateTime createdAt, LocalDateTime updatedAt) {
         Booking booking = new Booking();
         booking.id = id;
         booking.accommodationId = accommodationId;
@@ -71,6 +73,7 @@ public class Booking {
         booking.checkInDate = checkInDate;
         booking.checkOutDate = checkOutDate;
         booking.nights = nights;
+        booking.installmentAllowed = installmentAllowed;
         booking.createdAt = createdAt;
         booking.updatedAt = updatedAt;
         return booking;

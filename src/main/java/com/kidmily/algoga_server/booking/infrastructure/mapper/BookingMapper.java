@@ -23,6 +23,7 @@ public class BookingMapper {
                 booking.getCheckInDate(),
                 booking.getCheckOutDate(),
                 booking.getNights(),
+                booking.isInstallmentAllowed(),
                 booking.getCreatedAt(),
                 booking.getUpdatedAt()
         );
@@ -43,6 +44,7 @@ public class BookingMapper {
                 entity.getCheckInDate(),
                 entity.getCheckOutDate(),
                 entity.getNights(),
+                entity.isInstallmentAllowed(),
                 entity.getCreatedAt(),
                 entity.getUpdatedAt()
         );

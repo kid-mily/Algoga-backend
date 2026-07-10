@@ -49,7 +49,8 @@ public class BookingController {
                 returnFlightInfoJson,
                 request.flightPrice(),
                 request.checkInDate(),
-                request.checkOutDate()
+                request.checkOutDate(),
+                request.bookingSource()
         );
         Long bookingId = bookingCommandUseCase.handle(command);
         return ResponseEntity.status(HttpStatus.CREATED)

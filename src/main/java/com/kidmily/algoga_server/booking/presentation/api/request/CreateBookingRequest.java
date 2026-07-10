@@ -1,5 +1,6 @@
 package com.kidmily.algoga_server.booking.presentation.api.request;
 
+import com.kidmily.algoga_server.booking.domain.model.BookingSource;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
@@ -28,5 +29,10 @@ public record CreateBookingRequest(
 
         @Schema(description = "체크아웃 날짜", example = "2026-07-04")
         @NotNull
-        LocalDate checkOutDate
+        LocalDate checkOutDate,
+
+        @Schema(description = "예약 진입 경로. LOUNGE=패키지 라운지(분할/일시불 선택), "
+                + "COMPLETION=완강 후 마이페이지 모달(완강 필수·일시불 고정). 미전달 시 LOUNGE로 처리",
+                example = "LOUNGE")
+        BookingSource bookingSource
 ) {}
