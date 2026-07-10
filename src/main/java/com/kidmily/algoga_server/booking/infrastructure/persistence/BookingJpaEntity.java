@@ -48,6 +48,9 @@ public class BookingJpaEntity {
     @Column(name = "return_flight_info", columnDefinition = "JSON")
     private String returnFlightInfo;
 
+    @Column(name = "passenger_info", columnDefinition = "JSON")
+    private String passengerInfo;
+
     @Column(name = "check_in_date")
     private LocalDate checkInDate;
 
@@ -69,7 +72,7 @@ public class BookingJpaEntity {
     public BookingJpaEntity(Long accommodationId, Long userId, BookingStatus status,
                             int totalPrice, int depositPrice, int balancePrice,
                             String bookingNumber, String flightInfo, String returnFlightInfo,
-                            LocalDate checkInDate, LocalDate checkOutDate,
+                            String passengerInfo, LocalDate checkInDate, LocalDate checkOutDate,
                             int nights, boolean installmentAllowed,
                             LocalDateTime createdAt, LocalDateTime updatedAt) {
         this.accommodationId = accommodationId;
@@ -81,6 +84,7 @@ public class BookingJpaEntity {
         this.bookingNumber = bookingNumber;
         this.flightInfo = flightInfo;
         this.returnFlightInfo = returnFlightInfo;
+        this.passengerInfo = passengerInfo;
         this.checkInDate = checkInDate;
         this.checkOutDate = checkOutDate;
         this.nights = nights;

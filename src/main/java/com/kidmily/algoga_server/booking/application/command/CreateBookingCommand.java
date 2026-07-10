@@ -9,6 +9,7 @@ public record CreateBookingCommand(
         Long userId,
         String flightInfo,
         String returnFlightInfo,
+        String passengerInfo,
         int flightPrice,
         LocalDate checkInDate,
         LocalDate checkOutDate,

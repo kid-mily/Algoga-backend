@@ -57,7 +57,7 @@ class RefundStatsServiceTest {
 
     private Booking booking(Long id, BookingStatus status) {
         return Booking.reconstitute(id, 1L, 1L, status, 1_000_000, 300_000, 700_000,
-                "BK-" + id, "{}", null, LocalDate.now().plusDays(10), LocalDate.now().plusDays(13), 3, false,
+                "BK-" + id, "{}", null, null, LocalDate.now().plusDays(10), LocalDate.now().plusDays(13), 3, false,
                 LocalDateTime.now(), LocalDateTime.now());
     }
 

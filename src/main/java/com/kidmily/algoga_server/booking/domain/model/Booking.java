@@ -21,6 +21,7 @@ public class Booking {
     private String bookingNumber;
     private String flightInfo;
     private String returnFlightInfo;
+    private String passengerInfo; // 탑승객(여권) 정보 JSON: 성/이름/생년월일/여권번호/만료일
     private LocalDate checkInDate;
     private LocalDate checkOutDate;
     private int nights;
@@ -30,8 +31,9 @@ public class Booking {
 
     public static Booking create(Long accommodationId, Long userId, int totalPrice,
                                  int depositPrice, int balancePrice, String bookingNumber,
-                                 String flightInfo, String returnFlightInfo, LocalDate checkInDate,
-                                 LocalDate checkOutDate, int nights, boolean installmentAllowed) {
+                                 String flightInfo, String returnFlightInfo, String passengerInfo,
+                                 LocalDate checkInDate, LocalDate checkOutDate,
+                                 int nights, boolean installmentAllowed) {
         Booking booking = new Booking();
         booking.accommodationId = accommodationId;
         booking.userId = userId;
@@ -42,6 +44,7 @@ public class Booking {
         booking.bookingNumber = bookingNumber;
         booking.flightInfo = flightInfo;
         booking.returnFlightInfo = returnFlightInfo;
+        booking.passengerInfo = passengerInfo;
         booking.checkInDate = checkInDate;
         booking.checkOutDate = checkOutDate;
         booking.nights = nights;
@@ -55,7 +58,7 @@ public class Booking {
                                        BookingStatus status, int totalPrice,
                                        int depositPrice, int balancePrice,
                                        String bookingNumber, String flightInfo,
-                                       String returnFlightInfo,
+                                       String returnFlightInfo, String passengerInfo,
                                        LocalDate checkInDate, LocalDate checkOutDate,
                                        int nights, boolean installmentAllowed,
                                        LocalDateTime createdAt, LocalDateTime updatedAt) {
@@ -70,6 +73,7 @@ public class Booking {
         booking.bookingNumber = bookingNumber;
         booking.flightInfo = flightInfo;
         booking.returnFlightInfo = returnFlightInfo;
+        booking.passengerInfo = passengerInfo;
         booking.checkInDate = checkInDate;
         booking.checkOutDate = checkOutDate;
         booking.nights = nights;

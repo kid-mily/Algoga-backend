@@ -86,6 +86,7 @@ public class BookingCommandService implements BookingCommandUseCase {
                 bookingNumber,
                 command.flightInfo(),
                 command.returnFlightInfo(),
+                command.passengerInfo(),
                 command.checkInDate(),
                 command.checkOutDate(),
                 nights,
