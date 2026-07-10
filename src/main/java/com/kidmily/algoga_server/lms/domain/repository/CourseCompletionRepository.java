@@ -3,6 +3,7 @@ package com.kidmily.algoga_server.lms.domain.repository;
 import com.kidmily.algoga_server.lms.domain.model.CourseCompletion;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 public interface CourseCompletionRepository {
@@ -14,4 +15,6 @@ public interface CourseCompletionRepository {
     List<CourseCompletion> findByUserIdAndCourseIdIn(Long userId, List<Long> courseIds);
 
     boolean existsByUserIdAndCourseId(Long userId, Long courseId);
+
+    Map<Long, Long> countByCourseIds(List<Long> courseIds);
 }
