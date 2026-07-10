@@ -37,7 +37,7 @@ class BookingQueryServiceTest {
         return Booking.reconstitute(
                 id, accommodationId, 1L, status,
                 1_200_000, 360_000, 840_000,
-                "BK-20260706-0000" + id, "{}", null,
+                "BK-20260706-0000" + id, "{}", null, null,
                 LocalDate.of(2026, 8, 1), LocalDate.of(2026, 8, 4), 3, false,
                 LocalDateTime.now(), LocalDateTime.now());
     }

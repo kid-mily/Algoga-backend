@@ -39,6 +39,9 @@ public record BookingResponse(
         @Schema(description = "오는편 항공편 정보 (JSON). 패키지 예약이 아니거나 미전달 시 null")
         String returnFlightInfo,
 
+        @Schema(description = "탑승객(여권) 정보 (JSON). 성/이름/생년월일/여권번호/만료일")
+        String passengerInfo,
+
         @Schema(description = "체크인 날짜", example = "2026-07-01")
         LocalDate checkInDate,
 

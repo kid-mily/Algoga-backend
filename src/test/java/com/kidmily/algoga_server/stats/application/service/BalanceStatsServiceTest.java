@@ -42,7 +42,7 @@ class BalanceStatsServiceTest {
 
     private Booking booking(Long id, BookingStatus status, int balance, LocalDate checkIn) {
         return Booking.reconstitute(id, 1L, 1L, status, 1_000_000, 300_000, balance,
-                "BK-2026-000" + id, "{}", null, checkIn, checkIn.plusDays(3), 3, false,
+                "BK-2026-000" + id, "{}", null, null, checkIn, checkIn.plusDays(3), 3, false,
                 LocalDateTime.now(), LocalDateTime.now());
     }
 

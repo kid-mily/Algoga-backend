@@ -42,11 +42,15 @@ public class BookingController {
         String returnFlightInfoJson = request.returnFlightInfo() == null
                 ? null
                 : objectMapper.writeValueAsString(request.returnFlightInfo());
+        String passengerInfoJson = request.passengerInfo() == null
+                ? null
+                : objectMapper.writeValueAsString(request.passengerInfo());
         CreateBookingCommand command = new CreateBookingCommand(
                 request.accommodationId(),
                 userId,
                 objectMapper.writeValueAsString(request.flightInfo()),
                 returnFlightInfoJson,
+                passengerInfoJson,
                 request.flightPrice(),
                 request.checkInDate(),
                 request.checkOutDate(),
