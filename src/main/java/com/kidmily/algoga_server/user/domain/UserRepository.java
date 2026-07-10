@@ -3,6 +3,7 @@ package com.kidmily.algoga_server.user.domain;
 import org.springframework.data.domain.Page;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -45,12 +46,13 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
     boolean existsByPhone(String phone);
 
-    // DB에게 "가입경로별로 그룹 묶어서 숫자 세서 줘!" 라고 명령합니다. (탈퇴한 유저는 제외)
+    // DB에게 "가입경로별로 그룹 묶어서 숫자 세서 줘!" 라고 명령합니다. (탈퇴한 유저는 제외, 가입일(createdAt) 기준 기간 필터)
     @Query("SELECT u.signupPath AS path, COUNT(u) AS count " +
             "FROM User u " +
             "WHERE u.isDeleted = false " +
+            "AND u.createdAt BETWEEN :from AND :to " +
             "GROUP BY u.signupPath")
-    List<SignupPathStat> countUsersBySignupPath();
+    List<SignupPathStat> countUsersBySignupPath(@Param("from") LocalDateTime from, @Param("to") LocalDateTime to);
 
     // 통계매니저 코호트 분석용: 탈퇴 안 한 유저의 id + 가입일시만 가볍게 조회
     interface SignupInfo {
