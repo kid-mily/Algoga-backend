@@ -85,7 +85,7 @@ public class AuthController {
         }
     }
 
-    // 🌟 일반 로그인 (토큰을 HttpOnly 쿠키로 세팅)
+    // 일반 로그인 (토큰을 HttpOnly 쿠키로 세팅)
     @Operation(summary = "일반 로그인")
     @ApiErrorCodeExample(domain = UserErrorCode.class, value = {"NOT_FOUND_USER", "DELETED_USER", "ACCOUNT_LOCKED", "INVALID_PASSWORD"})
     @PostMapping("/login")
@@ -100,7 +100,7 @@ public class AuthController {
 //
 //        response.addHeader(HttpHeaders.SET_COOKIE, accessCookie.toString());
 //        response.addHeader(HttpHeaders.SET_COOKIE, refreshCookie.toString());
-        // 🌟 공통 메서드 호출 (깔끔!)
+        // 공통 메서드 호출 (깔끔!)
         response.addHeader(HttpHeaders.SET_COOKIE, globalJwtProvider.createCookie("accessToken", tokenResponse.accessToken()).toString());
         response.addHeader(HttpHeaders.SET_COOKIE, globalJwtProvider.createCookie("refreshToken", tokenResponse.refreshToken()).toString());
         log.info("응답 헤더에 AccessToken / RefreshToken 쿠키 세팅 완료.");
@@ -128,6 +128,7 @@ public class AuthController {
 
     // 임시비번 발급 후 비밀번호 강제 변경
     @Operation(summary = "비밀번호 강제 변경", description = "임시 비밀번호로 로그인한 후, 새 비밀번호로 강제 변경합니다.")
+    @ApiErrorCodeExample(domain = UserErrorCode.class, value = {"PASSWORD_SAME_AS_OLD"})
     @PatchMapping("/reset-password")
     public ApiResponse<Void> resetPassword(
             @AuthenticationPrincipal CustomUserDetails userDetails,
@@ -139,7 +140,7 @@ public class AuthController {
         return ApiResponse.success("AUTH_RESET_PW_SUCCESS", "비밀번호 변경이 완료되었습니다. 다시 로그인해주세요.");
     }
 
-    // 🌟 로그아웃 (쿠키를 읽어서 만료시킴)
+    // 로그아웃 (쿠키를 읽어서 만료시킴)
     @Operation(summary = "로그아웃", description = "쿠키를 삭제하고 Redis에서 Refresh Token을 지웁니다.")
     @PostMapping("/logout")
     public ApiResponse<Void> logout(HttpServletRequest request, HttpServletResponse response) {
@@ -158,7 +159,6 @@ public class AuthController {
             authService.logout(email);
         }
 
-        // 🌟 깔끔하게 리팩토링: 이제 컨트롤러는 내부 속성을 몰라도 됩니다.
         response.addHeader(HttpHeaders.SET_COOKIE, globalJwtProvider.deleteCookie("accessToken").toString());
         response.addHeader(HttpHeaders.SET_COOKIE, globalJwtProvider.deleteCookie("refreshToken").toString());
 
@@ -223,17 +223,7 @@ public class AuthController {
         // 3. 서비스에 가서 새 엑세스 토큰을 발급받아옵니다.
         String newAccessToken = authService.refreshAccessToken(email, refreshToken);
 
-        // 4. 새로 발급받은 엑세스 토큰을 다시 HttpOnly 쿠키로 예쁘게 구워서 줍니다.
-//        ResponseCookie accessCookie = ResponseCookie.from("accessToken", newAccessToken)
-//                .httpOnly(true)
-//                .secure(true) // HTTPS 적용 시 true
-//                .path("/")
-//                .maxAge(30 * 60) // 30분
-//                .sameSite("None")
-//                .build();
-//
-//        response.addHeader(HttpHeaders.SET_COOKIE, accessCookie.toString());
-        // 🌟 공통 메서드 호출
+        // 공통 메서드 호출
         response.addHeader(HttpHeaders.SET_COOKIE, globalJwtProvider.createCookie("accessToken", newAccessToken).toString());
 
         return ApiResponse.success("AUTH_REFRESH_SUCCESS", "토큰이 성공적으로 재발급되었습니다.", null);

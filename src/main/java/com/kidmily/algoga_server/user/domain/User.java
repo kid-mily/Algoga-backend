@@ -54,6 +54,10 @@ public class User {
     @Column(name = "locked_until")
     private LocalDateTime lockedUntil;
 
+    // 임시 비밀번호 발급 직전의 비밀번호 스냅샷 (강제 변경 시 재사용 방지용, 변경 완료 후에는 비움)
+    @Column(name = "previous_password")
+    private String previousPassword;
+
     @Column(name = "is_deleted")
     private boolean isDeleted;
 
@@ -99,6 +103,7 @@ public class User {
     private LocalDateTime diagnosedAt;
 
     public void setTemporaryPassword(String encodedPassword) {
+        this.previousPassword = this.password; // 임시비번 발급 전 원래 비밀번호 스냅샷 보관 (강제 변경 시 재사용 방지 체크용)
         this.password = encodedPassword;
         this.requiresPasswordChange = true;
         this.loginFailCount = 0; // 비밀번호가 초기화되었으니 실패 카운트도 리셋
@@ -108,6 +113,7 @@ public class User {
     public void changePassword(String encodedPassword) {
         this.password = encodedPassword;
         this.requiresPasswordChange = false; // 비밀번호를 정상 변경했으므로 플래그 해제
+        this.previousPassword = null; // 다 썼으니 비움
     }
 
     // 회원 탈퇴 (Soft Delete + 데이터 충돌 방지)
