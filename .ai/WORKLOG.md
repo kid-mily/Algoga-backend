@@ -83,5 +83,16 @@ Record completed work here by date. Keep entries factual and useful for future d
 
 - Before continuing refactor, search for old package references:
   - `rg "lms\.domain\.repository\.CourseRepository" src/main/java src/test/java`
-- A remaining old test import was detected in `BookingCommandServiceTest`; fix it before running broader tests.
+- Booking main/test old `CourseRepository` imports were fixed and pushed. Continue checking old imports after each `develop` update.
 - Continue refactor in small commits. Avoid moving all of `CourseService` at once because it touches payment, progress, quiz, review, Q&A, and completion behavior.
+
+### 2026-07-10 Course Value Object Package Split
+
+#### Summary
+
+- Moved CourseLevel and CourseStatus from lms.domain.model to course.domain.model.
+- Updated LMS service/result imports without changing API behavior.
+
+#### Verification
+
+- Pending final compile after CourseStatus move.

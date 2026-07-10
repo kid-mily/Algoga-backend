@@ -27,7 +27,7 @@
 
 ## Remaining Work
 
-- Fix any remaining old imports to moved Course packages.
+- Keep checking for old imports to moved Course packages after each `develop` update.
 - Decide next small refactor slice; likely inspect `CourseService` and avoid moving it wholesale.
 - Keep API request/response/json unchanged unless explicitly requested.
 
@@ -38,7 +38,7 @@
 ## Failed Verification or Cautions
 
 - After latest `develop` pull, `BookingCommandService.java` initially failed compile due old `lms.domain.repository.CourseRepository` import; fixed and pushed.
-- Actual search later found `BookingCommandServiceTest.java` still imports old `CourseRepository`; fix before broader test work.
+- Old `CourseRepository` imports in booking main/test code were fixed; search again before broad test work.
 - `docker-compose.yml` is intentionally untracked.
 - Windows/Git Bash CRLF warnings may appear due `core.autocrlf=true`; avoid broad diffs.
 

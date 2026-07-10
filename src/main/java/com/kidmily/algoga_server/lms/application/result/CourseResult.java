@@ -1,7 +1,7 @@
 package com.kidmily.algoga_server.lms.application.result;
 
 import com.kidmily.algoga_server.course.domain.model.Course;
-import com.kidmily.algoga_server.lms.domain.model.CourseLevel;
+import com.kidmily.algoga_server.course.domain.model.CourseLevel;
 
 import java.util.List;
 
