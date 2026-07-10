@@ -286,6 +286,13 @@ public class PaymentTransactionService {
                 payment.updatePaymentMethod(paymentMethod);
                 paymentRepository.save(payment);
 
+                // 웹훅 단독으로 결제가 확정되는 경우에도 쿠폰을 사용 처리한다.
+                // (savePayment/saveLecturePayment 경로에서만 markUsed 하고 있어 웹훅 확정분이 쿠폰 사용률 통계에서 누락되던 문제)
+                if (payment.getUsedCouponId() != null) {
+                    userCouponRepository.markUsed(payment.getUsedCouponId(), LocalDateTime.now());
+                    log.info("[PaymentTransactionService] 웹훅 - 쿠폰 사용 처리 - userCouponId: {}", payment.getUsedCouponId());
+                }
+
                 // 웹훅으로 결제 확정 시에도 결제 목록/통계 캐시를 무효화한다.
                 // 웹훅은 PortOne이 호출하는 경로라 userId 파라미터가 없어 @CacheEvict(key=...)를 쓸 수 없으므로,
                 // 저장된 payment 엔티티의 userId 로 CacheManager 를 통해 직접 evict 한다.
