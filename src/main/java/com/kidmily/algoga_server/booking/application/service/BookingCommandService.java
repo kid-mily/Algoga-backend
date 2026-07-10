@@ -7,12 +7,16 @@ import com.kidmily.algoga_server.booking.application.usecase.BookingCommandUseCa
 import com.kidmily.algoga_server.booking.domain.event.BookingCanceledEvent;
 import com.kidmily.algoga_server.booking.domain.event.BookingCreatedEvent;
 import com.kidmily.algoga_server.booking.domain.model.Booking;
+import com.kidmily.algoga_server.booking.domain.model.BookingSource;
 import com.kidmily.algoga_server.booking.domain.model.BookingStatus;
 import com.kidmily.algoga_server.booking.domain.repository.BookingRepository;
 import com.kidmily.algoga_server.booking.exception.BookingErrorCode;
 import com.kidmily.algoga_server.booking.settings.cache.BookingCacheType;
+import com.kidmily.algoga_server.course.domain.model.Course;
 import com.kidmily.algoga_server.global.exception.BusinessException;
 import com.kidmily.algoga_server.global.lock.DistributedLock;
+import com.kidmily.algoga_server.lms.domain.repository.CourseCompletionRepository;
+import com.kidmily.algoga_server.lms.domain.repository.CourseRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.CacheEvict;
@@ -23,6 +27,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
+import java.util.List;
 
 @Slf4j
 @Service
@@ -34,6 +39,8 @@ public class BookingCommandService implements BookingCommandUseCase {
 
     private final BookingRepository bookingRepository;
     private final AccommodationRepository accommodationRepository;
+    private final CourseRepository courseRepository;
+    private final CourseCompletionRepository courseCompletionRepository;
     private final ApplicationEventPublisher eventPublisher;
 
     @DistributedLock(key = "'booking:' + #command.userId() + ':' + #command.accommodationId() + ':' + #command.checkInDate()")
@@ -54,6 +61,15 @@ public class BookingCommandService implements BookingCommandUseCase {
         int nights = (int) ChronoUnit.DAYS.between(command.checkInDate(), command.checkOutDate());
         if (nights < 1) nights = 1; // 방어: 같은 날/역전 시 최소 1박
 
+        // 경로별 규칙:
+        // - COMPLETION(단과 완강 후 마이페이지 예약): 그 나라 강의 완강 필수 + 일시불만(분할 불가)
+        // - LOUNGE(라운지에서 바로 예약, 기본값): 완강 불필요 + 분할/일시불 선택 가능
+        boolean installmentAllowed = true;
+        if (command.bookingSource() == BookingSource.COMPLETION) {
+            requireCourseCompleted(command.userId(), accommodation.getCountryId());
+            installmentAllowed = false;
+        }
+
         int accommodationPrice = accommodation.getPricePerNight() * nights;
         int totalPrice = command.flightPrice() + accommodationPrice;
         int depositPrice = (int) (totalPrice * DEPOSIT_RATE);
@@ -72,7 +88,8 @@ public class BookingCommandService implements BookingCommandUseCase {
                 command.returnFlightInfo(),
                 command.checkInDate(),
                 command.checkOutDate(),
-                nights
+                nights,
+                installmentAllowed
         );
 
         Booking savedBooking = bookingRepository.save(booking);
@@ -117,6 +134,25 @@ public class BookingCommandService implements BookingCommandUseCase {
         eventPublisher.publishEvent(new BookingCanceledEvent(booking.getUserId(), booking.getAccommodationId(),  booking.getId()));
 
         log.info("[BookingCommandService] 예약 취소 완료 - bookingId: {}", bookingId);
+    }
+
+    /**
+     * 완강 후 예약(COMPLETION) 경로 게이트: 해당 국가의 강의를 하나라도 완강했는지 확인한다.
+     * 완강한 강의가 없으면 예약을 막는다.
+     */
+    private void requireCourseCompleted(Long userId, Long countryId) {
+        List<Long> courseIds = courseRepository.findPublishedByCountryId(countryId)
+                .stream()
+                .map(Course::getId)
+                .toList();
+
+        boolean completed = !courseIds.isEmpty()
+                && !courseCompletionRepository.findByUserIdAndCourseIdIn(userId, courseIds).isEmpty();
+
+        if (!completed) {
+            log.warn("[BookingCommandService] 완강 조건 미충족 - userId: {}, countryId: {}", userId, countryId);
+            throw new BusinessException(BookingErrorCode.LECTURE_NOT_COMPLETED);
+        }
     }
 
     private String generateBookingNumber() {

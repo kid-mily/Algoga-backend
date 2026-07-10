@@ -92,6 +92,7 @@ public class BookingQueryService implements BookingQueryUseCase {
                 booking.getCheckInDate(),
                 booking.getCheckOutDate(),
                 booking.getNights(),
+                booking.isInstallmentAllowed(),
                 booking.getCreatedAt()
         );
     }

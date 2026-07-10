@@ -57,6 +57,9 @@ public class BookingJpaEntity {
     @Column(name = "nights")
     private int nights;
 
+    @Column(name = "installment_allowed")
+    private boolean installmentAllowed;
+
     @Column(name = "created_at")
     private LocalDateTime createdAt;
 
@@ -67,7 +70,8 @@ public class BookingJpaEntity {
                             int totalPrice, int depositPrice, int balancePrice,
                             String bookingNumber, String flightInfo, String returnFlightInfo,
                             LocalDate checkInDate, LocalDate checkOutDate,
-                            int nights, LocalDateTime createdAt, LocalDateTime updatedAt) {
+                            int nights, boolean installmentAllowed,
+                            LocalDateTime createdAt, LocalDateTime updatedAt) {
         this.accommodationId = accommodationId;
         this.userId = userId;
         this.status = status;
@@ -80,6 +84,7 @@ public class BookingJpaEntity {
         this.checkInDate = checkInDate;
         this.checkOutDate = checkOutDate;
         this.nights = nights;
+        this.installmentAllowed = installmentAllowed;
         this.createdAt = createdAt;
         this.updatedAt = updatedAt;
     }

@@ -1,22 +1,34 @@
 package com.kidmily.algoga_server.booking.application.service;
 
+import com.kidmily.algoga_server.accommodation.domain.model.Accommodation;
 import com.kidmily.algoga_server.accommodation.domain.repository.AccommodationRepository;
+import com.kidmily.algoga_server.booking.application.command.CreateBookingCommand;
 import com.kidmily.algoga_server.booking.domain.model.Booking;
+import com.kidmily.algoga_server.booking.domain.model.BookingSource;
 import com.kidmily.algoga_server.booking.domain.model.BookingStatus;
 import com.kidmily.algoga_server.booking.domain.repository.BookingRepository;
+import com.kidmily.algoga_server.course.domain.model.Course;
 import com.kidmily.algoga_server.global.exception.BusinessException;
+import com.kidmily.algoga_server.lms.domain.model.CourseCompletion;
+import com.kidmily.algoga_server.lms.domain.repository.CourseCompletionRepository;
+import com.kidmily.algoga_server.lms.domain.repository.CourseRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.context.ApplicationEventPublisher;
 
+import java.time.LocalDate;
+import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.anyList;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
 /*
@@ -28,10 +40,25 @@ class BookingCommandServiceTest {
 
     @Mock private BookingRepository bookingRepository;
     @Mock private AccommodationRepository accommodationRepository;
+    @Mock private CourseRepository courseRepository;
+    @Mock private CourseCompletionRepository courseCompletionRepository;
     @Mock private ApplicationEventPublisher eventPublisher;
 
     @InjectMocks
     private BookingCommandService bookingCommandService;
+
+    private CreateBookingCommand command(BookingSource source) {
+        return new CreateBookingCommand(1L, 1L, "{}", null, 300_000,
+                LocalDate.of(2026, 8, 1), LocalDate.of(2026, 8, 3), source);
+    }
+
+    private Accommodation accommodationMock() {
+        Accommodation acc = mock(Accommodation.class);
+        when(acc.getPricePerNight()).thenReturn(100_000);
+        when(accommodationRepository.findById(1L)).thenReturn(Optional.of(acc));
+        when(bookingRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+        return acc;
+    }
 
     @BeforeEach
     @DisplayName("Mock 객체 주입 확인")
@@ -72,7 +99,7 @@ class BookingCommandServiceTest {
         Booking booking = Booking.reconstitute(
                 1L, 1L, 1L, BookingStatus.PENDING,
                 100000, 50000, 50000,
-                "BK-001", null, null, null, null, 3, null, null
+                "BK-001", null, null, null, null, 3, false, null, null
         );
         when(bookingRepository.findById(1L)).thenReturn(Optional.of(booking));
 
@@ -81,5 +108,56 @@ class BookingCommandServiceTest {
 
         // then : 상태 변경은 리포지토리(updateStatus)를 통해 CANCEL_REQUESTED 로 요청된다
         verify(bookingRepository).updateStatus(1L, BookingStatus.CANCEL_REQUESTED);
+    }
+
+    @Test
+    @DisplayName("LOUNGE 예약은 완강 체크 없이 생성되고 분할 결제가 허용된다(installmentAllowed=true)")
+    void 라운지_예약_분할허용() {
+        accommodationMock();
+
+        bookingCommandService.handle(command(BookingSource.LOUNGE));
+
+        ArgumentCaptor<Booking> captor = ArgumentCaptor.forClass(Booking.class);
+        verify(bookingRepository).save(captor.capture());
+        assertTrue(captor.getValue().isInstallmentAllowed());
+        // 라운지 경로는 완강 조회를 하지 않는다
+        verifyNoInteractions(courseRepository, courseCompletionRepository);
+    }
+
+    @Test
+    @DisplayName("COMPLETION 예약은 완강 시 생성되고 일시불만 허용된다(installmentAllowed=false)")
+    void 완강후_예약_일시불고정() {
+        Accommodation acc = accommodationMock();
+        when(acc.getCountryId()).thenReturn(1L);
+
+        Course course = mock(Course.class);
+        when(course.getId()).thenReturn(10L);
+        when(courseRepository.findPublishedByCountryId(1L)).thenReturn(List.of(course));
+        when(courseCompletionRepository.findByUserIdAndCourseIdIn(eq(1L), anyList()))
+                .thenReturn(List.of(mock(CourseCompletion.class)));
+
+        bookingCommandService.handle(command(BookingSource.COMPLETION));
+
+        ArgumentCaptor<Booking> captor = ArgumentCaptor.forClass(Booking.class);
+        verify(bookingRepository).save(captor.capture());
+        assertFalse(captor.getValue().isInstallmentAllowed());
+    }
+
+    @Test
+    @DisplayName("COMPLETION 예약인데 완강 안 했으면 LECTURE_NOT_COMPLETED 예외가 발생하고 저장되지 않는다")
+    void 미완강_예약_차단() {
+        Accommodation acc = mock(Accommodation.class);
+        when(accommodationRepository.findById(1L)).thenReturn(Optional.of(acc));
+        when(acc.getCountryId()).thenReturn(1L);
+
+        Course course = mock(Course.class);
+        when(course.getId()).thenReturn(10L);
+        when(courseRepository.findPublishedByCountryId(1L)).thenReturn(List.of(course));
+        when(courseCompletionRepository.findByUserIdAndCourseIdIn(eq(1L), anyList()))
+                .thenReturn(List.of());
+
+        assertThrows(BusinessException.class, () ->
+                bookingCommandService.handle(command(BookingSource.COMPLETION)));
+        verify(bookingRepository, never()).save(any());
     }
 }
