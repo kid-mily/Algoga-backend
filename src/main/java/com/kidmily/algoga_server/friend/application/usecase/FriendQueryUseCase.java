@@ -5,6 +5,7 @@ import java.util.List;
 public interface FriendQueryUseCase {
     List<FriendView> getFriends(Long myId);
     List<FriendView> getReceivedRequests(Long myId);
+    List<FriendView> getBlockedUsers(Long myId);
     FriendView searchUserByCode(String code);
 
     // 🌟 1. 추가: 관리자 페이지 리스트용 친구 수 카운트 기능
@@ -19,6 +20,7 @@ public interface FriendQueryUseCase {
             Long userId,
             String nickname,
             String personalCode,
-            String profileImageUrl
+            String profileImageUrl,
+            boolean isFavorite
     ) {}
 }

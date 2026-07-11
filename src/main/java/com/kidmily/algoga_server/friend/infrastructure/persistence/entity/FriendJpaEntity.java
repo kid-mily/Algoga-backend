@@ -34,6 +34,9 @@ public class FriendJpaEntity {
     @Column(nullable = false)
     private RelationStatus status;
 
+    @Column(nullable = false)
+    private boolean favorite;
+
     @CreatedDate
     private LocalDateTime createdAt;
 

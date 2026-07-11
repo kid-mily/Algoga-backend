@@ -148,6 +148,23 @@ public class FriendCommandService implements FriendCommandUseCase {
     }
 
     @Override
+    public void toggleFavorite(Long myId, Long relationId) {
+        FriendRelation relation = friendRepository.findById(relationId)
+                .orElseThrow(() -> new FriendException(FriendErrorCode.RELATION_NOT_FOUND));
+
+        if (!relation.getRequesterId().equals(myId) && !relation.getReceiverId().equals(myId)) {
+            throw new FriendException(FriendErrorCode.UNAUTHORIZED_ACTION);
+        }
+
+        if (relation.getStatus() != RelationStatus.ACCEPTED) {
+            throw new FriendException(FriendErrorCode.INVALID_STATUS);
+        }
+
+        relation.toggleFavorite();
+        friendRepository.save(relation);
+    }
+
+    @Override
     public void unblockUser(Long myId, String targetUserCode) {
         User targetUser = userRepository.findByPersonalCode(targetUserCode)
                 .orElseThrow(() -> new FriendException(FriendErrorCode.USER_NOT_FOUND));

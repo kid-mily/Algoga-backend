@@ -56,6 +56,12 @@ public class FriendRepositoryAdapter implements FriendRepository {
     }
 
     @Override
+    public List<FriendRelation> findByRequesterIdAndStatus(Long requesterId, RelationStatus status) {
+        return jpaRepository.findByRequesterIdAndStatus(requesterId, status).stream()
+                .map(mapper::toDomain).collect(Collectors.toList());
+    }
+
+    @Override
     public Optional<FriendRelation> findByRequesterIdAndReceiverId(Long requesterId, Long receiverId) {
         return jpaRepository.findByRequesterIdAndReceiverId(requesterId, receiverId).map(mapper::toDomain);
     }

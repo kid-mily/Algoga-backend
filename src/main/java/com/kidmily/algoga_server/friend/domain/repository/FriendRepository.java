@@ -15,6 +15,7 @@ public interface FriendRepository {
     long countAcceptedFriends(Long userId);
     List<FriendRelation> findAcceptedFriends(Long userId);
     List<FriendRelation> findByReceiverIdAndStatus(Long receiverId, RelationStatus status);
+    List<FriendRelation> findByRequesterIdAndStatus(Long requesterId, RelationStatus status);
 
     // 차단 해제 시 필요
     Optional<FriendRelation> findByRequesterIdAndReceiverId(Long requesterId, Long receiverId);

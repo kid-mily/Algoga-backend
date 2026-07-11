@@ -11,6 +11,7 @@ public class FriendRelation {
     private Long requesterId;
     private Long receiverId;
     private RelationStatus status;
+    private boolean favorite;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 
@@ -20,5 +21,9 @@ public class FriendRelation {
 
     public void updateStatus(RelationStatus status) {
         this.status = status;
+    }
+
+    public void toggleFavorite() {
+        this.favorite = !this.favorite;
     }
 }

@@ -9,4 +9,5 @@ public interface FriendCommandUseCase {
     void deleteFriend(Long myId, Long relationId);
     void blockUser(CreateFriendCommand command);
     void unblockUser(Long myId, String targetUserCode);
+    void toggleFavorite(Long myId, Long relationId);
 }
