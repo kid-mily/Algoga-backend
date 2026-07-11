@@ -7,6 +7,7 @@ import com.kidmily.algoga_server.benefit.domain.repository.UserCouponRepository;
 import com.kidmily.algoga_server.booking.domain.model.Booking;
 import com.kidmily.algoga_server.booking.domain.model.BookingStatus;
 import com.kidmily.algoga_server.booking.domain.repository.BookingRepository;
+import com.kidmily.algoga_server.course.domain.model.Course;
 import com.kidmily.algoga_server.global.exception.BusinessException;
 import com.kidmily.algoga_server.global.event.LecturePaymentCompletedEvent;
 import com.kidmily.algoga_server.course.domain.repository.CourseRepository;
@@ -32,6 +33,10 @@ import org.springframework.cache.annotation.Caching;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.kidmily.algoga_server.accommodation.domain.model.Accommodation;
+import com.kidmily.algoga_server.accommodation.domain.repository.AccommodationRepository;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -58,6 +63,8 @@ public class PaymentTransactionService {
     private final UserCouponRepository userCouponRepository;
     private final MileageHistoryRepository mileageHistoryRepository;
     private final CacheManager cacheManager;
+    private final AccommodationRepository accommodationRepository;
+    private final ObjectMapper objectMapper;
 
     @Caching(evict = {
             @CacheEvict(value = PaymentCacheType.Const.MY_PAYMENTS, key = "#command.userId()"),
@@ -147,6 +154,15 @@ public class PaymentTransactionService {
                         return new BusinessException(UserErrorCode.NOT_FOUND_USER);
                     });
 
+            // 숙소 정보 조회
+            Accommodation accommodation = accommodationRepository.findById(booking.getAccommodationId())
+                    .orElse(null);
+            String accName = accommodation != null ? accommodation.getName() : null;
+            String accAddress = accommodation != null ? accommodation.getAddress() : null;
+
+// 항공 정보 파싱 (가는 편)
+            FlightSummary flight = parseFlight(booking.getFlightInfo());
+
             eventPublisher.publishEvent(new PaymentCompletedEvent(
                     user.getId(),
                     user.getEmail(),
@@ -155,7 +171,16 @@ public class PaymentTransactionService {
                     null,
                     command.paymentType(),
                     command.amount(),
-                    LocalDateTime.now()
+                    LocalDateTime.now(),
+                    null,                     // productName (패키지는 숙소명을 별도 필드로)
+                    accName,
+                    accAddress,
+                    flight.airline(),
+                    flight.flightNumber(),
+                    flight.departureTime(),
+                    flight.arrivalTime(),
+                    booking.getCheckInDate(),
+                    booking.getCheckOutDate()
             ));
             // 캘린더용 패키지 이벤트 발행 승재 추가
             if (command.paymentType() == PaymentType.DEPOSIT || command.paymentType() == PaymentType.FULL) {
@@ -254,6 +279,10 @@ public class PaymentTransactionService {
                         return new BusinessException(UserErrorCode.NOT_FOUND_USER);
                     });
 
+            String courseName = courseRepository.findByIdAndDeletedFalse(command.courseId())
+                    .map(Course::getTitle)
+                    .orElse(null);
+
             eventPublisher.publishEvent(new PaymentCompletedEvent(
                     user.getId(),
                     user.getEmail(),
@@ -262,7 +291,10 @@ public class PaymentTransactionService {
                     command.courseId(),
                     PaymentType.LECTURE_ONLY,
                     command.amount(),
-                    paidAt
+                    paidAt,
+                    courseName,
+                    null, null, null, null, null, null,
+                    null, null
             ));
 
             eventPublisher.publishEvent(new LecturePaymentCompletedEvent(
@@ -394,4 +426,37 @@ public class PaymentTransactionService {
     private String generateIdempotencyKey(Long bookingId, PaymentType type) {
         return bookingId + "_" + type.name();
     }
+
+
+// 항공 JSON 파싱 헬퍼
+private FlightSummary parseFlight(String flightInfoJson) {
+    if (flightInfoJson == null || flightInfoJson.isBlank()) {
+        return FlightSummary.EMPTY;
+    }
+    try {
+        JsonNode node = objectMapper.readTree(flightInfoJson);
+        String airline = node.hasNonNull("airline") ? node.get("airline").asText() : null;
+        String flightNumber = node.hasNonNull("flightNumber") ? node.get("flightNumber").asText() : null;
+        LocalDateTime dep = parseDateTime(node.hasNonNull("departureTime") ? node.get("departureTime").asText() : null);
+        LocalDateTime arr = parseDateTime(node.hasNonNull("arrivalTime") ? node.get("arrivalTime").asText() : null);
+        return new FlightSummary(airline, flightNumber, dep, arr);
+    } catch (Exception e) {
+        log.warn("[PaymentTransactionService] 항공 정보 파싱 실패 - {}", e.getMessage());
+        return FlightSummary.EMPTY;
+    }
+}
+
+private LocalDateTime parseDateTime(String value) {
+    if (value == null || value.isBlank()) return null;
+    try {
+        return LocalDateTime.parse(value);
+    } catch (Exception e) {
+        return null;
+    }
+}
+
+private record FlightSummary(String airline, String flightNumber,
+                             LocalDateTime departureTime, LocalDateTime arrivalTime) {
+    static final FlightSummary EMPTY = new FlightSummary(null, null, null, null);
+}
 }
