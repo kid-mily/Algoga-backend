@@ -9,6 +9,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Repository;
 
+import java.time.LocalDateTime;
 import java.util.Optional;
 
 @Repository
@@ -57,5 +58,10 @@ public class NotificationRepositoryAdapter implements NotificationRepository {
     @Override
     public void deleteById(Long notificationId) {
         springDataRepository.deleteById(notificationId);
+    }
+
+    @Override
+    public int deleteOldNotifications(LocalDateTime threshold) {
+        return springDataRepository.deleteByCreatedAtBefore(threshold);
     }
 }

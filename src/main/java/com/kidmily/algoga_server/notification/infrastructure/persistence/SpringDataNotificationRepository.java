@@ -8,6 +8,8 @@ import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.time.LocalDateTime;
+
 public interface SpringDataNotificationRepository extends JpaRepository<NotificationJpaEntity, Long> {
 
     Page<NotificationJpaEntity> findByUserIdOrderByCreatedAtDesc(Long userId, Pageable pageable);
@@ -23,6 +25,10 @@ public interface SpringDataNotificationRepository extends JpaRepository<Notifica
     @Modifying
     @Query("DELETE FROM NotificationJpaEntity n WHERE n.userId = :userId")
     void deleteAllByUserId(@Param("userId") Long userId);
+
+    @Modifying
+    @Query("DELETE FROM NotificationJpaEntity n WHERE n.createdAt < :threshold")
+    int deleteByCreatedAtBefore(@Param("threshold") LocalDateTime threshold);
 
 
 }

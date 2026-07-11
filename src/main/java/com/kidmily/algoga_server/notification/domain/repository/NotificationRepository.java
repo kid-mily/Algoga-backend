@@ -4,6 +4,7 @@ import com.kidmily.algoga_server.notification.domain.model.Notification;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
+import java.time.LocalDateTime;
 import java.util.Optional;
 
 public interface NotificationRepository {
@@ -14,4 +15,5 @@ public interface NotificationRepository {
     void markAllAsRead(Long userId);
     void deleteById(Long notificationId);
     void deleteAllByUserId(Long userId);
+    int deleteOldNotifications(LocalDateTime threshold);
 }
