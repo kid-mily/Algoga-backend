@@ -262,35 +262,25 @@ public class RefundCommandService implements RefundCommandUseCase {
                 refundRequest.getId(), payment.getPortonePaymentId());
 
         // 🌟 메일 발송에 필요한 유저 정보 조회 (결제와 동일 패턴)
-        User user = userRepository.findById(booking.getUserId())
-                .orElseThrow(() -> new BusinessException(UserErrorCode.NOT_FOUND_USER));
+        // 메일용 정보 조회·이벤트 발행은 실패해도 환불 완료는 성공시킴
+        try {
+            User user = userRepository.findById(booking.getUserId())
+                    .orElseThrow(() -> new BusinessException(UserErrorCode.NOT_FOUND_USER));
 
-        RefundApprovedEvent event;
-        if (payment.getCourseId() != null) {
-            event = RefundApprovedEvent.ofLecture(
-                    booking.getUserId(),
-                    user.getEmail(),
-                    user.getName(),
-                    payment.getCourseId(),
-                    booking.getBookingNumber(),
-                    refundRequest.getAmount(),
-                    LocalDateTime.now()
-            );
-        } else {
-            event = RefundApprovedEvent.ofTrip(
-                    booking.getUserId(),
-                    user.getEmail(),
-                    user.getName(),
-                    booking.getAccommodationId(),
-                    booking.getId(),
-                    booking.getBookingNumber(),
-                    refundRequest.getAmount(),
-                    LocalDateTime.now()
-            );
+            RefundApprovedEvent event;
+            if (payment.getCourseId() != null) {
+                event = RefundApprovedEvent.ofLecture(booking.getUserId(), user.getEmail(), user.getName(),
+                        payment.getCourseId(), booking.getBookingNumber(), refundRequest.getAmount(), LocalDateTime.now());
+            } else {
+                event = RefundApprovedEvent.ofTrip(booking.getUserId(), user.getEmail(), user.getName(),
+                        booking.getAccommodationId(), booking.getId(), booking.getBookingNumber(),
+                        refundRequest.getAmount(), LocalDateTime.now());
+            }
+            eventPublisher.publishEvent(event);
+        } catch (Exception e) {
+            log.error("[RefundCommandService] 환불 완료 후 이벤트 발행 실패 (환불 자체는 완료됨) - refundId: {}, error: {}",
+                    refundRequest.getId(), e.getMessage(), e);
         }
-        eventPublisher.publishEvent(event);
-
-        log.info("[RefundCommandService] 캘린더 연동 및 메일 발송을 위한 RefundApprovedEvent 발행 완료");
     }
 
     private RefundRequest findRefundOrThrow(Long refundId) {
