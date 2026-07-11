@@ -1,13 +1,13 @@
-package com.kidmily.algoga_server.lms.presentation.api;
+package com.kidmily.algoga_server.learningprogress.presentation.api;
 
 import com.kidmily.algoga_server.global.annotation.swagger.ApiErrorCodeExample;
 import com.kidmily.algoga_server.global.common.api.response.ApiResponse;
 import com.kidmily.algoga_server.global.exception.GlobalErrorCode;
-import com.kidmily.algoga_server.lms.application.command.UpdateLearningProgressCommand;
-import com.kidmily.algoga_server.lms.application.usecase.LearningProgressUseCase;
+import com.kidmily.algoga_server.learningprogress.application.command.UpdateLearningProgressCommand;
+import com.kidmily.algoga_server.learningprogress.application.usecase.LearningProgressUseCase;
 import com.kidmily.algoga_server.lms.exception.LmsErrorCode;
-import com.kidmily.algoga_server.lms.presentation.request.UpdateLearningProgressRequest;
-import com.kidmily.algoga_server.lms.presentation.response.LearningProgressResponse;
+import com.kidmily.algoga_server.learningprogress.presentation.request.UpdateLearningProgressRequest;
+import com.kidmily.algoga_server.learningprogress.presentation.response.LearningProgressResponse;
 import com.kidmily.algoga_server.lms.presentation.support.CurrentUserIdResolver;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;

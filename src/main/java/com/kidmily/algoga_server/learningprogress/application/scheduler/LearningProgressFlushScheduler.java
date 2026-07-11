@@ -1,7 +1,7 @@
-package com.kidmily.algoga_server.lms.application.scheduler;
+package com.kidmily.algoga_server.learningprogress.application.scheduler;
 
-import com.kidmily.algoga_server.lms.application.port.LearningProgressCachePort;
-import com.kidmily.algoga_server.lms.domain.model.LearningProgress;
+import com.kidmily.algoga_server.learningprogress.application.port.LearningProgressCachePort;
+import com.kidmily.algoga_server.learningprogress.domain.model.LearningProgress;
 import io.micrometer.core.instrument.MeterRegistry;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

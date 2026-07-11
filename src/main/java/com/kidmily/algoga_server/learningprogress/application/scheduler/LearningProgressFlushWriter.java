@@ -1,7 +1,7 @@
-package com.kidmily.algoga_server.lms.application.scheduler;
+package com.kidmily.algoga_server.learningprogress.application.scheduler;
 
-import com.kidmily.algoga_server.lms.domain.model.LearningProgress;
-import com.kidmily.algoga_server.lms.domain.repository.LearningProgressRepository;
+import com.kidmily.algoga_server.learningprogress.domain.model.LearningProgress;
+import com.kidmily.algoga_server.learningprogress.domain.repository.LearningProgressRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Propagation;

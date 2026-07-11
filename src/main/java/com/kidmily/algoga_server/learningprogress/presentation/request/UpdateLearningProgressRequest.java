@@ -1,4 +1,4 @@
-package com.kidmily.algoga_server.lms.presentation.request;
+package com.kidmily.algoga_server.learningprogress.presentation.request;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.Min;

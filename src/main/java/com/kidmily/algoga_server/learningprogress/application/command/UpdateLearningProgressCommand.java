@@ -1,4 +1,4 @@
-package com.kidmily.algoga_server.lms.application.command;
+package com.kidmily.algoga_server.learningprogress.application.command;
 
 public record UpdateLearningProgressCommand(
         Long userId,

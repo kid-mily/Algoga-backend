@@ -1,6 +1,6 @@
-package com.kidmily.algoga_server.lms.application.port;
+package com.kidmily.algoga_server.learningprogress.application.port;
 
-import com.kidmily.algoga_server.lms.domain.model.LearningProgress;
+import com.kidmily.algoga_server.learningprogress.domain.model.LearningProgress;
 
 import java.util.List;
 import java.util.Optional;

@@ -1,6 +1,6 @@
-package com.kidmily.algoga_server.lms.infrastructure.persistence.repository;
+package com.kidmily.algoga_server.learningprogress.infrastructure.persistence.repository;
 
-import com.kidmily.algoga_server.lms.infrastructure.persistence.entity.LearningProgressJpaEntity;
+import com.kidmily.algoga_server.learningprogress.infrastructure.persistence.entity.LearningProgressJpaEntity;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.List;

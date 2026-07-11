@@ -1,9 +1,9 @@
-package com.kidmily.algoga_server.lms.infrastructure.persistence.adapter;
+package com.kidmily.algoga_server.learningprogress.infrastructure.persistence.adapter;
 
-import com.kidmily.algoga_server.lms.domain.model.LearningProgress;
-import com.kidmily.algoga_server.lms.domain.repository.LearningProgressRepository;
-import com.kidmily.algoga_server.lms.infrastructure.persistence.entity.LearningProgressJpaEntity;
-import com.kidmily.algoga_server.lms.infrastructure.persistence.repository.SpringDataLearningProgressRepository;
+import com.kidmily.algoga_server.learningprogress.domain.model.LearningProgress;
+import com.kidmily.algoga_server.learningprogress.domain.repository.LearningProgressRepository;
+import com.kidmily.algoga_server.learningprogress.infrastructure.persistence.entity.LearningProgressJpaEntity;
+import com.kidmily.algoga_server.learningprogress.infrastructure.persistence.repository.SpringDataLearningProgressRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 

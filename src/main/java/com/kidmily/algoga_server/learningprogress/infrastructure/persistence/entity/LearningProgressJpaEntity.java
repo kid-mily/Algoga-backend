@@ -1,4 +1,4 @@
-package com.kidmily.algoga_server.lms.infrastructure.persistence.entity;
+package com.kidmily.algoga_server.learningprogress.infrastructure.persistence.entity;
 
 import jakarta.persistence.*;
 import lombok.AccessLevel;

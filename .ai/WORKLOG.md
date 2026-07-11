@@ -150,3 +150,21 @@ Record completed work here by date. Keep entries factual and useful for future d
 
 - `./gradlew clean compileJava` passed with existing warnings.
 - `./gradlew build -x test` passed.
+
+### 2026-07-12 LearningProgress Package Split
+
+#### Summary
+
+- Moved learning progress command, port, result, service, usecase, scheduler, domain model/repository, persistence, Redis adapter, controller, request, and response classes from `lms` to `learningprogress`.
+- Preserved learning progress API path, request fields, response fields, Redis write-behind behavior, cache key behavior, and JSON structure.
+- Updated dependent imports in `CourseService`, `QuizService`, and `CourseServiceClassroomTest`.
+
+#### Verification
+
+- `./gradlew clean compileJava` passed with existing warnings.
+- `./gradlew build -x test` passed.
+
+#### Notes
+
+- `LearningProgressResult` still references LMS classroom result types because classroom/course service responsibilities are not fully split yet.
+- Next likely slice: split `Enrollment` package or isolate course classroom/service boundaries before moving more CourseService responsibilities.

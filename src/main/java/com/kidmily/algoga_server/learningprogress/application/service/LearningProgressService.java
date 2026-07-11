@@ -1,18 +1,18 @@
-package com.kidmily.algoga_server.lms.application.service;
+package com.kidmily.algoga_server.learningprogress.application.service;
 
-import com.kidmily.algoga_server.lms.application.command.UpdateLearningProgressCommand;
-import com.kidmily.algoga_server.lms.application.port.LearningProgressCachePort;
+import com.kidmily.algoga_server.learningprogress.application.command.UpdateLearningProgressCommand;
+import com.kidmily.algoga_server.learningprogress.application.port.LearningProgressCachePort;
 import com.kidmily.algoga_server.lms.application.result.CourseClassroomChapterResult;
 import com.kidmily.algoga_server.lms.application.result.CourseClassroomResult;
-import com.kidmily.algoga_server.lms.application.result.LearningProgressResult;
-import com.kidmily.algoga_server.lms.application.usecase.LearningProgressUseCase;
+import com.kidmily.algoga_server.learningprogress.application.result.LearningProgressResult;
+import com.kidmily.algoga_server.learningprogress.application.usecase.LearningProgressUseCase;
 import com.kidmily.algoga_server.course.domain.model.Chapter;
 import com.kidmily.algoga_server.course.domain.model.Course;
-import com.kidmily.algoga_server.lms.domain.model.LearningProgress;
+import com.kidmily.algoga_server.learningprogress.domain.model.LearningProgress;
 import com.kidmily.algoga_server.course.domain.repository.ChapterRepository;
 import com.kidmily.algoga_server.course.domain.repository.CourseRepository;
 import com.kidmily.algoga_server.lms.domain.repository.EnrollmentRepository;
-import com.kidmily.algoga_server.lms.domain.repository.LearningProgressRepository;
+import com.kidmily.algoga_server.learningprogress.domain.repository.LearningProgressRepository;
 import com.kidmily.algoga_server.lms.exception.LmsErrorCode;
 import com.kidmily.algoga_server.lms.exception.LmsException;
 import io.micrometer.core.instrument.MeterRegistry;

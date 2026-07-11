@@ -1,9 +1,9 @@
-package com.kidmily.algoga_server.lms.infrastructure.redis;
+package com.kidmily.algoga_server.learningprogress.infrastructure.redis;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.kidmily.algoga_server.lms.application.port.LearningProgressCachePort;
-import com.kidmily.algoga_server.lms.domain.model.LearningProgress;
+import com.kidmily.algoga_server.learningprogress.application.port.LearningProgressCachePort;
+import com.kidmily.algoga_server.learningprogress.domain.model.LearningProgress;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.RedisTemplate;

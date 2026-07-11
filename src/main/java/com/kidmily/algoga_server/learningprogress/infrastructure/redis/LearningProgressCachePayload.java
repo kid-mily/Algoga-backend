@@ -1,6 +1,6 @@
-package com.kidmily.algoga_server.lms.infrastructure.redis;
+package com.kidmily.algoga_server.learningprogress.infrastructure.redis;
 
-import com.kidmily.algoga_server.lms.domain.model.LearningProgress;
+import com.kidmily.algoga_server.learningprogress.domain.model.LearningProgress;
 
 public record LearningProgressCachePayload(
         Long id,
