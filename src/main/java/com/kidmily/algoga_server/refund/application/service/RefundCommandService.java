@@ -16,6 +16,9 @@ import com.kidmily.algoga_server.refund.domain.model.RefundRequest;
 import com.kidmily.algoga_server.refund.domain.model.RefundStatus;
 import com.kidmily.algoga_server.refund.domain.repository.RefundRepository;
 import com.kidmily.algoga_server.refund.exception.RefundErrorCode;
+import com.kidmily.algoga_server.user.domain.User;
+import com.kidmily.algoga_server.user.domain.UserRepository;
+import com.kidmily.algoga_server.user.exception.UserErrorCode;
 import io.micrometer.core.instrument.Counter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -24,6 +27,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
 
@@ -40,6 +44,7 @@ public class RefundCommandService implements RefundCommandUseCase {
     private final Counter refundRequestedTotal;
     private final Counter refundApprovedTotal;
     private final Counter refundRejectedTotal;
+    private final UserRepository userRepository;
 
     @Override
     @Transactional
@@ -256,15 +261,26 @@ public class RefundCommandService implements RefundCommandUseCase {
         log.info("[RefundCommandService] 환불 완료 - refundId: {}, portonePaymentId: {}",
                 refundRequest.getId(), payment.getPortonePaymentId());
 
-        RefundApprovedEvent event;
-        if (payment.getCourseId() != null) {
-            event = RefundApprovedEvent.ofLecture(booking.getUserId(), payment.getCourseId());
-        } else {
-            event = RefundApprovedEvent.ofTrip(booking.getUserId(), booking.getAccommodationId(), booking.getId());
-        }
-        eventPublisher.publishEvent(event);
+        // 🌟 메일 발송에 필요한 유저 정보 조회 (결제와 동일 패턴)
+        // 메일용 정보 조회·이벤트 발행은 실패해도 환불 완료는 성공시킴
+        try {
+            User user = userRepository.findById(booking.getUserId())
+                    .orElseThrow(() -> new BusinessException(UserErrorCode.NOT_FOUND_USER));
 
-        log.info("[RefundCommandService] 캘린더 연동을 위한 RefundApprovedEvent 발행 완료");
+            RefundApprovedEvent event;
+            if (payment.getCourseId() != null) {
+                event = RefundApprovedEvent.ofLecture(booking.getUserId(), user.getEmail(), user.getName(),
+                        payment.getCourseId(), booking.getBookingNumber(), refundRequest.getAmount(), LocalDateTime.now());
+            } else {
+                event = RefundApprovedEvent.ofTrip(booking.getUserId(), user.getEmail(), user.getName(),
+                        booking.getAccommodationId(), booking.getId(), booking.getBookingNumber(),
+                        refundRequest.getAmount(), LocalDateTime.now());
+            }
+            eventPublisher.publishEvent(event);
+        } catch (Exception e) {
+            log.error("[RefundCommandService] 환불 완료 후 이벤트 발행 실패 (환불 자체는 완료됨) - refundId: {}, error: {}",
+                    refundRequest.getId(), e.getMessage(), e);
+        }
     }
 
     private RefundRequest findRefundOrThrow(Long refundId) {

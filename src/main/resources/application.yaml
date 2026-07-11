@@ -35,7 +35,8 @@ spring:
       host: ${REDIS_HOST}
       port: ${REDIS_PORT}
       ssl:
-        enabled: true
+        # 로컬(평문 Docker Redis)은 false, ElastiCache(전송 중 암호화)는 REDIS_SSL_ENABLED=true 주입
+        enabled: ${REDIS_SSL_ENABLED:false}
 
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
