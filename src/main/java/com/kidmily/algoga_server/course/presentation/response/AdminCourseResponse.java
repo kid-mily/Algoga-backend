@@ -1,6 +1,6 @@
-package com.kidmily.algoga_server.lms.presentation.response;
+package com.kidmily.algoga_server.course.presentation.response;
 
-import com.kidmily.algoga_server.lms.application.result.CourseResult;
+import com.kidmily.algoga_server.course.application.result.CourseResult;
 import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.util.List;

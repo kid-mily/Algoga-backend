@@ -1,7 +1,7 @@
-package com.kidmily.algoga_server.lms.application.service;
+package com.kidmily.algoga_server.course.application.service;
 
-import com.kidmily.algoga_server.lms.application.result.CourseResult;
-import com.kidmily.algoga_server.lms.application.result.PublishedCourseListCacheResult;
+import com.kidmily.algoga_server.course.application.result.CourseResult;
+import com.kidmily.algoga_server.course.application.result.PublishedCourseListCacheResult;
 import com.kidmily.algoga_server.course.domain.repository.CourseRepository;
 import com.kidmily.algoga_server.country.domain.repository.MapRepository;
 import com.kidmily.algoga_server.lms.exception.LmsErrorCode;

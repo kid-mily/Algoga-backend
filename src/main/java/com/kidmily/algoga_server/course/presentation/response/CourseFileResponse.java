@@ -1,6 +1,6 @@
-package com.kidmily.algoga_server.lms.presentation.response;
+package com.kidmily.algoga_server.course.presentation.response;
 
-import com.kidmily.algoga_server.lms.application.result.CourseFileResult;
+import com.kidmily.algoga_server.course.application.result.CourseFileResult;
 import io.swagger.v3.oas.annotations.media.Schema;
 
 @Schema(description = "강의 자료 파일 응답")

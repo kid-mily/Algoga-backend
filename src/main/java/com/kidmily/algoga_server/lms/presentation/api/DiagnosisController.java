@@ -9,7 +9,7 @@ import com.kidmily.algoga_server.lms.application.usecase.DiagnosisUseCase;
 import com.kidmily.algoga_server.lms.exception.LmsErrorCode;
 import com.kidmily.algoga_server.lms.presentation.request.DiagnosisAnswerRequest;
 import com.kidmily.algoga_server.lms.presentation.request.DiagnosisSubmitRequest;
-import com.kidmily.algoga_server.lms.presentation.response.CourseListResponse;
+import com.kidmily.algoga_server.course.presentation.response.CourseListResponse;
 import com.kidmily.algoga_server.lms.presentation.response.DiagnosisQuestionResponse;
 import com.kidmily.algoga_server.lms.presentation.response.DiagnosisResultResponse;
 import com.kidmily.algoga_server.lms.presentation.support.CurrentUserIdResolver;

@@ -1,4 +1,4 @@
-package com.kidmily.algoga_server.lms.application.command;
+package com.kidmily.algoga_server.course.application.command;
 
 import com.kidmily.algoga_server.course.application.port.UploadFile;
 

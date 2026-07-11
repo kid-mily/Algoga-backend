@@ -1,5 +1,6 @@
 package com.kidmily.algoga_server.lms.application.result;
 
+import com.kidmily.algoga_server.course.application.result.CourseResult;
 import java.time.LocalDateTime;
 import java.util.List;
 

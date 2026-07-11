@@ -1,6 +1,7 @@
-package com.kidmily.algoga_server.lms.application.result;
+package com.kidmily.algoga_server.course.application.result;
 
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
+import com.kidmily.algoga_server.course.application.result.CourseResult;
 
 import java.util.List;
 

@@ -108,3 +108,31 @@ Record completed work here by date. Keep entries factual and useful for future d
 
 - Ran `./gradlew clean compileJava`; build passed with existing warnings.
 - Ran `./gradlew build -x test`; build passed.
+
+### 2026-07-12 Course Application and Presentation Package Split
+
+#### Summary
+
+- Continued LMS package split on `refactor/lms-package-split-next`.
+- Moved course-specific application command/result/cache classes from `lms` to `course`.
+- Moved Course/Chapter admin request DTOs and Course/Chapter response DTOs from `lms.presentation` to `course.presentation`.
+- Kept API URL, request fields, response fields, JSON structure, `ApiResponse`, and `PageResponse` unchanged.
+
+#### Changed Scope
+
+- `course/application/command`: `CreateCourseCommand`, `UpdateCourseCommand`
+- `course/application/result`: `CourseResult`, `CourseFileResult`, `PublishedCourseListCacheResult`
+- `course/application/service`: `PublishedCourseListCacheService`
+- `course/presentation/request/admin`: Course/Chapter create/update request DTOs
+- `course/presentation/response`: Course/Chapter list/admin/file response DTOs
+- Updated imports in existing LMS/diagnosis/course controllers and services.
+
+#### Verification
+
+- `./gradlew clean compileJava` passed with existing warnings.
+- `./gradlew build -x test` passed.
+
+#### Notes
+
+- `CourseUseCase` and `CourseService` remain under `lms` because they still include enrollment, completion, Q&A, classroom, and diagnosis-related behavior.
+- Next likely slice: split `CourseUseCase` responsibilities or move course-only service logic carefully without changing API contracts.
