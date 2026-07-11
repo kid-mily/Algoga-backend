@@ -186,3 +186,21 @@ Record completed work here by date. Keep entries factual and useful for future d
 
 - `CourseService` still owns several LMS classroom/course flows and now imports the enrollment port explicitly.
 - Next likely slice: split quiz or review/Q&A package after committing this Enrollment slice.
+
+### 2026-07-12 Quiz Package Split
+
+#### Summary
+
+- Moved quiz command, result, usecase, service, domain model/repository, persistence adapter/entity/repository, controller, request, and response classes from `lms` to `quiz` package.
+- Updated dependent imports in `CourseService`, `CourseServiceClassroomTest`, and benefit LMS adapter.
+- Preserved quiz API URLs, request fields, response fields, JSON structure, and behavior.
+
+#### Verification
+
+- `./gradlew clean compileJava` passed with existing warnings.
+- `./gradlew build -x test` passed.
+
+#### Notes
+
+- `QuizSubmitResult` and `QuizSubmitResponse` still depend on LMS completion result/response types because completion has not been split yet.
+- Next likely slice: split completion/certificate or review/Q&A, depending on desired PR size.

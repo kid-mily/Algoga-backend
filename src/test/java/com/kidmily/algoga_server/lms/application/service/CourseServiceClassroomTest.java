@@ -1,4 +1,4 @@
-package com.kidmily.algoga_server.lms.application.service;
+package com.kidmily.algoga_server.quiz.application.service;
 
 import com.kidmily.algoga_server.global.port.out.FileStoragePort;
 import com.kidmily.algoga_server.lms.application.port.UserProfilePort;
@@ -17,7 +17,7 @@ import com.kidmily.algoga_server.lms.domain.repository.CourseReviewRepository;
 import com.kidmily.algoga_server.enrollment.domain.repository.EnrollmentRepository;
 import com.kidmily.algoga_server.learningprogress.domain.repository.LearningProgressRepository;
 import com.kidmily.algoga_server.country.domain.repository.MapRepository;
-import com.kidmily.algoga_server.lms.domain.repository.QuizSubmissionRepository;
+import com.kidmily.algoga_server.quiz.domain.repository.QuizSubmissionRepository;
 import com.kidmily.algoga_server.lms.exception.LmsErrorCode;
 import com.kidmily.algoga_server.lms.exception.LmsException;
 import com.kidmily.algoga_server.lms.settings.LmsStorageSettings;
