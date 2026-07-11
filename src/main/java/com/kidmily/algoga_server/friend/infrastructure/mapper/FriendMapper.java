@@ -13,6 +13,7 @@ public class FriendMapper {
                 .requesterId(entity.getRequesterId())
                 .receiverId(entity.getReceiverId())
                 .status(entity.getStatus())
+                .favorite(entity.isFavorite())
                 .createdAt(entity.getCreatedAt())
                 .updatedAt(entity.getUpdatedAt())
                 .build();
@@ -25,6 +26,7 @@ public class FriendMapper {
                 .requesterId(domain.getRequesterId())
                 .receiverId(domain.getReceiverId())
                 .status(domain.getStatus())
+                .favorite(domain.isFavorite())
                 .build();
     }
 }

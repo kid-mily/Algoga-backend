@@ -48,14 +48,20 @@ FriendQueryService implements FriendQueryUseCase {
 
         // 4. 조립 및 정렬
         return friends.stream()
-                .map(friend -> new FriendView(
-                        // relationId가 필요하다면 relations 리스트에서 매칭시켜야 합니다.
-                        relations.stream().filter(r -> r.getRequesterId().equals(friend.getId()) || r.getReceiverId().equals(friend.getId())).findFirst().get().getId(),
-                        friend.getId(),
-                        friend.getNickname(),
-                        friend.getPersonalCode(),
-                        friend.getProfileImageUrl()
-                ))
+                .map(friend -> {
+                    // relationId/즐겨찾기 여부가 필요하므로 relations 리스트에서 매칭시킴
+                    FriendRelation relation = relations.stream()
+                            .filter(r -> r.getRequesterId().equals(friend.getId()) || r.getReceiverId().equals(friend.getId()))
+                            .findFirst().get();
+                    return new FriendView(
+                            relation.getId(),
+                            friend.getId(),
+                            friend.getNickname(),
+                            friend.getPersonalCode(),
+                            friend.getProfileImageUrl(),
+                            relation.isFavorite()
+                    );
+                })
                 .sorted((a, b) -> a.nickname().compareToIgnoreCase(b.nickname()))
                 .collect(Collectors.toList());
     }
@@ -87,7 +93,42 @@ FriendQueryService implements FriendQueryUseCase {
                             requester.getId(),
                             requester.getNickname(),
                             requester.getPersonalCode(),
-                            requester.getProfileImageUrl()
+                            requester.getProfileImageUrl(),
+                            false // 친구 요청 단계라 즐겨찾기 개념 없음
+                    );
+                }).collect(Collectors.toList());
+    }
+
+    @Override
+    public List<FriendView> getBlockedUsers(Long myId) {
+        // 차단 관계는 requesterId=차단한 사람(나), receiverId=차단당한 사람으로 저장됨
+        List<FriendRelation> blocks = friendRepository.findByRequesterIdAndStatus(myId, RelationStatus.BLOCKED);
+
+        if (blocks.isEmpty()) {
+            return List.of();
+        }
+
+        // 차단당한 유저들의 정보를 배치로 한 번에 조회 (N+1 방지)
+        List<Long> blockedUserIds = blocks.stream()
+                .map(FriendRelation::getReceiverId)
+                .distinct()
+                .toList();
+
+        Map<Long, User> blockedUserById = userRepository.findAllById(blockedUserIds).stream()
+                .collect(Collectors.toMap(User::getId, blockedUser -> blockedUser));
+
+        // 탈퇴 후 하드 삭제된 유저에 대한 차단 기록은 조용히 건너뜀
+        return blocks.stream()
+                .filter(block -> blockedUserById.containsKey(block.getReceiverId()))
+                .map(block -> {
+                    User blockedUser = blockedUserById.get(block.getReceiverId());
+                    return new FriendView(
+                            block.getId(),
+                            blockedUser.getId(),
+                            blockedUser.getNickname(),
+                            blockedUser.getPersonalCode(),
+                            blockedUser.getProfileImageUrl(),
+                            false // 차단 목록이라 즐겨찾기 개념 없음
                     );
                 }).collect(Collectors.toList());
     }
@@ -102,7 +143,8 @@ FriendQueryService implements FriendQueryUseCase {
                 user.getId(),
                 user.getNickname(),
                 user.getPersonalCode(),
-                user.getProfileImageUrl()
+                user.getProfileImageUrl(),
+                false // 검색 결과라 즐겨찾기 개념 없음
         );
     }
 

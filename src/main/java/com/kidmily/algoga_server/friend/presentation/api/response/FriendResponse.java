@@ -9,7 +9,8 @@ public record FriendResponse(
         Long userId,
         String nickname,
         String personalCode,
-        String profileImageUrl
+        String profileImageUrl,
+        boolean isFavorite
 ) {
     // Application의 View 객체를 Presentation의 Response로 변환
     public static FriendResponse from(FriendView view) {
@@ -19,6 +20,7 @@ public record FriendResponse(
                 .nickname(view.nickname())
                 .personalCode(view.personalCode())
                 .profileImageUrl(view.profileImageUrl())
+                .isFavorite(view.isFavorite())
                 .build();
     }
 }

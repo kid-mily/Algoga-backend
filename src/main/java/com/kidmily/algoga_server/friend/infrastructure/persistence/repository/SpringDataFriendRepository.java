@@ -23,6 +23,9 @@ public interface SpringDataFriendRepository extends JpaRepository<FriendJpaEntit
     @Query("SELECT f FROM FriendJpaEntity f WHERE f.receiverId = :receiverId AND f.status = :status")
     List<FriendJpaEntity> findByReceiverIdAndStatus(@Param("receiverId") Long receiverId, @Param("status") RelationStatus status);
 
+    @Query("SELECT f FROM FriendJpaEntity f WHERE f.requesterId = :requesterId AND f.status = :status")
+    List<FriendJpaEntity> findByRequesterIdAndStatus(@Param("requesterId") Long requesterId, @Param("status") RelationStatus status);
+
     @Query("SELECT f FROM FriendJpaEntity f WHERE f.requesterId = :requesterId AND f.receiverId = :receiverId")
     Optional<FriendJpaEntity> findByRequesterIdAndReceiverId(@Param("requesterId") Long requesterId, @Param("receiverId") Long receiverId);
 }

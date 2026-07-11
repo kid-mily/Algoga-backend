@@ -50,6 +50,17 @@ public class FriendController {
         return ApiResponse.success("FRIEND_REQUEST_LIST_SUCCESS", "받은 요청 목록을 조회했습니다.", response);
     }
 
+    @Operation(summary = "내가 차단한 유저 목록 조회", description = "내가 차단한 유저 목록을 조회합니다.")
+    @GetMapping("/friends/blocks")
+    public ApiResponse<List<FriendResponse>> getBlockedUsers(@AuthenticationPrincipal CustomUserDetails user) {
+        if (user == null) throw new FriendException(FriendErrorCode.USER_NOT_FOUND);
+
+        List<FriendView> views = queryUseCase.getBlockedUsers(user.getUser().getId());
+        List<FriendResponse> response = views.stream().map(FriendResponse::from).collect(Collectors.toList());
+
+        return ApiResponse.success("FRIEND_BLOCK_LIST_SUCCESS", "차단한 유저 목록을 조회했습니다.", response);
+    }
+
     @Operation(summary = "사용자 코드로 친구 검색", description = "개인 번호로 상대방을 검색합니다.")
     @GetMapping("/users/search")
     public ApiResponse<FriendResponse> searchUserByCode(@RequestParam String code) {
@@ -108,6 +119,18 @@ public class FriendController {
 
         commandUseCase.deleteFriend(userDetails.getUser().getId(), relationId);
         return ApiResponse.success("FRIEND_DELETE_SUCCESS", "친구를 삭제했습니다.");
+    }
+
+    @Operation(summary = "친구 즐겨찾기 토글", description = "친구를 즐겨찾기에 추가하거나 해제합니다.")
+    @PatchMapping("/friends/{relationId}/favorite")
+    public ApiResponse<Void> toggleFavorite(
+            @AuthenticationPrincipal CustomUserDetails userDetails,
+            @PathVariable Long relationId) {
+
+        if (userDetails == null) throw new FriendException(FriendErrorCode.USER_NOT_FOUND);
+
+        commandUseCase.toggleFavorite(userDetails.getUser().getId(), relationId);
+        return ApiResponse.success("FRIEND_FAVORITE_TOGGLE_SUCCESS", "즐겨찾기 상태를 변경했습니다.");
     }
 
     @Operation(summary = "유저 차단", description = "상대방 유저를 차단합니다.")
