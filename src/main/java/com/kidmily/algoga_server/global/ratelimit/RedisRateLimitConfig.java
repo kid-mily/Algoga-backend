@@ -29,12 +29,17 @@ public class RedisRateLimitConfig {
     @Value("${spring.data.redis.password:#{null}}")
     private String redisPassword;
 
+    @Value("${spring.data.redis.ssl.enabled:false}")
+    private boolean redisSslEnabled;
+
     @Bean
     public ProxyManager<byte[]> lettuceProxyManager() {
         try {
             RedisURI.Builder uriBuilder = RedisURI.builder()
                     .withHost(redisHost)
-                    .withPort(redisPort);
+                    .withPort(redisPort)
+                    // ElastiCache 전송 중 암호화(TLS) 활성화 시 SSL로 접속해야 함
+                    .withSsl(redisSslEnabled);
 
             if (redisPassword != null && !redisPassword.isBlank()) {
                 uriBuilder.withPassword(redisPassword.toCharArray());
