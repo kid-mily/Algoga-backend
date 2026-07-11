@@ -168,3 +168,21 @@ Record completed work here by date. Keep entries factual and useful for future d
 
 - `LearningProgressResult` still references LMS classroom result types because classroom/course service responsibilities are not fully split yet.
 - Next likely slice: split `Enrollment` package or isolate course classroom/service boundaries before moving more CourseService responsibilities.
+
+### 2026-07-12 Enrollment Package Split
+
+#### Summary
+
+- Moved enrollment event listener, domain model, repository port, persistence adapter/entity/repository from `lms` to `enrollment` package.
+- Updated dependent imports in benefit LMS adapter, learning progress service, LMS course/quiz services, stats interest service, and related tests.
+- Kept API URL, request fields, response fields, JSON structure, and enrollment behavior unchanged.
+
+#### Verification
+
+- `./gradlew clean compileJava` passed with existing warnings.
+- `./gradlew build -x test` passed.
+
+#### Notes
+
+- `CourseService` still owns several LMS classroom/course flows and now imports the enrollment port explicitly.
+- Next likely slice: split quiz or review/Q&A package after committing this Enrollment slice.
