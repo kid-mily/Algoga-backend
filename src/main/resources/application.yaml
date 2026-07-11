@@ -37,6 +37,11 @@ spring:
       ssl:
         # 로컬(평문 Docker Redis)은 false, ElastiCache(전송 중 암호화)는 REDIS_SSL_ENABLED=true 주입
         enabled: ${REDIS_SSL_ENABLED:false}
+      # ElastiCache Serverless 콜드 스타트 시 첫 TLS 연결이 느릴 수 있어 여유있게 설정
+      timeout: 5000ms
+      connect-timeout: 10000ms
+      lettuce:
+        shutdown-timeout: 200ms
 
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
