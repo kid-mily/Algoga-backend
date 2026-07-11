@@ -51,6 +51,10 @@ public class AuthService implements SocialLoginProcessor {
     @Value("${user.app.frontend.base-url}")
     private String frontendBaseUrl;
 
+    // 이중 로그인 방지용 "현재 활성 AccessToken" 만료시간 (AccessToken 자체 만료시간과 동일하게 맞춤)
+    @Value("${jwt.access-token-expiration}")
+    private long accessTokenExpiration;
+
     // 이메일 인증번호 발송
     public void sendVerificationCode(SendEmailCodeRequest request) {
         String email = request.email().toLowerCase();
@@ -213,6 +217,14 @@ public class AuthService implements SocialLoginProcessor {
                 TimeUnit.MILLISECONDS
         );
 
+        // 이중 로그인 방지: 이 로그인이 "현재 활성 세션"이 되도록 표시 (기존에 다른 기기에서 로그인해 있었다면 그 세션은 다음 요청부터 즉시 튕겨나감)
+        redisTemplate.opsForValue().set(
+                "ACTIVE_AT:" + user.getEmail(),
+                accessToken,
+                accessTokenExpiration,
+                TimeUnit.MILLISECONDS
+        );
+
         log.info("로그인 로직 통과 및 토큰 생성 완료 [아이디: {}, AccessToken: {}...]",
                 user.getUsername(), accessToken.substring(0, 15));
 
@@ -315,6 +327,16 @@ public class AuthService implements SocialLoginProcessor {
     public void logout(String email) {
         // Redis에서 해당 유저의 Refresh Token 삭제
         redisTemplate.delete("RT:" + email);
+
+        // 🌟 그냥 삭제하면 "한 번도 로그인 기록 없음"과 구분이 안 돼서 필터가 fail-open으로 통과시켜버림
+        //    -> 절대 어떤 토큰 문자열과도 일치할 수 없는 값으로 덮어써서, 이 계정의 토큰은 로그아웃 즉시(만료 전이라도) 전부 무효화되도록 함
+        redisTemplate.opsForValue().set(
+                "ACTIVE_AT:" + email,
+                "LOGGED_OUT",
+                accessTokenExpiration,
+                TimeUnit.MILLISECONDS
+        );
+
         log.info("로그아웃 처리 완료 [접속 종료 이메일: {}]", email);
     }
 
@@ -333,7 +355,17 @@ public class AuthService implements SocialLoginProcessor {
             throw new AuthException(AuthErrorCode.REFRESH_TOKEN_NOT_FOUND);
         }
 
-        return globalJwtProvider.createUserAccessToken(email);
+        String newAccessToken = globalJwtProvider.createUserAccessToken(email);
+
+        // 재발급도 "같은 세션의 연장"이므로 활성 세션 표시를 새 토큰으로 갱신 (여기서 안 갱신하면 재발급 직후 본인 요청이 바로 튕겨나감)
+        redisTemplate.opsForValue().set(
+                "ACTIVE_AT:" + email,
+                newAccessToken,
+                accessTokenExpiration,
+                TimeUnit.MILLISECONDS
+        );
+
+        return newAccessToken;
     }
 
     // 소셜 전용 추가정보 회원가입
@@ -410,6 +442,8 @@ public class AuthService implements SocialLoginProcessor {
 
             // 기존 일반 로그인과 똑같이 7일간 Redis에 저장
             redisTemplate.opsForValue().set("RT:" + email, refreshToken, 604800000, TimeUnit.MILLISECONDS);
+            // 이중 로그인 방지: 일반 로그인과 동일하게 활성 세션 표시 (기존에 다른 기기 세션이 있었다면 즉시 무효화됨)
+            redisTemplate.opsForValue().set("ACTIVE_AT:" + email, accessToken, accessTokenExpiration, TimeUnit.MILLISECONDS);
             log.info("소셜 로그인 성공 (기존 유저) [이메일: {}]", email);
 
             // URL 파라미터 전부 제거! (토큰은 쿠키로 구울 거니까)
