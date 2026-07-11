@@ -66,6 +66,16 @@ public class GlobalJwtAuthenticationFilter extends OncePerRequestFilter {
                         return;
                     }
 
+                    // 이중 로그인(중복 로그인) 검증: 다른 기기에서 새로 로그인해서 활성 세션이 바뀌었으면 이 토큰은 더 이상 유효한 세션이 아님
+                    String activeAccessToken = redisTemplate.opsForValue().get("ACTIVE_AT:" + email);
+                    if (activeAccessToken != null && !activeAccessToken.equals(token)) {
+                        log.warn("다른 기기에서 로그인되어 종료된 세션의 접근 차단: {}", email);
+                        response.setStatus(HttpServletResponse.SC_UNAUTHORIZED); // 401
+                        response.setContentType("application/json;charset=UTF-8");
+                        response.getWriter().write("{\"code\":\"AUTH_017\",\"message\":\"다른 기기에서 로그인되어 세션이 종료되었습니다.\"}");
+                        return;
+                    }
+
                     CustomUserDetails userDetails = (CustomUserDetails) customUserDetailsService.loadUserByUsername(email);
 
                     UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
