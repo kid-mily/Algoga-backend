@@ -17,7 +17,7 @@ import com.kidmily.algoga_server.lms.domain.model.DiagnosisResult;
 import com.kidmily.algoga_server.lms.domain.repository.DiagnosisAnswerRepository;
 import com.kidmily.algoga_server.lms.domain.repository.DiagnosisQuestionRepository;
 import com.kidmily.algoga_server.lms.domain.repository.DiagnosisResultRepository;
-import com.kidmily.algoga_server.lms.domain.repository.MapRepository;
+import com.kidmily.algoga_server.country.domain.repository.MapRepository;
 import com.kidmily.algoga_server.lms.exception.LmsErrorCode;
 import com.kidmily.algoga_server.lms.exception.LmsException;
 import lombok.RequiredArgsConstructor;

@@ -96,3 +96,15 @@ Record completed work here by date. Keep entries factual and useful for future d
 #### Verification
 
 - Pending final compile after CourseStatus move.
+### 2026-07-11 MapRepository Country Package Split
+
+#### Summary
+
+- Moved MapRepository persistence boundary from `lms` to `country` package.
+- Replaced `LmsCourseAdapter` MAP_REPOSITORY string/class lookup with typed `MapRepository` injection.
+- Kept API request/response/json behavior unchanged.
+
+#### Verification
+
+- Ran `./gradlew clean compileJava`; build passed with existing warnings.
+- Ran `./gradlew build -x test`; build passed.
