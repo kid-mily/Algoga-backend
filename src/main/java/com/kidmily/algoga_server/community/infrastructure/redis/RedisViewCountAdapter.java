@@ -4,7 +4,7 @@ import com.kidmily.algoga_server.community.domain.port.ViewCountPort;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Component;
-
+import java.time.Duration;
 import java.util.Set;
 
 @Component
@@ -14,6 +14,8 @@ public class RedisViewCountAdapter implements ViewCountPort {
     private final RedisTemplate<String, String> redisTemplate;
     private static final String VIEW_COUNT_KEY = "post:viewCount:";
     private static final String CHANGED_IDS_KEY = "changed:post:ids";
+    private static final String VIEWED_KEY = "post:viewed:";
+    private static final Duration VIEW_DEDUP_TTL = Duration.ofHours(6);
 
     @Override
     public void increment(Long postId) {
@@ -41,5 +43,14 @@ public class RedisViewCountAdapter implements ViewCountPort {
     @Override
     public void clearChangedPostIds() {
         redisTemplate.delete(CHANGED_IDS_KEY);
+    }
+
+    @Override
+    public boolean markViewedIfAbsent(Long postId, String viewerKey) {
+        String key = VIEWED_KEY + postId + ":" + viewerKey;
+        // 키가 없을 때만 저장하고 true 반환 (원자적 SETNX + TTL)
+        Boolean isFirst = redisTemplate.opsForValue()
+                .setIfAbsent(key, "1", VIEW_DEDUP_TTL);
+        return Boolean.TRUE.equals(isFirst);
     }
 }

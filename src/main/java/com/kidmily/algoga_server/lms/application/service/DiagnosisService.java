@@ -23,7 +23,7 @@ import com.kidmily.algoga_server.lms.exception.LmsException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import com.kidmily.algoga_server.lms.domain.model.Country;
+import com.kidmily.algoga_server.country.domain.model.Country;
 
 import java.util.LinkedHashSet;
 import java.util.List;

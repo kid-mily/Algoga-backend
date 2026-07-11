@@ -1,4 +1,4 @@
-package com.kidmily.algoga_server.lms.domain.model;
+package com.kidmily.algoga_server.country.domain.model;
 
 public class Country {
 
