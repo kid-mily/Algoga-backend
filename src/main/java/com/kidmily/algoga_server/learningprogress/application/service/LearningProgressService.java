@@ -11,7 +11,7 @@ import com.kidmily.algoga_server.course.domain.model.Course;
 import com.kidmily.algoga_server.learningprogress.domain.model.LearningProgress;
 import com.kidmily.algoga_server.course.domain.repository.ChapterRepository;
 import com.kidmily.algoga_server.course.domain.repository.CourseRepository;
-import com.kidmily.algoga_server.lms.domain.repository.EnrollmentRepository;
+import com.kidmily.algoga_server.enrollment.domain.repository.EnrollmentRepository;
 import com.kidmily.algoga_server.learningprogress.domain.repository.LearningProgressRepository;
 import com.kidmily.algoga_server.lms.exception.LmsErrorCode;
 import com.kidmily.algoga_server.lms.exception.LmsException;

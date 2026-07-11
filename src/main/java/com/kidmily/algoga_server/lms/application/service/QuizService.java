@@ -22,7 +22,7 @@ import com.kidmily.algoga_server.lms.domain.model.QuizSubmissionAnswer;
 import com.kidmily.algoga_server.course.domain.repository.ChapterRepository;
 import com.kidmily.algoga_server.lms.domain.repository.CourseCompletionRepository;
 import com.kidmily.algoga_server.course.domain.repository.CourseRepository;
-import com.kidmily.algoga_server.lms.domain.repository.EnrollmentRepository;
+import com.kidmily.algoga_server.enrollment.domain.repository.EnrollmentRepository;
 import com.kidmily.algoga_server.learningprogress.domain.repository.LearningProgressRepository;
 import com.kidmily.algoga_server.lms.domain.repository.QuizRepository;
 import com.kidmily.algoga_server.lms.domain.repository.QuizSubmissionAnswerRepository;

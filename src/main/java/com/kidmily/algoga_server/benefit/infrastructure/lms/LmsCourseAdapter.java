@@ -18,7 +18,7 @@ public class LmsCourseAdapter implements LmsCoursePort {
     private static final String COURSE_REPOSITORY = "com.kidmily.algoga_server.course.domain.repository.CourseRepository";
     private static final String COURSE_COMPLETION_REPOSITORY = "com.kidmily.algoga_server.lms.domain.repository.CourseCompletionRepository";
     private static final String QUIZ_SUBMISSION_REPOSITORY = "com.kidmily.algoga_server.lms.domain.repository.QuizSubmissionRepository";
-    private static final String ENROLLMENT_REPOSITORY = "com.kidmily.algoga_server.lms.domain.repository.EnrollmentRepository";
+    private static final String ENROLLMENT_REPOSITORY = "com.kidmily.algoga_server.enrollment.domain.repository.EnrollmentRepository";
 
     private final ApplicationContext applicationContext;
     private final MapRepository mapRepository;

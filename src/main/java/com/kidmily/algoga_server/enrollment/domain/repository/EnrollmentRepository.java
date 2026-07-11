@@ -1,6 +1,6 @@
-package com.kidmily.algoga_server.lms.domain.repository;
+package com.kidmily.algoga_server.enrollment.domain.repository;
 
-import com.kidmily.algoga_server.lms.domain.model.Enrollment;
+import com.kidmily.algoga_server.enrollment.domain.model.Enrollment;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 

@@ -1,6 +1,6 @@
-package com.kidmily.algoga_server.lms.infrastructure.persistence.entity;
+package com.kidmily.algoga_server.enrollment.infrastructure.persistence.entity;
 
-import com.kidmily.algoga_server.lms.domain.model.EnrollmentStatus;
+import com.kidmily.algoga_server.enrollment.domain.model.EnrollmentStatus;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;

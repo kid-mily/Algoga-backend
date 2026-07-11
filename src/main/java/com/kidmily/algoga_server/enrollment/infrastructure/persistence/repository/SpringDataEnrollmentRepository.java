@@ -1,6 +1,6 @@
-package com.kidmily.algoga_server.lms.infrastructure.persistence.repository;
+package com.kidmily.algoga_server.enrollment.infrastructure.persistence.repository;
 
-import com.kidmily.algoga_server.lms.infrastructure.persistence.entity.EnrollmentJpaEntity;
+import com.kidmily.algoga_server.enrollment.infrastructure.persistence.entity.EnrollmentJpaEntity;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;

@@ -1,8 +1,8 @@
-package com.kidmily.algoga_server.lms.application.event;
+package com.kidmily.algoga_server.enrollment.application.event;
 
 import com.kidmily.algoga_server.global.event.LecturePaymentCompletedEvent;
-import com.kidmily.algoga_server.lms.domain.model.Enrollment;
-import com.kidmily.algoga_server.lms.domain.repository.EnrollmentRepository;
+import com.kidmily.algoga_server.enrollment.domain.model.Enrollment;
+import com.kidmily.algoga_server.enrollment.domain.repository.EnrollmentRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;

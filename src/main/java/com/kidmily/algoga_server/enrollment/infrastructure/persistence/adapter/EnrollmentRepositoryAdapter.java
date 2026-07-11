@@ -1,9 +1,9 @@
-package com.kidmily.algoga_server.lms.infrastructure.persistence.adapter;
+package com.kidmily.algoga_server.enrollment.infrastructure.persistence.adapter;
 
-import com.kidmily.algoga_server.lms.domain.model.Enrollment;
-import com.kidmily.algoga_server.lms.domain.repository.EnrollmentRepository;
-import com.kidmily.algoga_server.lms.infrastructure.persistence.entity.EnrollmentJpaEntity;
-import com.kidmily.algoga_server.lms.infrastructure.persistence.repository.SpringDataEnrollmentRepository;
+import com.kidmily.algoga_server.enrollment.domain.model.Enrollment;
+import com.kidmily.algoga_server.enrollment.domain.repository.EnrollmentRepository;
+import com.kidmily.algoga_server.enrollment.infrastructure.persistence.entity.EnrollmentJpaEntity;
+import com.kidmily.algoga_server.enrollment.infrastructure.persistence.repository.SpringDataEnrollmentRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
