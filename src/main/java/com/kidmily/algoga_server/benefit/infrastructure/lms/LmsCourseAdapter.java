@@ -3,6 +3,7 @@ package com.kidmily.algoga_server.benefit.infrastructure.lms;
 import com.kidmily.algoga_server.benefit.application.port.LmsCoursePort;
 import com.kidmily.algoga_server.benefit.exception.BenefitErrorCode;
 import com.kidmily.algoga_server.benefit.exception.BenefitException;
+import com.kidmily.algoga_server.country.domain.repository.MapRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.ApplicationContext;
 import org.springframework.stereotype.Component;
@@ -18,9 +19,9 @@ public class LmsCourseAdapter implements LmsCoursePort {
     private static final String COURSE_COMPLETION_REPOSITORY = "com.kidmily.algoga_server.lms.domain.repository.CourseCompletionRepository";
     private static final String QUIZ_SUBMISSION_REPOSITORY = "com.kidmily.algoga_server.lms.domain.repository.QuizSubmissionRepository";
     private static final String ENROLLMENT_REPOSITORY = "com.kidmily.algoga_server.lms.domain.repository.EnrollmentRepository";
-    private static final String MAP_REPOSITORY = "com.kidmily.algoga_server.lms.domain.repository.MapRepository";
 
     private final ApplicationContext applicationContext;
+    private final MapRepository mapRepository;
 
     @Override
     public void validateCourseExists(Long courseId) {
@@ -113,12 +114,8 @@ public class LmsCourseAdapter implements LmsCoursePort {
     }
 
     private Optional<Object> findCountry(Long countryId) {
-        return invoke(
-                bean(MAP_REPOSITORY),
-                "findActiveCountryById",
-                new Class<?>[]{Long.class},
-                countryId
-        );
+        return mapRepository.findActiveCountryById(countryId)
+                .map(country -> country);
     }
 
     private Object bean(String className) {
