@@ -136,3 +136,17 @@ Record completed work here by date. Keep entries factual and useful for future d
 
 - `CourseUseCase` and `CourseService` remain under `lms` because they still include enrollment, completion, Q&A, classroom, and diagnosis-related behavior.
 - Next likely slice: split `CourseUseCase` responsibilities or move course-only service logic carefully without changing API contracts.
+
+### 2026-07-12 Course Cache Settings Split
+
+#### Summary
+
+- Moved public course list cache settings from `lms.settings.cache` to `course.settings.cache`.
+- Renamed `LmsCacheType`/`LmsCacheRegistry` to `CourseCacheType`/`CourseCacheRegistry`.
+- Updated course cache usage in `PublishedCourseListCacheService` and cache eviction usage in `CourseService`.
+- Kept cache name and TTL unchanged: `lmsPublicCourseList`, `10 * 60` seconds.
+
+#### Verification
+
+- `./gradlew clean compileJava` passed with existing warnings.
+- `./gradlew build -x test` passed.

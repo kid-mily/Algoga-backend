@@ -24,7 +24,7 @@ import com.kidmily.algoga_server.lms.domain.repository.*;
 import com.kidmily.algoga_server.lms.exception.LmsErrorCode;
 import com.kidmily.algoga_server.lms.exception.LmsException;
 import com.kidmily.algoga_server.lms.settings.LmsStorageSettings;
-import com.kidmily.algoga_server.lms.settings.cache.LmsCacheType;
+import com.kidmily.algoga_server.course.settings.cache.CourseCacheType;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -65,7 +65,7 @@ public class CourseService implements CourseUseCase {
     private final PublishedCourseListCacheService publishedCourseListCacheService;
 
     @Override
-    @CacheEvict(cacheNames = LmsCacheType.Const.PUBLIC_COURSE_LIST, allEntries = true)
+    @CacheEvict(cacheNames = CourseCacheType.Const.PUBLIC_COURSE_LIST, allEntries = true)
     public Long createCourse(CreateCourseCommand command) {
         validateCountry(command.countryId());
         validateMaxRewardMileage(command.maxRewardMileage());
@@ -153,7 +153,7 @@ public class CourseService implements CourseUseCase {
     }
 
     @Override
-    @CacheEvict(cacheNames = LmsCacheType.Const.PUBLIC_COURSE_LIST, allEntries = true)
+    @CacheEvict(cacheNames = CourseCacheType.Const.PUBLIC_COURSE_LIST, allEntries = true)
     public CourseResult updateCourse(Long courseId, UpdateCourseCommand command) {
         validateMaxRewardMileage(command.maxRewardMileage());
 
@@ -199,7 +199,7 @@ public class CourseService implements CourseUseCase {
     }
 
     @Override
-    @CacheEvict(cacheNames = LmsCacheType.Const.PUBLIC_COURSE_LIST, allEntries = true)
+    @CacheEvict(cacheNames = CourseCacheType.Const.PUBLIC_COURSE_LIST, allEntries = true)
     public void deleteCourse(Long courseId) {
         findCourse(courseId);
 

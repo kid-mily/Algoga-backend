@@ -1,11 +1,11 @@
-package com.kidmily.algoga_server.lms.settings.cache;
+package com.kidmily.algoga_server.course.settings.cache;
 
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 
 @Getter
 @RequiredArgsConstructor
-public enum LmsCacheType {
+public enum CourseCacheType {
 
     // Public course lists are read often and change only through admin course commands.
     // A 10 minute TTL limits stale exposure while protecting DB reads during browsing traffic.

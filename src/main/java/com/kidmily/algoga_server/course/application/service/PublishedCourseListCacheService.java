@@ -6,7 +6,7 @@ import com.kidmily.algoga_server.course.domain.repository.CourseRepository;
 import com.kidmily.algoga_server.country.domain.repository.MapRepository;
 import com.kidmily.algoga_server.lms.exception.LmsErrorCode;
 import com.kidmily.algoga_server.lms.exception.LmsException;
-import com.kidmily.algoga_server.lms.settings.cache.LmsCacheType;
+import com.kidmily.algoga_server.course.settings.cache.CourseCacheType;
 import lombok.RequiredArgsConstructor;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
@@ -22,7 +22,7 @@ public class PublishedCourseListCacheService {
     private final CourseRepository courseRepository;
     private final MapRepository mapRepository;
 
-    @Cacheable(cacheNames = LmsCacheType.Const.PUBLIC_COURSE_LIST, key = "#countryId")
+    @Cacheable(cacheNames = CourseCacheType.Const.PUBLIC_COURSE_LIST, key = "#countryId")
     public PublishedCourseListCacheResult getPublishedCoursesByCountry(Long countryId) {
         mapRepository.findActiveCountryById(countryId)
                 .orElseThrow(() -> new LmsException(LmsErrorCode.COUNTRY_NOT_FOUND));
