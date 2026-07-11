@@ -86,7 +86,7 @@ jobs:
       # AWS에서 최신 작업 정의(Task Definition) 파일 실시간 다운로드
       - name: Download latest task definition
         run: |
-          aws ecs describe-task-definition --task-definition team02-01-task --query taskDefinition > task-definition.json
+          aws ecs describe-task-definition --task-definition team02-01-backend-task --query taskDefinition > task-definition.json
 
       # 다운받은 작업 정의 파일에 방금 올린 새 ECR 이미지 주소 덮어쓰기
       - name: Fill in the new image ID in the Amazon ECS task definition
@@ -94,7 +94,7 @@ jobs:
         uses: aws-actions/amazon-ecs-render-task-definition@v1
         with:
           task-definition: task-definition.json
-          container-name: team02-01-container
+          container-name: team02-01-backend-container
           image: ${{ steps.build-image.outputs.image }}
 
       # 수정된 작업 정의로 ECS 서비스 업데이트(배포)
@@ -102,6 +102,6 @@ jobs:
         uses: aws-actions/amazon-ecs-deploy-task-definition@v1
         with:
           task-definition: ${{ steps.task-def.outputs.task-definition }}
-          service: team02-01-service
+          service: team02-01-backend-task-service
           cluster: team02-01-cluster
           wait-for-service-stability: true
