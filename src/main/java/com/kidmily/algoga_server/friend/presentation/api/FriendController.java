@@ -31,6 +31,8 @@ public class FriendController {
     @Operation(summary = "내 친구 목록 정렬 조회", description = "닉네임 순으로 정렬된 친구 목록을 조회합니다.")
     @GetMapping("/friends")
     public ApiResponse<List<FriendResponse>> getFriends(@AuthenticationPrincipal CustomUserDetails user) {
+        if (user == null) throw new FriendException(FriendErrorCode.USER_NOT_FOUND);
+
         List<FriendView> views = queryUseCase.getFriends(user.getUser().getId());
         List<FriendResponse> response = views.stream().map(FriendResponse::from).collect(Collectors.toList());
 
@@ -40,6 +42,8 @@ public class FriendController {
     @Operation(summary = "받은 친구 요청 목록 조회", description = "나에게 들어온 친구 요청을 조회합니다.")
     @GetMapping("/friends/requests/received")
     public ApiResponse<List<FriendResponse>> getReceivedRequests(@AuthenticationPrincipal CustomUserDetails user) {
+        if (user == null) throw new FriendException(FriendErrorCode.USER_NOT_FOUND);
+
         List<FriendView> views = queryUseCase.getReceivedRequests(user.getUser().getId());
         List<FriendResponse> response = views.stream().map(FriendResponse::from).collect(Collectors.toList());
 
@@ -76,6 +80,8 @@ public class FriendController {
             @AuthenticationPrincipal CustomUserDetails user,
             @PathVariable("request_id") Long requestId) {
 
+        if (user == null) throw new FriendException(FriendErrorCode.USER_NOT_FOUND);
+
         commandUseCase.acceptFriendRequest(user.getUser().getId(), requestId);
         return ApiResponse.success("FRIEND_ACCEPT_SUCCESS", "친구 요청을 수락했습니다.");
     }
@@ -85,6 +91,8 @@ public class FriendController {
     public ApiResponse<Void> rejectFriendRequest(
             @AuthenticationPrincipal CustomUserDetails user,
             @PathVariable("request_id") Long requestId) {
+
+        if (user == null) throw new FriendException(FriendErrorCode.USER_NOT_FOUND);
 
         commandUseCase.rejectFriendRequest(user.getUser().getId(), requestId);
         return ApiResponse.success("FRIEND_REJECT_SUCCESS", "친구 요청을 거절했습니다.");

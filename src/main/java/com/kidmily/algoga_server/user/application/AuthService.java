@@ -378,6 +378,11 @@ public class AuthService implements SocialLoginProcessor {
             throw new AuthException(AuthErrorCode.DUPLICATE_EMAIL);
         }
 
+        // 1-1. 전화번호 중복 검사 (일반 회원가입/마이페이지 수정과 동일하게 체크)
+        if (userRepository.existsByPhone(request.phone())) {
+            throw new UserException(UserErrorCode.ALREADY_EXISTS_PHONE);
+        }
+
         // 2. 요구사항 명세 반영: 아이디(username)는 이메일로 대체
         String username = email;
 

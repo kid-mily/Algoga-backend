@@ -16,6 +16,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @Service
@@ -63,16 +64,32 @@ FriendQueryService implements FriendQueryUseCase {
     public List<FriendView> getReceivedRequests(Long myId) {
         List<FriendRelation> requests = friendRepository.findByReceiverIdAndStatus(myId, RelationStatus.REQUESTED);
 
-        return requests.stream().map(req -> {
-            User requester = userRepository.findById(req.getRequesterId()).orElseThrow();
-            return new FriendView(
-                    req.getId(),
-                    requester.getId(),
-                    requester.getNickname(),
-                    requester.getPersonalCode(),
-                    requester.getProfileImageUrl()
-            );
-        }).collect(Collectors.toList());
+        if (requests.isEmpty()) {
+            return List.of();
+        }
+
+        // 요청자들의 정보를 배치로 한 번에 조회 (N+1 방지)
+        List<Long> requesterIds = requests.stream()
+                .map(FriendRelation::getRequesterId)
+                .distinct()
+                .toList();
+
+        Map<Long, User> requesterById = userRepository.findAllById(requesterIds).stream()
+                .collect(Collectors.toMap(User::getId, requester -> requester));
+
+        // 🌟 탈퇴 후 하드 삭제된 유저가 보낸 요청은 조회 목록에서 조용히 건너뜀 (없는 유저 조회로 500 나는 것 방지)
+        return requests.stream()
+                .filter(req -> requesterById.containsKey(req.getRequesterId()))
+                .map(req -> {
+                    User requester = requesterById.get(req.getRequesterId());
+                    return new FriendView(
+                            req.getId(),
+                            requester.getId(),
+                            requester.getNickname(),
+                            requester.getPersonalCode(),
+                            requester.getProfileImageUrl()
+                    );
+                }).collect(Collectors.toList());
     }
 
     @Override

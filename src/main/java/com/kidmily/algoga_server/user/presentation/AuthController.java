@@ -185,7 +185,7 @@ public class AuthController {
 
     // 소셜 추가정보 회원가입 API
     @Operation(summary = "소셜 추가정보 회원가입", description = "소셜 로그인 성공 후 최초 가입 시, 필수 추가 정보(전화번호, 성별, 닉네임 등)를 입력받아 회원가입을 완료합니다.")
-    @ApiErrorCodeExample(domain = UserErrorCode.class, value = {"ALREADY_EXISTS_EMAIL"})
+    @ApiErrorCodeExample(domain = UserErrorCode.class, value = {"ALREADY_EXISTS_EMAIL", "ALREADY_EXISTS_PHONE"})
     @io.swagger.v3.oas.annotations.responses.ApiResponses({
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "201", description = "소셜 회원가입 성공"),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "입력값 유효성 검사 실패 또는 필수값 누락")
