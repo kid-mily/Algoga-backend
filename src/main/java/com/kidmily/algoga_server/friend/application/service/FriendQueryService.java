@@ -7,7 +7,6 @@ import com.kidmily.algoga_server.friend.domain.model.RelationStatus;
 import com.kidmily.algoga_server.friend.domain.repository.FriendRepository;
 import com.kidmily.algoga_server.friend.exception.FriendErrorCode;
 import com.kidmily.algoga_server.friend.exception.FriendException;
-// import com.kidmily.algoga_server.friend.settings.cache.FriendCacheType;
 import com.kidmily.algoga_server.user.domain.User;
 import com.kidmily.algoga_server.user.domain.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -83,7 +82,7 @@ FriendQueryService implements FriendQueryUseCase {
         Map<Long, User> requesterById = userRepository.findAllById(requesterIds).stream()
                 .collect(Collectors.toMap(User::getId, requester -> requester));
 
-        // 🌟 탈퇴 후 하드 삭제된 유저가 보낸 요청은 조회 목록에서 조용히 건너뜀 (없는 유저 조회로 500 나는 것 방지)
+        // 탈퇴 후 하드 삭제된 유저가 보낸 요청은 조회 목록에서 조용히 건너뜀 (없는 유저 조회로 500 나는 것 방지)
         return requests.stream()
                 .filter(req -> requesterById.containsKey(req.getRequesterId()))
                 .map(req -> {
@@ -165,8 +164,7 @@ FriendQueryService implements FriendQueryUseCase {
                 .map(rel -> rel.getRequesterId().equals(userId) ? rel.getReceiverId() : rel.getRequesterId())
                 .toList();
 
-        // 3. (옵션) 최적화를 위해 UserRepository에서 닉네임만 맵으로 가져오는 로직
-        // (이 부분을 위해 FriendQueryService 상단에 UserRepository 주입이 필요합니다)
+        // 3.최적화를 위해 UserRepository에서 닉네임만 맵으로 가져오는 로직
         java.util.Map<Long, String> friendNicknameMap = userRepository.findAllById(friendIds).stream()
                 .collect(java.util.stream.Collectors.toMap(User::getId, User::getNickname));
 
