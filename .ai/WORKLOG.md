@@ -367,3 +367,20 @@ Record completed work here by date. Keep entries factual and useful for future d
 
 - `benefit.application.port.UserProfilePort` remains separate and unchanged.
 - Next likely slice: move `CourseService` to `course.application.service` after checking remaining LMS exception/support dependencies.
+### 2026-07-12 CourseService Package Split
+
+#### Summary
+
+- Moved `CourseService` from `lms.application.service` to `course.application.service`.
+- Updated `CourseServiceClassroomTest` to import the moved service.
+- Preserved API URLs, request fields, response fields, JSON structure, cache behavior, and business behavior.
+
+#### Verification
+
+- `./gradlew clean compileJava` passed with existing warnings.
+- `./gradlew build -x test` passed.
+
+#### Notes
+
+- `CourseService` still uses `lms.exception` until shared exception package handling is decided.
+- Remaining LMS package files are mostly exception/support/config/test remnants.

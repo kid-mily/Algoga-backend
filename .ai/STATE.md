@@ -9,7 +9,7 @@
 
 - LMS package split is active on branch `refactor/completion-certificate-package`.
 - Goal: split the old `lms` package into feature packages while keeping API URLs, request fields, response fields, JSON structure, and behavior unchanged.
-- Current uncommitted slice: Course UserProfile port/adapter package split.
+- Current uncommitted slice: CourseService package split.
 
 ## Progress
 
@@ -32,6 +32,7 @@
   - Course file/storage remnants split into course.
   - Course usecase/command split into course.
   - Course UserProfile port/adapter split into course.
+  - CourseService split into course.
   - Welcome coupon discount type changed from `RATE` to `PERCENT` for new signup coupons.
 
 ## Latest Verification
@@ -41,12 +42,13 @@
 
 ## Next Steps
 
-1. Review and commit the Course UserProfile port/adapter package split slice.
-2. Continue LMS package split with one of these small slices:
-   - Move `CourseService` to `course.application.service`.
-   - Move/decide remaining LMS support and exception classes.
-   - Clean up remaining LMS tests after service/support moves.
-3. Keep each slice small and verify with `compileJava` and `build -x test`.
+1. Review and commit the CourseService package split slice.
+2. Prepare PR for the accumulated LMS Course application package split work.
+3. Remaining cleanup candidates after PR:
+   - `lms.exception` package decision.
+   - `CurrentUserIdResolver` support package decision.
+   - `LmsSchedulingConfig` naming/package decision.
+   - leftover LMS tests package cleanup.
 
 ## Cautions
 

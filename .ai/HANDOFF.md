@@ -15,16 +15,15 @@
 - Map/Country application/presentation package split completed and committed.
 - Course file/storage package split completed.
 - Course usecase/command package split completed.
-- Current working tree slice: Course UserProfile port/adapter package split.
+- Course UserProfile port/adapter package split completed.
+- Current working tree slice: CourseService package split.
 
 ## Current Slice Details
 
-- Moved LMS `UserProfilePort` to `course.application.port`.
-- Moved LMS `UserProfileAdapter` to `course.infrastructure.user`.
-- Updated imports in course, diagnosis, Q&A, review services/results, and related tests.
-- Kept `@Component("lmsUserProfileAdapter")` unchanged to minimize hidden wiring impact.
-- `benefit.application.port.UserProfilePort` remains separate and unchanged.
+- Moved `CourseService` to `course.application.service`.
+- Updated `CourseServiceClassroomTest` to import the moved service.
 - API URLs and JSON contracts are unchanged.
+- Cache behavior and business logic are unchanged.
 
 ## Verification Run
 
@@ -34,5 +33,5 @@
 ## Next Suggested Slice
 
 - Commit current slice first.
-- Then move `CourseService` to `course.application.service` if remaining dependencies look stable.
-- After that, decide what to do with shared `lms.exception` and presentation support classes.
+- Then prepare PR for accumulated LMS Course package split work.
+- Remaining post-PR cleanup candidates: shared `lms.exception`, `CurrentUserIdResolver`, `LmsSchedulingConfig`, and leftover LMS test package names.
