@@ -2,32 +2,36 @@
 
 ## Current Goal
 
-- Continue LMS package split on `refactor/lms-package-split-next` without changing API contracts.
+- Continue LMS package split without changing API contracts.
 
 ## Completed Recently
 
-- Enrollment package split completed and committed by user.
-- Quiz package split completed in working tree:
-  - Moved quiz command/result/usecase/service/domain/repository/persistence/controller/request/response classes from `lms` to `quiz`.
-  - Updated imports in `CourseService`, `CourseServiceClassroomTest`, and `benefit/infrastructure/lms/LmsCourseAdapter`.
-  - Kept URLs/request/response/json unchanged.
+- Completion/certificate package split completed and committed.
+- Review/Q&A package split completed and committed.
+- Diagnosis package split completed and committed.
+- Course statistics package split completed and committed.
+- Welcome coupon type fix completed and committed.
+- Current working tree slice: Course my-course/classroom/student result/response/controller package split.
+
+## Current Slice Details
+
+- Moved:
+  - `MyCourseResult`, `CourseStudentResult`, `CourseClassroomResult`, `CourseClassroomChapterResult` to `course.application.result`.
+  - `MyCourseResponse`, `CourseStudentResponse`, `CourseClassroomResponse` to `course.presentation.response`.
+  - `MyCourseController` to `course.presentation.api`.
+  - `AdminCourseStudentController` to `course.presentation.api.admin`.
+- Updated imports in `CourseService`, `CourseUseCase`, learning progress result/service/response, and `CourseServiceClassroomTest`.
+- API URLs and JSON contracts are unchanged.
 
 ## Verification Run
 
 - `./gradlew clean compileJava` passed with existing warnings.
 - `./gradlew build -x test` passed.
 
-## Important Notes
-
-- `QuizSubmitResult` still imports `lms.application.result.CourseCompletionResult`.
-- `QuizSubmitResponse` still imports `lms.presentation.response.CourseCompletionResponse`.
-- This is intentional until completion/certificate is split.
-- During this slice, an initial broad replacement caused extra LMS files to change; those were restored before verification.
-
 ## Next Suggested Slice
 
-- Commit Quiz split first.
+- Commit current slice first.
 - Then choose one:
-  - `completion` + maybe `certificate` for course completion flow.
-  - `review` and `qna` for user interaction flow.
-  - `diagnosis` for assessment flow.
+  - Split remaining map application/presentation files.
+  - Split course file/storage files.
+  - Extract `CourseService` orchestration carefully after surrounding DTO/controller moves are complete.

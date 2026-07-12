@@ -1,4 +1,4 @@
-package com.kidmily.algoga_server.lms.application.result;
+package com.kidmily.algoga_server.course.application.result;
 
 import java.time.LocalDateTime;
 

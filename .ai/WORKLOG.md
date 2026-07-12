@@ -275,3 +275,21 @@ Record completed work here by date. Keep entries factual and useful for future d
 
 - This split keeps course-specific statistics separate from the broader `stats` manager package.
 - Next likely slice: decide whether to split map/my-course/student classroom APIs or move to file upload constraints.
+### 2026-07-12 Course Classroom/MyCourse Package Split
+
+#### Summary
+
+- Moved my-course, classroom, and course-student result classes from `lms` to `course.application.result`.
+- Moved my-course, classroom, and course-student response/controller classes from `lms` to `course.presentation`.
+- Updated dependent imports in `CourseService`, `CourseUseCase`, learning progress flow, and classroom test.
+- Preserved API URLs, request parameters, response fields, JSON structure, and authorization behavior.
+
+#### Verification
+
+- `./gradlew clean compileJava` passed with existing warnings.
+- `./gradlew build -x test` passed.
+
+#### Notes
+
+- `CourseService` still owns the actual orchestration logic for my-course/classroom/student queries.
+- Next likely slice: split map presentation/application pieces or decide whether to extract `CourseService` orchestration into smaller services.
