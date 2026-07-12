@@ -2,32 +2,36 @@
 
 ## Current Goal
 
-- Continue LMS package split on `refactor/lms-package-split-next` without changing API contracts.
+- Continue LMS package split without changing API contracts.
 
 ## Completed Recently
 
-- Enrollment package split completed and committed by user.
-- Quiz package split completed in working tree:
-  - Moved quiz command/result/usecase/service/domain/repository/persistence/controller/request/response classes from `lms` to `quiz`.
-  - Updated imports in `CourseService`, `CourseServiceClassroomTest`, and `benefit/infrastructure/lms/LmsCourseAdapter`.
-  - Kept URLs/request/response/json unchanged.
+- Completion/certificate package split completed and committed.
+- Review/Q&A package split completed and committed.
+- Diagnosis package split completed and committed.
+- Course statistics package split completed and committed.
+- Welcome coupon type fix completed and committed.
+- Course my-course/classroom/student result/response/controller package split completed and committed.
+- Map/Country application/presentation package split completed and committed.
+- Course file/storage package split completed.
+- Course usecase/command package split completed.
+- Course UserProfile port/adapter package split completed.
+- Current working tree slice: CourseService package split.
+
+## Current Slice Details
+
+- Moved `CourseService` to `course.application.service`.
+- Updated `CourseServiceClassroomTest` to import the moved service.
+- API URLs and JSON contracts are unchanged.
+- Cache behavior and business logic are unchanged.
 
 ## Verification Run
 
 - `./gradlew clean compileJava` passed with existing warnings.
 - `./gradlew build -x test` passed.
 
-## Important Notes
-
-- `QuizSubmitResult` still imports `lms.application.result.CourseCompletionResult`.
-- `QuizSubmitResponse` still imports `lms.presentation.response.CourseCompletionResponse`.
-- This is intentional until completion/certificate is split.
-- During this slice, an initial broad replacement caused extra LMS files to change; those were restored before verification.
-
 ## Next Suggested Slice
 
-- Commit Quiz split first.
-- Then choose one:
-  - `completion` + maybe `certificate` for course completion flow.
-  - `review` and `qna` for user interaction flow.
-  - `diagnosis` for assessment flow.
+- Commit current slice first.
+- Then prepare PR for accumulated LMS Course package split work.
+- Remaining post-PR cleanup candidates: shared `lms.exception`, `CurrentUserIdResolver`, `LmsSchedulingConfig`, and leftover LMS test package names.

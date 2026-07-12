@@ -1,7 +1,7 @@
 package com.kidmily.algoga_server.course.presentation.api;
 
 import com.kidmily.algoga_server.global.common.api.response.ApiResponse;
-import com.kidmily.algoga_server.lms.application.usecase.CourseUseCase;
+import com.kidmily.algoga_server.course.application.usecase.CourseUseCase;
 import com.kidmily.algoga_server.course.presentation.response.CourseListResponse;
 import com.kidmily.algoga_server.lms.presentation.support.CurrentUserIdResolver;
 import lombok.RequiredArgsConstructor;

@@ -1,6 +1,6 @@
 package com.kidmily.algoga_server.quiz.application.result;
 
-import com.kidmily.algoga_server.lms.application.result.CourseCompletionResult;
+import com.kidmily.algoga_server.completion.application.result.CourseCompletionResult;
 
 import java.util.List;
 
