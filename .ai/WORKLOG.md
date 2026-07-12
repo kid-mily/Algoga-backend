@@ -384,3 +384,27 @@ Record completed work here by date. Keep entries factual and useful for future d
 
 - `CourseService` still uses `lms.exception` until shared exception package handling is decided.
 - Remaining LMS package files are mostly exception/support/config/test remnants.
+### 2026-07-12 LMS Residual Cleanup
+
+#### Summary
+
+- Pulled latest `develop` and created branch `refactor/lms-cleanup-architecture`.
+- Removed the remaining Java `lms` package from main/test source paths.
+- Renamed shared learning exceptions from `LmsErrorCode`/`LmsException` to `LearningErrorCode`/`LearningException` under `learning.exception`.
+- Moved exception advice to `learning.presentation.advice` and expanded its controller package scope to the split learning domains.
+- Moved `CurrentUserIdResolver` to `learning.presentation.support`.
+- Removed duplicate `LmsSchedulingConfig` because `global.config.SchedulerConfig` already enables scheduling.
+- Moved course-related tests from `lms` test packages to `course` test packages.
+- Moved LMS HTTP request samples from `src/main/java` to `docs/http/learning`.
+- Preserved error code values such as `LMS_001`, API URLs, request fields, response fields, and JSON structure.
+
+#### Verification
+
+- `./gradlew clean compileJava` passed with existing warnings.
+- `./gradlew build -x test` passed.
+- `./gradlew testClasses` passed.
+
+#### Notes
+
+- Java source/test references to `com.kidmily.algoga_server.lms` were removed.
+- The remaining `LMS_###` strings are API error code values and were intentionally preserved for frontend/API compatibility.

@@ -13,8 +13,8 @@ import com.kidmily.algoga_server.course.domain.repository.ChapterRepository;
 import com.kidmily.algoga_server.course.domain.repository.CourseRepository;
 import com.kidmily.algoga_server.enrollment.domain.repository.EnrollmentRepository;
 import com.kidmily.algoga_server.learningprogress.domain.repository.LearningProgressRepository;
-import com.kidmily.algoga_server.lms.exception.LmsErrorCode;
-import com.kidmily.algoga_server.lms.exception.LmsException;
+import com.kidmily.algoga_server.learning.exception.LearningErrorCode;
+import com.kidmily.algoga_server.learning.exception.LearningException;
 import io.micrometer.core.instrument.MeterRegistry;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -53,7 +53,7 @@ public class LearningProgressService implements LearningProgressUseCase {
         validateWatchedSeconds(command.watchedSeconds());
 
         Course course = courseRepository.findById(command.courseId())
-                .orElseThrow(() -> new LmsException(LmsErrorCode.COURSE_NOT_FOUND));
+                .orElseThrow(() -> new LearningException(LearningErrorCode.COURSE_NOT_FOUND));
 
         validateEnrollment(command.userId(), command.courseId());
 
@@ -63,7 +63,7 @@ public class LearningProgressService implements LearningProgressUseCase {
         ).orElseThrow(() -> {
             log.warn("[Learning Progress Command] chapter not found. courseId={}, chapterId={}",
                     command.courseId(), command.chapterId());
-            return new LmsException(LmsErrorCode.CHAPTER_NOT_FOUND);
+            return new LearningException(LearningErrorCode.CHAPTER_NOT_FOUND);
         });
 
         List<Chapter> chapters = chapterRepository.findByCourseId(command.courseId())
@@ -156,7 +156,7 @@ public class LearningProgressService implements LearningProgressUseCase {
     ) {
         var enrollment = enrollmentRepository.findByUserIdAndCourseId(userId, course.getId())
                 .filter(value -> value.isAccessibleAt(LocalDateTime.now()))
-                .orElseThrow(() -> new LmsException(LmsErrorCode.NOT_ENROLLED));
+                .orElseThrow(() -> new LearningException(LearningErrorCode.NOT_ENROLLED));
 
         boolean previousChaptersCompleted = true;
         List<CourseClassroomChapterResult> chapterResults = new ArrayList<>();
@@ -201,14 +201,14 @@ public class LearningProgressService implements LearningProgressUseCase {
 
         if (!accessible) {
             log.warn("[Learning Progress Command] user is not enrolled. userId={}, courseId={}", userId, courseId);
-            throw new LmsException(LmsErrorCode.NOT_ENROLLED);
+            throw new LearningException(LearningErrorCode.NOT_ENROLLED);
         }
     }
 
     private void validateWatchedSeconds(int watchedSeconds) {
         if (watchedSeconds < 0) {
             log.warn("[Learning Progress Command] invalid watchedSeconds. watchedSeconds={}", watchedSeconds);
-            throw new LmsException(LmsErrorCode.INVALID_PROGRESS);
+            throw new LearningException(LearningErrorCode.INVALID_PROGRESS);
         }
     }
 
@@ -234,7 +234,7 @@ public class LearningProgressService implements LearningProgressUseCase {
         if (!previousCompleted) {
             log.warn("[Learning Progress Command] previous chapter is not completed. userId={}, courseId={}, currentChapterId={}, previousChapterId={}",
                     userId, courseId, currentChapter.getId(), previousChapter.getId());
-            throw new LmsException(LmsErrorCode.CHAPTER_LOCKED);
+            throw new LearningException(LearningErrorCode.CHAPTER_LOCKED);
         }
     }
 

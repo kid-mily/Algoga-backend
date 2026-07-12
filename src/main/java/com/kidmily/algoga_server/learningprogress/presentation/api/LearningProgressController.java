@@ -5,10 +5,10 @@ import com.kidmily.algoga_server.global.common.api.response.ApiResponse;
 import com.kidmily.algoga_server.global.exception.GlobalErrorCode;
 import com.kidmily.algoga_server.learningprogress.application.command.UpdateLearningProgressCommand;
 import com.kidmily.algoga_server.learningprogress.application.usecase.LearningProgressUseCase;
-import com.kidmily.algoga_server.lms.exception.LmsErrorCode;
+import com.kidmily.algoga_server.learning.exception.LearningErrorCode;
 import com.kidmily.algoga_server.learningprogress.presentation.request.UpdateLearningProgressRequest;
 import com.kidmily.algoga_server.learningprogress.presentation.response.LearningProgressResponse;
-import com.kidmily.algoga_server.lms.presentation.support.CurrentUserIdResolver;
+import com.kidmily.algoga_server.learning.presentation.support.CurrentUserIdResolver;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -35,7 +35,7 @@ public class LearningProgressController {
                     """
     )
     @ApiErrorCodeExample(domain = GlobalErrorCode.class, value = {"INVALID_REQUEST"})
-    @ApiErrorCodeExample(domain = LmsErrorCode.class, value = {
+    @ApiErrorCodeExample(domain = LearningErrorCode.class, value = {
             "COURSE_NOT_FOUND",
             "CHAPTER_NOT_FOUND",
             "INVALID_PROGRESS",

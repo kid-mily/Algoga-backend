@@ -5,7 +5,7 @@ import com.kidmily.algoga_server.global.common.api.response.ApiResponse;
 import com.kidmily.algoga_server.diagnosis.application.command.CreateDiagnosisQuestionCommand;
 import com.kidmily.algoga_server.diagnosis.application.command.UpdateDiagnosisQuestionCommand;
 import com.kidmily.algoga_server.diagnosis.application.usecase.DiagnosisUseCase;
-import com.kidmily.algoga_server.lms.exception.LmsErrorCode;
+import com.kidmily.algoga_server.learning.exception.LearningErrorCode;
 import com.kidmily.algoga_server.diagnosis.presentation.request.admin.CreateDiagnosisQuestionRequest;
 import com.kidmily.algoga_server.diagnosis.presentation.request.admin.UpdateDiagnosisQuestionRequest;
 import com.kidmily.algoga_server.diagnosis.presentation.response.AdminDiagnosisQuestionResponse;
@@ -127,7 +127,7 @@ public class AdminDiagnosisController {
     }
 
     @Operation(summary = "진단평가 문제 즉시 삭제", description = "진단평가 문제와 연결된 답안을 즉시 물리 삭제합니다.")
-    @ApiErrorCodeExample(domain = LmsErrorCode.class, value = {"DIAGNOSIS_QUESTION_NOT_FOUND"})
+    @ApiErrorCodeExample(domain = LearningErrorCode.class, value = {"DIAGNOSIS_QUESTION_NOT_FOUND"})
     @PreAuthorize("hasAnyAuthority('CONTENT_MANAGER', 'ROLE_CONTENT_MANAGER', 'SUPER_ADMIN', 'ROLE_SUPER_ADMIN')")
     @DeleteMapping("/questions/{questionId}")
     public ResponseEntity<ApiResponse<Void>> deleteQuestion(

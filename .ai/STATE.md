@@ -7,9 +7,8 @@
 
 ## Current Work
 
-- LMS package split is active on branch `refactor/completion-certificate-package`.
-- Goal: split the old `lms` package into feature packages while keeping API URLs, request fields, response fields, JSON structure, and behavior unchanged.
-- Current uncommitted slice: CourseService package split.
+- LMS residual cleanup is active on branch `refactor/lms-cleanup-architecture`.
+- Goal: remove the old Java `lms` package remnants while keeping API URLs, request fields, response fields, JSON structure, and error code values unchanged.
 
 ## Progress
 
@@ -33,27 +32,29 @@
   - Course usecase/command split into course.
   - Course UserProfile port/adapter split into course.
   - CourseService split into course.
+  - LMS residual Java package cleanup into `learning`, `course`, and `docs/http/learning`.
   - Welcome coupon discount type changed from `RATE` to `PERCENT` for new signup coupons.
 
 ## Latest Verification
 
 - `./gradlew clean compileJava` passed with existing warnings.
 - `./gradlew build -x test` passed.
+- `./gradlew testClasses` passed.
 
 ## Next Steps
 
-1. Review and commit the CourseService package split slice.
-2. Prepare PR for the accumulated LMS Course application package split work.
-3. Remaining cleanup candidates after PR:
-   - `lms.exception` package decision.
-   - `CurrentUserIdResolver` support package decision.
-   - `LmsSchedulingConfig` naming/package decision.
-   - leftover LMS tests package cleanup.
+1. Review and commit the LMS residual cleanup slice.
+2. Decide whether to open a small PR for this cleanup before feature work.
+3. After merge, start the next functional improvements:
+   - restrict course material file types,
+   - preserve original PDF/material file name on download,
+   - review admin course/chapter/quiz registration flow,
+   - add classroom text length limits.
 
 ## Cautions
 
 - Do not change API contracts unless explicitly requested.
-- Avoid broad package declaration replacements; only edit moved files and required imports.
-- Keep storage bucket/directory strings unchanged unless the user explicitly asks to change S3 paths.
+- Preserve `LMS_###` error code values for frontend/API compatibility.
+- Avoid broad formatting, import-order, or whitespace-only changes.
 - Watch CRLF warnings due local Git config.
 - Do not track unrelated local files.

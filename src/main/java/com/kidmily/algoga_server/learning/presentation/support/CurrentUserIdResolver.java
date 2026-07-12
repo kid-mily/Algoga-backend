@@ -1,7 +1,7 @@
-package com.kidmily.algoga_server.lms.presentation.support;
+package com.kidmily.algoga_server.learning.presentation.support;
 
-import com.kidmily.algoga_server.lms.exception.LmsErrorCode;
-import com.kidmily.algoga_server.lms.exception.LmsException;
+import com.kidmily.algoga_server.learning.exception.LearningErrorCode;
+import com.kidmily.algoga_server.learning.exception.LearningException;
 
 import java.lang.reflect.Method;
 
@@ -13,7 +13,7 @@ public final class CurrentUserIdResolver {
     public static Long resolveRequired(Object principal) {
         Long userId = resolveNullable(principal);
         if (userId == null) {
-            throw new LmsException(LmsErrorCode.DIAGNOSIS_LOGIN_REQUIRED);
+            throw new LearningException(LearningErrorCode.DIAGNOSIS_LOGIN_REQUIRED);
         }
         return userId;
     }
@@ -21,7 +21,7 @@ public final class CurrentUserIdResolver {
     public static Long resolveLoginRequired(Object principal) {
         Long userId = resolveNullable(principal);
         if (userId == null) {
-            throw new LmsException(LmsErrorCode.LOGIN_REQUIRED);
+            throw new LearningException(LearningErrorCode.LOGIN_REQUIRED);
         }
         return userId;
     }

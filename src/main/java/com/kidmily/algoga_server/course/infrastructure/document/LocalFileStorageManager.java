@@ -1,7 +1,7 @@
 package com.kidmily.algoga_server.course.infrastructure.document;
 
-import com.kidmily.algoga_server.lms.exception.LmsErrorCode;
-import com.kidmily.algoga_server.lms.exception.LmsException;
+import com.kidmily.algoga_server.learning.exception.LearningErrorCode;
+import com.kidmily.algoga_server.learning.exception.LearningException;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.web.multipart.MultipartFile;
@@ -44,7 +44,7 @@ public class LocalFileStorageManager {
 
             return uploadRoot.relativize(savedPath).toString().replace("\\", "/");
         } catch (Exception e) {
-            throw new LmsException(LmsErrorCode.FILE_UPLOAD_FAILED);
+            throw new LearningException(LearningErrorCode.FILE_UPLOAD_FAILED);
         }
     }
 }

@@ -1,4 +1,4 @@
-package com.kidmily.algoga_server.lms.tdd;
+package com.kidmily.algoga_server.course.infrastructure.persistence.repository;
 
 import com.kidmily.algoga_server.course.infrastructure.persistence.entity.ChapterJpaEntity;
 import com.kidmily.algoga_server.course.infrastructure.persistence.entity.CourseJpaEntity;

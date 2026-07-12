@@ -6,8 +6,8 @@ import com.kidmily.algoga_server.diagnosis.domain.repository.DiagnosisAnswerRepo
 import com.kidmily.algoga_server.diagnosis.domain.repository.DiagnosisQuestionRepository;
 import com.kidmily.algoga_server.diagnosis.domain.repository.DiagnosisResultRepository;
 import com.kidmily.algoga_server.country.domain.repository.MapRepository;
-import com.kidmily.algoga_server.lms.exception.LmsErrorCode;
-import com.kidmily.algoga_server.lms.exception.LmsException;
+import com.kidmily.algoga_server.learning.exception.LearningErrorCode;
+import com.kidmily.algoga_server.learning.exception.LearningException;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InOrder;
@@ -51,12 +51,12 @@ class DiagnosisServiceTest {
         Long questionId = 1L;
         when(diagnosisQuestionRepository.existsById(questionId)).thenReturn(false);
 
-        LmsException exception = assertThrows(
-                LmsException.class,
+        LearningException exception = assertThrows(
+                LearningException.class,
                 () -> diagnosisService.deleteQuestion(questionId)
         );
 
-        assertSame(LmsErrorCode.DIAGNOSIS_QUESTION_NOT_FOUND, exception.getErrorCode());
+        assertSame(LearningErrorCode.DIAGNOSIS_QUESTION_NOT_FOUND, exception.getErrorCode());
         verifyNoInteractions(diagnosisAnswerRepository);
     }
 }

@@ -7,13 +7,13 @@ import com.kidmily.algoga_server.qna.application.command.CreateCourseQnaCommand;
 import com.kidmily.algoga_server.qna.application.command.CreateCourseQnaCommentCommand;
 import com.kidmily.algoga_server.qna.application.result.CourseQnaDetailResult;
 import com.kidmily.algoga_server.course.application.usecase.CourseUseCase;
-import com.kidmily.algoga_server.lms.exception.LmsErrorCode;
+import com.kidmily.algoga_server.learning.exception.LearningErrorCode;
 import com.kidmily.algoga_server.qna.presentation.request.CreateCourseQnaCommentRequest;
 import com.kidmily.algoga_server.qna.presentation.request.CreateCourseQnaRequest;
 import com.kidmily.algoga_server.qna.presentation.response.CourseQnaCommentResponse;
 import com.kidmily.algoga_server.qna.presentation.response.CourseQnaDetailResponse;
 import com.kidmily.algoga_server.qna.presentation.response.CourseQnaResponse;
-import com.kidmily.algoga_server.lms.presentation.support.CurrentUserIdResolver;
+import com.kidmily.algoga_server.learning.presentation.support.CurrentUserIdResolver;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -36,7 +36,7 @@ public class CourseQnaController {
 
     @Operation(summary = "강의 Q&A 등록")
     @ApiErrorCodeExample(domain = GlobalErrorCode.class, value = {"INVALID_REQUEST"})
-    @ApiErrorCodeExample(domain = LmsErrorCode.class, value = {"COURSE_NOT_FOUND"})
+    @ApiErrorCodeExample(domain = LearningErrorCode.class, value = {"COURSE_NOT_FOUND"})
     @PostMapping
     public ResponseEntity<ApiResponse<CourseQnaResponse>> createQna(
             @Parameter(description = "강의 ID", example = "3")
@@ -66,7 +66,7 @@ public class CourseQnaController {
     }
 
     @Operation(summary = "강의 Q&A 목록 조회")
-    @ApiErrorCodeExample(domain = LmsErrorCode.class, value = {"COURSE_NOT_FOUND"})
+    @ApiErrorCodeExample(domain = LearningErrorCode.class, value = {"COURSE_NOT_FOUND"})
     @GetMapping
     public ResponseEntity<ApiResponse<List<CourseQnaResponse>>> getQnas(
             @Parameter(description = "강의 ID", example = "3")
@@ -87,7 +87,7 @@ public class CourseQnaController {
     }
 
     @Operation(summary = "강의 Q&A 상세 조회")
-    @ApiErrorCodeExample(domain = LmsErrorCode.class, value = {
+    @ApiErrorCodeExample(domain = LearningErrorCode.class, value = {
             "COURSE_NOT_FOUND",
             "QNA_NOT_FOUND"
     })
@@ -112,7 +112,7 @@ public class CourseQnaController {
 
     @Operation(summary = "강의 Q&A 사용자 댓글/대댓글 등록")
     @ApiErrorCodeExample(domain = GlobalErrorCode.class, value = {"INVALID_REQUEST"})
-    @ApiErrorCodeExample(domain = LmsErrorCode.class, value = {
+    @ApiErrorCodeExample(domain = LearningErrorCode.class, value = {
             "COURSE_NOT_FOUND",
             "QNA_NOT_FOUND",
             "QNA_COMMENT_NOT_FOUND"

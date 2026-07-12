@@ -4,10 +4,10 @@ import com.kidmily.algoga_server.global.annotation.swagger.ApiErrorCodeExample;
 import com.kidmily.algoga_server.global.common.api.response.ApiResponse;
 import com.kidmily.algoga_server.global.common.api.response.PageResponse;
 import com.kidmily.algoga_server.course.application.usecase.CourseUseCase;
-import com.kidmily.algoga_server.lms.exception.LmsErrorCode;
+import com.kidmily.algoga_server.learning.exception.LearningErrorCode;
 import com.kidmily.algoga_server.course.presentation.response.CourseClassroomResponse;
 import com.kidmily.algoga_server.course.presentation.response.MyCourseResponse;
-import com.kidmily.algoga_server.lms.presentation.support.CurrentUserIdResolver;
+import com.kidmily.algoga_server.learning.presentation.support.CurrentUserIdResolver;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
@@ -53,7 +53,7 @@ public class MyCourseController {
             summary = "수강 중인 강의 상세 조회",
             description = "수강 중인 강의의 챕터 영상, 진도, 잠금 상태 및 퀴즈 응시 가능 여부를 조회합니다."
     )
-    @ApiErrorCodeExample(domain = LmsErrorCode.class, value = {"COURSE_NOT_FOUND", "NOT_ENROLLED"})
+    @ApiErrorCodeExample(domain = LearningErrorCode.class, value = {"COURSE_NOT_FOUND", "NOT_ENROLLED"})
     @GetMapping("/{courseId}")
     public ResponseEntity<ApiResponse<CourseClassroomResponse>> getCourseClassroom(
             @PathVariable Long courseId,

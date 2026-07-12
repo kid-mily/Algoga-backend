@@ -40,8 +40,8 @@ import com.kidmily.algoga_server.qna.domain.repository.CourseQnaRepository;
 import com.kidmily.algoga_server.review.domain.model.CourseReview;
 import com.kidmily.algoga_server.review.domain.repository.CourseReviewRepository;
 import com.kidmily.algoga_server.quiz.domain.repository.QuizSubmissionRepository;
-import com.kidmily.algoga_server.lms.exception.LmsErrorCode;
-import com.kidmily.algoga_server.lms.exception.LmsException;
+import com.kidmily.algoga_server.learning.exception.LearningErrorCode;
+import com.kidmily.algoga_server.learning.exception.LearningException;
 import com.kidmily.algoga_server.course.settings.CourseStorageSettings;
 import com.kidmily.algoga_server.course.settings.cache.CourseCacheType;
 import com.kidmily.algoga_server.learningprogress.application.port.LearningProgressCachePort;
@@ -168,7 +168,7 @@ public class CourseService implements CourseUseCase {
         Course course = findCourseIncludingDeleted(courseId);
 
         if (!course.isDeleted()) {
-            throw new LmsException(LmsErrorCode.COURSE_NOT_FOUND);
+            throw new LearningException(LearningErrorCode.COURSE_NOT_FOUND);
         }
 
         return CourseResult.from(course);
@@ -215,7 +215,7 @@ public class CourseService implements CourseUseCase {
                 targetCourseFiles,
                 command.level(),
                 normalizeCourseStatus(command.status(), course.getStatus())
-        ).orElseThrow(() -> new LmsException(LmsErrorCode.COURSE_NOT_FOUND));
+        ).orElseThrow(() -> new LearningException(LearningErrorCode.COURSE_NOT_FOUND));
 
         return CourseResult.from(updatedCourse);
     }
@@ -226,7 +226,7 @@ public class CourseService implements CourseUseCase {
         findCourse(courseId);
 
         if (!courseRepository.softDelete(courseId)) {
-            throw new LmsException(LmsErrorCode.COURSE_NOT_FOUND);
+            throw new LearningException(LearningErrorCode.COURSE_NOT_FOUND);
         }
     }
 
@@ -293,7 +293,7 @@ public class CourseService implements CourseUseCase {
     public CourseClassroomResult getCourseClassroom(Long userId, Long courseId) {
         var enrollment = enrollmentRepository.findByUserIdAndCourseId(userId, courseId)
                 .filter(value -> value.isAccessibleAt(LocalDateTime.now()))
-                .orElseThrow(() -> new LmsException(LmsErrorCode.NOT_ENROLLED));
+                .orElseThrow(() -> new LearningException(LearningErrorCode.NOT_ENROLLED));
 
         Course course = findCourseIncludingDeleted(courseId);
 
@@ -397,7 +397,7 @@ public class CourseService implements CourseUseCase {
         CourseQna qna = findQna(command.courseId(), command.qnaId());
 
         if ("ANSWERED".equals(qna.getStatus())) {
-            throw new LmsException(LmsErrorCode.QNA_ALREADY_ANSWERED);
+            throw new LearningException(LearningErrorCode.QNA_ALREADY_ANSWERED);
         }
 
         CourseQna answeredQna = qna.answer(command.managerId(), command.answer());
@@ -438,10 +438,10 @@ public class CourseService implements CourseUseCase {
         }
 
         CourseQnaComment parentComment = courseQnaCommentRepository.findByIdAndQnaId(parentCommentId, qnaId)
-                .orElseThrow(() -> new LmsException(LmsErrorCode.QNA_COMMENT_NOT_FOUND));
+                .orElseThrow(() -> new LearningException(LearningErrorCode.QNA_COMMENT_NOT_FOUND));
 
         if (parentComment.getParentCommentId() != null) {
-            throw new LmsException(LmsErrorCode.QNA_COMMENT_NOT_FOUND);
+            throw new LearningException(LearningErrorCode.QNA_COMMENT_NOT_FOUND);
         }
     }
 
@@ -455,10 +455,10 @@ public class CourseService implements CourseUseCase {
     @Transactional(readOnly = true)
     public CourseResult getPublishedCourse(Long courseId) {
         Course course = courseRepository.findByIdAndDeletedFalse(courseId)
-                .orElseThrow(() -> new LmsException(LmsErrorCode.COURSE_NOT_FOUND));
+                .orElseThrow(() -> new LearningException(LearningErrorCode.COURSE_NOT_FOUND));
 
         if (!"PUBLISHED".equals(course.getStatus())) {
-            throw new LmsException(LmsErrorCode.COURSE_NOT_FOUND);
+            throw new LearningException(LearningErrorCode.COURSE_NOT_FOUND);
         }
 
         return CourseResult.from(course);
@@ -512,12 +512,12 @@ public class CourseService implements CourseUseCase {
 
     private Course findCourse(Long courseId) {
         return courseRepository.findByIdAndDeletedFalse(courseId)
-                .orElseThrow(() -> new LmsException(LmsErrorCode.COURSE_NOT_FOUND));
+                .orElseThrow(() -> new LearningException(LearningErrorCode.COURSE_NOT_FOUND));
     }
 
     private Course findCourseIncludingDeleted(Long courseId) {
         return courseRepository.findById(courseId)
-                .orElseThrow(() -> new LmsException(LmsErrorCode.COURSE_NOT_FOUND));
+                .orElseThrow(() -> new LearningException(LearningErrorCode.COURSE_NOT_FOUND));
     }
 
     private void validateAccessibleEnrollment(Long userId, Long courseId) {
@@ -526,13 +526,13 @@ public class CourseService implements CourseUseCase {
                 .orElse(false);
 
         if (!accessible) {
-            throw new LmsException(LmsErrorCode.NOT_ENROLLED);
+            throw new LearningException(LearningErrorCode.NOT_ENROLLED);
         }
     }
 
     private void validateCountry(Long countryId) {
         mapRepository.findActiveCountryById(countryId)
-                .orElseThrow(() -> new LmsException(LmsErrorCode.COUNTRY_NOT_FOUND));
+                .orElseThrow(() -> new LearningException(LearningErrorCode.COUNTRY_NOT_FOUND));
     }
 
     private List<Long> resolveCountryFilter(Long countryId, String countryName) {
@@ -571,19 +571,19 @@ public class CourseService implements CourseUseCase {
 
     private void validateCourseLevel(String level) {
         if (CourseLevel.find(level).isEmpty()) {
-            throw new LmsException(LmsErrorCode.INVALID_COURSE_LEVEL);
+            throw new LearningException(LearningErrorCode.INVALID_COURSE_LEVEL);
         }
     }
 
     private void validateMaxRewardMileage(Integer maxRewardMileage) {
         if (maxRewardMileage == null || maxRewardMileage < 0) {
-            throw new LmsException(LmsErrorCode.INVALID_COURSE_REWARD_MILEAGE);
+            throw new LearningException(LearningErrorCode.INVALID_COURSE_REWARD_MILEAGE);
         }
     }
 
     private void validateNotCompleted(Long userId, Long courseId) {
         if (courseCompletionRepository.existsByUserIdAndCourseId(userId, courseId)) {
-            throw new LmsException(LmsErrorCode.COURSE_ALREADY_COMPLETED);
+            throw new LearningException(LearningErrorCode.COURSE_ALREADY_COMPLETED);
         }
     }
 
@@ -591,7 +591,7 @@ public class CourseService implements CourseUseCase {
         List<Chapter> chapters = chapterRepository.findByCourseId(courseId);
 
         if (chapters.isEmpty()) {
-            throw new LmsException(LmsErrorCode.QUIZ_LOCKED);
+            throw new LearningException(LearningErrorCode.QUIZ_LOCKED);
         }
 
         List<Long> incompleteChapterIds = chapters.stream()
@@ -602,7 +602,7 @@ public class CourseService implements CourseUseCase {
                 .toList();
 
         if (!incompleteChapterIds.isEmpty()) {
-            throw new LmsException(LmsErrorCode.QUIZ_LOCKED);
+            throw new LearningException(LearningErrorCode.QUIZ_LOCKED);
         }
     }
 
@@ -705,7 +705,7 @@ public class CourseService implements CourseUseCase {
 
     private void validateQuizSubmitted(Long userId, Long courseId) {
         if (!quizSubmissionRepository.existsByUserIdAndCourseId(userId, courseId)) {
-            throw new LmsException(LmsErrorCode.QUIZ_NOT_SUBMITTED);
+            throw new LearningException(LearningErrorCode.QUIZ_NOT_SUBMITTED);
         }
     }
 
@@ -1010,7 +1010,7 @@ public class CourseService implements CourseUseCase {
 
     private CourseQna findQna(Long courseId, Long qnaId) {
         return courseQnaRepository.findByIdAndCourseId(qnaId, courseId)
-                .orElseThrow(() -> new LmsException(LmsErrorCode.QNA_NOT_FOUND));
+                .orElseThrow(() -> new LearningException(LearningErrorCode.QNA_NOT_FOUND));
     }
 
     private String normalizeCourseStatus(String status, String defaultStatus) {

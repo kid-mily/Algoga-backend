@@ -1,4 +1,4 @@
-package com.kidmily.algoga_server.lms.exception;
+package com.kidmily.algoga_server.learning.exception;
 
 import com.kidmily.algoga_server.global.exception.BaseErrorCode;
 import lombok.Getter;
@@ -7,7 +7,7 @@ import org.springframework.http.HttpStatus;
 
 @Getter
 @RequiredArgsConstructor
-public enum LmsErrorCode implements BaseErrorCode {
+public enum LearningErrorCode implements BaseErrorCode {
 
     COURSE_NOT_FOUND(HttpStatus.NOT_FOUND, "LMS_001", "해당 강의를 찾을 수 없습니다."),
     QUIZ_NOT_FOUND(HttpStatus.NOT_FOUND, "LMS_002", "해당 퀴즈를 찾을 수 없습니다."),
