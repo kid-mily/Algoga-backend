@@ -1,4 +1,4 @@
-package com.kidmily.algoga_server.lms.application.result;
+package com.kidmily.algoga_server.course.statistics.application.result;
 
 import java.util.List;
 

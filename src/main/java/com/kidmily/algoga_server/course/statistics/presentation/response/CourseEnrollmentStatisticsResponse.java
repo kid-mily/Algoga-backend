@@ -1,7 +1,7 @@
-package com.kidmily.algoga_server.lms.presentation.response;
+package com.kidmily.algoga_server.course.statistics.presentation.response;
 
-import com.kidmily.algoga_server.lms.application.result.CourseEnrollmentStatisticsPageResult;
-import com.kidmily.algoga_server.lms.application.result.CourseEnrollmentStatisticsResult;
+import com.kidmily.algoga_server.course.statistics.application.result.CourseEnrollmentStatisticsPageResult;
+import com.kidmily.algoga_server.course.statistics.application.result.CourseEnrollmentStatisticsResult;
 import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.util.List;

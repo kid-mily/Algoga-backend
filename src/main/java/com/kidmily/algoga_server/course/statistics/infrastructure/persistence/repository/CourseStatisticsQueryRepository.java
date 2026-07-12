@@ -1,8 +1,8 @@
-package com.kidmily.algoga_server.lms.infrastructure.persistence.repository;
+package com.kidmily.algoga_server.course.statistics.infrastructure.persistence.repository;
 
-import com.kidmily.algoga_server.lms.application.port.CourseStatisticsQueryPort;
-import com.kidmily.algoga_server.lms.application.result.CourseEnrollmentStatisticsPageResult;
-import com.kidmily.algoga_server.lms.application.result.CourseEnrollmentStatisticsResult;
+import com.kidmily.algoga_server.course.statistics.application.port.CourseStatisticsQueryPort;
+import com.kidmily.algoga_server.course.statistics.application.result.CourseEnrollmentStatisticsPageResult;
+import com.kidmily.algoga_server.course.statistics.application.result.CourseEnrollmentStatisticsResult;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.Query;
 import lombok.RequiredArgsConstructor;

@@ -259,3 +259,19 @@ Record completed work here by date. Keep entries factual and useful for future d
 
 - `DiagnosisService` still depends on `CourseUseCase`, `MapRepository`, and `UserProfilePort` as before; only package boundaries changed.
 - Next likely slice: split remaining classroom/course orchestration pieces or start file upload constraints, depending on PR size.
+### 2026-07-12 Course Statistics Package Split
+
+#### Summary
+
+- Moved course enrollment statistics port, result, usecase, service, query repository, admin controller, and response classes from `lms` to `course.statistics` package.
+- Preserved admin statistics API URL, request parameters, response fields, JSON structure, and authorization condition.
+
+#### Verification
+
+- `./gradlew clean compileJava` passed with existing warnings.
+- `./gradlew build -x test` passed.
+
+#### Notes
+
+- This split keeps course-specific statistics separate from the broader `stats` manager package.
+- Next likely slice: decide whether to split map/my-course/student classroom APIs or move to file upload constraints.

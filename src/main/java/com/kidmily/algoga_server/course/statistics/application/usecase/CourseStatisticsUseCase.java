@@ -1,6 +1,6 @@
-package com.kidmily.algoga_server.lms.application.usecase;
+package com.kidmily.algoga_server.course.statistics.application.usecase;
 
-import com.kidmily.algoga_server.lms.application.result.CourseEnrollmentStatisticsPageResult;
+import com.kidmily.algoga_server.course.statistics.application.result.CourseEnrollmentStatisticsPageResult;
 
 public interface CourseStatisticsUseCase {
 

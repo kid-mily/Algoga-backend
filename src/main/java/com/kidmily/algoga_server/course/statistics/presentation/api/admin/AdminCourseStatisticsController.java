@@ -1,8 +1,8 @@
-package com.kidmily.algoga_server.lms.presentation.api.admin;
+package com.kidmily.algoga_server.course.statistics.presentation.api.admin;
 
 import com.kidmily.algoga_server.global.common.api.response.ApiResponse;
-import com.kidmily.algoga_server.lms.application.usecase.CourseStatisticsUseCase;
-import com.kidmily.algoga_server.lms.presentation.response.CourseEnrollmentStatisticsResponse;
+import com.kidmily.algoga_server.course.statistics.application.usecase.CourseStatisticsUseCase;
+import com.kidmily.algoga_server.course.statistics.presentation.response.CourseEnrollmentStatisticsResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
