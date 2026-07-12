@@ -1,5 +1,6 @@
 package com.kidmily.algoga_server.lms.presentation.response;
 
+import com.kidmily.algoga_server.course.presentation.response.CourseListResponse;
 import com.kidmily.algoga_server.lms.application.result.DiagnosisResultView;
 import io.swagger.v3.oas.annotations.media.Schema;
 

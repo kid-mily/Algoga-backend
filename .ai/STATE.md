@@ -3,63 +3,39 @@
 ## Scope
 
 - This file tracks the current AI-assisted backend work in this repository.
-- It is not a team-wide task board.
-- Do not record every teammate's task here.
+- Do not record every teammate task here.
 
 ## Current Work
 
-- LMS/Course clean architecture refactor is active again in small package-split commits.
-- A short urgent stats support task was completed for the statistics manager.
-- Next active work should resume the LMS/Course refactor after checking compile/test impact from latest `develop` merges.
-
-## Current Branch
-
-- `feature/course-clean-architecture-refactor`
-- Local branch is synced with `origin/feature/course-clean-architecture-refactor` as of the last push.
-- `docker-compose.yml` remains intentionally untracked.
+- LMS package split is active on branch `refactor/lms-package-split-next`.
+- Goal: split the old `lms` package into feature packages while keeping API URLs, request fields, response fields, JSON structure, and behavior unchanged.
 
 ## Progress
 
-- Done:
-  - Added AI collaboration documents and guides: `AGENTS.md`, `.ai/*`, `docs/ai/*`, `docs/design/figma-stats-manager-prompt.md`.
-  - Split Course/Chapter domain models, repository ports, persistence entities, Spring Data repositories, adapters, mapper, S3 storage port/adapter, and course/chapter controllers into the `course` package.
-  - Moved Chapter application layer into the `course` package.
-  - Moved `CourseRepository` port into `course.domain.repository` and updated known main/test imports.
-  - Added `CourseCompletionRepository.countByCourseIds(List<Long> courseIds)` for statistics manager lecture completion-rate support.
-  - Updated booking main/test imports after latest `develop` merge introduced old `CourseRepository` imports.
-  - Verified Java compilation with `./gradlew clean compileJava` before the latest booking import follow-up.
-  - Pushed branch `feature/course-clean-architecture-refactor` to origin.
-- In progress:
-  - Keep branch aligned with latest `develop` while refactor is in progress.
-  - Current small split moves Course value objects (`CourseLevel`, `CourseStatus`) into `course.domain.model`.
-- Waiting:
-  - PR review/merge status for `[Feat] 강의별 수료자 수 집계 메서드 추가`.
-
-## Actual State Check
-
-- `git status` showed only `docker-compose.yml` as untracked before updating these `.ai` files.
-- Actual tracked docs are now committed in the branch, so `.ai` files can be edited and committed normally.
-- Old `CourseRepository` imports in booking main/test code were fixed and pushed.
+- Done in previous slices:
+  - Course/Chapter core package split into `course`.
+  - Country/Map package split into `country`.
+  - Course application/presentation DTO package split into `course`.
+  - Course cache settings split into `course.settings.cache`.
+  - LearningProgress package split into `learningprogress`.
+  - Enrollment package split into `enrollment`.
+  - Quiz package split into `quiz`.
+- Verified latest Quiz slice with:
+  - `./gradlew clean compileJava`
+  - `./gradlew build -x test`
 
 ## Next Steps
 
-1. Finish current small refactor slice: move `CourseLevel` and `CourseStatus` to `course.domain.model` and verify imports.
-2. Run/search before broader refactor work:
-   - `rg "lms\.domain\.repository\.CourseRepository|lms\.domain\.model\.CourseLevel|lms\.domain\.model\.CourseStatus" src/main/java src/test/java`
-3. Run verification:
-   - `./gradlew clean compileJava`
-   - Consider `./gradlew test` or at least test compilation if practical.
-4. Resume LMS/Course refactor in small commits.
-5. Next likely refactor candidate: inspect `CourseService` dependencies and split only a small, low-risk piece instead of moving the whole service at once.
+1. Commit the Quiz package split slice.
+2. Decide the next package slice:
+   - `completion`/`certificate` if targeting course completion flow cleanup.
+   - `review`/`qna` if targeting community interaction cleanup.
+   - `diagnosis` if targeting assessment flow cleanup.
+3. Keep each slice small and verify with `compileJava` and `build -x test`.
 
-## Out of Scope
+## Cautions
 
-- Do not change payment/webhook coupon behavior unless explicitly assigned; that was not the user's ownership area.
-- Do not add `docker-compose.yml` unless the user explicitly decides to track it.
-- Do not make broad line-ending, formatting, or import-order-only changes.
-
-## Notes
-
-- Existing Git global config has `core.autocrlf=true`, so watch for CRLF warnings and avoid broad staged diffs.
-- Use file-specific `git add` when excluding `docker-compose.yml` or unrelated changes.
-- Keep this file short and factual; use `.ai/WORKLOG.md` for completed work history.
+- Do not change API contract unless explicitly requested.
+- Avoid broad package declaration replacements; only edit moved files and required imports.
+- Watch CRLF warnings due local Git config.
+- Do not track unrelated local files.

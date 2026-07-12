@@ -7,9 +7,9 @@ import com.kidmily.algoga_server.course.application.command.CreateChapterCommand
 import com.kidmily.algoga_server.course.application.command.UpdateChapterCommand;
 import com.kidmily.algoga_server.course.application.usecase.ChapterUseCase;
 import com.kidmily.algoga_server.lms.exception.LmsErrorCode;
-import com.kidmily.algoga_server.lms.presentation.request.admin.CreateChapterRequest;
-import com.kidmily.algoga_server.lms.presentation.request.admin.UpdateChapterRequest;
-import com.kidmily.algoga_server.lms.presentation.response.AdminChapterResponse;
+import com.kidmily.algoga_server.course.presentation.request.admin.CreateChapterRequest;
+import com.kidmily.algoga_server.course.presentation.request.admin.UpdateChapterRequest;
+import com.kidmily.algoga_server.course.presentation.response.AdminChapterResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;

@@ -108,3 +108,99 @@ Record completed work here by date. Keep entries factual and useful for future d
 
 - Ran `./gradlew clean compileJava`; build passed with existing warnings.
 - Ran `./gradlew build -x test`; build passed.
+
+### 2026-07-12 Course Application and Presentation Package Split
+
+#### Summary
+
+- Continued LMS package split on `refactor/lms-package-split-next`.
+- Moved course-specific application command/result/cache classes from `lms` to `course`.
+- Moved Course/Chapter admin request DTOs and Course/Chapter response DTOs from `lms.presentation` to `course.presentation`.
+- Kept API URL, request fields, response fields, JSON structure, `ApiResponse`, and `PageResponse` unchanged.
+
+#### Changed Scope
+
+- `course/application/command`: `CreateCourseCommand`, `UpdateCourseCommand`
+- `course/application/result`: `CourseResult`, `CourseFileResult`, `PublishedCourseListCacheResult`
+- `course/application/service`: `PublishedCourseListCacheService`
+- `course/presentation/request/admin`: Course/Chapter create/update request DTOs
+- `course/presentation/response`: Course/Chapter list/admin/file response DTOs
+- Updated imports in existing LMS/diagnosis/course controllers and services.
+
+#### Verification
+
+- `./gradlew clean compileJava` passed with existing warnings.
+- `./gradlew build -x test` passed.
+
+#### Notes
+
+- `CourseUseCase` and `CourseService` remain under `lms` because they still include enrollment, completion, Q&A, classroom, and diagnosis-related behavior.
+- Next likely slice: split `CourseUseCase` responsibilities or move course-only service logic carefully without changing API contracts.
+
+### 2026-07-12 Course Cache Settings Split
+
+#### Summary
+
+- Moved public course list cache settings from `lms.settings.cache` to `course.settings.cache`.
+- Renamed `LmsCacheType`/`LmsCacheRegistry` to `CourseCacheType`/`CourseCacheRegistry`.
+- Updated course cache usage in `PublishedCourseListCacheService` and cache eviction usage in `CourseService`.
+- Kept cache name and TTL unchanged: `lmsPublicCourseList`, `10 * 60` seconds.
+
+#### Verification
+
+- `./gradlew clean compileJava` passed with existing warnings.
+- `./gradlew build -x test` passed.
+
+### 2026-07-12 LearningProgress Package Split
+
+#### Summary
+
+- Moved learning progress command, port, result, service, usecase, scheduler, domain model/repository, persistence, Redis adapter, controller, request, and response classes from `lms` to `learningprogress`.
+- Preserved learning progress API path, request fields, response fields, Redis write-behind behavior, cache key behavior, and JSON structure.
+- Updated dependent imports in `CourseService`, `QuizService`, and `CourseServiceClassroomTest`.
+
+#### Verification
+
+- `./gradlew clean compileJava` passed with existing warnings.
+- `./gradlew build -x test` passed.
+
+#### Notes
+
+- `LearningProgressResult` still references LMS classroom result types because classroom/course service responsibilities are not fully split yet.
+- Next likely slice: split `Enrollment` package or isolate course classroom/service boundaries before moving more CourseService responsibilities.
+
+### 2026-07-12 Enrollment Package Split
+
+#### Summary
+
+- Moved enrollment event listener, domain model, repository port, persistence adapter/entity/repository from `lms` to `enrollment` package.
+- Updated dependent imports in benefit LMS adapter, learning progress service, LMS course/quiz services, stats interest service, and related tests.
+- Kept API URL, request fields, response fields, JSON structure, and enrollment behavior unchanged.
+
+#### Verification
+
+- `./gradlew clean compileJava` passed with existing warnings.
+- `./gradlew build -x test` passed.
+
+#### Notes
+
+- `CourseService` still owns several LMS classroom/course flows and now imports the enrollment port explicitly.
+- Next likely slice: split quiz or review/Q&A package after committing this Enrollment slice.
+
+### 2026-07-12 Quiz Package Split
+
+#### Summary
+
+- Moved quiz command, result, usecase, service, domain model/repository, persistence adapter/entity/repository, controller, request, and response classes from `lms` to `quiz` package.
+- Updated dependent imports in `CourseService`, `CourseServiceClassroomTest`, and benefit LMS adapter.
+- Preserved quiz API URLs, request fields, response fields, JSON structure, and behavior.
+
+#### Verification
+
+- `./gradlew clean compileJava` passed with existing warnings.
+- `./gradlew build -x test` passed.
+
+#### Notes
+
+- `QuizSubmitResult` and `QuizSubmitResponse` still depend on LMS completion result/response types because completion has not been split yet.
+- Next likely slice: split completion/certificate or review/Q&A, depending on desired PR size.

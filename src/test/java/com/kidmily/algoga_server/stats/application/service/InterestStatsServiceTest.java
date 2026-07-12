@@ -5,7 +5,7 @@ import com.kidmily.algoga_server.country.domain.repository.CountryRepository;
 import com.kidmily.algoga_server.course.domain.repository.CourseRepository;
 import com.kidmily.algoga_server.country.domain.model.Country;
 import com.kidmily.algoga_server.lms.domain.repository.CourseCompletionRepository;
-import com.kidmily.algoga_server.lms.domain.repository.EnrollmentRepository;
+import com.kidmily.algoga_server.enrollment.domain.repository.EnrollmentRepository;
 import com.kidmily.algoga_server.stats.presentation.api.response.InterestLectureResponse;
 import com.kidmily.algoga_server.stats.presentation.api.response.InterestSummaryResponse;
 import org.junit.jupiter.api.DisplayName;

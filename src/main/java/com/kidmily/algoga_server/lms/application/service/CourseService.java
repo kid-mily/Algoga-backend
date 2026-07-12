@@ -1,7 +1,11 @@
-package com.kidmily.algoga_server.lms.application.service;
+package com.kidmily.algoga_server.quiz.application.service;
 
 import com.kidmily.algoga_server.course.application.port.CourseFileStoragePort;
 import com.kidmily.algoga_server.course.application.port.UploadFile;
+import com.kidmily.algoga_server.course.application.command.CreateCourseCommand;
+import com.kidmily.algoga_server.course.application.command.UpdateCourseCommand;
+import com.kidmily.algoga_server.course.application.result.CourseResult;
+import com.kidmily.algoga_server.course.application.service.PublishedCourseListCacheService;
 import com.kidmily.algoga_server.course.domain.model.Chapter;
 import com.kidmily.algoga_server.course.domain.model.Course;
 import com.kidmily.algoga_server.course.domain.model.CourseFile;
@@ -9,6 +13,8 @@ import com.kidmily.algoga_server.course.domain.model.CourseLevel;
 import com.kidmily.algoga_server.course.domain.model.CourseStatus;
 import com.kidmily.algoga_server.country.domain.model.Country;
 import com.kidmily.algoga_server.country.domain.repository.MapRepository;
+import com.kidmily.algoga_server.enrollment.domain.model.Enrollment;
+import com.kidmily.algoga_server.enrollment.domain.repository.EnrollmentRepository;
 import com.kidmily.algoga_server.course.domain.repository.ChapterRepository;
 import com.kidmily.algoga_server.course.domain.repository.CourseRepository;
 import com.kidmily.algoga_server.lms.application.command.*;
@@ -17,10 +23,14 @@ import com.kidmily.algoga_server.lms.application.result.*;
 import com.kidmily.algoga_server.lms.application.usecase.CourseUseCase;
 import com.kidmily.algoga_server.lms.domain.model.*;
 import com.kidmily.algoga_server.lms.domain.repository.*;
+import com.kidmily.algoga_server.quiz.domain.repository.QuizSubmissionRepository;
 import com.kidmily.algoga_server.lms.exception.LmsErrorCode;
 import com.kidmily.algoga_server.lms.exception.LmsException;
 import com.kidmily.algoga_server.lms.settings.LmsStorageSettings;
-import com.kidmily.algoga_server.lms.settings.cache.LmsCacheType;
+import com.kidmily.algoga_server.course.settings.cache.CourseCacheType;
+import com.kidmily.algoga_server.learningprogress.application.port.LearningProgressCachePort;
+import com.kidmily.algoga_server.learningprogress.domain.model.LearningProgress;
+import com.kidmily.algoga_server.learningprogress.domain.repository.LearningProgressRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -61,7 +71,7 @@ public class CourseService implements CourseUseCase {
     private final PublishedCourseListCacheService publishedCourseListCacheService;
 
     @Override
-    @CacheEvict(cacheNames = LmsCacheType.Const.PUBLIC_COURSE_LIST, allEntries = true)
+    @CacheEvict(cacheNames = CourseCacheType.Const.PUBLIC_COURSE_LIST, allEntries = true)
     public Long createCourse(CreateCourseCommand command) {
         validateCountry(command.countryId());
         validateMaxRewardMileage(command.maxRewardMileage());
@@ -149,7 +159,7 @@ public class CourseService implements CourseUseCase {
     }
 
     @Override
-    @CacheEvict(cacheNames = LmsCacheType.Const.PUBLIC_COURSE_LIST, allEntries = true)
+    @CacheEvict(cacheNames = CourseCacheType.Const.PUBLIC_COURSE_LIST, allEntries = true)
     public CourseResult updateCourse(Long courseId, UpdateCourseCommand command) {
         validateMaxRewardMileage(command.maxRewardMileage());
 
@@ -195,7 +205,7 @@ public class CourseService implements CourseUseCase {
     }
 
     @Override
-    @CacheEvict(cacheNames = LmsCacheType.Const.PUBLIC_COURSE_LIST, allEntries = true)
+    @CacheEvict(cacheNames = CourseCacheType.Const.PUBLIC_COURSE_LIST, allEntries = true)
     public void deleteCourse(Long courseId) {
         findCourse(courseId);
 

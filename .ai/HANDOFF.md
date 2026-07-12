@@ -2,50 +2,32 @@
 
 ## Current Goal
 
-- Resume LMS/Course clean architecture refactor after completing urgent statistics-manager support.
+- Continue LMS package split on `refactor/lms-package-split-next` without changing API contracts.
 
-## Completed Work
+## Completed Recently
 
-- Course/Chapter domain, persistence, mapper, S3 storage port/adapter, presentation, and Chapter application packages were partially split into `course`.
-- `CourseRepository` now lives under `course.domain.repository`.
-- Statistics-manager support was added via `CourseCompletionRepository.countByCourseIds(List<Long> courseIds)`.
-- Booking main-code import was fixed after latest `develop` introduced an old `CourseRepository` import.
-- Branch was pushed to `origin/feature/course-clean-architecture-refactor`.
-
-## Changed Files
-
-- Refactor files under `src/main/java/com/kidmily/algoga_server/course/**`.
-- Remaining LMS files under `src/main/java/com/kidmily/algoga_server/lms/**` still own progress, quiz, completion, review, Q&A, and parts of course service behavior.
-- Stats support changed:
-  - `src/main/java/com/kidmily/algoga_server/lms/domain/repository/CourseCompletionRepository.java`
-  - `src/main/java/com/kidmily/algoga_server/lms/infrastructure/persistence/adapter/CourseCompletionRepositoryAdapter.java`
-  - `src/main/java/com/kidmily/algoga_server/lms/infrastructure/persistence/repository/SpringDataCourseCompletionRepository.java`
-- Docs changed:
-  - `.ai/*`
-  - `AGENTS.md`
-  - `docs/**`
-
-## Remaining Work
-
-- Keep checking for old imports to moved Course packages after each `develop` update.
-- Decide next small refactor slice; likely inspect `CourseService` and avoid moving it wholesale.
-- Keep API request/response/json unchanged unless explicitly requested.
+- Enrollment package split completed and committed by user.
+- Quiz package split completed in working tree:
+  - Moved quiz command/result/usecase/service/domain/repository/persistence/controller/request/response classes from `lms` to `quiz`.
+  - Updated imports in `CourseService`, `CourseServiceClassroomTest`, and `benefit/infrastructure/lms/LmsCourseAdapter`.
+  - Kept URLs/request/response/json unchanged.
 
 ## Verification Run
 
-- `./gradlew clean compileJava` passed after adding completion count support.
+- `./gradlew clean compileJava` passed with existing warnings.
+- `./gradlew build -x test` passed.
 
-## Failed Verification or Cautions
+## Important Notes
 
-- After latest `develop` pull, `BookingCommandService.java` initially failed compile due old `lms.domain.repository.CourseRepository` import; fixed and pushed.
-- Old `CourseRepository` imports in booking main/test code were fixed; search again before broad test work.
-- `docker-compose.yml` is intentionally untracked.
-- Windows/Git Bash CRLF warnings may appear due `core.autocrlf=true`; avoid broad diffs.
+- `QuizSubmitResult` still imports `lms.application.result.CourseCompletionResult`.
+- `QuizSubmitResponse` still imports `lms.presentation.response.CourseCompletionResponse`.
+- This is intentional until completion/certificate is split.
+- During this slice, an initial broad replacement caused extra LMS files to change; those were restored before verification.
 
-## Files to Check First
+## Next Suggested Slice
 
-- `.ai/STATE.md`
-- `src/test/java/com/kidmily/algoga_server/booking/application/service/BookingCommandServiceTest.java`
-- `src/main/java/com/kidmily/algoga_server/lms/application/service/CourseService.java`
-- `src/main/java/com/kidmily/algoga_server/lms/application/service/LearningProgressService.java`
-- `src/main/java/com/kidmily/algoga_server/lms/application/service/QuizService.java`
+- Commit Quiz split first.
+- Then choose one:
+  - `completion` + maybe `certificate` for course completion flow.
+  - `review` and `qna` for user interaction flow.
+  - `diagnosis` for assessment flow.

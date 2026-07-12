@@ -2,10 +2,11 @@ package com.kidmily.algoga_server.lms.application.usecase;
 
 import com.kidmily.algoga_server.lms.application.command.AnswerCourseQnaCommand;
 import com.kidmily.algoga_server.lms.application.command.CompleteCourseCommand;
-import com.kidmily.algoga_server.lms.application.command.CreateCourseCommand;
+import com.kidmily.algoga_server.course.application.command.CreateCourseCommand;
 import com.kidmily.algoga_server.lms.application.command.CreateCourseQnaCommand;
 import com.kidmily.algoga_server.lms.application.command.CreateCourseQnaCommentCommand;
-import com.kidmily.algoga_server.lms.application.command.UpdateCourseCommand;
+import com.kidmily.algoga_server.course.application.command.UpdateCourseCommand;
+import com.kidmily.algoga_server.course.application.result.CourseResult;
 import com.kidmily.algoga_server.lms.application.result.*;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
