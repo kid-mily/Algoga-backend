@@ -42,7 +42,7 @@ import com.kidmily.algoga_server.review.domain.repository.CourseReviewRepository
 import com.kidmily.algoga_server.quiz.domain.repository.QuizSubmissionRepository;
 import com.kidmily.algoga_server.lms.exception.LmsErrorCode;
 import com.kidmily.algoga_server.lms.exception.LmsException;
-import com.kidmily.algoga_server.lms.settings.LmsStorageSettings;
+import com.kidmily.algoga_server.course.settings.CourseStorageSettings;
 import com.kidmily.algoga_server.course.settings.cache.CourseCacheType;
 import com.kidmily.algoga_server.learningprogress.application.port.LearningProgressCachePort;
 import com.kidmily.algoga_server.learningprogress.domain.model.LearningProgress;
@@ -82,7 +82,7 @@ public class CourseService implements CourseUseCase {
     private final EnrollmentRepository enrollmentRepository;
     private final UserProfilePort userProfilePort;
     private final CourseFileStoragePort fileStoragePort;
-    private final LmsStorageSettings storageSettings;
+    private final CourseStorageSettings storageSettings;
     private final ApplicationEventPublisher eventPublisher;
     private final PublishedCourseListCacheService publishedCourseListCacheService;
 

@@ -311,3 +311,22 @@ Record completed work here by date. Keep entries factual and useful for future d
 
 - `MapController` still depends on `CourseUseCase` for published-course counts by country, matching existing behavior.
 - Next likely slice: course file/storage package remnants or careful extraction of `CourseService` orchestration.
+### 2026-07-12 Course File/Storage Package Split
+
+#### Summary
+
+- Moved course storage settings from `lms.settings.LmsStorageSettings` to `course.settings.CourseStorageSettings`.
+- Moved `CourseFileJpaEntity` to `course.infrastructure.persistence.entity`.
+- Moved `LocalFileStorageManager` to `course.infrastructure.document`.
+- Updated dependent imports in course services, mapper/entity, and classroom test.
+- Preserved S3 bucket name, storage directory values, API URLs, request fields, response fields, and JSON structure.
+
+#### Verification
+
+- `./gradlew clean compileJava` passed with existing warnings.
+- `./gradlew build -x test` passed.
+
+#### Notes
+
+- LMS exception classes still remain under `lms.exception` for now and are referenced by course file storage code.
+- Next likely slice: split remaining course command/usecase/port pieces or decide whether to extract `CourseService` orchestration.

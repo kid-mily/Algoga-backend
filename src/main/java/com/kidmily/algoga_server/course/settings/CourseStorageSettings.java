@@ -1,4 +1,4 @@
-package com.kidmily.algoga_server.lms.settings;
+package com.kidmily.algoga_server.course.settings;
 
 import com.kidmily.algoga_server.global.port.out.StorageSettings;
 import lombok.Getter;
@@ -6,7 +6,7 @@ import org.springframework.stereotype.Component;
 
 @Getter
 @Component
-public class LmsStorageSettings implements StorageSettings {
+public class CourseStorageSettings implements StorageSettings {
 
     private final String bucketName = "algoga-lms";
 

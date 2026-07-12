@@ -20,7 +20,7 @@ import com.kidmily.algoga_server.country.domain.repository.MapRepository;
 import com.kidmily.algoga_server.quiz.domain.repository.QuizSubmissionRepository;
 import com.kidmily.algoga_server.lms.exception.LmsErrorCode;
 import com.kidmily.algoga_server.lms.exception.LmsException;
-import com.kidmily.algoga_server.lms.settings.LmsStorageSettings;
+import com.kidmily.algoga_server.course.settings.CourseStorageSettings;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -60,7 +60,7 @@ class CourseServiceClassroomTest {
     @Mock private EnrollmentRepository enrollmentRepository;
     @Mock private UserProfilePort userProfilePort;
     @Mock private FileStoragePort fileStoragePort;
-    @Mock private LmsStorageSettings storageSettings;
+    @Mock private CourseStorageSettings storageSettings;
 
     @InjectMocks
     private CourseService courseService;

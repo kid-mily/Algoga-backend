@@ -10,7 +10,7 @@ import com.kidmily.algoga_server.course.domain.repository.ChapterRepository;
 import com.kidmily.algoga_server.course.domain.repository.CourseRepository;
 import com.kidmily.algoga_server.lms.exception.LmsErrorCode;
 import com.kidmily.algoga_server.lms.exception.LmsException;
-import com.kidmily.algoga_server.lms.settings.LmsStorageSettings;
+import com.kidmily.algoga_server.course.settings.CourseStorageSettings;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -27,7 +27,7 @@ public class ChapterService implements ChapterUseCase {
     private final ChapterRepository chapterRepository;
     private final CourseRepository courseRepository;
     private final FileStoragePort fileStoragePort;
-    private final LmsStorageSettings storageSettings;
+    private final CourseStorageSettings storageSettings;
 
     @Override
     @Transactional(readOnly = true)

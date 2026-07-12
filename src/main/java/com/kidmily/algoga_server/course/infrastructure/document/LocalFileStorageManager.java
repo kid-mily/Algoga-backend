@@ -1,4 +1,4 @@
-package com.kidmily.algoga_server.lms.infrastructure.document;
+package com.kidmily.algoga_server.course.infrastructure.document;
 
 import com.kidmily.algoga_server.lms.exception.LmsErrorCode;
 import com.kidmily.algoga_server.lms.exception.LmsException;
