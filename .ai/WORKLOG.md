@@ -242,3 +242,20 @@ Record completed work here by date. Keep entries factual and useful for future d
 
 - `CourseService` and `CourseUseCase` still own course classroom/Q&A orchestration and import review/qna package types explicitly.
 - Next likely slice: split diagnosis package, then decide whether to separate remaining LMS classroom/course orchestration further.
+### 2026-07-12 Diagnosis Package Split
+
+#### Summary
+
+- Moved diagnosis command, result, usecase, service, domain model/repository, persistence adapter/entity/repository, controller, request, response, and related service test classes from `lms` to `diagnosis` package.
+- Updated dependent imports and removed obsolete LMS domain wildcard imports from `CourseService`.
+- Preserved diagnosis API URLs, request fields, response fields, JSON structure, and diagnosis result persistence behavior.
+
+#### Verification
+
+- `./gradlew clean compileJava` passed with existing warnings.
+- `./gradlew build -x test` passed.
+
+#### Notes
+
+- `DiagnosisService` still depends on `CourseUseCase`, `MapRepository`, and `UserProfilePort` as before; only package boundaries changed.
+- Next likely slice: split remaining classroom/course orchestration pieces or start file upload constraints, depending on PR size.

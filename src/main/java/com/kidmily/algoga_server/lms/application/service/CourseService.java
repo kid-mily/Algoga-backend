@@ -36,8 +36,6 @@ import com.kidmily.algoga_server.qna.domain.repository.CourseQnaCommentRepositor
 import com.kidmily.algoga_server.qna.domain.repository.CourseQnaRepository;
 import com.kidmily.algoga_server.review.domain.model.CourseReview;
 import com.kidmily.algoga_server.review.domain.repository.CourseReviewRepository;
-import com.kidmily.algoga_server.lms.domain.model.*;
-import com.kidmily.algoga_server.lms.domain.repository.*;
 import com.kidmily.algoga_server.quiz.domain.repository.QuizSubmissionRepository;
 import com.kidmily.algoga_server.lms.exception.LmsErrorCode;
 import com.kidmily.algoga_server.lms.exception.LmsException;
