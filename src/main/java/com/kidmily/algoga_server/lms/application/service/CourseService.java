@@ -1,4 +1,4 @@
-package com.kidmily.algoga_server.quiz.application.service;
+package com.kidmily.algoga_server.lms.application.service;
 
 import com.kidmily.algoga_server.course.application.port.CourseFileStoragePort;
 import com.kidmily.algoga_server.course.application.port.UploadFile;
@@ -24,6 +24,18 @@ import com.kidmily.algoga_server.lms.application.command.*;
 import com.kidmily.algoga_server.lms.application.port.*;
 import com.kidmily.algoga_server.lms.application.result.*;
 import com.kidmily.algoga_server.lms.application.usecase.CourseUseCase;
+import com.kidmily.algoga_server.qna.application.command.AnswerCourseQnaCommand;
+import com.kidmily.algoga_server.qna.application.command.CreateCourseQnaCommand;
+import com.kidmily.algoga_server.qna.application.command.CreateCourseQnaCommentCommand;
+import com.kidmily.algoga_server.qna.application.result.CourseQnaCommentResult;
+import com.kidmily.algoga_server.qna.application.result.CourseQnaDetailResult;
+import com.kidmily.algoga_server.qna.application.result.CourseQnaResult;
+import com.kidmily.algoga_server.qna.domain.model.CourseQna;
+import com.kidmily.algoga_server.qna.domain.model.CourseQnaComment;
+import com.kidmily.algoga_server.qna.domain.repository.CourseQnaCommentRepository;
+import com.kidmily.algoga_server.qna.domain.repository.CourseQnaRepository;
+import com.kidmily.algoga_server.review.domain.model.CourseReview;
+import com.kidmily.algoga_server.review.domain.repository.CourseReviewRepository;
 import com.kidmily.algoga_server.lms.domain.model.*;
 import com.kidmily.algoga_server.lms.domain.repository.*;
 import com.kidmily.algoga_server.quiz.domain.repository.QuizSubmissionRepository;

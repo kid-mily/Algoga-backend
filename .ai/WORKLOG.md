@@ -223,3 +223,22 @@ Record completed work here by date. Keep entries factual and useful for future d
 
 - `CourseService` still owns the completion workflow method and imports completion package types explicitly.
 - Next likely slice: split review/Q&A or diagnosis package.
+
+### 2026-07-12 Review and Q&A Package Split
+
+#### Summary
+
+- Moved course review command, result, usecase, service, scheduler, domain model/repository, persistence adapter/entity/repository, controller, request, and response classes from `lms` to `review` package.
+- Moved course Q&A command, result, domain model/repository, persistence adapter/entity/repository, controller, request, and response classes from `lms` to `qna` package.
+- Updated dependent imports in LMS course usecase/service and classroom test.
+- Preserved API URLs, request fields, response fields, JSON structure, review deletion scheduling behavior, and Q&A behavior.
+
+#### Verification
+
+- `./gradlew clean compileJava` passed with existing warnings.
+- `./gradlew build -x test` passed.
+
+#### Notes
+
+- `CourseService` and `CourseUseCase` still own course classroom/Q&A orchestration and import review/qna package types explicitly.
+- Next likely slice: split diagnosis package, then decide whether to separate remaining LMS classroom/course orchestration further.
