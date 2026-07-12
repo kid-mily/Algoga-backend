@@ -8,4 +8,6 @@ public interface BookingPort {
     LocalDate getDepartureDate(Long bookingId);
     LocalDateTime getDepartureDateTime(Long bookingId);
     String getFlightInfo(Long bookingId);
+    Long getAccommodationId(Long bookingId);
+    LocalDate getCheckInDate(Long bookingId);
 }
