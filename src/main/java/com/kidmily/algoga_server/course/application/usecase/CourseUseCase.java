@@ -1,9 +1,9 @@
-package com.kidmily.algoga_server.lms.application.usecase;
+package com.kidmily.algoga_server.course.application.usecase;
 
 import com.kidmily.algoga_server.completion.application.result.CourseCompletionResult;
 
 import com.kidmily.algoga_server.qna.application.command.AnswerCourseQnaCommand;
-import com.kidmily.algoga_server.lms.application.command.CompleteCourseCommand;
+import com.kidmily.algoga_server.course.application.command.CompleteCourseCommand;
 import com.kidmily.algoga_server.course.application.command.CreateCourseCommand;
 import com.kidmily.algoga_server.qna.application.command.CreateCourseQnaCommand;
 import com.kidmily.algoga_server.qna.application.command.CreateCourseQnaCommentCommand;

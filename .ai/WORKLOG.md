@@ -330,3 +330,21 @@ Record completed work here by date. Keep entries factual and useful for future d
 
 - LMS exception classes still remain under `lms.exception` for now and are referenced by course file storage code.
 - Next likely slice: split remaining course command/usecase/port pieces or decide whether to extract `CourseService` orchestration.
+### 2026-07-12 Course UseCase/Command Package Split
+
+#### Summary
+
+- Moved `CourseUseCase` from `lms.application.usecase` to `course.application.usecase`.
+- Moved `CompleteCourseCommand` from `lms.application.command` to `course.application.command`.
+- Updated dependent imports in course, completion, country, diagnosis, Q&A controllers/services, and diagnosis service test.
+- Preserved API URLs, request fields, response fields, JSON structure, and business behavior.
+
+#### Verification
+
+- `./gradlew clean compileJava` passed with existing warnings.
+- `./gradlew build -x test` passed.
+
+#### Notes
+
+- `CourseService` still remains under `lms.application.service` but now implements the course package use case.
+- Next likely slice: move `CourseService` itself or split `UserProfilePort`/`UserProfileAdapter` before moving the service.

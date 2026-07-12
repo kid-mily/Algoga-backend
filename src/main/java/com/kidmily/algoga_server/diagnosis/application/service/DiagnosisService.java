@@ -9,7 +9,7 @@ import com.kidmily.algoga_server.diagnosis.application.result.AdminDiagnosisResu
 import com.kidmily.algoga_server.diagnosis.application.result.DiagnosisAnswerResult;
 import com.kidmily.algoga_server.diagnosis.application.result.DiagnosisQuestionResult;
 import com.kidmily.algoga_server.diagnosis.application.result.DiagnosisResultView;
-import com.kidmily.algoga_server.lms.application.usecase.CourseUseCase;
+import com.kidmily.algoga_server.course.application.usecase.CourseUseCase;
 import com.kidmily.algoga_server.diagnosis.application.usecase.DiagnosisUseCase;
 import com.kidmily.algoga_server.diagnosis.domain.model.DiagnosisAnswer;
 import com.kidmily.algoga_server.diagnosis.domain.model.DiagnosisQuestion;

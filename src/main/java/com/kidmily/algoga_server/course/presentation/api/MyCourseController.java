@@ -3,7 +3,7 @@ package com.kidmily.algoga_server.course.presentation.api;
 import com.kidmily.algoga_server.global.annotation.swagger.ApiErrorCodeExample;
 import com.kidmily.algoga_server.global.common.api.response.ApiResponse;
 import com.kidmily.algoga_server.global.common.api.response.PageResponse;
-import com.kidmily.algoga_server.lms.application.usecase.CourseUseCase;
+import com.kidmily.algoga_server.course.application.usecase.CourseUseCase;
 import com.kidmily.algoga_server.lms.exception.LmsErrorCode;
 import com.kidmily.algoga_server.course.presentation.response.CourseClassroomResponse;
 import com.kidmily.algoga_server.course.presentation.response.MyCourseResponse;

@@ -7,7 +7,7 @@ import com.kidmily.algoga_server.global.exception.GlobalErrorCode;
 import com.kidmily.algoga_server.qna.application.command.AnswerCourseQnaCommand;
 import com.kidmily.algoga_server.qna.application.command.CreateCourseQnaCommentCommand;
 import com.kidmily.algoga_server.qna.application.result.CourseQnaDetailResult;
-import com.kidmily.algoga_server.lms.application.usecase.CourseUseCase;
+import com.kidmily.algoga_server.course.application.usecase.CourseUseCase;
 import com.kidmily.algoga_server.lms.exception.LmsErrorCode;
 import com.kidmily.algoga_server.qna.presentation.request.AnswerCourseQnaRequest;
 import com.kidmily.algoga_server.qna.presentation.request.CreateCourseQnaCommentRequest;

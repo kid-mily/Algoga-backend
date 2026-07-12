@@ -4,7 +4,7 @@ import com.kidmily.algoga_server.global.annotation.swagger.ApiErrorCodeExample;
 import com.kidmily.algoga_server.global.common.api.response.ApiResponse;
 import com.kidmily.algoga_server.diagnosis.application.command.SubmitDiagnosisAnswerCommand;
 import com.kidmily.algoga_server.diagnosis.application.command.SubmitDiagnosisCommand;
-import com.kidmily.algoga_server.lms.application.usecase.CourseUseCase;
+import com.kidmily.algoga_server.course.application.usecase.CourseUseCase;
 import com.kidmily.algoga_server.diagnosis.application.usecase.DiagnosisUseCase;
 import com.kidmily.algoga_server.lms.exception.LmsErrorCode;
 import com.kidmily.algoga_server.diagnosis.presentation.request.DiagnosisAnswerRequest;

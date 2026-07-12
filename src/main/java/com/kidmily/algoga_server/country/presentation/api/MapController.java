@@ -2,7 +2,7 @@ package com.kidmily.algoga_server.country.presentation.api;
 
 import com.kidmily.algoga_server.global.common.api.response.ApiResponse;
 import com.kidmily.algoga_server.country.application.result.CountryResult;
-import com.kidmily.algoga_server.lms.application.usecase.CourseUseCase;
+import com.kidmily.algoga_server.course.application.usecase.CourseUseCase;
 import com.kidmily.algoga_server.country.application.usecase.MapUseCase;
 import com.kidmily.algoga_server.country.presentation.response.ContinentResponse;
 import com.kidmily.algoga_server.country.presentation.response.CountryResponse;

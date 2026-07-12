@@ -1,7 +1,7 @@
 package com.kidmily.algoga_server.diagnosis.application.service;
 
 import com.kidmily.algoga_server.lms.application.port.UserProfilePort;
-import com.kidmily.algoga_server.lms.application.usecase.CourseUseCase;
+import com.kidmily.algoga_server.course.application.usecase.CourseUseCase;
 import com.kidmily.algoga_server.diagnosis.domain.repository.DiagnosisAnswerRepository;
 import com.kidmily.algoga_server.diagnosis.domain.repository.DiagnosisQuestionRepository;
 import com.kidmily.algoga_server.diagnosis.domain.repository.DiagnosisResultRepository;
