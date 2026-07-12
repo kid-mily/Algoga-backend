@@ -11,6 +11,7 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -23,23 +24,22 @@ public class FlightReminderScheduler {
     private final FlightReminderMailService flightReminderMailService;
     private final CalendarSchedulePolicy calendarSchedulePolicy;
 
-    @Scheduled(cron = "0 0 * * * *") // 매 정시마다 실행
+    @Scheduled(cron = "0 0 * * * *")
     public void sendFlightReminders() {
         LocalDateTime now = LocalDateTime.now();
         LocalDateTime in24Hours = now.plusHours(24);
 
         log.info("[FlightReminderScheduler] 항공권 리마인더 스케줄러 실행 - 현재: {}", now);
 
-        List<Calendar> flightCalendars = calendarRepository.findByType(CalendarType.FLIGHT);
+        // 변경: 전체 스캔 → "내일 출발 + 미발송"만 조회
+        LocalDate tomorrow = now.toLocalDate().plusDays(1);
+        List<Calendar> flightCalendars = calendarRepository.findFlightRemindTargets(tomorrow);
 
         for (Calendar calendar : flightCalendars) {
             try {
-                // 이미 발송된 경우 스킵
-                if (Boolean.TRUE.equals(calendar.getIsDDayAlertSent())) {
-                    continue;
-                }
-
-                LocalDateTime departureDateTime = calendarSchedulePolicy.resolveDepartureDateTime(calendar.getReferenceId());
+                // isDDayAlertSent 체크는 쿼리에서 이미 걸렀지만, 방어적으로 남겨둬도 무방
+                LocalDateTime departureDateTime =
+                        calendarSchedulePolicy.resolveDepartureDateTime(calendar.getReferenceId());
 
                 if (departureDateTime == null) {
                     log.warn("[FlightReminderScheduler] 출발 시각 없음 - calendarId: {}", calendar.getCalendarId());
@@ -56,7 +56,6 @@ public class FlightReminderScheduler {
                             departureDateTime.toLocalDate()
                     );
 
-                    // 발송 완료 처리
                     calendar.markDDayAlertSent();
                     calendarRepository.update(calendar);
                     log.info("[FlightReminderScheduler] 발송 완료 처리 - calendarId: {}", calendar.getCalendarId());

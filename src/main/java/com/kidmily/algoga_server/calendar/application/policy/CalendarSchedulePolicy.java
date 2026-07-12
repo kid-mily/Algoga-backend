@@ -61,4 +61,17 @@ public class CalendarSchedulePolicy {
     public String resolveUserName(Long userId) {
         return userPort.getUserName(userId);
     }
+
+    // 숙소 관련 (기존 resolveAccommodationName 아래에 추가)
+    public String resolveAccommodationAddress(Long accommodationId) {
+        return accommodationPort.getAccommodationAddress(accommodationId);
+    }
+
+    public Long resolveAccommodationId(Long bookingId) {
+        return bookingPort.getAccommodationId(bookingId);
+    }
+
+    public LocalDate resolveCheckInDate(Long bookingId) {
+        return bookingPort.getCheckInDate(bookingId);
+    }
 }

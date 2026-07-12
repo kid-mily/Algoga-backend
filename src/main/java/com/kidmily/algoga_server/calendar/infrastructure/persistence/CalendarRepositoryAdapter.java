@@ -61,4 +61,13 @@ public class CalendarRepositoryAdapter implements CalendarRepository {
     public void deleteAllByUserId(Long userId) {
         springDataRepository.deleteAllByUserId(userId);
     }
+
+    @Override
+    public List<Calendar> findFlightRemindTargets(LocalDate eventDate) {
+        return springDataRepository
+                .findByTypeAndIsDDayAlertSentFalseAndEventDate(CalendarType.FLIGHT, eventDate)
+                .stream()
+                .map(calendarMapper::toDomain)
+                .toList();
+    }
 }

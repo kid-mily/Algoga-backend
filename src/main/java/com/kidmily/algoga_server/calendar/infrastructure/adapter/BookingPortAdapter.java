@@ -68,4 +68,19 @@ public class BookingPortAdapter implements BookingPort {
                 .map(booking -> booking.getFlightInfo())
                 .orElse(null);
     }
+
+    // 클래스 안에 추가
+    @Override
+    public Long getAccommodationId(Long bookingId) {
+        return bookingRepository.findById(bookingId)
+                .map(booking -> booking.getAccommodationId())
+                .orElse(null);
+    }
+
+    @Override
+    public LocalDate getCheckInDate(Long bookingId) {
+        return bookingRepository.findById(bookingId)
+                .map(booking -> booking.getCheckInDate())
+                .orElse(null);
+    }
 }
