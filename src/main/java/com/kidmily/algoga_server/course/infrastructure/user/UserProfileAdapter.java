@@ -1,6 +1,6 @@
-package com.kidmily.algoga_server.lms.infrastructure.user;
+package com.kidmily.algoga_server.course.infrastructure.user;
 
-import com.kidmily.algoga_server.lms.application.port.UserProfilePort;
+import com.kidmily.algoga_server.course.application.port.UserProfilePort;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.ApplicationContext;
 import org.springframework.stereotype.Component;

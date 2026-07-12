@@ -2,7 +2,7 @@ package com.kidmily.algoga_server.review.application.service;
 
 import com.kidmily.algoga_server.review.application.command.CreateCourseReviewCommand;
 import com.kidmily.algoga_server.review.application.command.UpdateCourseReviewVisibilityCommand;
-import com.kidmily.algoga_server.lms.application.port.UserProfilePort;
+import com.kidmily.algoga_server.course.application.port.UserProfilePort;
 import com.kidmily.algoga_server.review.application.result.AdminCourseReviewResult;
 import com.kidmily.algoga_server.review.application.result.CourseReviewResult;
 import com.kidmily.algoga_server.review.application.result.CourseReviewSummaryResult;

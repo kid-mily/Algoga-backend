@@ -1,7 +1,7 @@
 package com.kidmily.algoga_server.quiz.application.service;
 
 import com.kidmily.algoga_server.global.port.out.FileStoragePort;
-import com.kidmily.algoga_server.lms.application.port.UserProfilePort;
+import com.kidmily.algoga_server.course.application.port.UserProfilePort;
 import com.kidmily.algoga_server.course.application.result.CourseClassroomResult;
 import com.kidmily.algoga_server.course.domain.model.Chapter;
 import com.kidmily.algoga_server.course.domain.model.Course;

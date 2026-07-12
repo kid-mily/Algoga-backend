@@ -348,3 +348,22 @@ Record completed work here by date. Keep entries factual and useful for future d
 
 - `CourseService` still remains under `lms.application.service` but now implements the course package use case.
 - Next likely slice: move `CourseService` itself or split `UserProfilePort`/`UserProfileAdapter` before moving the service.
+### 2026-07-12 Course UserProfile Port Package Split
+
+#### Summary
+
+- Moved LMS `UserProfilePort` to `course.application.port`.
+- Moved LMS `UserProfileAdapter` to `course.infrastructure.user`.
+- Updated dependent imports in course, diagnosis, Q&A, review services/results, and related tests.
+- Kept the adapter bean name unchanged to minimize hidden wiring impact.
+- Preserved API URLs, request fields, response fields, JSON structure, and behavior.
+
+#### Verification
+
+- `./gradlew clean compileJava` passed with existing warnings.
+- `./gradlew build -x test` passed.
+
+#### Notes
+
+- `benefit.application.port.UserProfilePort` remains separate and unchanged.
+- Next likely slice: move `CourseService` to `course.application.service` after checking remaining LMS exception/support dependencies.

@@ -14,13 +14,16 @@
 - Course my-course/classroom/student result/response/controller package split completed and committed.
 - Map/Country application/presentation package split completed and committed.
 - Course file/storage package split completed.
-- Current working tree slice: Course usecase/command package split.
+- Course usecase/command package split completed.
+- Current working tree slice: Course UserProfile port/adapter package split.
 
 ## Current Slice Details
 
-- Moved `CourseUseCase` to `course.application.usecase`.
-- Moved `CompleteCourseCommand` to `course.application.command`.
-- Updated imports in course, completion, country, diagnosis, Q&A controllers/services, and diagnosis test.
+- Moved LMS `UserProfilePort` to `course.application.port`.
+- Moved LMS `UserProfileAdapter` to `course.infrastructure.user`.
+- Updated imports in course, diagnosis, Q&A, review services/results, and related tests.
+- Kept `@Component("lmsUserProfileAdapter")` unchanged to minimize hidden wiring impact.
+- `benefit.application.port.UserProfilePort` remains separate and unchanged.
 - API URLs and JSON contracts are unchanged.
 
 ## Verification Run
@@ -31,7 +34,5 @@
 ## Next Suggested Slice
 
 - Commit current slice first.
-- Then choose one:
-  - Move `CourseService` to `course.application.service` after checking imports and remaining dependencies.
-  - Split `UserProfilePort`/`UserProfileAdapter` if moving `CourseService` exposes awkward LMS dependencies.
-  - Decide what to do with shared `lms.exception` after remaining LMS services are moved.
+- Then move `CourseService` to `course.application.service` if remaining dependencies look stable.
+- After that, decide what to do with shared `lms.exception` and presentation support classes.

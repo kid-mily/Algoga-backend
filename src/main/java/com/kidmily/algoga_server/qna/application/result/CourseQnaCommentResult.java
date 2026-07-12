@@ -1,6 +1,6 @@
 package com.kidmily.algoga_server.qna.application.result;
 
-import com.kidmily.algoga_server.lms.application.port.UserProfilePort;
+import com.kidmily.algoga_server.course.application.port.UserProfilePort;
 import com.kidmily.algoga_server.qna.domain.model.CourseQnaComment;
 
 import java.time.LocalDateTime;

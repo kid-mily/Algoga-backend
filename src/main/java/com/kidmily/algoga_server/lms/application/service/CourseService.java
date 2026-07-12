@@ -25,7 +25,7 @@ import com.kidmily.algoga_server.enrollment.domain.repository.EnrollmentReposito
 import com.kidmily.algoga_server.course.domain.repository.ChapterRepository;
 import com.kidmily.algoga_server.course.domain.repository.CourseRepository;
 import com.kidmily.algoga_server.course.application.command.CompleteCourseCommand;
-import com.kidmily.algoga_server.lms.application.port.*;
+import com.kidmily.algoga_server.course.application.port.UserProfilePort;
 import com.kidmily.algoga_server.course.application.usecase.CourseUseCase;
 import com.kidmily.algoga_server.qna.application.command.AnswerCourseQnaCommand;
 import com.kidmily.algoga_server.qna.application.command.CreateCourseQnaCommand;

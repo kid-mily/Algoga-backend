@@ -4,7 +4,7 @@ import com.kidmily.algoga_server.diagnosis.application.command.CreateDiagnosisQu
 import com.kidmily.algoga_server.diagnosis.application.command.SubmitDiagnosisAnswerCommand;
 import com.kidmily.algoga_server.diagnosis.application.command.SubmitDiagnosisCommand;
 import com.kidmily.algoga_server.diagnosis.application.command.UpdateDiagnosisQuestionCommand;
-import com.kidmily.algoga_server.lms.application.port.UserProfilePort;
+import com.kidmily.algoga_server.course.application.port.UserProfilePort;
 import com.kidmily.algoga_server.diagnosis.application.result.AdminDiagnosisResult;
 import com.kidmily.algoga_server.diagnosis.application.result.DiagnosisAnswerResult;
 import com.kidmily.algoga_server.diagnosis.application.result.DiagnosisQuestionResult;
