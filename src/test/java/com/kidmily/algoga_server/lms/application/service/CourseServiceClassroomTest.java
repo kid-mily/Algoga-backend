@@ -1,26 +1,27 @@
 package com.kidmily.algoga_server.quiz.application.service;
 
 import com.kidmily.algoga_server.global.port.out.FileStoragePort;
-import com.kidmily.algoga_server.lms.application.port.UserProfilePort;
-import com.kidmily.algoga_server.lms.application.result.CourseClassroomResult;
+import com.kidmily.algoga_server.course.application.port.UserProfilePort;
+import com.kidmily.algoga_server.course.application.result.CourseClassroomResult;
+import com.kidmily.algoga_server.course.application.service.CourseService;
 import com.kidmily.algoga_server.course.domain.model.Chapter;
 import com.kidmily.algoga_server.course.domain.model.Course;
 import com.kidmily.algoga_server.enrollment.domain.model.Enrollment;
 import com.kidmily.algoga_server.enrollment.domain.model.EnrollmentStatus;
 import com.kidmily.algoga_server.learningprogress.domain.model.LearningProgress;
 import com.kidmily.algoga_server.course.domain.repository.ChapterRepository;
-import com.kidmily.algoga_server.lms.domain.repository.CourseCompletionRepository;
-import com.kidmily.algoga_server.lms.domain.repository.CourseQnaCommentRepository;
-import com.kidmily.algoga_server.lms.domain.repository.CourseQnaRepository;
+import com.kidmily.algoga_server.completion.domain.repository.CourseCompletionRepository;
+import com.kidmily.algoga_server.qna.domain.repository.CourseQnaCommentRepository;
+import com.kidmily.algoga_server.qna.domain.repository.CourseQnaRepository;
 import com.kidmily.algoga_server.course.domain.repository.CourseRepository;
-import com.kidmily.algoga_server.lms.domain.repository.CourseReviewRepository;
+import com.kidmily.algoga_server.review.domain.repository.CourseReviewRepository;
 import com.kidmily.algoga_server.enrollment.domain.repository.EnrollmentRepository;
 import com.kidmily.algoga_server.learningprogress.domain.repository.LearningProgressRepository;
 import com.kidmily.algoga_server.country.domain.repository.MapRepository;
 import com.kidmily.algoga_server.quiz.domain.repository.QuizSubmissionRepository;
 import com.kidmily.algoga_server.lms.exception.LmsErrorCode;
 import com.kidmily.algoga_server.lms.exception.LmsException;
-import com.kidmily.algoga_server.lms.settings.LmsStorageSettings;
+import com.kidmily.algoga_server.course.settings.CourseStorageSettings;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -60,7 +61,7 @@ class CourseServiceClassroomTest {
     @Mock private EnrollmentRepository enrollmentRepository;
     @Mock private UserProfilePort userProfilePort;
     @Mock private FileStoragePort fileStoragePort;
-    @Mock private LmsStorageSettings storageSettings;
+    @Mock private CourseStorageSettings storageSettings;
 
     @InjectMocks
     private CourseService courseService;

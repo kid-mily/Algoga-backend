@@ -1,7 +1,7 @@
 package com.kidmily.algoga_server.learningprogress.presentation.response;
 
 import com.kidmily.algoga_server.learningprogress.application.result.LearningProgressResult;
-import com.kidmily.algoga_server.lms.presentation.response.CourseClassroomResponse;
+import com.kidmily.algoga_server.course.presentation.response.CourseClassroomResponse;
 import io.swagger.v3.oas.annotations.media.Schema;
 
 @Schema(description = "강의 학습 진도 응답")

@@ -1,7 +1,7 @@
 package com.kidmily.algoga_server.learningprogress.application.result;
 
 import com.kidmily.algoga_server.learningprogress.domain.model.LearningProgress;
-import com.kidmily.algoga_server.lms.application.result.CourseClassroomResult;
+import com.kidmily.algoga_server.course.application.result.CourseClassroomResult;
 
 public record LearningProgressResult(
         Long progressId,

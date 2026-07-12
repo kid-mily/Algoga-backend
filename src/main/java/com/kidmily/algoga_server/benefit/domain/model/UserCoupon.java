@@ -74,7 +74,7 @@ public class UserCoupon {
                 null,
                 null,
                 "웰컴쿠폰",
-                "RATE",
+                "PERCENT",
                 10,
                 "ISSUED",
                 now,

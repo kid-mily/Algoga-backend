@@ -204,3 +204,183 @@ Record completed work here by date. Keep entries factual and useful for future d
 
 - `QuizSubmitResult` and `QuizSubmitResponse` still depend on LMS completion result/response types because completion has not been split yet.
 - Next likely slice: split completion/certificate or review/Q&A, depending on desired PR size.
+
+### 2026-07-12 Completion and Certificate Package Split
+
+#### Summary
+
+- Moved course completion result, domain model/repository, persistence adapter/entity/repository, controller, and response classes from `lms` to `completion` package.
+- Moved certificate PDF service and certificate download controller from `lms` to `certificate` package.
+- Updated dependent imports in benefit, booking, LMS course/review services, quiz, stats, and related tests.
+- Preserved API URLs, request fields, response fields, PDF download behavior, JSON structure, and completion reward event behavior.
+
+#### Verification
+
+- `./gradlew clean compileJava` passed with existing warnings.
+- `./gradlew build -x test` passed.
+
+#### Notes
+
+- `CourseService` still owns the completion workflow method and imports completion package types explicitly.
+- Next likely slice: split review/Q&A or diagnosis package.
+
+### 2026-07-12 Review and Q&A Package Split
+
+#### Summary
+
+- Moved course review command, result, usecase, service, scheduler, domain model/repository, persistence adapter/entity/repository, controller, request, and response classes from `lms` to `review` package.
+- Moved course Q&A command, result, domain model/repository, persistence adapter/entity/repository, controller, request, and response classes from `lms` to `qna` package.
+- Updated dependent imports in LMS course usecase/service and classroom test.
+- Preserved API URLs, request fields, response fields, JSON structure, review deletion scheduling behavior, and Q&A behavior.
+
+#### Verification
+
+- `./gradlew clean compileJava` passed with existing warnings.
+- `./gradlew build -x test` passed.
+
+#### Notes
+
+- `CourseService` and `CourseUseCase` still own course classroom/Q&A orchestration and import review/qna package types explicitly.
+- Next likely slice: split diagnosis package, then decide whether to separate remaining LMS classroom/course orchestration further.
+### 2026-07-12 Diagnosis Package Split
+
+#### Summary
+
+- Moved diagnosis command, result, usecase, service, domain model/repository, persistence adapter/entity/repository, controller, request, response, and related service test classes from `lms` to `diagnosis` package.
+- Updated dependent imports and removed obsolete LMS domain wildcard imports from `CourseService`.
+- Preserved diagnosis API URLs, request fields, response fields, JSON structure, and diagnosis result persistence behavior.
+
+#### Verification
+
+- `./gradlew clean compileJava` passed with existing warnings.
+- `./gradlew build -x test` passed.
+
+#### Notes
+
+- `DiagnosisService` still depends on `CourseUseCase`, `MapRepository`, and `UserProfilePort` as before; only package boundaries changed.
+- Next likely slice: split remaining classroom/course orchestration pieces or start file upload constraints, depending on PR size.
+### 2026-07-12 Course Statistics Package Split
+
+#### Summary
+
+- Moved course enrollment statistics port, result, usecase, service, query repository, admin controller, and response classes from `lms` to `course.statistics` package.
+- Preserved admin statistics API URL, request parameters, response fields, JSON structure, and authorization condition.
+
+#### Verification
+
+- `./gradlew clean compileJava` passed with existing warnings.
+- `./gradlew build -x test` passed.
+
+#### Notes
+
+- This split keeps course-specific statistics separate from the broader `stats` manager package.
+- Next likely slice: decide whether to split map/my-course/student classroom APIs or move to file upload constraints.
+### 2026-07-12 Course Classroom/MyCourse Package Split
+
+#### Summary
+
+- Moved my-course, classroom, and course-student result classes from `lms` to `course.application.result`.
+- Moved my-course, classroom, and course-student response/controller classes from `lms` to `course.presentation`.
+- Updated dependent imports in `CourseService`, `CourseUseCase`, learning progress flow, and classroom test.
+- Preserved API URLs, request parameters, response fields, JSON structure, and authorization behavior.
+
+#### Verification
+
+- `./gradlew clean compileJava` passed with existing warnings.
+- `./gradlew build -x test` passed.
+
+#### Notes
+
+- `CourseService` still owns the actual orchestration logic for my-course/classroom/student queries.
+- Next likely slice: split map presentation/application pieces or decide whether to extract `CourseService` orchestration into smaller services.
+### 2026-07-12 Map/Country Package Split
+
+#### Summary
+
+- Moved map application result/usecase/service classes from `lms` to `country.application`.
+- Moved map controller and country/continent response classes from `lms` to `country.presentation`.
+- Removed obsolete LMS application result wildcard imports from `CourseService` and `CourseUseCase`.
+- Preserved `/api/v1/maps` API URLs, response fields, JSON structure, and course-count aggregation behavior.
+
+#### Verification
+
+- `./gradlew clean compileJava` passed with existing warnings.
+- `./gradlew build -x test` passed.
+
+#### Notes
+
+- `MapController` still depends on `CourseUseCase` for published-course counts by country, matching existing behavior.
+- Next likely slice: course file/storage package remnants or careful extraction of `CourseService` orchestration.
+### 2026-07-12 Course File/Storage Package Split
+
+#### Summary
+
+- Moved course storage settings from `lms.settings.LmsStorageSettings` to `course.settings.CourseStorageSettings`.
+- Moved `CourseFileJpaEntity` to `course.infrastructure.persistence.entity`.
+- Moved `LocalFileStorageManager` to `course.infrastructure.document`.
+- Updated dependent imports in course services, mapper/entity, and classroom test.
+- Preserved S3 bucket name, storage directory values, API URLs, request fields, response fields, and JSON structure.
+
+#### Verification
+
+- `./gradlew clean compileJava` passed with existing warnings.
+- `./gradlew build -x test` passed.
+
+#### Notes
+
+- LMS exception classes still remain under `lms.exception` for now and are referenced by course file storage code.
+- Next likely slice: split remaining course command/usecase/port pieces or decide whether to extract `CourseService` orchestration.
+### 2026-07-12 Course UseCase/Command Package Split
+
+#### Summary
+
+- Moved `CourseUseCase` from `lms.application.usecase` to `course.application.usecase`.
+- Moved `CompleteCourseCommand` from `lms.application.command` to `course.application.command`.
+- Updated dependent imports in course, completion, country, diagnosis, Q&A controllers/services, and diagnosis service test.
+- Preserved API URLs, request fields, response fields, JSON structure, and business behavior.
+
+#### Verification
+
+- `./gradlew clean compileJava` passed with existing warnings.
+- `./gradlew build -x test` passed.
+
+#### Notes
+
+- `CourseService` still remains under `lms.application.service` but now implements the course package use case.
+- Next likely slice: move `CourseService` itself or split `UserProfilePort`/`UserProfileAdapter` before moving the service.
+### 2026-07-12 Course UserProfile Port Package Split
+
+#### Summary
+
+- Moved LMS `UserProfilePort` to `course.application.port`.
+- Moved LMS `UserProfileAdapter` to `course.infrastructure.user`.
+- Updated dependent imports in course, diagnosis, Q&A, review services/results, and related tests.
+- Kept the adapter bean name unchanged to minimize hidden wiring impact.
+- Preserved API URLs, request fields, response fields, JSON structure, and behavior.
+
+#### Verification
+
+- `./gradlew clean compileJava` passed with existing warnings.
+- `./gradlew build -x test` passed.
+
+#### Notes
+
+- `benefit.application.port.UserProfilePort` remains separate and unchanged.
+- Next likely slice: move `CourseService` to `course.application.service` after checking remaining LMS exception/support dependencies.
+### 2026-07-12 CourseService Package Split
+
+#### Summary
+
+- Moved `CourseService` from `lms.application.service` to `course.application.service`.
+- Updated `CourseServiceClassroomTest` to import the moved service.
+- Preserved API URLs, request fields, response fields, JSON structure, cache behavior, and business behavior.
+
+#### Verification
+
+- `./gradlew clean compileJava` passed with existing warnings.
+- `./gradlew build -x test` passed.
+
+#### Notes
+
+- `CourseService` still uses `lms.exception` until shared exception package handling is decided.
+- Remaining LMS package files are mostly exception/support/config/test remnants.

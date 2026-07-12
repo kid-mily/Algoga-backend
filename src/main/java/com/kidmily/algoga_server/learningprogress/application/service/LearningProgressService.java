@@ -2,8 +2,8 @@ package com.kidmily.algoga_server.learningprogress.application.service;
 
 import com.kidmily.algoga_server.learningprogress.application.command.UpdateLearningProgressCommand;
 import com.kidmily.algoga_server.learningprogress.application.port.LearningProgressCachePort;
-import com.kidmily.algoga_server.lms.application.result.CourseClassroomChapterResult;
-import com.kidmily.algoga_server.lms.application.result.CourseClassroomResult;
+import com.kidmily.algoga_server.course.application.result.CourseClassroomChapterResult;
+import com.kidmily.algoga_server.course.application.result.CourseClassroomResult;
 import com.kidmily.algoga_server.learningprogress.application.result.LearningProgressResult;
 import com.kidmily.algoga_server.learningprogress.application.usecase.LearningProgressUseCase;
 import com.kidmily.algoga_server.course.domain.model.Chapter;

@@ -1,6 +1,6 @@
 package com.kidmily.algoga_server.quiz.presentation.response;
 
-import com.kidmily.algoga_server.lms.presentation.response.CourseCompletionResponse;
+import com.kidmily.algoga_server.completion.presentation.response.CourseCompletionResponse;
 import com.kidmily.algoga_server.quiz.application.result.QuizSubmitResult;
 import io.swagger.v3.oas.annotations.media.Schema;
 
