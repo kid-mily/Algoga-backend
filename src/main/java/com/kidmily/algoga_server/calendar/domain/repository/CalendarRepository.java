@@ -14,5 +14,5 @@ public interface CalendarRepository {
     List<Calendar> findByType(CalendarType type);
     Calendar update(Calendar calendar);
     void deleteAllByUserId(Long userId);
-    List<Calendar> findFlightRemindTargets(LocalDate eventDate);
+    List<Calendar> findFlightRemindTargets(LocalDate startDate, LocalDate endDate);
 }

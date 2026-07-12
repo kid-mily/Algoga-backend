@@ -15,6 +15,6 @@ public interface SpringDataCalendarRepository extends JpaRepository<CalendarJpaE
     void deleteByUserIdAndReferenceIdAndType(Long userId, Long referenceId, CalendarType type);
     List<CalendarJpaEntity> findByType(CalendarType type);
     void deleteAllByUserId(Long userId);
-    List<CalendarJpaEntity> findByTypeAndIsDDayAlertSentFalseAndEventDate(
-            CalendarType type, LocalDate eventDate);
+    List<CalendarJpaEntity> findByTypeAndIsDDayAlertSentFalseAndEventDateBetween(
+            CalendarType type, LocalDate startDate, LocalDate endDate);
 }

@@ -22,6 +22,6 @@ public class AccommodationPortAdapter implements AccommodationPort {
     public String getAccommodationAddress(Long accommodationId) {
         return accommodationRepository.findById(accommodationId)
                 .map(accommodation -> accommodation.getAddress())
-                .orElse(null);
+                .orElse("삭제된 숙소");
     }
 }

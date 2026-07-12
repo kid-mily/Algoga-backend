@@ -63,9 +63,11 @@ public class CalendarRepositoryAdapter implements CalendarRepository {
     }
 
     @Override
-    public List<Calendar> findFlightRemindTargets(LocalDate eventDate) {
+    @Transactional(readOnly = true)
+    public List<Calendar> findFlightRemindTargets(LocalDate startDate, LocalDate endDate) {
         return springDataRepository
-                .findByTypeAndIsDDayAlertSentFalseAndEventDate(CalendarType.FLIGHT, eventDate)
+                .findByTypeAndIsDDayAlertSentFalseAndEventDateBetween(
+                        CalendarType.FLIGHT, startDate, endDate)
                 .stream()
                 .map(calendarMapper::toDomain)
                 .toList();
