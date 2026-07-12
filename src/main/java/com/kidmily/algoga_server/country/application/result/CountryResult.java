@@ -1,4 +1,4 @@
-package com.kidmily.algoga_server.lms.application.result;
+package com.kidmily.algoga_server.country.application.result;
 
 import com.kidmily.algoga_server.country.domain.model.Country;
 

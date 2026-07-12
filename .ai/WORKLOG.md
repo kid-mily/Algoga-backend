@@ -293,3 +293,21 @@ Record completed work here by date. Keep entries factual and useful for future d
 
 - `CourseService` still owns the actual orchestration logic for my-course/classroom/student queries.
 - Next likely slice: split map presentation/application pieces or decide whether to extract `CourseService` orchestration into smaller services.
+### 2026-07-12 Map/Country Package Split
+
+#### Summary
+
+- Moved map application result/usecase/service classes from `lms` to `country.application`.
+- Moved map controller and country/continent response classes from `lms` to `country.presentation`.
+- Removed obsolete LMS application result wildcard imports from `CourseService` and `CourseUseCase`.
+- Preserved `/api/v1/maps` API URLs, response fields, JSON structure, and course-count aggregation behavior.
+
+#### Verification
+
+- `./gradlew clean compileJava` passed with existing warnings.
+- `./gradlew build -x test` passed.
+
+#### Notes
+
+- `MapController` still depends on `CourseUseCase` for published-course counts by country, matching existing behavior.
+- Next likely slice: course file/storage package remnants or careful extraction of `CourseService` orchestration.

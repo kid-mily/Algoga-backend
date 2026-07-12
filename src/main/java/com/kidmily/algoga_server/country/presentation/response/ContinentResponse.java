@@ -1,4 +1,4 @@
-package com.kidmily.algoga_server.lms.presentation.response;
+package com.kidmily.algoga_server.country.presentation.response;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 

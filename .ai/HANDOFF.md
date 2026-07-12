@@ -11,7 +11,8 @@
 - Diagnosis package split completed and committed.
 - Course statistics package split completed and committed.
 - Welcome coupon type fix completed and committed.
-- Current working tree slice: Course my-course/classroom/student result/response/controller package split.
+- Course my-course/classroom/student result/response/controller package split completed and committed.
+- Current working tree slice: Map/Country package split.
 
 ## Current Slice Details
 
@@ -32,6 +33,11 @@
 
 - Commit current slice first.
 - Then choose one:
-  - Split remaining map application/presentation files.
+  - Split course file/storage files.
   - Split course file/storage files.
   - Extract `CourseService` orchestration carefully after surrounding DTO/controller moves are complete.
+## Current Map/Country Slice Details
+
+- Moved `CountryResult`, `MapService`, `MapUseCase`, `MapController`, `ContinentResponse`, and `CountryResponse` to `country` package.
+- API URLs and JSON contracts are unchanged.
+- Verification passed with `./gradlew clean compileJava` and `./gradlew build -x test`.

@@ -26,7 +26,6 @@ import com.kidmily.algoga_server.course.domain.repository.ChapterRepository;
 import com.kidmily.algoga_server.course.domain.repository.CourseRepository;
 import com.kidmily.algoga_server.lms.application.command.*;
 import com.kidmily.algoga_server.lms.application.port.*;
-import com.kidmily.algoga_server.lms.application.result.*;
 import com.kidmily.algoga_server.lms.application.usecase.CourseUseCase;
 import com.kidmily.algoga_server.qna.application.command.AnswerCourseQnaCommand;
 import com.kidmily.algoga_server.qna.application.command.CreateCourseQnaCommand;

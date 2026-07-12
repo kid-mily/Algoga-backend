@@ -26,7 +26,8 @@
   - Q&A package split into `qna`.
   - Diagnosis package split into `diagnosis`.
   - Course statistics package split into `course.statistics`.
-  - My-course/classroom/student presentation/result package split into `course`.
+  - My-course/classroom/student presentation/result package split into course.
+  - Map application/presentation package split into country.
   - Welcome coupon discount type changed from `RATE` to `PERCENT` for new signup coupons.
 
 ## Latest Verification
@@ -38,7 +39,7 @@
 
 1. Commit the Course Classroom/MyCourse package split slice.
 2. Decide the next package slice:
-   - Map application/presentation remnants.
+   - Course file/storage remnants.
    - Course file/storage remnants.
    - CourseService orchestration extraction.
 3. Keep each slice small and verify with `compileJava` and `build -x test`.

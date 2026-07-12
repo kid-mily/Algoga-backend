@@ -1,6 +1,6 @@
-package com.kidmily.algoga_server.lms.application.usecase;
+package com.kidmily.algoga_server.country.application.usecase;
 
-import com.kidmily.algoga_server.lms.application.result.CountryResult;
+import com.kidmily.algoga_server.country.application.result.CountryResult;
 
 import java.util.List;
 

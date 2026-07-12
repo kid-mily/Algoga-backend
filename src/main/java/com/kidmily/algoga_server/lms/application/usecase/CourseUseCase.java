@@ -15,7 +15,6 @@ import com.kidmily.algoga_server.course.application.result.CourseResult;
 import com.kidmily.algoga_server.course.application.result.CourseClassroomResult;
 import com.kidmily.algoga_server.course.application.result.CourseStudentResult;
 import com.kidmily.algoga_server.course.application.result.MyCourseResult;
-import com.kidmily.algoga_server.lms.application.result.*;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
