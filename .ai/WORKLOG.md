@@ -204,3 +204,22 @@ Record completed work here by date. Keep entries factual and useful for future d
 
 - `QuizSubmitResult` and `QuizSubmitResponse` still depend on LMS completion result/response types because completion has not been split yet.
 - Next likely slice: split completion/certificate or review/Q&A, depending on desired PR size.
+
+### 2026-07-12 Completion and Certificate Package Split
+
+#### Summary
+
+- Moved course completion result, domain model/repository, persistence adapter/entity/repository, controller, and response classes from `lms` to `completion` package.
+- Moved certificate PDF service and certificate download controller from `lms` to `certificate` package.
+- Updated dependent imports in benefit, booking, LMS course/review services, quiz, stats, and related tests.
+- Preserved API URLs, request fields, response fields, PDF download behavior, JSON structure, and completion reward event behavior.
+
+#### Verification
+
+- `./gradlew clean compileJava` passed with existing warnings.
+- `./gradlew build -x test` passed.
+
+#### Notes
+
+- `CourseService` still owns the completion workflow method and imports completion package types explicitly.
+- Next likely slice: split review/Q&A or diagnosis package.

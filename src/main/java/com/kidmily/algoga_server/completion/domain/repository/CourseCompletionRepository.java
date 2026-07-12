@@ -1,6 +1,6 @@
-package com.kidmily.algoga_server.lms.domain.repository;
+package com.kidmily.algoga_server.completion.domain.repository;
 
-import com.kidmily.algoga_server.lms.domain.model.CourseCompletion;
+import com.kidmily.algoga_server.completion.domain.model.CourseCompletion;
 
 import java.util.List;
 import java.util.Map;

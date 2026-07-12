@@ -1,6 +1,6 @@
-package com.kidmily.algoga_server.lms.application.result;
+package com.kidmily.algoga_server.completion.application.result;
 
-import com.kidmily.algoga_server.lms.domain.model.CourseCompletion;
+import com.kidmily.algoga_server.completion.domain.model.CourseCompletion;
 
 import java.time.LocalDateTime;
 

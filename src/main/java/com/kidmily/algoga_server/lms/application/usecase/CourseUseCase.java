@@ -1,5 +1,7 @@
 package com.kidmily.algoga_server.lms.application.usecase;
 
+import com.kidmily.algoga_server.completion.application.result.CourseCompletionResult;
+
 import com.kidmily.algoga_server.lms.application.command.AnswerCourseQnaCommand;
 import com.kidmily.algoga_server.lms.application.command.CompleteCourseCommand;
 import com.kidmily.algoga_server.course.application.command.CreateCourseCommand;

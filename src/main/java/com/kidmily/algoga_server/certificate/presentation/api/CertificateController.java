@@ -1,7 +1,7 @@
-package com.kidmily.algoga_server.lms.presentation.api;
+package com.kidmily.algoga_server.completion.presentation.api;
 
 import com.kidmily.algoga_server.global.annotation.swagger.ApiErrorCodeExample;
-import com.kidmily.algoga_server.lms.application.service.CertificatePdfService;
+import com.kidmily.algoga_server.certificate.application.service.CertificatePdfService;
 import com.kidmily.algoga_server.lms.exception.LmsErrorCode;
 import com.kidmily.algoga_server.lms.presentation.support.CurrentUserIdResolver;
 import io.swagger.v3.oas.annotations.Operation;

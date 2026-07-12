@@ -3,7 +3,7 @@ package com.kidmily.algoga_server.stats.application.service;
 import com.kidmily.algoga_server.course.domain.model.Course;
 import com.kidmily.algoga_server.country.domain.repository.CountryRepository;
 import com.kidmily.algoga_server.course.domain.repository.CourseRepository;
-import com.kidmily.algoga_server.lms.domain.repository.CourseCompletionRepository;
+import com.kidmily.algoga_server.completion.domain.repository.CourseCompletionRepository;
 import com.kidmily.algoga_server.enrollment.domain.repository.EnrollmentRepository;
 import com.kidmily.algoga_server.stats.presentation.api.response.InterestCountryResponse;
 import com.kidmily.algoga_server.stats.presentation.api.response.InterestLectureResponse;

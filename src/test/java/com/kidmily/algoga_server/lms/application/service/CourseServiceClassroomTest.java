@@ -9,7 +9,7 @@ import com.kidmily.algoga_server.enrollment.domain.model.Enrollment;
 import com.kidmily.algoga_server.enrollment.domain.model.EnrollmentStatus;
 import com.kidmily.algoga_server.learningprogress.domain.model.LearningProgress;
 import com.kidmily.algoga_server.course.domain.repository.ChapterRepository;
-import com.kidmily.algoga_server.lms.domain.repository.CourseCompletionRepository;
+import com.kidmily.algoga_server.completion.domain.repository.CourseCompletionRepository;
 import com.kidmily.algoga_server.lms.domain.repository.CourseQnaCommentRepository;
 import com.kidmily.algoga_server.lms.domain.repository.CourseQnaRepository;
 import com.kidmily.algoga_server.course.domain.repository.CourseRepository;

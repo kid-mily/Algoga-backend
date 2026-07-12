@@ -1,6 +1,6 @@
-package com.kidmily.algoga_server.lms.presentation.response;
+package com.kidmily.algoga_server.completion.presentation.response;
 
-import com.kidmily.algoga_server.lms.application.result.CourseCompletionResult;
+import com.kidmily.algoga_server.completion.application.result.CourseCompletionResult;
 import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.time.LocalDateTime;

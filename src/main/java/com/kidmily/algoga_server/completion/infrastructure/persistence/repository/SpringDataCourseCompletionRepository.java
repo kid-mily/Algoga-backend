@@ -1,6 +1,6 @@
-package com.kidmily.algoga_server.lms.infrastructure.persistence.repository;
+package com.kidmily.algoga_server.completion.infrastructure.persistence.repository;
 
-import com.kidmily.algoga_server.lms.infrastructure.persistence.entity.CourseCompletionJpaEntity;
+import com.kidmily.algoga_server.completion.infrastructure.persistence.entity.CourseCompletionJpaEntity;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;

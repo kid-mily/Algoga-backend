@@ -1,4 +1,4 @@
-package com.kidmily.algoga_server.lms.domain.model;
+package com.kidmily.algoga_server.completion.domain.model;
 
 import java.time.LocalDateTime;
 import java.time.Year;

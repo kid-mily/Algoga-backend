@@ -1,8 +1,8 @@
-package com.kidmily.algoga_server.lms.application.service;
+package com.kidmily.algoga_server.certificate.application.service;
 
 import com.kidmily.algoga_server.course.domain.model.Course;
-import com.kidmily.algoga_server.lms.domain.model.CourseCompletion;
-import com.kidmily.algoga_server.lms.domain.repository.CourseCompletionRepository;
+import com.kidmily.algoga_server.completion.domain.model.CourseCompletion;
+import com.kidmily.algoga_server.completion.domain.repository.CourseCompletionRepository;
 import com.kidmily.algoga_server.course.domain.repository.CourseRepository;
 import com.kidmily.algoga_server.lms.exception.LmsErrorCode;
 import com.kidmily.algoga_server.lms.exception.LmsException;

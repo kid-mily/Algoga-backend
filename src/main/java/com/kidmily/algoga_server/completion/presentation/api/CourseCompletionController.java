@@ -1,11 +1,11 @@
-package com.kidmily.algoga_server.lms.presentation.api;
+package com.kidmily.algoga_server.completion.presentation.api;
 
 import com.kidmily.algoga_server.global.annotation.swagger.ApiErrorCodeExample;
 import com.kidmily.algoga_server.global.common.api.response.ApiResponse;
 import com.kidmily.algoga_server.lms.application.command.CompleteCourseCommand;
 import com.kidmily.algoga_server.lms.application.usecase.CourseUseCase;
 import com.kidmily.algoga_server.lms.exception.LmsErrorCode;
-import com.kidmily.algoga_server.lms.presentation.response.CourseCompletionResponse;
+import com.kidmily.algoga_server.completion.presentation.response.CourseCompletionResponse;
 import com.kidmily.algoga_server.lms.presentation.support.CurrentUserIdResolver;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;

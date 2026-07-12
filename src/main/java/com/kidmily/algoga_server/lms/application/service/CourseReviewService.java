@@ -1,4 +1,4 @@
-package com.kidmily.algoga_server.lms.application.service;
+package com.kidmily.algoga_server.certificate.application.service;
 
 import com.kidmily.algoga_server.lms.application.command.CreateCourseReviewCommand;
 import com.kidmily.algoga_server.lms.application.command.UpdateCourseReviewVisibilityCommand;
@@ -8,7 +8,7 @@ import com.kidmily.algoga_server.lms.application.result.CourseReviewResult;
 import com.kidmily.algoga_server.lms.application.result.CourseReviewSummaryResult;
 import com.kidmily.algoga_server.lms.application.usecase.CourseReviewUseCase;
 import com.kidmily.algoga_server.lms.domain.model.CourseReview;
-import com.kidmily.algoga_server.lms.domain.repository.CourseCompletionRepository;
+import com.kidmily.algoga_server.completion.domain.repository.CourseCompletionRepository;
 import com.kidmily.algoga_server.course.domain.repository.CourseRepository;
 import com.kidmily.algoga_server.lms.domain.repository.CourseReviewRepository;
 import com.kidmily.algoga_server.lms.exception.LmsErrorCode;

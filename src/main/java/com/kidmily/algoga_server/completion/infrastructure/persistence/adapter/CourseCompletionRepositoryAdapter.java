@@ -1,9 +1,9 @@
-package com.kidmily.algoga_server.lms.infrastructure.persistence.adapter;
+package com.kidmily.algoga_server.completion.infrastructure.persistence.adapter;
 
-import com.kidmily.algoga_server.lms.domain.model.CourseCompletion;
-import com.kidmily.algoga_server.lms.domain.repository.CourseCompletionRepository;
-import com.kidmily.algoga_server.lms.infrastructure.persistence.entity.CourseCompletionJpaEntity;
-import com.kidmily.algoga_server.lms.infrastructure.persistence.repository.SpringDataCourseCompletionRepository;
+import com.kidmily.algoga_server.completion.domain.model.CourseCompletion;
+import com.kidmily.algoga_server.completion.domain.repository.CourseCompletionRepository;
+import com.kidmily.algoga_server.completion.infrastructure.persistence.entity.CourseCompletionJpaEntity;
+import com.kidmily.algoga_server.completion.infrastructure.persistence.repository.SpringDataCourseCompletionRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 
