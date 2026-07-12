@@ -10,6 +10,7 @@ import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 
@@ -23,6 +24,7 @@ public class FlightReminderMailService {
     private final ObjectMapper objectMapper;
 
     @Async
+    @Transactional(readOnly = true)
     public void sendFlightReminder(Long userId, Long bookingId, LocalDate departureDate) {
         String email = calendarSchedulePolicy.resolveUserEmail(userId);
         String name = calendarSchedulePolicy.resolveUserName(userId);

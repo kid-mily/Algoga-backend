@@ -24,32 +24,28 @@ public class FlightReminderScheduler {
     private final FlightReminderMailService flightReminderMailService;
     private final CalendarSchedulePolicy calendarSchedulePolicy;
 
-    @Scheduled(cron = "0 0 * * * *")
+    @Scheduled(cron = "0 0 * * * *")   // 매 정시 (운영)
     public void sendFlightReminders() {
         LocalDateTime now = LocalDateTime.now();
         LocalDateTime in24Hours = now.plusHours(24);
 
         log.info("[FlightReminderScheduler] 항공권 리마인더 스케줄러 실행 - 현재: {}", now);
 
-        // 변경: 전체 스캔 → "내일 출발 + 미발송"만 조회
-        LocalDate tomorrow = now.toLocalDate().plusDays(1);
-        List<Calendar> flightCalendars = calendarRepository.findFlightRemindTargets(tomorrow);
+        // 오늘~내일 출발 + 미발송 건만 조회 (23시 이후 출발 누락 방지)
+        LocalDate today = now.toLocalDate();
+        List<Calendar> flightCalendars =
+                calendarRepository.findFlightRemindTargets(today, today.plusDays(1));
 
         for (Calendar calendar : flightCalendars) {
             try {
-                // isDDayAlertSent 체크는 쿼리에서 이미 걸렀지만, 방어적으로 남겨둬도 무방
                 LocalDateTime departureDateTime =
                         calendarSchedulePolicy.resolveDepartureDateTime(calendar.getReferenceId());
 
                 if (departureDateTime == null) {
-                    log.warn("[FlightReminderScheduler] 출발 시각 없음 - calendarId: {}", calendar.getCalendarId());
                     continue;
                 }
 
                 if (departureDateTime.isAfter(now) && departureDateTime.isBefore(in24Hours)) {
-                    log.info("[FlightReminderScheduler] 리마인더 발송 대상 - userId: {}, departureDateTime: {}",
-                            calendar.getUserId(), departureDateTime);
-
                     flightReminderMailService.sendFlightReminder(
                             calendar.getUserId(),
                             calendar.getReferenceId(),
@@ -58,11 +54,9 @@ public class FlightReminderScheduler {
 
                     calendar.markDDayAlertSent();
                     calendarRepository.update(calendar);
-                    log.info("[FlightReminderScheduler] 발송 완료 처리 - calendarId: {}", calendar.getCalendarId());
                 }
             } catch (Exception e) {
-                log.error("[FlightReminderScheduler] 리마인더 처리 실패 - calendarId: {}, error: {}",
-                        calendar.getCalendarId(), e.getMessage());
+                log.error("[FlightReminderScheduler] 리마인더 처리 실패 - calendarId: {}", calendar.getCalendarId());
             }
         }
         log.info("[FlightReminderScheduler] 항공권 리마인더 발송 완료");
