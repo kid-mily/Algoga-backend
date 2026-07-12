@@ -2,36 +2,36 @@
 
 ## Current Goal
 
-- Continue LMS package split without changing API contracts.
+- Clean up remaining LMS package remnants without changing API contracts.
 
 ## Completed Recently
 
-- Completion/certificate package split completed and committed.
-- Review/Q&A package split completed and committed.
-- Diagnosis package split completed and committed.
-- Course statistics package split completed and committed.
-- Welcome coupon type fix completed and committed.
-- Course my-course/classroom/student result/response/controller package split completed and committed.
-- Map/Country application/presentation package split completed and committed.
-- Course file/storage package split completed.
-- Course usecase/command package split completed.
-- Course UserProfile port/adapter package split completed.
-- Current working tree slice: CourseService package split.
+- Latest `develop` was pulled.
+- New branch created: `refactor/lms-cleanup-architecture`.
+- Previous LMS package split PR has been merged into `develop`.
 
 ## Current Slice Details
 
-- Moved `CourseService` to `course.application.service`.
-- Updated `CourseServiceClassroomTest` to import the moved service.
-- API URLs and JSON contracts are unchanged.
-- Cache behavior and business logic are unchanged.
+- Moved shared learning exceptions to `learning.exception`:
+  - `LearningErrorCode`
+  - `LearningException`
+- Moved learning exception advice to `learning.presentation.advice.LearningExceptionAdvice`.
+- Expanded advice base packages to certificate, completion, country, course, diagnosis, learningprogress, qna, quiz, and review presentation APIs.
+- Moved `CurrentUserIdResolver` to `learning.presentation.support`.
+- Removed duplicate `LmsSchedulingConfig`; scheduling remains enabled by `global.config.SchedulerConfig`.
+- Moved course tests out of `lms` test packages.
+- Moved HTTP request/sample files from `src/main/java/.../lms/presentation/request` to `docs/http/learning`.
+- Removed Java source/test references to `com.kidmily.algoga_server.lms`.
+- Preserved `LMS_###` error code values and all API/JSON contracts.
 
 ## Verification Run
 
 - `./gradlew clean compileJava` passed with existing warnings.
 - `./gradlew build -x test` passed.
+- `./gradlew testClasses` passed.
 
-## Next Suggested Slice
+## Next Suggested Step
 
-- Commit current slice first.
-- Then prepare PR for accumulated LMS Course package split work.
-- Remaining post-PR cleanup candidates: shared `lms.exception`, `CurrentUserIdResolver`, `LmsSchedulingConfig`, and leftover LMS test package names.
+- Review diff, then commit this cleanup slice.
+- Suggested commit: `refactor: clean up remaining LMS package remnants`.
+- Then open a focused cleanup PR before starting file upload/download feature changes.

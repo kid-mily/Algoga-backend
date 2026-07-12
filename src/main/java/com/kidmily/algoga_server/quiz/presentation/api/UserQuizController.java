@@ -7,12 +7,12 @@ import com.kidmily.algoga_server.quiz.application.command.SubmitQuizAnswerComman
 import com.kidmily.algoga_server.quiz.application.command.SubmitQuizCommand;
 import com.kidmily.algoga_server.quiz.application.result.QuizSubmitResult;
 import com.kidmily.algoga_server.quiz.application.usecase.QuizUseCase;
-import com.kidmily.algoga_server.lms.exception.LmsErrorCode;
+import com.kidmily.algoga_server.learning.exception.LearningErrorCode;
 import com.kidmily.algoga_server.quiz.presentation.request.SubmitQuizRequest;
 import com.kidmily.algoga_server.quiz.presentation.response.QuizSubmissionResponse;
 import com.kidmily.algoga_server.quiz.presentation.response.QuizSubmitResponse;
 import com.kidmily.algoga_server.quiz.presentation.response.UserQuizResponse;
-import com.kidmily.algoga_server.lms.presentation.support.CurrentUserIdResolver;
+import com.kidmily.algoga_server.learning.presentation.support.CurrentUserIdResolver;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -39,7 +39,7 @@ public class UserQuizController {
                     정답 번호와 해설은 응답에 포함하지 않습니다.
                     """
     )
-    @ApiErrorCodeExample(domain = LmsErrorCode.class, value = {
+    @ApiErrorCodeExample(domain = LearningErrorCode.class, value = {
             "COURSE_NOT_FOUND",
             "QUIZ_NOT_FOUND",
             "QUIZ_LOCKED",
@@ -79,7 +79,7 @@ public class UserQuizController {
                     """
     )
     @ApiErrorCodeExample(domain = GlobalErrorCode.class, value = {"INVALID_REQUEST"})
-    @ApiErrorCodeExample(domain = LmsErrorCode.class, value = {
+    @ApiErrorCodeExample(domain = LearningErrorCode.class, value = {
             "COURSE_NOT_FOUND",
             "QUIZ_NOT_FOUND",
             "QUIZ_LOCKED",
@@ -129,7 +129,7 @@ public class UserQuizController {
                     현재 저장 구조상 전체 문제 수, 정답 수, 점수, 제출 일시를 반환합니다.
                     """
     )
-    @ApiErrorCodeExample(domain = LmsErrorCode.class, value = {
+    @ApiErrorCodeExample(domain = LearningErrorCode.class, value = {
             "COURSE_NOT_FOUND",
             "QUIZ_NOT_SUBMITTED",
             "NOT_ENROLLED"

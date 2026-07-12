@@ -2,8 +2,8 @@ package com.kidmily.algoga_server.completion.presentation.api;
 
 import com.kidmily.algoga_server.global.annotation.swagger.ApiErrorCodeExample;
 import com.kidmily.algoga_server.certificate.application.service.CertificatePdfService;
-import com.kidmily.algoga_server.lms.exception.LmsErrorCode;
-import com.kidmily.algoga_server.lms.presentation.support.CurrentUserIdResolver;
+import com.kidmily.algoga_server.learning.exception.LearningErrorCode;
+import com.kidmily.algoga_server.learning.presentation.support.CurrentUserIdResolver;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -47,7 +47,7 @@ public class CertificateController {
                     schema = @Schema(type = "string", format = "binary")
             )
     )
-    @ApiErrorCodeExample(domain = LmsErrorCode.class, value = {
+    @ApiErrorCodeExample(domain = LearningErrorCode.class, value = {
             "LOGIN_REQUIRED",
             "COURSE_NOT_FOUND",
             "COURSE_COMPLETION_NOT_FOUND"

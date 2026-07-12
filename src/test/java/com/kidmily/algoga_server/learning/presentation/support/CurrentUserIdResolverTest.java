@@ -1,7 +1,7 @@
-package com.kidmily.algoga_server.lms.presentation.support;
+package com.kidmily.algoga_server.learning.presentation.support;
 
-import com.kidmily.algoga_server.lms.exception.LmsErrorCode;
-import com.kidmily.algoga_server.lms.exception.LmsException;
+import com.kidmily.algoga_server.learning.exception.LearningErrorCode;
+import com.kidmily.algoga_server.learning.exception.LearningException;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -12,12 +12,12 @@ class CurrentUserIdResolverTest {
 
     @Test
     void requiresLoginWhenPrincipalIsMissing() {
-        LmsException exception = assertThrows(
-                LmsException.class,
+        LearningException exception = assertThrows(
+                LearningException.class,
                 () -> CurrentUserIdResolver.resolveRequired(null)
         );
 
-        assertSame(LmsErrorCode.DIAGNOSIS_LOGIN_REQUIRED, exception.getErrorCode());
+        assertSame(LearningErrorCode.DIAGNOSIS_LOGIN_REQUIRED, exception.getErrorCode());
     }
 
     @Test

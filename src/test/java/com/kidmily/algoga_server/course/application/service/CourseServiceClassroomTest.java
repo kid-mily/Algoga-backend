@@ -1,9 +1,8 @@
-package com.kidmily.algoga_server.quiz.application.service;
+package com.kidmily.algoga_server.course.application.service;
 
 import com.kidmily.algoga_server.global.port.out.FileStoragePort;
 import com.kidmily.algoga_server.course.application.port.UserProfilePort;
 import com.kidmily.algoga_server.course.application.result.CourseClassroomResult;
-import com.kidmily.algoga_server.course.application.service.CourseService;
 import com.kidmily.algoga_server.course.domain.model.Chapter;
 import com.kidmily.algoga_server.course.domain.model.Course;
 import com.kidmily.algoga_server.enrollment.domain.model.Enrollment;
@@ -19,8 +18,8 @@ import com.kidmily.algoga_server.enrollment.domain.repository.EnrollmentReposito
 import com.kidmily.algoga_server.learningprogress.domain.repository.LearningProgressRepository;
 import com.kidmily.algoga_server.country.domain.repository.MapRepository;
 import com.kidmily.algoga_server.quiz.domain.repository.QuizSubmissionRepository;
-import com.kidmily.algoga_server.lms.exception.LmsErrorCode;
-import com.kidmily.algoga_server.lms.exception.LmsException;
+import com.kidmily.algoga_server.learning.exception.LearningErrorCode;
+import com.kidmily.algoga_server.learning.exception.LearningException;
 import com.kidmily.algoga_server.course.settings.CourseStorageSettings;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -102,12 +101,12 @@ class CourseServiceClassroomTest {
         when(enrollmentRepository.findByUserIdAndCourseId(USER_ID, COURSE_ID))
                 .thenReturn(Optional.of(enrollment(LocalDateTime.now().minusSeconds(1))));
 
-        LmsException exception = assertThrows(
-                LmsException.class,
+        LearningException exception = assertThrows(
+                LearningException.class,
                 () -> courseService.getCourseClassroom(USER_ID, COURSE_ID)
         );
 
-        assertSame(LmsErrorCode.NOT_ENROLLED, exception.getErrorCode());
+        assertSame(LearningErrorCode.NOT_ENROLLED, exception.getErrorCode());
     }
 
     @Test
