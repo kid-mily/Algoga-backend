@@ -293,7 +293,7 @@ public class PaymentQueryService implements PaymentQueryUseCase {
         if (usedCouponId != null) {
             UserCoupon userCoupon = userCouponRepository.findById(usedCouponId)
                     .orElseThrow(() -> new BusinessException(BenefitErrorCode.COUPON_POLICY_NOT_FOUND));
-            if ("PERCENT".equals(userCoupon.getDiscountType())) {
+            if ("PERCENT".equals(userCoupon.getDiscountType()) || "RATE".equals(userCoupon.getDiscountType())) {
                 couponDiscount = basePrice * userCoupon.getDiscountValue() / 100;
             } else {
                 couponDiscount = Math.min(userCoupon.getDiscountValue(), basePrice);

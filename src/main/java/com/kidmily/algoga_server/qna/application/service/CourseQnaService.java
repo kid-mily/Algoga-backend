@@ -1,0 +1,197 @@
+package com.kidmily.algoga_server.qna.application.service;
+
+import com.kidmily.algoga_server.course.application.port.UserProfilePort;
+import com.kidmily.algoga_server.course.domain.repository.CourseRepository;
+import com.kidmily.algoga_server.enrollment.domain.repository.EnrollmentRepository;
+import com.kidmily.algoga_server.learning.exception.LearningErrorCode;
+import com.kidmily.algoga_server.learning.exception.LearningException;
+import com.kidmily.algoga_server.qna.application.command.AnswerCourseQnaCommand;
+import com.kidmily.algoga_server.qna.application.command.CreateCourseQnaCommand;
+import com.kidmily.algoga_server.qna.application.command.CreateCourseQnaCommentCommand;
+import com.kidmily.algoga_server.qna.application.result.CourseQnaCommentResult;
+import com.kidmily.algoga_server.qna.application.result.CourseQnaDetailResult;
+import com.kidmily.algoga_server.qna.application.result.CourseQnaResult;
+import com.kidmily.algoga_server.qna.application.usecase.CourseQnaUseCase;
+import com.kidmily.algoga_server.qna.domain.model.CourseQna;
+import com.kidmily.algoga_server.qna.domain.model.CourseQnaComment;
+import com.kidmily.algoga_server.qna.domain.repository.CourseQnaCommentRepository;
+import com.kidmily.algoga_server.qna.domain.repository.CourseQnaRepository;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.function.Function;
+
+/**
+ * 강의 Q&A 애플리케이션 서비스. 기존 CourseService에 있던 Q&A 로직을 그대로 옮긴 구현으로,
+ * 동작과 예외(에러코드)는 기존과 동일하다.
+ *
+ * <p>코스 존재 확인/수강 접근 검증은 Q&A 자체 흐름에 필요한 최소 로직만 자체 보유한다.
+ */
+@Service
+@RequiredArgsConstructor
+@Transactional
+public class CourseQnaService implements CourseQnaUseCase {
+
+    private final CourseQnaRepository courseQnaRepository;
+    private final CourseQnaCommentRepository courseQnaCommentRepository;
+    private final CourseRepository courseRepository;
+    private final EnrollmentRepository enrollmentRepository;
+    private final UserProfilePort userProfilePort;
+
+    @Override
+    public CourseQnaResult createQna(CreateCourseQnaCommand command) {
+        validateAccessibleEnrollment(command.userId(), command.courseId());
+        findCourseIncludingDeleted(command.courseId());
+
+        CourseQna courseQna = CourseQna.create(
+                command.courseId(),
+                command.userId(),
+                command.title(),
+                command.question()
+        );
+
+        return toCourseQnaResult(courseQnaRepository.save(courseQna));
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<CourseQnaResult> getQnas(Long courseId) {
+        findCourseIncludingDeleted(courseId);
+
+        return courseQnaRepository.findByCourseId(courseId).stream()
+                .map(this::toCourseQnaResult)
+                .toList();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public CourseQnaDetailResult getQnaDetail(Long courseId, Long qnaId) {
+        findCourseIncludingDeleted(courseId);
+
+        CourseQna qna = findQna(courseId, qnaId);
+        List<CourseQnaComment> comments = courseQnaCommentRepository.findByQnaId(qnaId);
+
+        return new CourseQnaDetailResult(
+                qna.getId(),
+                qna.getCourseId(),
+                qna.getUserId(),
+                profileValue(qna.getUserId(), UserProfilePort.UserProfile::username),
+                profileValue(qna.getUserId(), UserProfilePort.UserProfile::name),
+                profileValue(qna.getUserId(), UserProfilePort.UserProfile::email),
+                profileValue(qna.getUserId(), UserProfilePort.UserProfile::nickname),
+                qna.getManagerId(),
+                qna.getTitle(),
+                qna.getQuestion(),
+                qna.getAnswer(),
+                qna.getStatus(),
+                qna.getCreatedAt(),
+                qna.getAnsweredAt(),
+                comments.stream()
+                        .map(this::toCourseQnaCommentResult)
+                        .toList()
+        );
+    }
+
+    @Override
+    public CourseQnaResult answerQna(AnswerCourseQnaCommand command) {
+        findCourseIncludingDeleted(command.courseId());
+
+        CourseQna qna = findQna(command.courseId(), command.qnaId());
+
+        if ("ANSWERED".equals(qna.getStatus())) {
+            throw new LearningException(LearningErrorCode.QNA_ALREADY_ANSWERED);
+        }
+
+        CourseQna answeredQna = qna.answer(command.managerId(), command.answer());
+
+        return toCourseQnaResult(courseQnaRepository.save(answeredQna));
+    }
+
+    @Override
+    public CourseQnaCommentResult createComment(CreateCourseQnaCommentCommand command) {
+        findCourseIncludingDeleted(command.courseId());
+        findQna(command.courseId(), command.qnaId());
+        validateParentComment(command.qnaId(), command.parentCommentId());
+
+        if ("USER".equals(command.writerType())) {
+            validateAccessibleEnrollment(command.writerId(), command.courseId());
+        }
+
+        CourseQnaComment comment = "MANAGER".equals(command.writerType())
+                ? CourseQnaComment.createManagerComment(
+                command.qnaId(),
+                command.parentCommentId(),
+                command.writerId(),
+                command.content()
+        )
+                : CourseQnaComment.createUserComment(
+                command.qnaId(),
+                command.parentCommentId(),
+                command.writerId(),
+                command.content()
+        );
+
+        return toCourseQnaCommentResult(courseQnaCommentRepository.save(comment));
+    }
+
+    private void validateParentComment(Long qnaId, Long parentCommentId) {
+        if (parentCommentId == null) {
+            return;
+        }
+
+        CourseQnaComment parentComment = courseQnaCommentRepository.findByIdAndQnaId(parentCommentId, qnaId)
+                .orElseThrow(() -> new LearningException(LearningErrorCode.QNA_COMMENT_NOT_FOUND));
+
+        if (parentComment.getParentCommentId() != null) {
+            throw new LearningException(LearningErrorCode.QNA_COMMENT_NOT_FOUND);
+        }
+    }
+
+    private CourseQna findQna(Long courseId, Long qnaId) {
+        return courseQnaRepository.findByIdAndCourseId(qnaId, courseId)
+                .orElseThrow(() -> new LearningException(LearningErrorCode.QNA_NOT_FOUND));
+    }
+
+    private CourseQnaResult toCourseQnaResult(CourseQna qna) {
+        return CourseQnaResult.from(qna, findProfile(qna.getUserId()));
+    }
+
+    private CourseQnaCommentResult toCourseQnaCommentResult(CourseQnaComment comment) {
+        UserProfilePort.UserProfile profile = "USER".equals(comment.getWriterType())
+                ? findProfile(comment.getUserId())
+                : null;
+
+        return CourseQnaCommentResult.from(comment, profile);
+    }
+
+    private UserProfilePort.UserProfile findProfile(Long userId) {
+        return userProfilePort.findProfile(userId)
+                .orElse(null);
+    }
+
+    private String profileValue(
+            Long userId,
+            Function<UserProfilePort.UserProfile, String> mapper
+    ) {
+        UserProfilePort.UserProfile profile = findProfile(userId);
+        return profile == null ? null : mapper.apply(profile);
+    }
+
+    private void validateAccessibleEnrollment(Long userId, Long courseId) {
+        boolean accessible = enrollmentRepository.findByUserIdAndCourseId(userId, courseId)
+                .map(enrollment -> enrollment.isAccessibleAt(LocalDateTime.now()))
+                .orElse(false);
+
+        if (!accessible) {
+            throw new LearningException(LearningErrorCode.NOT_ENROLLED);
+        }
+    }
+
+    private void findCourseIncludingDeleted(Long courseId) {
+        courseRepository.findById(courseId)
+                .orElseThrow(() -> new LearningException(LearningErrorCode.COURSE_NOT_FOUND));
+    }
+}

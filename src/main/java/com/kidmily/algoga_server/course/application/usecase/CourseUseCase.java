@@ -2,14 +2,15 @@ package com.kidmily.algoga_server.course.application.usecase;
 
 import com.kidmily.algoga_server.completion.application.result.CourseCompletionResult;
 
-import com.kidmily.algoga_server.qna.application.command.AnswerCourseQnaCommand;
+// [리팩토링] Q&A가 CourseQnaUseCase로 분리되어 미사용이 된 import들. 삭제 대신 이력 보존용으로 주석 처리함.
+//import com.kidmily.algoga_server.qna.application.command.AnswerCourseQnaCommand;
 import com.kidmily.algoga_server.course.application.command.CompleteCourseCommand;
 import com.kidmily.algoga_server.course.application.command.CreateCourseCommand;
-import com.kidmily.algoga_server.qna.application.command.CreateCourseQnaCommand;
-import com.kidmily.algoga_server.qna.application.command.CreateCourseQnaCommentCommand;
-import com.kidmily.algoga_server.qna.application.result.CourseQnaCommentResult;
-import com.kidmily.algoga_server.qna.application.result.CourseQnaDetailResult;
-import com.kidmily.algoga_server.qna.application.result.CourseQnaResult;
+//import com.kidmily.algoga_server.qna.application.command.CreateCourseQnaCommand;
+//import com.kidmily.algoga_server.qna.application.command.CreateCourseQnaCommentCommand;
+//import com.kidmily.algoga_server.qna.application.result.CourseQnaCommentResult;
+//import com.kidmily.algoga_server.qna.application.result.CourseQnaDetailResult;
+//import com.kidmily.algoga_server.qna.application.result.CourseQnaResult;
 import com.kidmily.algoga_server.course.application.command.UpdateCourseCommand;
 import com.kidmily.algoga_server.course.application.result.CourseResult;
 import com.kidmily.algoga_server.course.application.result.CourseClassroomResult;
@@ -45,6 +46,8 @@ public interface CourseUseCase {
 
     CourseClassroomResult getCourseClassroom(Long userId, Long courseId);
 
+    // [리팩토링] Q&A 유스케이스를 qna 도메인의 CourseQnaUseCase로 분리. 아래 선언들은 삭제 대신 이력 보존용으로 주석 처리함.
+    /*
     CourseQnaResult createQna(CreateCourseQnaCommand command);
 
     List<CourseQnaResult> getQnas(Long courseId);
@@ -54,6 +57,7 @@ public interface CourseUseCase {
     CourseQnaResult answerQna(AnswerCourseQnaCommand command);
 
     CourseQnaCommentResult createComment(CreateCourseQnaCommentCommand command);
+    */
 
     List<CourseResult> getPublishedCoursesByCountry(Long countryId);
 
