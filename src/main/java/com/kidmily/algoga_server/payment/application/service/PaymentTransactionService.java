@@ -376,7 +376,7 @@ public class PaymentTransactionService {
     }
 
     private int calculateCouponDiscount(UserCoupon userCoupon, int baseAmount) {
-        if ("PERCENT".equals(userCoupon.getDiscountType())) {
+        if ("PERCENT".equals(userCoupon.getDiscountType()) || "RATE".equals(userCoupon.getDiscountType())) {
             return baseAmount * userCoupon.getDiscountValue() / 100;
         }
         return Math.min(userCoupon.getDiscountValue(), baseAmount);

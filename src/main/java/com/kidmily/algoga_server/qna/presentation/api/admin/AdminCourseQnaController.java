@@ -7,7 +7,9 @@ import com.kidmily.algoga_server.global.exception.GlobalErrorCode;
 import com.kidmily.algoga_server.qna.application.command.AnswerCourseQnaCommand;
 import com.kidmily.algoga_server.qna.application.command.CreateCourseQnaCommentCommand;
 import com.kidmily.algoga_server.qna.application.result.CourseQnaDetailResult;
-import com.kidmily.algoga_server.course.application.usecase.CourseUseCase;
+// [리팩토링] Q&A 로직을 qna 도메인의 CourseQnaUseCase로 분리하여 CourseUseCase 의존 제거. 삭제 대신 이력 보존용으로 주석 처리함.
+//import com.kidmily.algoga_server.course.application.usecase.CourseUseCase;
+import com.kidmily.algoga_server.qna.application.usecase.CourseQnaUseCase;
 import com.kidmily.algoga_server.learning.exception.LearningErrorCode;
 import com.kidmily.algoga_server.qna.presentation.request.AnswerCourseQnaRequest;
 import com.kidmily.algoga_server.qna.presentation.request.CreateCourseQnaCommentRequest;
@@ -32,7 +34,9 @@ import java.util.List;
 @RequiredArgsConstructor
 public class AdminCourseQnaController {
 
-    private final CourseUseCase courseUseCase;
+    // [리팩토링] Q&A 유스케이스를 qna 도메인으로 분리. 기존 CourseUseCase 주입을 CourseQnaUseCase로 대체함.
+    //private final CourseUseCase courseUseCase;
+    private final CourseQnaUseCase courseQnaUseCase;
 
     @Operation(summary = "관리자 강의 Q&A 목록 조회")
     @ApiErrorCodeExample(domain = LearningErrorCode.class, value = {"COURSE_NOT_FOUND"})
@@ -42,7 +46,7 @@ public class AdminCourseQnaController {
             @Parameter(description = "강의 ID", example = "3")
             @PathVariable Long courseId
     ) {
-        List<AdminCourseQnaResponse> response = courseUseCase.getQnas(courseId)
+        List<AdminCourseQnaResponse> response = courseQnaUseCase.getQnas(courseId)
                 .stream()
                 .map(AdminCourseQnaResponse::from)
                 .toList();
@@ -70,7 +74,7 @@ public class AdminCourseQnaController {
             @Parameter(description = "Q&A ID", example = "1")
             @PathVariable Long qnaId
     ) {
-        CourseQnaDetailResult result = courseUseCase.getQnaDetail(courseId, qnaId);
+        CourseQnaDetailResult result = courseQnaUseCase.getQnaDetail(courseId, qnaId);
 
         return ResponseEntity.ok(
                 ApiResponse.success(
@@ -108,7 +112,7 @@ public class AdminCourseQnaController {
                 request.answer()
         );
 
-        var qna = courseUseCase.answerQna(command);
+        var qna = courseQnaUseCase.answerQna(command);
 
         return ResponseEntity.ok(
                 ApiResponse.success(
@@ -148,7 +152,7 @@ public class AdminCourseQnaController {
                 request.content()
         );
 
-        var comment = courseUseCase.createComment(command);
+        var comment = courseQnaUseCase.createComment(command);
 
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(ApiResponse.created(

@@ -1,7 +1,8 @@
 package com.kidmily.algoga_server.course.application.service;
 
-import com.kidmily.algoga_server.course.application.port.CourseFileStoragePort;
-import com.kidmily.algoga_server.course.application.port.UploadFile;
+// [리팩토링] 파일 스토리지 로직을 CourseFileManager로 이관하여 미사용. 삭제 대신 이력 보존용으로 주석 처리함.
+//import com.kidmily.algoga_server.course.application.port.CourseFileStoragePort;
+//import com.kidmily.algoga_server.course.application.port.UploadFile;
 import com.kidmily.algoga_server.course.application.command.CreateCourseCommand;
 import com.kidmily.algoga_server.course.application.command.UpdateCourseCommand;
 import com.kidmily.algoga_server.course.application.result.CourseResult;
@@ -25,28 +26,35 @@ import com.kidmily.algoga_server.enrollment.domain.repository.EnrollmentReposito
 import com.kidmily.algoga_server.course.domain.repository.ChapterRepository;
 import com.kidmily.algoga_server.course.domain.repository.CourseRepository;
 import com.kidmily.algoga_server.course.application.command.CompleteCourseCommand;
-import com.kidmily.algoga_server.course.application.port.UserProfilePort;
+// [리팩토링] 수강생 결과 조립을 CourseStudentResultAssembler로 이관하여 미사용이 된 import. 삭제 대신 이력 보존용으로 주석 처리함.
+//import com.kidmily.algoga_server.course.application.port.UserProfilePort;
 import com.kidmily.algoga_server.course.application.usecase.CourseUseCase;
-import com.kidmily.algoga_server.qna.application.command.AnswerCourseQnaCommand;
-import com.kidmily.algoga_server.qna.application.command.CreateCourseQnaCommand;
-import com.kidmily.algoga_server.qna.application.command.CreateCourseQnaCommentCommand;
-import com.kidmily.algoga_server.qna.application.result.CourseQnaCommentResult;
-import com.kidmily.algoga_server.qna.application.result.CourseQnaDetailResult;
-import com.kidmily.algoga_server.qna.application.result.CourseQnaResult;
-import com.kidmily.algoga_server.qna.domain.model.CourseQna;
-import com.kidmily.algoga_server.qna.domain.model.CourseQnaComment;
-import com.kidmily.algoga_server.qna.domain.repository.CourseQnaCommentRepository;
-import com.kidmily.algoga_server.qna.domain.repository.CourseQnaRepository;
-import com.kidmily.algoga_server.review.domain.model.CourseReview;
-import com.kidmily.algoga_server.review.domain.repository.CourseReviewRepository;
+// [리팩토링] Q&A 로직을 qna 도메인의 CourseQnaService로 분리하여 미사용이 된 import들. 삭제 대신 이력 보존용으로 주석 처리함.
+//import com.kidmily.algoga_server.qna.application.command.AnswerCourseQnaCommand;
+//import com.kidmily.algoga_server.qna.application.command.CreateCourseQnaCommand;
+//import com.kidmily.algoga_server.qna.application.command.CreateCourseQnaCommentCommand;
+//import com.kidmily.algoga_server.qna.application.result.CourseQnaCommentResult;
+//import com.kidmily.algoga_server.qna.application.result.CourseQnaDetailResult;
+//import com.kidmily.algoga_server.qna.application.result.CourseQnaResult;
+//import com.kidmily.algoga_server.qna.domain.model.CourseQna;
+//import com.kidmily.algoga_server.qna.domain.model.CourseQnaComment;
+//import com.kidmily.algoga_server.qna.domain.repository.CourseQnaCommentRepository;
+//import com.kidmily.algoga_server.qna.domain.repository.CourseQnaRepository;
+// [리팩토링] calculateAverageRating(죽은 메서드) 주석 처리로 미사용이 된 import. 삭제 대신 이력 보존용으로 주석 처리함.
+//import com.kidmily.algoga_server.review.domain.model.CourseReview;
+// [리팩토링] my-course/수강생 결과 조립을 assembler로 이관하여 미사용이 된 import. 삭제 대신 이력 보존용으로 주석 처리함.
+//import com.kidmily.algoga_server.review.domain.repository.CourseReviewRepository;
 import com.kidmily.algoga_server.quiz.domain.repository.QuizSubmissionRepository;
 import com.kidmily.algoga_server.learning.exception.LearningErrorCode;
 import com.kidmily.algoga_server.learning.exception.LearningException;
-import com.kidmily.algoga_server.course.settings.CourseStorageSettings;
+// [리팩토링] 파일 스토리지 로직을 CourseFileManager로 이관하여 미사용. 삭제 대신 이력 보존용으로 주석 처리함.
+//import com.kidmily.algoga_server.course.settings.CourseStorageSettings;
 import com.kidmily.algoga_server.course.settings.cache.CourseCacheType;
-import com.kidmily.algoga_server.learningprogress.application.port.LearningProgressCachePort;
+// [리팩토링] 진도 캐시 포트 사용을 CourseProgressReader로 이관하여 미사용. 삭제 대신 이력 보존용으로 주석 처리함.
+//import com.kidmily.algoga_server.learningprogress.application.port.LearningProgressCachePort;
 import com.kidmily.algoga_server.learningprogress.domain.model.LearningProgress;
-import com.kidmily.algoga_server.learningprogress.domain.repository.LearningProgressRepository;
+// [리팩토링] my-course/수강생 결과 조립을 assembler로 이관하여 미사용이 된 import. 삭제 대신 이력 보존용으로 주석 처리함.
+//import com.kidmily.algoga_server.learningprogress.domain.repository.LearningProgressRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -71,18 +79,28 @@ public class CourseService implements CourseUseCase {
 
     private final CourseRepository courseRepository;
     private final ChapterRepository chapterRepository;
-    private final LearningProgressRepository learningProgressRepository;
-    private final LearningProgressCachePort learningProgressCachePort;
+    // [리팩토링] my-course/수강생 결과 조립을 assembler로 이관하여 미사용. 삭제 대신 이력 보존용으로 주석 처리함.
+    //private final LearningProgressRepository learningProgressRepository;
+    private final MyCourseResultAssembler myCourseResultAssembler;
+    // [리팩토링] 진도 캐시 조회/병합 책임을 CourseProgressReader로 이관. 캐시 포트 의존성은 그쪽으로 이동하여 주석 처리함.
+    //private final LearningProgressCachePort learningProgressCachePort;
+    private final CourseProgressReader courseProgressReader;
     private final CourseCompletionRepository courseCompletionRepository;
     private final QuizSubmissionRepository quizSubmissionRepository;
-    private final CourseReviewRepository courseReviewRepository;
-    private final CourseQnaRepository courseQnaRepository;
-    private final CourseQnaCommentRepository courseQnaCommentRepository;
+    // [리팩토링] my-course/수강생 결과 조립을 assembler로 이관하여 미사용. 삭제 대신 이력 보존용으로 주석 처리함.
+    //private final CourseReviewRepository courseReviewRepository;
+    // [리팩토링] Q&A 로직을 CourseQnaService로 분리하여 미사용. 삭제 대신 이력 보존용으로 주석 처리함.
+    //private final CourseQnaRepository courseQnaRepository;
+    //private final CourseQnaCommentRepository courseQnaCommentRepository;
     private final MapRepository mapRepository;
     private final EnrollmentRepository enrollmentRepository;
-    private final UserProfilePort userProfilePort;
-    private final CourseFileStoragePort fileStoragePort;
-    private final CourseStorageSettings storageSettings;
+    // [리팩토링] 수강생 결과 조립을 CourseStudentResultAssembler로 이관하여 userProfilePort 미사용. 삭제 대신 이력 보존용으로 주석 처리함.
+    //private final UserProfilePort userProfilePort;
+    private final CourseStudentResultAssembler courseStudentResultAssembler;
+    // [리팩토링] 파일 스토리지 의존성을 CourseFileManager로 이관. 삭제 대신 이력 보존용으로 주석 처리함.
+    //private final CourseFileStoragePort fileStoragePort;
+    //private final CourseStorageSettings storageSettings;
+    private final CourseFileManager courseFileManager;
     private final ApplicationEventPublisher eventPublisher;
     private final PublishedCourseListCacheService publishedCourseListCacheService;
 
@@ -92,16 +110,20 @@ public class CourseService implements CourseUseCase {
         validateCountry(command.countryId());
         validateMaxRewardMileage(command.maxRewardMileage());
 
-        String thumbnailUrl = null;
+        // [리팩토링] 파일 업로드 로직을 CourseFileManager로 이관. 아래 원본 코드는 삭제 대신 이력 보존용으로 주석 처리함.
+        //String thumbnailUrl = null;
+        //
+        //if (command.thumbnailFile() != null && !command.thumbnailFile().isEmpty()) {
+        //    thumbnailUrl = fileStoragePort.uploadFile(
+        //            command.thumbnailFile(),
+        //            storageSettings.getCourseThumbnailDirectory()
+        //    );
+        //}
+        //
+        //List<CourseFile> courseFiles = uploadCourseFiles(command.attachedFiles());
+        String thumbnailUrl = courseFileManager.uploadThumbnail(command.thumbnailFile());
 
-        if (command.thumbnailFile() != null && !command.thumbnailFile().isEmpty()) {
-            thumbnailUrl = fileStoragePort.uploadFile(
-                    command.thumbnailFile(),
-                    storageSettings.getCourseThumbnailDirectory()
-            );
-        }
-
-        List<CourseFile> courseFiles = uploadCourseFiles(command.attachedFiles());
+        List<CourseFile> courseFiles = courseFileManager.uploadCourseFiles(command.attachedFiles());
 
         Course newCourse = Course.create(
                 command.countryId(),
@@ -180,25 +202,39 @@ public class CourseService implements CourseUseCase {
 
         Course course = findCourse(courseId);
 
-        String targetThumbnailUrl = course.getThumbnailUrl();
+        // [리팩토링] 썸네일/첨부파일 처리 로직을 CourseFileManager로 이관. 아래 원본 코드는 삭제 대신 이력 보존용으로 주석 처리함.
+        //String targetThumbnailUrl = course.getThumbnailUrl();
+        //String targetFileUrl = course.getFileUrl();
+        //List<CourseFile> targetCourseFiles = null;
+        //
+        //if (command.thumbnailFile() != null && !command.thumbnailFile().isEmpty()) {
+        //    if (targetThumbnailUrl != null && !targetThumbnailUrl.isBlank()) {
+        //        fileStoragePort.deleteFile(targetThumbnailUrl);
+        //    }
+        //
+        //    targetThumbnailUrl = fileStoragePort.uploadFile(
+        //            command.thumbnailFile(),
+        //            storageSettings.getCourseThumbnailDirectory()
+        //    );
+        //}
+        //
+        //if (hasAttachedFiles(command.attachedFiles())) {
+        //    deleteCourseFiles(course.getFileUrls());
+        //
+        //    targetCourseFiles = uploadCourseFiles(command.attachedFiles());
+        //    targetFileUrl = targetCourseFiles.isEmpty() ? null : targetCourseFiles.get(0).getFileUrl();
+        //}
+        String targetThumbnailUrl = courseFileManager.replaceThumbnail(
+                course.getThumbnailUrl(),
+                command.thumbnailFile()
+        );
         String targetFileUrl = course.getFileUrl();
         List<CourseFile> targetCourseFiles = null;
 
-        if (command.thumbnailFile() != null && !command.thumbnailFile().isEmpty()) {
-            if (targetThumbnailUrl != null && !targetThumbnailUrl.isBlank()) {
-                fileStoragePort.deleteFile(targetThumbnailUrl);
-            }
+        if (courseFileManager.hasAttachedFiles(command.attachedFiles())) {
+            courseFileManager.deleteCourseFiles(course.getFileUrls());
 
-            targetThumbnailUrl = fileStoragePort.uploadFile(
-                    command.thumbnailFile(),
-                    storageSettings.getCourseThumbnailDirectory()
-            );
-        }
-
-        if (hasAttachedFiles(command.attachedFiles())) {
-            deleteCourseFiles(course.getFileUrls());
-
-            targetCourseFiles = uploadCourseFiles(command.attachedFiles());
+            targetCourseFiles = courseFileManager.uploadCourseFiles(command.attachedFiles());
             targetFileUrl = targetCourseFiles.isEmpty() ? null : targetCourseFiles.get(0).getFileUrl();
         }
 
@@ -263,7 +299,7 @@ public class CourseService implements CourseUseCase {
                 .collect(java.util.stream.Collectors.toCollection(LinkedHashSet::new));
 
         return userIds.stream()
-                .map(userId -> createCourseStudentResult(userId, course, chapters))
+                .map(userId -> courseStudentResultAssembler.assemble(userId, course, chapters))
                 .flatMap(Optional::stream)
                 .sorted(Comparator.comparing(CourseStudentResult::userId))
                 .toList();
@@ -280,7 +316,7 @@ public class CourseService implements CourseUseCase {
         }
 
         return new PageImpl<>(
-                createMyCourseResults(userId, enrollments),
+                myCourseResultAssembler.assemble(userId, enrollments),
                 pageable,
                 enrollmentPage.getTotalElements()
         );
@@ -296,7 +332,7 @@ public class CourseService implements CourseUseCase {
         Course course = findCourseIncludingDeleted(courseId);
 
         List<Chapter> chapters = chapterRepository.findByCourseId(courseId);
-        Map<Long, LearningProgress> progressByChapterId = loadProgressMapWithCache(userId, courseId, chapters);
+        Map<Long, LearningProgress> progressByChapterId = courseProgressReader.loadProgressMapWithCache(userId, courseId, chapters);
 
         List<CourseClassroomChapterResult> chapterResults = new java.util.ArrayList<>();
         boolean previousChaptersCompleted = true;
@@ -334,6 +370,8 @@ public class CourseService implements CourseUseCase {
         );
     }
 
+    // [리팩토링] Q&A 유스케이스를 qna 도메인의 CourseQnaService로 이관. 아래 구현들은 삭제 대신 이력 보존용으로 주석 처리함.
+    /*
     @Override
     public CourseQnaResult createQna(CreateCourseQnaCommand command) {
         validateAccessibleEnrollment(command.userId(), command.courseId());
@@ -442,6 +480,7 @@ public class CourseService implements CourseUseCase {
             throw new LearningException(LearningErrorCode.QNA_COMMENT_NOT_FOUND);
         }
     }
+    */
 
     @Override
     @Transactional(readOnly = true)
@@ -593,7 +632,7 @@ public class CourseService implements CourseUseCase {
         }
 
         List<Long> incompleteChapterIds = chapters.stream()
-                .filter(chapter -> !loadProgressWithCache(userId, courseId, chapter.getId())
+                .filter(chapter -> !courseProgressReader.loadProgressWithCache(userId, courseId, chapter.getId())
                         .map(LearningProgress::isCompleted)
                         .orElse(false))
                 .map(Chapter::getId)
@@ -604,6 +643,8 @@ public class CourseService implements CourseUseCase {
         }
     }
 
+    // [리팩토링] 아래 진도 조회/캐시 병합 메서드들을 CourseProgressReader로 이관하여 미사용. 삭제 대신 이력 보존용으로 주석 처리함.
+    /*
     private Map<Long, LearningProgress> loadProgressMapWithCache(
             Long userId,
             Long courseId,
@@ -700,6 +741,7 @@ public class CourseService implements CourseUseCase {
 
         return first;
     }
+    */
 
     private void validateQuizSubmitted(Long userId, Long courseId) {
         if (!quizSubmissionRepository.existsByUserIdAndCourseId(userId, courseId)) {
@@ -707,6 +749,8 @@ public class CourseService implements CourseUseCase {
         }
     }
 
+    // [리팩토링] 수강생 결과 조립을 CourseStudentResultAssembler로 이관하여 미사용. 삭제 대신 이력 보존용으로 주석 처리함.
+    /*
     private Optional<CourseStudentResult> createCourseStudentResult(
             Long userId,
             Course course,
@@ -724,7 +768,7 @@ public class CourseService implements CourseUseCase {
                 userId,
                 course.getId()
         );
-        List<LearningProgress> mergedProgresses = mergeProgressesWithCache(
+        List<LearningProgress> mergedProgresses = courseProgressReader.mergeProgressesWithCache(
                 userId,
                 course.getId(),
                 chapters,
@@ -732,8 +776,8 @@ public class CourseService implements CourseUseCase {
         );
 
         int totalChapterCount = chapters.size();
-        int completedChapterCount = calculateCompletedChapterCount(mergedProgresses);
-        int progressRate = calculateCourseProgressRate(chapters, mergedProgresses);
+        int completedChapterCount = CourseProgressCalculator.calculateCompletedChapterCount(mergedProgresses);
+        int progressRate = CourseProgressCalculator.calculateCourseProgressRate(chapters, mergedProgresses);
 
         Optional<CourseCompletion> optionalCompletion = courseCompletionRepository.findByUserIdAndCourseId(
                 userId,
@@ -770,7 +814,10 @@ public class CourseService implements CourseUseCase {
                 completedAt
         ));
     }
+    */
 
+    // [리팩토링] my-course 결과 조립을 MyCourseResultAssembler로 이관하여 미사용. 삭제 대신 이력 보존용으로 주석 처리함.
+    /*
     private List<MyCourseResult> createMyCourseResults(Long userId, List<Enrollment> enrollments) {
         List<Long> courseIds = enrollments.stream()
                 .map(Enrollment::getCourseId)
@@ -837,7 +884,7 @@ public class CourseService implements CourseUseCase {
                         coursesById.get(courseId),
                         enrollmentsByCourseId.get(courseId),
                         chaptersByCourseId.getOrDefault(courseId, List.of()),
-                        mergeProgressesWithCache(
+                        courseProgressReader.mergeProgressesWithCache(
                                 userId,
                                 courseId,
                                 chaptersByCourseId.getOrDefault(courseId, List.of()),
@@ -892,9 +939,9 @@ public class CourseService implements CourseUseCase {
         }
 
         int totalChapterCount = chapters.size();
-        int completedChapterCount = calculateCompletedChapterCount(progresses);
-        int progressRate = calculateCourseProgressRate(chapters, progresses);
-        int totalDurationSeconds = calculateTotalDurationSeconds(chapters);
+        int completedChapterCount = CourseProgressCalculator.calculateCompletedChapterCount(progresses);
+        int progressRate = CourseProgressCalculator.calculateCourseProgressRate(chapters, progresses);
+        int totalDurationSeconds = CourseProgressCalculator.calculateTotalDurationSeconds(chapters);
         boolean completed = completion != null;
         String learningStatus = completed ? "COMPLETED" : "IN_PROGRESS";
         String certificateCode = completed ? completion.getCertificateCode() : null;
@@ -931,7 +978,10 @@ public class CourseService implements CourseUseCase {
                 completedAt
         ));
     }
+    */
 
+    // [리팩토링] 아래 순수 계산 메서드들을 CourseProgressCalculator로 이관하여 미사용. 삭제 대신 이력 보존용으로 주석 처리함.
+    /*
     private int calculateCompletedChapterCount(List<LearningProgress> progresses) {
         return (int) progresses.stream()
                 .filter(LearningProgress::isCompleted)
@@ -966,7 +1016,10 @@ public class CourseService implements CourseUseCase {
                 .mapToInt(Chapter::getDurationSeconds)
                 .sum();
     }
+    */
 
+    // [리팩토링] 호출부가 없는 죽은 메서드(평균 평점 계산은 CourseReviewService가 자체 구현을 사용함). 삭제 대신 이력 보존용으로 주석 처리함.
+    /*
     private double calculateAverageRating(List<CourseReview> reviews) {
         if (reviews.isEmpty()) {
             return 0.0;
@@ -980,7 +1033,10 @@ public class CourseService implements CourseUseCase {
 
         return Math.round(average * 10.0) / 10.0;
     }
+    */
 
+    // [리팩토링] 아래 Q&A 헬퍼들을 CourseQnaService로 이관하여 미사용. 삭제 대신 이력 보존용으로 주석 처리함.
+    /*
     private CourseQnaResult toCourseQnaResult(CourseQna qna) {
         return CourseQnaResult.from(qna, findProfile(qna.getUserId()));
     }
@@ -1010,6 +1066,7 @@ public class CourseService implements CourseUseCase {
         return courseQnaRepository.findByIdAndCourseId(qnaId, courseId)
                 .orElseThrow(() -> new LearningException(LearningErrorCode.QNA_NOT_FOUND));
     }
+    */
 
     private String normalizeCourseStatus(String status, String defaultStatus) {
         if (status == null || status.isBlank()) {
@@ -1021,6 +1078,8 @@ public class CourseService implements CourseUseCase {
                 .orElse(defaultStatus);
     }
 
+    // [리팩토링] 아래 파일 처리 메서드들을 CourseFileManager로 이관하여 미사용. 삭제 대신 이력 보존용으로 주석 처리함.
+    /*
     private List<CourseFile> uploadCourseFiles(List<UploadFile> attachedFiles) {
         if (!hasAttachedFiles(attachedFiles)) {
             return List.of();
@@ -1062,6 +1121,7 @@ public class CourseService implements CourseUseCase {
             }
         }
     }
+    */
 }
 
 
