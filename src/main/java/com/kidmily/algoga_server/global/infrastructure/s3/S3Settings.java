@@ -51,8 +51,10 @@ public class S3Settings {
             @Value("${cloud.aws.s3.path-style-access:}") String pathStyleOverride,
             @Value("${cloud.aws.s3.cdn-url:}") String cdnOverride
     ) {
-        this.bucket = bucket;
-        this.region = region;
+        // 환경변수에 실수로 붙은 앞뒤 공백/개행이 버킷명·리전에 섞이면
+        // AWS가 잘못된 버킷/호스트로 인식해 업로드가 500으로 실패하므로 방어적으로 trim 한다.
+        this.bucket = bucket == null ? null : bucket.trim();
+        this.region = region == null ? null : region.trim();
         this.awsMode = "aws".equalsIgnoreCase(mode == null ? "" : mode.trim());
 
         String rawEndpoint = endpoint == null ? "" : endpoint.trim();
