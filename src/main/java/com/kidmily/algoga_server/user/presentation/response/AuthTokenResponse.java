@@ -1,5 +1,6 @@
 package com.kidmily.algoga_server.user.presentation.response;
 
+import com.kidmily.algoga_server.global.infrastructure.s3.CdnMappable;
 import io.swagger.v3.oas.annotations.media.Schema;
 
 @Schema(description = "로그인 토큰 및 상태 응답 (실시간 프로필 동기화 정보 포함)")
@@ -18,4 +19,4 @@ public record AuthTokenResponse(
 
         @Schema(description = "최신 프로필 이미지 URL (S3 경로)", example = "https://algoga-banner.s3.ap-northeast-2.amazonaws.com/profiles/avatar.png")
         String profileImageUrl
-) {}
+) implements CdnMappable {}

@@ -128,16 +128,22 @@ portone:
 cloud:
   aws:
     s3:
-      endpoint: ${S3_ENDPOINT}
-      # 브라우저에 노출할 공개 접근 주소. 미설정 시 endpoint를 그대로 사용.
-      # MinIO 내부주소(localhost:9000 등)로 저장되면 브라우저에서 이미지 로드가 안 되므로,
-      # 운영에서는 공개 도메인/버킷 주소로 S3_PUBLIC_URL을 주입할 것.
-      public-url: ${S3_PUBLIC_URL:${S3_ENDPOINT}}
+      # 동작 모드. aws → AWS S3, 그 외/미설정 → MinIO (기본값 minio)
+      mode: ${S3_MODE:minio}
+      # 단일 버킷명. 미설정 시 팀 기본 버킷으로 고정된다.
+      bucket: ${S3_BUCKET:team02-01-635249349258-ap-northeast-2-an}
+      # 엔드포인트(직접 입력). 미지정 시 MinIO=localhost:9000, AWS=리전 엔드포인트 자동
+      endpoint: ${S3_ENDPOINT:}
+      # 응답 URL 루트(CDN, 직접 입력). 미지정 시 모드에 맞춰 자동 조합
+      #   MinIO: endpoint(+/bucket if path-style),  AWS: https://{bucket}.s3.{region}.amazonaws.com
+      cdn-url: ${S3_CDN_URL:}
+      # path-style 접근. 미설정 시 모드 기본값(MinIO=true, AWS=false) 사용. 필요 시 명시 오버라이드.
+      path-style-access: ${S3_PATH_STYLE:}
     credentials:
       access-key: ${AWS_ACCESS_KEY}
       secret-key: ${AWS_SECRET_KEY}
     region:
-      static: ap-northeast-2
+      static: ${AWS_REGION:ap-northeast-2}
 
 flight:
   api:
@@ -146,7 +152,6 @@ flight:
 
 user:
   storage:
-    bucket: algoga-banner
     directory: profiles
 
   app:

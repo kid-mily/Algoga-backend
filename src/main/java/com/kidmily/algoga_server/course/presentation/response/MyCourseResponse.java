@@ -1,6 +1,8 @@
 package com.kidmily.algoga_server.course.presentation.response;
 
 import com.kidmily.algoga_server.course.application.result.MyCourseResult;
+import com.kidmily.algoga_server.global.infrastructure.s3.CdnMappable;
+import com.kidmily.algoga_server.global.infrastructure.s3.NoCdnUrl;
 import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.time.LocalDateTime;
@@ -60,6 +62,7 @@ public record MyCourseResponse(
         String certificateCode,
 
         @Schema(description = "수료증 PDF 다운로드 API URL", example = "/api/v1/courses/3/certificate")
+        @NoCdnUrl
         String certificateDownloadUrl,
 
         @Schema(description = "수강 가능 만료 일시", example = "2026-12-10T15:30:00")
@@ -67,7 +70,7 @@ public record MyCourseResponse(
 
         @Schema(description = "수료 일시", example = "2026-05-26T15:30:00")
         LocalDateTime completedAt
-) {
+) implements CdnMappable {
 
     public static MyCourseResponse from(MyCourseResult result) {
         return new MyCourseResponse(

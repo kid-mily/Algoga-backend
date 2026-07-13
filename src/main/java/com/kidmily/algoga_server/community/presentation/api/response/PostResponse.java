@@ -1,6 +1,7 @@
 package com.kidmily.algoga_server.community.presentation.api.response;
 
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
+import com.kidmily.algoga_server.global.infrastructure.s3.CdnMappable;
 import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.time.LocalDateTime;
@@ -59,7 +60,7 @@ public record PostResponse(
         LocalDateTime createdAt
 
 
-) {
+) implements CdnMappable {
         // viewCount만 교체한 복사본
         public PostResponse withViewCount(Integer newViewCount) {
                 return new PostResponse(

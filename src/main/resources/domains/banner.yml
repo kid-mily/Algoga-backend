@@ -1,4 +1,3 @@
 banner:
   storage:
-    bucket: algoga-banner  # 🌟 S3 버킷 이름
-    directory: banners               # 🌟 S3 폴더 이름
+    directory: banners               # 🌟 object key prefix (버킷은 전역 단일 버킷 사용)

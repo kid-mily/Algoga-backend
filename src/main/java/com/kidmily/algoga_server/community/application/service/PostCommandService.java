@@ -54,7 +54,6 @@ public class PostCommandService implements PostCommandUseCase {
                     .filter(file -> file != null && !file.isEmpty())
                     .map(file -> fileStoragePort.uploadFile(
                             file,
-                            storageSettings.getBucketName(),
                             storageSettings.getDirectory()
                     ))
                     .toList();
@@ -96,7 +95,7 @@ public class PostCommandService implements PostCommandUseCase {
         if (command.images() != null && !command.images().isEmpty()) {
             // 기존 S3 파일 전부 삭제
             post.getImageUrls().forEach(oldUrl ->
-                    fileStoragePort.deleteFile(storageSettings.getBucketName(), oldUrl)
+                    fileStoragePort.deleteFile(oldUrl)
             );
             targetImageUrls.clear();
 
@@ -105,7 +104,6 @@ public class PostCommandService implements PostCommandUseCase {
                     .filter(file -> file != null && !file.isEmpty())
                     .map(file -> fileStoragePort.uploadFile(
                             file,
-                            storageSettings.getBucketName(),
                             storageSettings.getDirectory()
                     ))
                     .toList();

@@ -8,7 +8,7 @@ import org.springframework.stereotype.Component;
 @Component
 public class PackageStorageSettings implements StorageSettings {
 
-    private final String bucketName = "algoga-package";
+    // object key prefix. 버킷은 전역 단일 버킷을 사용한다.
     private final String imageDirectory = "package/images";
 
     @Override

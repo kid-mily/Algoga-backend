@@ -8,7 +8,7 @@ import org.springframework.stereotype.Component;
 @Component
 public class AccommodationStorageSettings implements StorageSettings {
 
-    private final String bucketName = "algoga-accommodation";
+    // object key prefix. 버킷은 전역 단일 버킷을 사용한다.
     private final String imageDirectory = "accommodation/images";
 
     @Override

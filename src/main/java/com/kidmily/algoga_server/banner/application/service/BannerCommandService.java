@@ -41,7 +41,6 @@ public class BannerCommandService implements BannerCommandUseCase {
 
         String imageUrl = fileStoragePort.uploadFile(
                 file,
-                storageSettings.getBucketName(),
                 storageSettings.getDirectory()
         );
 
@@ -77,16 +76,12 @@ public class BannerCommandService implements BannerCommandUseCase {
         if (command.image() != null && !command.image().isEmpty()) {
             MultipartFile file = command.image();
 
-            fileStoragePort.deleteFile(
-                    storageSettings.getBucketName(),
-                    banner.getImageUrl()
-            );
+            fileStoragePort.deleteFile(banner.getImageUrl());
 
             targetFileType = FileTypeDetector.determineFileType(file);
 
             targetImageUrl = fileStoragePort.uploadFile(
                     file,
-                    storageSettings.getBucketName(),
                     storageSettings.getDirectory()
             );
         }
@@ -110,10 +105,7 @@ public class BannerCommandService implements BannerCommandUseCase {
         Banner banner = bannerRepository.findById(bannerId)
                 .orElseThrow(() -> new BannerException(BannerErrorCode.BANNER_NOT_FOUND));
 
-        fileStoragePort.deleteFile(
-                storageSettings.getBucketName(),
-                banner.getImageUrl()
-        );
+        fileStoragePort.deleteFile(banner.getImageUrl());
 
         bannerRepository.deleteById(bannerId);
         log.info("[Banner Deleted] bannerId: {}", bannerId);

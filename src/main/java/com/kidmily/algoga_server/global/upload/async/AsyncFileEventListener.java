@@ -28,10 +28,10 @@ public class AsyncFileEventListener {
         try {
             if (isCanceled(event.trackingId())) return;
 
-            String uploadedUrl = fileStoragePort.uploadFileAsync(tempFile, event.bucketName(), event.targetS3Key());
+            String uploadedKey = fileStoragePort.uploadFileAsync(tempFile, event.targetS3Key());
 
             if (isCanceled(event.trackingId())) {
-                fileStoragePort.deleteFile(event.bucketName(), uploadedUrl);
+                fileStoragePort.deleteFile(uploadedKey);
             }
         } finally {
             if (tempFile.exists()) tempFile.delete();
@@ -43,8 +43,8 @@ public class AsyncFileEventListener {
     public void handleCancel(FileCancelEvent event) {
         redisTemplate.opsForValue().set(CANCEL_PREFIX + event.trackingId(), "true", Duration.ofHours(1));
         
-        if (event.fileUrl() != null && !event.fileUrl().isBlank()) {
-            fileStoragePort.deleteFile(event.bucketName(), event.fileUrl());
+        if (event.fileKey() != null && !event.fileKey().isBlank()) {
+            fileStoragePort.deleteFile(event.fileKey());
         }
     }
 

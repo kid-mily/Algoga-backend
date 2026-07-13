@@ -8,8 +8,7 @@ import org.springframework.stereotype.Component;
 @Component
 public class CourseStorageSettings implements StorageSettings {
 
-    private final String bucketName = "algoga-lms";
-
+    // object key prefix. 버킷은 전역 단일 버킷을 사용한다.
     private final String courseThumbnailDirectory = "lms/course-thumbnails";
 
     private final String courseFileDirectory = "lms/course-files";

@@ -1,6 +1,7 @@
 package com.kidmily.algoga_server.course.presentation.response;
 
 import com.kidmily.algoga_server.course.application.result.CourseFileResult;
+import com.kidmily.algoga_server.global.infrastructure.s3.CdnMappable;
 import io.swagger.v3.oas.annotations.media.Schema;
 
 @Schema(description = "강의 자료 파일 응답")
@@ -14,7 +15,7 @@ public record CourseFileResponse(
 
         @Schema(description = "파일 노출 순서", example = "1")
         int fileOrder
-) {
+) implements CdnMappable {
 
     public static CourseFileResponse from(CourseFileResult courseFile) {
         String originalFileName = courseFile.originalFileName();

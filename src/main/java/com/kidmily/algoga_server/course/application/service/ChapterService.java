@@ -51,7 +51,6 @@ public class ChapterService implements ChapterUseCase {
 
         String videoUrl = fileStoragePort.uploadFile(
                 command.videoFile(),
-                storageSettings.getBucketName(),
                 storageSettings.getChapterVideoDirectory()
         );
 
@@ -79,12 +78,11 @@ public class ChapterService implements ChapterUseCase {
 
         if (command.videoFile() != null && !command.videoFile().isEmpty()) {
             if (targetVideoUrl != null && !targetVideoUrl.isBlank()) {
-                fileStoragePort.deleteFile(storageSettings.getBucketName(), targetVideoUrl);
+                fileStoragePort.deleteFile(targetVideoUrl);
             }
 
             targetVideoUrl = fileStoragePort.uploadFile(
                     command.videoFile(),
-                    storageSettings.getBucketName(),
                     storageSettings.getChapterVideoDirectory()
             );
         }

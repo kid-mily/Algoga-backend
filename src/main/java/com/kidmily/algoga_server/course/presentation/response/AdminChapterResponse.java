@@ -1,6 +1,7 @@
 package com.kidmily.algoga_server.course.presentation.response;
 
 import com.kidmily.algoga_server.course.application.result.ChapterResult;
+import com.kidmily.algoga_server.global.infrastructure.s3.CdnMappable;
 import io.swagger.v3.oas.annotations.media.Schema;
 
 @Schema(description = "관리자 챕터 응답")
@@ -25,7 +26,7 @@ public record AdminChapterResponse(
 
         @Schema(description = "챕터 순서", example = "1")
         int chapterOrder
-) {
+) implements CdnMappable {
     public static AdminChapterResponse from(ChapterResult chapter) {
         return new AdminChapterResponse(
                 chapter.chapterId(),

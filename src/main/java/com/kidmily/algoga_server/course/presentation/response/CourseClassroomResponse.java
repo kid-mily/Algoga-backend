@@ -2,6 +2,7 @@ package com.kidmily.algoga_server.course.presentation.response;
 
 import com.kidmily.algoga_server.course.application.result.CourseClassroomChapterResult;
 import com.kidmily.algoga_server.course.application.result.CourseClassroomResult;
+import com.kidmily.algoga_server.global.infrastructure.s3.CdnMappable;
 import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.time.LocalDateTime;
@@ -65,7 +66,7 @@ public record CourseClassroomResponse(
 
             @Schema(description = "챕터 잠금 여부", example = "false")
             boolean locked
-    ) {
+    ) implements CdnMappable {
         public static ChapterLearningResponse from(CourseClassroomChapterResult result) {
             return new ChapterLearningResponse(
                     result.chapterId(),
