@@ -1,6 +1,7 @@
 package com.kidmily.algoga_server.community.presentation.api.response;
 
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
+import com.kidmily.algoga_server.global.infrastructure.s3.CdnMappable;
 import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.time.LocalDateTime;
@@ -36,4 +37,4 @@ public record CommentResponse(
 
         @Schema(description = "대댓글 목록")
         List<CommentResponse> replies
-) {}
+) implements CdnMappable {}

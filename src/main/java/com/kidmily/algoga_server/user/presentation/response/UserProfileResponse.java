@@ -1,5 +1,6 @@
 package com.kidmily.algoga_server.user.presentation.response;
 
+import com.kidmily.algoga_server.global.infrastructure.s3.CdnMappable;
 import com.kidmily.algoga_server.user.domain.User;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Builder;
@@ -39,7 +40,7 @@ public record UserProfileResponse(
 
         @Schema(description = "개인 식별 번호(UUID)", example = "550e8400-e29b-41d4-a716-446655440000")
         String personalCode
-) {
+) implements CdnMappable {
     // User 엔티티를 받아서 DTO로 변환하는 정적 팩토리 메서드
     public static UserProfileResponse from(User user) {
         return UserProfileResponse.builder()

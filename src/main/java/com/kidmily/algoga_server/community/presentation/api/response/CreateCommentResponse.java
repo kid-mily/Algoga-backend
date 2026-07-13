@@ -1,5 +1,6 @@
 package com.kidmily.algoga_server.community.presentation.api.response;
 
+import com.kidmily.algoga_server.global.infrastructure.s3.CdnMappable;
 import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.time.LocalDateTime;
@@ -26,4 +27,4 @@ public record CreateCommentResponse(
 
         @Schema(description = "작성일시")
         LocalDateTime createdAt
-) {}
+) implements CdnMappable {}

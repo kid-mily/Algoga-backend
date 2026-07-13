@@ -30,7 +30,6 @@ public class AccommodationCommandService implements AccommodationCommandUseCase 
 
         String imageUrl = fileStoragePort.uploadFile(
                 command.image(),
-                storageSettings.getBucketName(),
                 storageSettings.getImageDirectory()
         );
 
@@ -53,10 +52,9 @@ public class AccommodationCommandService implements AccommodationCommandUseCase 
         String targetImageUrl = accommodation.getImageUrl();
 
         if (command.image() != null && !command.image().isEmpty()) {
-            fileStoragePort.deleteFile(storageSettings.getBucketName(), accommodation.getImageUrl());
+            fileStoragePort.deleteFile(accommodation.getImageUrl());
             targetImageUrl = fileStoragePort.uploadFile(
                     command.image(),
-                    storageSettings.getBucketName(),
                     storageSettings.getImageDirectory()
             );
         }
@@ -71,7 +69,7 @@ public class AccommodationCommandService implements AccommodationCommandUseCase 
         log.info("[AccommodationCommandService] 숙소 삭제 - id: {}", accommodationId);
         Accommodation accommodation = accommodationRepository.findById(accommodationId)
                 .orElseThrow(() -> new BusinessException(AccommodationErrorCode.ACCOMMODATION_NOT_FOUND));
-        fileStoragePort.deleteFile(storageSettings.getBucketName(), accommodation.getImageUrl());
+        fileStoragePort.deleteFile(accommodation.getImageUrl());
         accommodationRepository.deleteById(accommodationId);
     }
 }

@@ -97,7 +97,6 @@ public class CourseService implements CourseUseCase {
         if (command.thumbnailFile() != null && !command.thumbnailFile().isEmpty()) {
             thumbnailUrl = fileStoragePort.uploadFile(
                     command.thumbnailFile(),
-                    storageSettings.getBucketName(),
                     storageSettings.getCourseThumbnailDirectory()
             );
         }
@@ -187,12 +186,11 @@ public class CourseService implements CourseUseCase {
 
         if (command.thumbnailFile() != null && !command.thumbnailFile().isEmpty()) {
             if (targetThumbnailUrl != null && !targetThumbnailUrl.isBlank()) {
-                fileStoragePort.deleteFile(storageSettings.getBucketName(), targetThumbnailUrl);
+                fileStoragePort.deleteFile(targetThumbnailUrl);
             }
 
             targetThumbnailUrl = fileStoragePort.uploadFile(
                     command.thumbnailFile(),
-                    storageSettings.getBucketName(),
                     storageSettings.getCourseThumbnailDirectory()
             );
         }
@@ -1038,7 +1036,6 @@ public class CourseService implements CourseUseCase {
 
                     String fileUrl = fileStoragePort.uploadFile(
                             file,
-                            storageSettings.getBucketName(),
                             storageSettings.getCourseFileDirectory()
                     );
 
@@ -1061,7 +1058,7 @@ public class CourseService implements CourseUseCase {
 
         for (String fileUrl : uniqueFileUrls) {
             if (fileUrl != null && !fileUrl.isBlank()) {
-                fileStoragePort.deleteFile(storageSettings.getBucketName(), fileUrl);
+                fileStoragePort.deleteFile(fileUrl);
             }
         }
     }

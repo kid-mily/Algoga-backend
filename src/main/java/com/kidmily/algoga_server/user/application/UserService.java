@@ -133,11 +133,10 @@ public class UserService {
 
         if (imageFile != null && !imageFile.isEmpty()) {
             if (targetImageUrl != null && !targetImageUrl.isBlank()) {
-                fileStoragePort.deleteFile(storageSettings.getBucketName(), targetImageUrl);
+                fileStoragePort.deleteFile(targetImageUrl);
             }
             targetImageUrl = fileStoragePort.uploadFile(
                     imageFile,
-                    storageSettings.getBucketName(),
                     storageSettings.getDirectory()
             );
             log.info("회원 프로필 이미지 S3 업로드 완료 [이메일: {}]", email);

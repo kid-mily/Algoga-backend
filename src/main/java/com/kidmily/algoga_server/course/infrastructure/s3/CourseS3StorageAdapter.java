@@ -2,10 +2,11 @@ package com.kidmily.algoga_server.course.infrastructure.s3;
 
 import com.kidmily.algoga_server.global.exception.BusinessException;
 import com.kidmily.algoga_server.global.exception.GlobalErrorCode;
+import com.kidmily.algoga_server.global.infrastructure.s3.S3Settings;
 import com.kidmily.algoga_server.course.application.port.CourseFileStoragePort;
 import com.kidmily.algoga_server.course.application.port.UploadFile;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import software.amazon.awssdk.core.sync.RequestBody;
 import software.amazon.awssdk.services.s3.S3Client;
@@ -16,19 +17,14 @@ import java.util.UUID;
 
 @Slf4j
 @Component
+@RequiredArgsConstructor
 public class CourseS3StorageAdapter implements CourseFileStoragePort {
 
     private final S3Client s3Client;
-
-    @Value("${cloud.aws.s3.endpoint}")
-    private String endpoint;
-
-    public CourseS3StorageAdapter(S3Client s3Client) {
-        this.s3Client = s3Client;
-    }
+    private final S3Settings s3Settings;
 
     @Override
-    public String uploadFile(UploadFile file, String bucketName, String directory) {
+    public String uploadFile(UploadFile file, String directory) {
         if (file == null || file.isEmpty()) {
             return null;
         }
@@ -38,12 +34,12 @@ public class CourseS3StorageAdapter implements CourseFileStoragePort {
                 ? originalFilename.substring(originalFilename.lastIndexOf("."))
                 : "";
 
-        String savedFilename = directory + "/" + UUID.randomUUID() + extension;
+        String key = directory + "/" + UUID.randomUUID() + extension;
 
         try {
             PutObjectRequest putObjectRequest = PutObjectRequest.builder()
-                    .bucket(bucketName)
-                    .key(savedFilename)
+                    .bucket(s3Settings.getBucket())
+                    .key(key)
                     .contentType(file.contentType())
                     .build();
 
@@ -52,7 +48,8 @@ public class CourseS3StorageAdapter implements CourseFileStoragePort {
                     RequestBody.fromInputStream(file.inputStream(), file.size())
             );
 
-            return endpoint + "/" + bucketName + "/" + savedFilename;
+            // 상대경로(object key)만 반환. 절대 URL은 응답 직렬화 시점에 CDN 루트로 매핑된다.
+            return key;
         } catch (RuntimeException exception) {
             log.error("[Course S3 Upload Error] file upload failed: {}", exception.getMessage(), exception);
             throw new BusinessException(GlobalErrorCode.SERVER_ERROR);
@@ -60,23 +57,18 @@ public class CourseS3StorageAdapter implements CourseFileStoragePort {
     }
 
     @Override
-    public void deleteFile(String bucketName, String fileUrl) {
-        if (fileUrl == null || fileUrl.isBlank()) {
+    public void deleteFile(String key) {
+        if (key == null || key.isBlank()) {
             return;
         }
 
         try {
-            String prefix = endpoint + "/" + bucketName + "/";
-            if (fileUrl.startsWith(prefix)) {
-                String key = fileUrl.substring(prefix.length());
+            s3Client.deleteObject(DeleteObjectRequest.builder()
+                    .bucket(s3Settings.getBucket())
+                    .key(key)
+                    .build());
 
-                s3Client.deleteObject(DeleteObjectRequest.builder()
-                        .bucket(bucketName)
-                        .key(key)
-                        .build());
-
-                log.info("[Course S3 Delete] file deleted: bucket={}, key={}", bucketName, key);
-            }
+            log.info("[Course S3 Delete] file deleted: bucket={}, key={}", s3Settings.getBucket(), key);
         } catch (Exception exception) {
             log.error("[Course S3 Delete Error] file delete failed: {}", exception.getMessage(), exception);
         }

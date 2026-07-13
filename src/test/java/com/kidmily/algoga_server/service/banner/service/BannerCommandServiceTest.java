@@ -49,9 +49,8 @@ class BannerCommandServiceTest {
         MockMultipartFile file = new MockMultipartFile("image", "test.jpg", "image/jpeg", "data".getBytes());
         CreateBannerCommand command = new CreateBannerCommand(file, "link", "text", true, 999L);
 
-        given(storageSettings.getBucketName()).willReturn("test-bucket");
         given(storageSettings.getDirectory()).willReturn("test-dir");
-        given(fileStoragePort.uploadFile(any(), any(), any())).willReturn("https://uploaded-url.com/test.jpg");
+        given(fileStoragePort.uploadFile(any(), any())).willReturn("banners/test.jpg");
 
         try (MockedStatic<FileTypeDetector> mockedStatic = mockStatic(FileTypeDetector.class)) {
             mockedStatic.when(() -> FileTypeDetector.determineFileType(file)).thenReturn(FileType.IMAGE);
@@ -63,7 +62,7 @@ class BannerCommandServiceTest {
             bannerCommandService.registerBanner(command);
 
             // then
-            verify(fileStoragePort, times(1)).uploadFile(file, "test-bucket", "test-dir");
+            verify(fileStoragePort, times(1)).uploadFile(file, "test-dir");
             verify(bannerRepository, times(1)).save(any(Banner.class));
         }
     }
@@ -76,13 +75,12 @@ class BannerCommandServiceTest {
         Banner banner = Banner.create(999L, "image-url", null, "link", "text", true, Instant.now());
 
         given(bannerRepository.findById(bannerId)).willReturn(Optional.of(banner));
-        given(storageSettings.getBucketName()).willReturn("test-bucket");
 
         // when
         bannerCommandService.deleteBanner(bannerId);
 
         // then
-        verify(fileStoragePort, times(1)).deleteFile("test-bucket", "image-url");
+        verify(fileStoragePort, times(1)).deleteFile("image-url");
         verify(bannerRepository, times(1)).deleteById(bannerId);
     }
 

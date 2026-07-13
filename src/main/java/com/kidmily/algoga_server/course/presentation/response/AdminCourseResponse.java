@@ -1,6 +1,7 @@
 package com.kidmily.algoga_server.course.presentation.response;
 
 import com.kidmily.algoga_server.course.application.result.CourseResult;
+import com.kidmily.algoga_server.global.infrastructure.s3.CdnMappable;
 import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.util.List;
@@ -45,7 +46,7 @@ public record AdminCourseResponse(
 
         @Schema(description = "삭제 여부", example = "true")
         boolean deleted
-) {
+) implements CdnMappable {
     public static AdminCourseResponse from(CourseResult course) {
         return new AdminCourseResponse(
                 course.courseId(),

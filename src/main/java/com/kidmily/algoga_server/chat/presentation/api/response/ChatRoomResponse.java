@@ -3,6 +3,7 @@ package com.kidmily.algoga_server.chat.presentation.api.response;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import com.kidmily.algoga_server.chat.domain.model.ChatRoom;
 import com.kidmily.algoga_server.chat.domain.model.ChatRoomType;
+import com.kidmily.algoga_server.global.infrastructure.s3.CdnMappable;
 import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.time.LocalDateTime;
@@ -39,7 +40,7 @@ public record ChatRoomResponse(
         int memberCount
 
 
-) {
+) implements CdnMappable {
     public static ChatRoomResponse from(ChatRoom chatRoom) {
         return new ChatRoomResponse(
                 chatRoom.getId(), chatRoom.getType(), chatRoom.getCreatedAt(),

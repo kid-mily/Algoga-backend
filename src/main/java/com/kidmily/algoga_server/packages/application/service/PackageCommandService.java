@@ -30,7 +30,6 @@ public class PackageCommandService implements PackageCommandUseCase {
 
         String imageUrl = fileStoragePort.uploadFile(
                 command.image(),
-                storageSettings.getBucketName(),
                 storageSettings.getImageDirectory()
         );
 
@@ -54,10 +53,9 @@ public class PackageCommandService implements PackageCommandUseCase {
         String targetImageUrl = travelPackage.getImageUrl();
 
         if (command.image() != null && !command.image().isEmpty()) {
-            fileStoragePort.deleteFile(storageSettings.getBucketName(), travelPackage.getImageUrl());
+            fileStoragePort.deleteFile(travelPackage.getImageUrl());
             targetImageUrl = fileStoragePort.uploadFile(
                     command.image(),
-                    storageSettings.getBucketName(),
                     storageSettings.getImageDirectory()
             );
         }
@@ -73,7 +71,7 @@ public class PackageCommandService implements PackageCommandUseCase {
         log.info("[PackageCommandService] 패키지 삭제 - id: {}", packageId);
         TravelPackage travelPackage = packageRepository.findById(packageId)
                 .orElseThrow(() -> new BusinessException(PackageErrorCode.PACKAGE_NOT_FOUND));
-        fileStoragePort.deleteFile(storageSettings.getBucketName(), travelPackage.getImageUrl());
+        fileStoragePort.deleteFile(travelPackage.getImageUrl());
         packageRepository.deleteById(packageId);
     }
 }

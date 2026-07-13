@@ -9,9 +9,7 @@ import org.springframework.stereotype.Component;
 @Component
 public class UserStorageSettings implements StorageSettings {
 
-    @Value("${user.storage.bucket}")
-    private String bucketName;
-
-    @Value("${user.storage.directory}")
+    // object key prefix (예: profiles/uuid.png). 버킷은 전역 단일 버킷을 사용한다.
+    @Value("${user.storage.directory:profiles}")
     private String directory;
 }

@@ -1,6 +1,7 @@
 package com.kidmily.algoga_server.chat.presentation.api.response;
 
 import com.kidmily.algoga_server.chat.domain.model.ChatMessage;
+import com.kidmily.algoga_server.global.infrastructure.s3.CdnMappable;
 import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.time.LocalDateTime;
@@ -31,7 +32,7 @@ public record ChatMessageResponse(
 
         @Schema(description = "메시지 전송 시각")
         LocalDateTime createdAt
-) {
+) implements CdnMappable {
     public static ChatMessageResponse of(ChatMessage message, String senderNickname,
                                          String senderProfileImageUrl, int unreadCount) {
         return new ChatMessageResponse(

@@ -1,6 +1,7 @@
 package com.kidmily.algoga_server.packages.presentation.api.response;
 
 import com.kidmily.algoga_server.flight.presentation.api.response.FlightSearchResponse;
+import com.kidmily.algoga_server.global.infrastructure.s3.CdnMappable;
 import com.kidmily.algoga_server.packages.domain.model.TravelPackage;
 import io.swagger.v3.oas.annotations.media.Schema;
 
@@ -29,7 +30,7 @@ public record PackageResponse(
 
         @Schema(description = "항공편 가격 (가는편+오는편 왕복 합산). flightInfo가 null이면 0")
         int flightPrice
-) {
+) implements CdnMappable {
     public static PackageResponse of(TravelPackage travelPackage,
                                      FlightSearchResponse flightInfo,
                                      FlightSearchResponse returnFlightInfo,

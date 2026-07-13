@@ -1,6 +1,8 @@
 package com.kidmily.algoga_server.banner.presentation.api.response;
 
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
+import com.kidmily.algoga_server.global.infrastructure.s3.CdnMappable;
+import com.kidmily.algoga_server.global.infrastructure.s3.NoCdnUrl;
 import io.swagger.v3.oas.annotations.media.Schema;
 
 @JsonTypeInfo(use = JsonTypeInfo.Id.CLASS, property = "@class")
@@ -17,9 +19,10 @@ public record BannerResponse(
         String fileType,
 
         @Schema(description = "배너 클릭 시 이동할 링크 URL", example = "https://algoga.com/event")
+        @NoCdnUrl
         String linkUrl,
 
         @Schema(description = "배너 대체 텍스트 또는 설명", example = "여름 맞이 특가 이벤트 배너")
         String text
-) {
+) implements CdnMappable {
 }

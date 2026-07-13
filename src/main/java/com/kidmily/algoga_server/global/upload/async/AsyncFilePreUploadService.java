@@ -19,26 +19,26 @@ public class AsyncFilePreUploadService {
 
     @Value("${app.file.upload-root:uploads}")
     private String tempDirPath;
-    
-    @Value("${cloud.aws.s3.endpoint}")
-    private String s3Endpoint;
 
-    public String startPreUpload(MultipartFile multipartFile, String bucketName, String directory, String trackingId) {
+    /**
+     * 비동기 사전 업로드를 시작하고, DB에 저장할 object key(상대경로)를 반환한다.
+     * 절대 URL은 응답 직렬화 시점에 CDN 루트로 매핑된다.
+     */
+    public String startPreUpload(MultipartFile multipartFile, String directory, String trackingId) {
         String extension = getExtension(multipartFile.getOriginalFilename());
         String targetS3Key = directory + "/" + trackingId + extension;
-        String expectedUrl = s3Endpoint + "/" + bucketName + "/" + targetS3Key;
 
         File tempFile = saveToLocalTemp(multipartFile, trackingId + extension);
 
         eventPublisher.publishEvent(new FilePreUploadEvent(
-                tempFile.getAbsolutePath(), bucketName, targetS3Key, trackingId
+                tempFile.getAbsolutePath(), targetS3Key, trackingId
         ));
 
-        return expectedUrl;
+        return targetS3Key;
     }
 
-    public void cancelPreUpload(String bucketName, String trackingId, String fileUrl) {
-        eventPublisher.publishEvent(new FileCancelEvent(bucketName, trackingId, fileUrl));
+    public void cancelPreUpload(String trackingId, String fileKey) {
+        eventPublisher.publishEvent(new FileCancelEvent(trackingId, fileKey));
     }
 
     private File saveToLocalTemp(MultipartFile multipartFile, String fileName) {
