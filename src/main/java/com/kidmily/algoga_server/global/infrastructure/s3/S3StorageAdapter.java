@@ -12,7 +12,6 @@ import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.DeleteObjectRequest;
 import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 
-import java.io.IOException;
 import java.util.UUID;
 
 @Slf4j
@@ -47,8 +46,11 @@ public class S3StorageAdapter implements FileStoragePort {
             // 상대경로(object key)만 반환. 절대 URL은 응답 직렬화 시점에 CDN 루트로 매핑된다.
             return key;
 
-        } catch (IOException e) {
-            log.error("[S3 Upload Error] 파일 업로드 실패: {}", e.getMessage(), e);
+        } catch (Exception e) {
+            // putObject는 S3Exception(RuntimeException)을 던지므로 IOException만 잡으면 진짜 원인이
+            // 로그에 안 남는다. AccessDenied/NoSuchBucket 등 실제 원인을 남기기 위해 전체를 잡아 로깅한다.
+            log.error("[S3 Upload Error] 파일 업로드 실패: bucket={}, key={}, cause={}",
+                    s3Settings.getBucket(), key, e.toString(), e);
             throw new BusinessException(GlobalErrorCode.SERVER_ERROR);
         }
     }
@@ -79,7 +81,8 @@ public class S3StorageAdapter implements FileStoragePort {
             s3Client.putObject(putObjectRequest, RequestBody.fromFile(file));
             return targetKey;
         } catch (Exception e) {
-            log.error("[S3 Async Upload Error] 비동기 파일 업로드 실패: {}", e.getMessage(), e);
+            log.error("[S3 Async Upload Error] 비동기 파일 업로드 실패: bucket={}, key={}, cause={}",
+                    s3Settings.getBucket(), targetKey, e.toString(), e);
             throw new BusinessException(GlobalErrorCode.SERVER_ERROR);
         }
     }
