@@ -21,6 +21,7 @@ public interface FriendQueryUseCase {
             String nickname,
             String personalCode,
             String profileImageUrl,
-            boolean isFavorite
+            boolean isFavorite,
+            boolean isOnline
     ) {}
 }

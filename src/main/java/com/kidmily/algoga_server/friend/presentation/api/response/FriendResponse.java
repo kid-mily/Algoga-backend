@@ -11,7 +11,8 @@ public record FriendResponse(
         String nickname,
         String personalCode,
         String profileImageUrl,
-        boolean isFavorite
+        boolean isFavorite,
+        boolean isOnline
 ) implements CdnMappable {
     // Application의 View 객체를 Presentation의 Response로 변환
     public static FriendResponse from(FriendView view) {
@@ -22,6 +23,7 @@ public record FriendResponse(
                 .personalCode(view.personalCode())
                 .profileImageUrl(view.profileImageUrl())
                 .isFavorite(view.isFavorite())
+                .isOnline(view.isOnline())
                 .build();
     }
 }

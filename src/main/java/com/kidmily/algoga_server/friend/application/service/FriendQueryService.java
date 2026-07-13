@@ -11,11 +11,14 @@ import com.kidmily.algoga_server.user.domain.User;
 import com.kidmily.algoga_server.user.domain.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @Service
@@ -24,8 +27,31 @@ import java.util.stream.Collectors;
 public class
 FriendQueryService implements FriendQueryUseCase {
 
+    private static final String ONLINE_KEY_PREFIX = "ONLINE:";
+
     private final FriendRepository friendRepository;
     private final UserRepository userRepository;
+    private final RedisTemplate<String, String> redisTemplate;
+
+    // 여러 유저의 온라인 여부를 한 번에 조회 (유저 수만큼 Redis를 개별 조회하지 않도록 배치 처리)
+    private Set<Long> findOnlineUserIds(List<Long> userIds) {
+        if (userIds.isEmpty()) {
+            return Set.of();
+        }
+
+        List<String> keys = userIds.stream().map(id -> ONLINE_KEY_PREFIX + id).toList();
+        List<String> values = redisTemplate.opsForValue().multiGet(keys);
+
+        Set<Long> onlineUserIds = new HashSet<>();
+        if (values != null) {
+            for (int i = 0; i < userIds.size(); i++) {
+                if ("true".equals(values.get(i))) {
+                    onlineUserIds.add(userIds.get(i));
+                }
+            }
+        }
+        return onlineUserIds;
+    }
 
     @Override
     public List<FriendView> getFriends(Long myId) {
@@ -45,6 +71,9 @@ FriendQueryService implements FriendQueryUseCase {
         // JPA의 findAllById는 내부적으로 WHERE user_id IN (1, 2, 3...) 쿼리를 날립니다.
         List<User> friends = userRepository.findAllById(friendIds);
 
+        // 3-1. 온라인 상태도 배치로 한 번에 조회
+        Set<Long> onlineUserIds = findOnlineUserIds(friendIds);
+
         // 4. 조립 및 정렬
         return friends.stream()
                 .map(friend -> {
@@ -58,7 +87,8 @@ FriendQueryService implements FriendQueryUseCase {
                             friend.getNickname(),
                             friend.getPersonalCode(),
                             friend.getProfileImageUrl(),
-                            relation.isFavorite()
+                            relation.isFavorite(),
+                            onlineUserIds.contains(friend.getId())
                     );
                 })
                 .sorted((a, b) -> a.nickname().compareToIgnoreCase(b.nickname()))
@@ -82,6 +112,8 @@ FriendQueryService implements FriendQueryUseCase {
         Map<Long, User> requesterById = userRepository.findAllById(requesterIds).stream()
                 .collect(Collectors.toMap(User::getId, requester -> requester));
 
+        Set<Long> onlineUserIds = findOnlineUserIds(requesterIds);
+
         // 탈퇴 후 하드 삭제된 유저가 보낸 요청은 조회 목록에서 조용히 건너뜀 (없는 유저 조회로 500 나는 것 방지)
         return requests.stream()
                 .filter(req -> requesterById.containsKey(req.getRequesterId()))
@@ -93,7 +125,8 @@ FriendQueryService implements FriendQueryUseCase {
                             requester.getNickname(),
                             requester.getPersonalCode(),
                             requester.getProfileImageUrl(),
-                            false // 친구 요청 단계라 즐겨찾기 개념 없음
+                            false, // 친구 요청 단계라 즐겨찾기 개념 없음
+                            onlineUserIds.contains(requester.getId())
                     );
                 }).collect(Collectors.toList());
     }
@@ -116,6 +149,8 @@ FriendQueryService implements FriendQueryUseCase {
         Map<Long, User> blockedUserById = userRepository.findAllById(blockedUserIds).stream()
                 .collect(Collectors.toMap(User::getId, blockedUser -> blockedUser));
 
+        Set<Long> onlineUserIds = findOnlineUserIds(blockedUserIds);
+
         // 탈퇴 후 하드 삭제된 유저에 대한 차단 기록은 조용히 건너뜀
         return blocks.stream()
                 .filter(block -> blockedUserById.containsKey(block.getReceiverId()))
@@ -127,7 +162,8 @@ FriendQueryService implements FriendQueryUseCase {
                             blockedUser.getNickname(),
                             blockedUser.getPersonalCode(),
                             blockedUser.getProfileImageUrl(),
-                            false // 차단 목록이라 즐겨찾기 개념 없음
+                            false, // 차단 목록이라 즐겨찾기 개념 없음
+                            onlineUserIds.contains(blockedUser.getId())
                     );
                 }).collect(Collectors.toList());
     }
@@ -137,13 +173,16 @@ FriendQueryService implements FriendQueryUseCase {
         User user = userRepository.findByPersonalCode(code)
                 .orElseThrow(() -> new FriendException(FriendErrorCode.USER_NOT_FOUND));
 
+        boolean isOnline = Boolean.TRUE.equals(redisTemplate.hasKey(ONLINE_KEY_PREFIX + user.getId()));
+
         return new FriendView(
                 null,
                 user.getId(),
                 user.getNickname(),
                 user.getPersonalCode(),
                 user.getProfileImageUrl(),
-                false // 검색 결과라 즐겨찾기 개념 없음
+                false, // 검색 결과라 즐겨찾기 개념 없음
+                isOnline
         );
     }
 
