@@ -9,6 +9,7 @@ import com.kidmily.algoga_server.course.domain.repository.CourseRepository;
 import com.kidmily.algoga_server.payment.application.command.CreateLecturePaymentCommand;
 import com.kidmily.algoga_server.payment.domain.model.Payment;
 import com.kidmily.algoga_server.payment.domain.model.PaymentStatus;
+import com.kidmily.algoga_server.payment.domain.model.PaymentType;
 import com.kidmily.algoga_server.payment.domain.repository.PaymentRepository;
 import com.kidmily.algoga_server.user.domain.User;
 import com.kidmily.algoga_server.user.domain.UserRepository;
@@ -21,6 +22,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.context.ApplicationEventPublisher;
 
+import java.time.LocalDateTime;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -74,5 +76,36 @@ class PaymentTransactionServiceTest {
 
         // 수강권 부여용 이벤트 발행
         verify(eventPublisher).publishEvent(any(LecturePaymentCompletedEvent.class));
+    }
+
+    @Test
+    @DisplayName("이전 결제가 FAILED로 남아있으면 재시도 시 기존 행을 삭제하고 새 SUCCESS 행을 기록한다")
+    void 강의결제_FAILED재시도_기존행삭제후_재기록() {
+        // given : 같은 멱등키로 FAILED 결제가 이미 존재
+        CreateLecturePaymentCommand command =
+                new CreateLecturePaymentCommand(5L, 2L, 50000, 0, null, "pid-2");
+
+        when(courseRepository.findByIdAndDeletedFalse(5L)).thenReturn(Optional.of(mock(Course.class)));
+
+        Payment failed = Payment.reconstitute(
+                9L, null, 5L, 2L, PaymentType.LECTURE_ONLY, 50000, 0, null,
+                PaymentStatus.FAILED, "LECTURE_5_2", null, null, null, LocalDateTime.now());
+        when(paymentRepository.findByIdempotencyKey("LECTURE_5_2")).thenReturn(Optional.of(failed));
+
+        User user = mock(User.class);
+        when(user.getId()).thenReturn(2L);
+        when(user.getName()).thenReturn("고성민");
+        when(user.getEmail()).thenReturn("test@algoga.kr");
+        when(userRepository.findById(2L)).thenReturn(Optional.of(user));
+        when(paymentRepository.save(any(Payment.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        // when
+        paymentTransactionService.saveLecturePayment(command, "PAID", 50000, "TOSSPAY");
+
+        // then : 기존 FAILED 행 삭제 후 새 SUCCESS 행 저장
+        verify(paymentRepository).deleteByIdempotencyKey("LECTURE_5_2");
+        ArgumentCaptor<Payment> captor = ArgumentCaptor.forClass(Payment.class);
+        verify(paymentRepository).save(captor.capture());
+        assertEquals(PaymentStatus.SUCCESS, captor.getValue().getStatus());
     }
 }

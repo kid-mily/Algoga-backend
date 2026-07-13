@@ -38,6 +38,11 @@ public class PaymentRepositoryAdapter implements PaymentRepository {
     }
 
     @Override
+    public void deleteByIdempotencyKey(String idempotencyKey) {
+        springDataPaymentRepository.deleteByIdempotencyKey(idempotencyKey);
+    }
+
+    @Override
     public Optional<Payment> findByPortonePaymentId(String portonePaymentId) {
         return springDataPaymentRepository.findByPortonePaymentId(portonePaymentId)
                 .map(paymentMapper::toDomain);
