@@ -172,7 +172,7 @@ public class RefundStatsService implements RefundStatsUseCase {
         Map<Long, Long> accToCountry = accToCountry(
                 bookings.values().stream().map(Booking::getAccommodationId).toList());
 
-        Map<Long, long[]> byCountry = new HashMap<>(); // countryId → [count, amount]
+        Map<Long, long[]> byCountry = new HashMap<>(); // countryId → [refundCount, refundAmount]
         for (RefundRequest r : refunds) {
             Booking b = bookings.get(r.getBookingId());
             if (b == null) continue;
@@ -183,14 +183,56 @@ public class RefundStatsService implements RefundStatsUseCase {
             agg[1] += r.getAmount();
         }
 
+        // 나라별 예약 건수(기간 내 생성) + 예약결제 매출(환불율 분모) 집계
+        Map<Long, Long> bookingCountByCountry = bookingCountByCountry(from, to);
+        Map<Long, Long> revenueByCountry = bookingRevenueByCountry(from, to);
+
         Map<Long, Country> countryMap = countryMap(byCountry.keySet());
         return byCountry.entrySet().stream()
-                .map(e -> new RefundByCountryResponse(
-                        e.getKey(),
-                        Optional.ofNullable(countryMap.get(e.getKey())).map(Country::getName).orElse("알 수 없음"),
-                        e.getValue()[0], e.getValue()[1]))
+                .map(e -> {
+                    Long countryId = e.getKey();
+                    String name = Optional.ofNullable(countryMap.get(countryId))
+                            .map(Country::getName).orElse("알 수 없음");
+                    return RefundByCountryResponse.of(
+                            countryId, name,
+                            bookingCountByCountry.getOrDefault(countryId, 0L),
+                            e.getValue()[0], e.getValue()[1],
+                            revenueByCountry.getOrDefault(countryId, 0L));
+                })
                 .sorted(Comparator.comparingLong(RefundByCountryResponse::refundAmount).reversed())
                 .toList();
+    }
+
+    /** 나라별 예약 건수 (기간 내 생성된 예약 기준). */
+    private Map<Long, Long> bookingCountByCountry(LocalDate from, LocalDate to) {
+        List<Booking> periodBookings = bookingRepository.findByCreatedAtBetween(
+                from.atStartOfDay(), to.plusDays(1).atStartOfDay());
+        Map<Long, Long> accToCountry = accToCountry(
+                periodBookings.stream().map(Booking::getAccommodationId).toList());
+        Map<Long, Long> result = new HashMap<>();
+        for (Booking b : periodBookings) {
+            Long countryId = accToCountry.get(b.getAccommodationId());
+            if (countryId == null) continue;
+            result.merge(countryId, 1L, Long::sum);
+        }
+        return result;
+    }
+
+    /** 나라별 예약결제 매출 (환불율 분모용, DEPOSIT/BALANCE/FULL 의 SUCCESS/REFUNDED 합). */
+    private Map<Long, Long> bookingRevenueByCountry(LocalDate from, LocalDate to) {
+        List<Payment> payments = bookingPayments(from, to);
+        Map<Long, Booking> bookings = bookingMap(payments.stream().map(Payment::getBookingId).toList());
+        Map<Long, Long> accToCountry = accToCountry(
+                bookings.values().stream().map(Booking::getAccommodationId).toList());
+        Map<Long, Long> result = new HashMap<>();
+        for (Payment p : payments) {
+            Booking b = bookings.get(p.getBookingId());
+            if (b == null) continue;
+            Long countryId = accToCountry.get(b.getAccommodationId());
+            if (countryId == null) continue;
+            result.merge(countryId, (long) p.getAmount(), Long::sum);
+        }
+        return result;
     }
 
     @Override

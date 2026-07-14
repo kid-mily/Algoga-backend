@@ -1,9 +1,11 @@
 package com.kidmily.algoga_server.stats.application.service;
 
+import com.kidmily.algoga_server.accommodation.domain.model.Accommodation;
 import com.kidmily.algoga_server.accommodation.domain.repository.AccommodationRepository;
 import com.kidmily.algoga_server.booking.domain.model.Booking;
 import com.kidmily.algoga_server.booking.domain.model.BookingStatus;
 import com.kidmily.algoga_server.booking.domain.repository.BookingRepository;
+import com.kidmily.algoga_server.country.domain.model.Country;
 import com.kidmily.algoga_server.country.domain.repository.CountryRepository;
 import com.kidmily.algoga_server.payment.domain.model.Payment;
 import com.kidmily.algoga_server.payment.domain.model.PaymentStatus;
@@ -14,7 +16,7 @@ import com.kidmily.algoga_server.refund.domain.model.RefundStatus;
 import com.kidmily.algoga_server.refund.domain.repository.RefundRepository;
 import com.kidmily.algoga_server.stats.domain.model.TrendUnit;
 import com.kidmily.algoga_server.stats.presentation.api.response.CancelStatsResponse;
-import com.kidmily.algoga_server.stats.presentation.api.response.OverviewTrendPointResponse;
+import com.kidmily.algoga_server.stats.presentation.api.response.RefundByCountryResponse;
 import com.kidmily.algoga_server.stats.presentation.api.response.RefundSummaryResponse;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -26,10 +28,11 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.*;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 /*
  * RefundStatsService 단위 테스트
@@ -119,56 +122,50 @@ class RefundStatsServiceTest {
         assertEquals(66.67, res.paidCancelRate()); // 4/6
     }
 
-    private Payment paymentAt(PaymentType type, int amount, PaymentStatus status, LocalDateTime at) {
-        return Payment.reconstitute(1L, 1L, null, 1L, type, amount, 0, null,
-                status, "k" + at, "portone", "TOSSPAY", "홍길동", at);
-    }
-
-    private RefundRequest refundAt(int amount, LocalDateTime at) {
-        return RefundRequest.reconstitute(1L, 1L, 1L, 1L, "홍길동", RefundStatus.COMPLETED,
-                "단순변심", null, amount, at, at);
+    private RefundRequest refundFor(Long bookingId, int amount) {
+        return RefundRequest.reconstitute(1L, bookingId, 1L, 1L, "홍길동", RefundStatus.COMPLETED,
+                "단순변심", null, amount, LocalDateTime.now(), LocalDateTime.now());
     }
 
     @Test
-    @DisplayName("DAY 단위 추이 — 날짜별로 총매출·환불·순매출을 버킷팅한다")
-    void 추이_일별_버킷팅() {
-        // given: 7/10 매출 100만, 7/11 환불 20만, 7/12 매출 30만
+    @DisplayName("나라별 환불 — 예약건수·환불율·평가를 함께 반환한다")
+    void 나라별_환불_필드확장() {
+        // 환불 1건 30만 (booking 1 → 숙소1 → 일본)
+        when(refundRepository.findAllByStatus(RefundStatus.COMPLETED))
+                .thenReturn(List.of(refundFor(1L, 300_000)));
+        when(bookingRepository.findById(1L)).thenReturn(Optional.of(booking(1L, BookingStatus.REFUNDED)));
+
+        Accommodation acc = mock(Accommodation.class);
+        when(acc.getId()).thenReturn(1L);
+        when(acc.getCountryId()).thenReturn(1L);
+        when(accommodationRepository.findById(1L)).thenReturn(Optional.of(acc));
+
+        Country jp = mock(Country.class);
+        when(jp.getId()).thenReturn(1L);
+        when(jp.getName()).thenReturn("일본");
+        when(countryRepository.findAllByIdIn(anyList())).thenReturn(List.of(jp));
+
+        // 예약 건수용: 숙소1 예약 4건
+        when(bookingRepository.findByCreatedAtBetween(any(), any())).thenReturn(List.of(
+                booking(1L, BookingStatus.REFUNDED), booking(2L, BookingStatus.FULL_PAID),
+                booking(3L, BookingStatus.FULL_PAID), booking(4L, BookingStatus.DEPOSIT_PAID)));
+
+        // 매출용: 예약결제 합 100만 → 환불율 30% → 위험
         when(paymentRepository.findByCreatedAtBetween(any(), any())).thenReturn(List.of(
-                paymentAt(PaymentType.FULL, 1_000_000, PaymentStatus.SUCCESS, LocalDateTime.of(2026, 7, 10, 9, 0)),
-                paymentAt(PaymentType.DEPOSIT, 300_000, PaymentStatus.SUCCESS, LocalDateTime.of(2026, 7, 12, 15, 0))));
-        when(refundRepository.findAllByStatus(RefundStatus.COMPLETED)).thenReturn(List.of(
-                refundAt(200_000, LocalDateTime.of(2026, 7, 11, 12, 0))));
+                payment(1L, PaymentType.FULL, 1_000_000, PaymentStatus.SUCCESS)));
 
         // when
-        List<OverviewTrendPointResponse> trend = refundStatsService.getTrend(
-                LocalDate.of(2026, 7, 10), LocalDate.of(2026, 7, 12), TrendUnit.DAY);
+        List<RefundByCountryResponse> res = refundStatsService.getByCountry(
+                LocalDate.now().minusDays(30), LocalDate.now());
 
-        // then: 3일치 버킷
-        assertEquals(3, trend.size());
-        assertEquals("2026-07-10", trend.get(0).label());
-        assertEquals(1_000_000, trend.get(0).totalRevenue());
-        assertEquals(0, trend.get(0).refund());
-        assertEquals(1_000_000, trend.get(0).netRevenue());
-        assertEquals("2026-07-11", trend.get(1).label());
-        assertEquals(200_000, trend.get(1).refund());
-        assertEquals(-200_000, trend.get(1).netRevenue());
-        assertEquals("2026-07-12", trend.get(2).label());
-        assertEquals(300_000, trend.get(2).totalRevenue());
-    }
-
-    @Test
-    @DisplayName("HOUR 단위 추이 — 하루면 24개 시간 버킷, 해당 시간에 매출이 잡힌다")
-    void 추이_시간별_버킷팅() {
-        when(paymentRepository.findByCreatedAtBetween(any(), any())).thenReturn(List.of(
-                paymentAt(PaymentType.FULL, 500_000, PaymentStatus.SUCCESS, LocalDateTime.of(2026, 7, 14, 14, 30))));
-        when(refundRepository.findAllByStatus(RefundStatus.COMPLETED)).thenReturn(List.of());
-
-        List<OverviewTrendPointResponse> trend = refundStatsService.getTrend(
-                LocalDate.of(2026, 7, 14), LocalDate.of(2026, 7, 14), TrendUnit.HOUR);
-
-        assertEquals(24, trend.size());
-        assertEquals("14:00", trend.get(14).label());
-        assertEquals(500_000, trend.get(14).totalRevenue());
-        assertEquals(0, trend.get(13).totalRevenue()); // 13시엔 없음
+        // then
+        assertEquals(1, res.size());
+        RefundByCountryResponse jpRow = res.get(0);
+        assertEquals("일본", jpRow.countryName());
+        assertEquals(4, jpRow.bookingCount());
+        assertEquals(1, jpRow.refundCount());
+        assertEquals(300_000, jpRow.refundAmount());
+        assertEquals(30.0, jpRow.refundRate());  // 30만 / 100만
+        assertEquals("위험", jpRow.grade());
     }
 }
