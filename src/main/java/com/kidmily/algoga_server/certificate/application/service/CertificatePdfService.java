@@ -1,5 +1,6 @@
 package com.kidmily.algoga_server.certificate.application.service;
 
+import com.kidmily.algoga_server.certificate.application.result.CertificatePdf;
 import com.kidmily.algoga_server.certificate.application.usecase.CertificateUseCase;
 import com.kidmily.algoga_server.course.domain.model.Course;
 import com.kidmily.algoga_server.completion.domain.model.CourseCompletion;
@@ -55,7 +56,7 @@ public class CertificatePdfService implements CertificateUseCase {
     private final CourseCompletionRepository courseCompletionRepository;
 
     @Override
-    public byte[] generateCertificatePdf(Long userId, String userName, Long courseId) {
+    public CertificatePdf generateCertificatePdf(Long userId, String userName, Long courseId) {
         log.info("[Certificate Query] 수료증 PDF 발급 요청. userId={}, courseId={}", userId, courseId);
 
         CourseCompletion courseCompletion = courseCompletionRepository.findByUserIdAndCourseId(userId, courseId)
@@ -72,12 +73,14 @@ public class CertificatePdfService implements CertificateUseCase {
                 });
 
         try {
-            byte[] pdfBytes = createPdf(resolveUserName(userName), course, courseCompletion);
+            String resolvedUserName = resolveUserName(userName);
+            byte[] pdfBytes = createPdf(resolvedUserName, course, courseCompletion);
+            String fileName = buildCertificateFileName(course.getTitle(), resolvedUserName);
 
             log.info("[Certificate Query] 수료증 PDF 발급 완료. userId={}, courseId={}, certificateCode={}",
                     userId, courseId, courseCompletion.getCertificateCode());
 
-            return pdfBytes;
+            return new CertificatePdf(pdfBytes, fileName);
         } catch (IOException exception) {
             log.error("[Certificate Query] 수료증 PDF 생성 실패. userId={}, courseId={}", userId, courseId, exception);
             throw new IllegalStateException("수료증 PDF 생성에 실패했습니다.", exception);
@@ -347,6 +350,23 @@ public class CertificatePdfService implements CertificateUseCase {
         }
 
         return userName;
+    }
+
+    // 다운로드 파일명: 강의명_학생이름_이수증.pdf (파일명에 부적합한 문자는 제거)
+    private String buildCertificateFileName(String courseTitle, String userName) {
+        String title = sanitizeFileNamePart(courseTitle, "강의");
+        String name = sanitizeFileNamePart(userName, "수강생");
+
+        return title + "_" + name + "_이수증.pdf";
+    }
+
+    private String sanitizeFileNamePart(String value, String fallback) {
+        if (value == null || value.isBlank()) {
+            return fallback;
+        }
+
+        String sanitized = value.replaceAll("[\\\\/:*?\"<>|]", "").trim();
+        return sanitized.isBlank() ? fallback : sanitized;
     }
 
     private String safeText(String text) {
