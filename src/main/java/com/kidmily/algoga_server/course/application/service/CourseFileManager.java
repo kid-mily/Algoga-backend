@@ -4,6 +4,8 @@ import com.kidmily.algoga_server.course.application.port.CourseFileStoragePort;
 import com.kidmily.algoga_server.course.application.port.UploadFile;
 import com.kidmily.algoga_server.course.domain.model.CourseFile;
 import com.kidmily.algoga_server.course.settings.CourseStorageSettings;
+import com.kidmily.algoga_server.learning.exception.LearningErrorCode;
+import com.kidmily.algoga_server.learning.exception.LearningException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -20,6 +22,11 @@ import java.util.stream.IntStream;
 @Component
 @RequiredArgsConstructor
 public class CourseFileManager {
+
+    // 강의자료로 허용하는 문서 확장자(소문자). 그 외 형식은 업로드를 거부한다.
+    private static final Set<String> ALLOWED_COURSE_FILE_EXTENSIONS = Set.of(
+            "pdf", "doc", "docx", "ppt", "pptx", "xls", "xlsx", "hwp", "hwpx"
+    );
 
     private final CourseFileStoragePort fileStoragePort;
     private final CourseStorageSettings storageSettings;
@@ -59,6 +66,9 @@ public class CourseFileManager {
                 .filter(file -> file != null && !file.isEmpty())
                 .toList();
 
+        // 업로드 시작 전에 전체 파일 형식을 먼저 검증하여 부분 업로드를 방지한다.
+        validFiles.forEach(this::validateCourseFileType);
+
         return IntStream.range(0, validFiles.size())
                 .mapToObj(index -> {
                     UploadFile file = validFiles.get(index);
@@ -90,5 +100,27 @@ public class CourseFileManager {
                 fileStoragePort.deleteFile(fileUrl);
             }
         }
+    }
+
+    private void validateCourseFileType(UploadFile file) {
+        String extension = extractExtension(file.originalFilename());
+
+        if (!ALLOWED_COURSE_FILE_EXTENSIONS.contains(extension)) {
+            throw new LearningException(LearningErrorCode.INVALID_COURSE_FILE_TYPE);
+        }
+    }
+
+    private String extractExtension(String originalFilename) {
+        if (originalFilename == null) {
+            return "";
+        }
+
+        int dotIndex = originalFilename.lastIndexOf('.');
+
+        if (dotIndex < 0 || dotIndex == originalFilename.length() - 1) {
+            return "";
+        }
+
+        return originalFilename.substring(dotIndex + 1).toLowerCase();
     }
 }

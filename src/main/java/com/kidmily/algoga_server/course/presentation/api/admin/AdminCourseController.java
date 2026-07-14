@@ -48,7 +48,7 @@ public class AdminCourseController {
             description = "콘텐츠 매니저가 강의 기본 정보와 썸네일, 선택 첨부파일을 등록합니다."
     )
     @ApiErrorCodeExample(domain = GlobalErrorCode.class, value = {"INVALID_REQUEST"})
-    @ApiErrorCodeExample(domain = LearningErrorCode.class, value = {"COUNTRY_NOT_FOUND", "FILE_UPLOAD_FAILED"})
+    @ApiErrorCodeExample(domain = LearningErrorCode.class, value = {"COUNTRY_NOT_FOUND", "FILE_UPLOAD_FAILED", "INVALID_COURSE_FILE_TYPE"})
     @PreAuthorize("hasAnyAuthority('CONTENT_MANAGER', 'ROLE_CONTENT_MANAGER', 'SUPER_ADMIN', 'ROLE_SUPER_ADMIN')")
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<ApiResponse<Long>> createCourse(
@@ -200,7 +200,7 @@ public class AdminCourseController {
             description = "강의 제목, 설명, 가격, 난이도, 썸네일, 첨부파일을 수정합니다. 파일을 보내지 않으면 기존 파일 경로를 유지합니다."
     )
     @ApiErrorCodeExample(domain = GlobalErrorCode.class, value = {"INVALID_REQUEST"})
-    @ApiErrorCodeExample(domain = LearningErrorCode.class, value = {"COURSE_NOT_FOUND", "FILE_UPLOAD_FAILED"})
+    @ApiErrorCodeExample(domain = LearningErrorCode.class, value = {"COURSE_NOT_FOUND", "FILE_UPLOAD_FAILED", "INVALID_COURSE_FILE_TYPE"})
     @PreAuthorize("hasAnyAuthority('CONTENT_MANAGER', 'ROLE_CONTENT_MANAGER', 'SUPER_ADMIN', 'ROLE_SUPER_ADMIN')")
     @PutMapping(value = "/{courseId}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<ApiResponse<AdminCourseResponse>> updateCourse(
