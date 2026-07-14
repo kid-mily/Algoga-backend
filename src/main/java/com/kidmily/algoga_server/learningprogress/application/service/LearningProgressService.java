@@ -2,8 +2,6 @@ package com.kidmily.algoga_server.learningprogress.application.service;
 
 import com.kidmily.algoga_server.learningprogress.application.command.UpdateLearningProgressCommand;
 import com.kidmily.algoga_server.learningprogress.application.port.LearningProgressCachePort;
-// [리팩토링] 강의실 조립을 CourseClassroomAssembler로 이관하여 미사용이 된 import. 삭제 대신 이력 보존용으로 주석 처리함.
-//import com.kidmily.algoga_server.course.application.result.CourseClassroomChapterResult;
 import com.kidmily.algoga_server.course.application.result.CourseClassroomResult;
 import com.kidmily.algoga_server.course.application.service.CourseClassroomAssembler;
 import com.kidmily.algoga_server.learningprogress.application.result.LearningProgressResult;
@@ -24,8 +22,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
-// [리팩토링] 강의실 조립을 CourseClassroomAssembler로 이관하여 미사용이 된 import. 삭제 대신 이력 보존용으로 주석 처리함.
-//import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
@@ -161,43 +157,6 @@ public class LearningProgressService implements LearningProgressUseCase {
                 .filter(value -> value.isAccessibleAt(LocalDateTime.now()))
                 .orElseThrow(() -> new LearningException(LearningErrorCode.NOT_ENROLLED));
 
-        // [리팩토링] 강의실 결과 조립이 CourseClassroomAssembler와 완전 중복되어 재사용으로 대체. 아래 원본 코드는 삭제 대신 이력 보존용으로 주석 처리함.
-        /*
-        boolean previousChaptersCompleted = true;
-        List<CourseClassroomChapterResult> chapterResults = new ArrayList<>();
-
-        for (Chapter currentChapter : chapters) {
-            LearningProgress progress = progressByChapterId.get(currentChapter.getId());
-            boolean completed = progress != null && progress.isCompleted();
-            boolean locked = !previousChaptersCompleted;
-
-            chapterResults.add(new CourseClassroomChapterResult(
-                    currentChapter.getId(),
-                    currentChapter.getTitle(),
-                    currentChapter.getDescription(),
-                    locked ? null : currentChapter.getVideoUrl(),
-                    currentChapter.getDurationSeconds(),
-                    currentChapter.getChapterOrder(),
-                    progress == null ? 0 : progress.getWatchedSeconds(),
-                    progress == null ? 0 : progress.getProgressRate(),
-                    completed,
-                    locked
-            ));
-
-            previousChaptersCompleted = previousChaptersCompleted && completed;
-        }
-
-        boolean quizAvailable = !chapters.isEmpty()
-                && chapterResults.stream().allMatch(CourseClassroomChapterResult::completed);
-
-        return new CourseClassroomResult(
-                course.getId(),
-                course.getTitle(),
-                enrollment.getAccessExpiresAt(),
-                quizAvailable,
-                chapterResults
-        );
-        */
         return CourseClassroomAssembler.assemble(course, enrollment, chapters, progressByChapterId);
     }
 
@@ -244,50 +203,6 @@ public class LearningProgressService implements LearningProgressUseCase {
             throw new LearningException(LearningErrorCode.CHAPTER_LOCKED);
         }
     }
-
-    // [리팩토링] 순수 계산(다음 챕터/진행률/퀴즈 가능 여부)을 LearningProgressCalculator로 이관하여 미사용. 삭제 대신 이력 보존용으로 주석 처리함.
-    /*
-    private Long findNextChapterId(List<Chapter> chapters, Chapter currentChapter) {
-        return chapters.stream()
-                .filter(chapter -> chapter.getChapterOrder() > currentChapter.getChapterOrder())
-                .min(Comparator.comparingInt(Chapter::getChapterOrder))
-                .map(Chapter::getId)
-                .orElse(null);
-    }
-
-    private int calculateCourseProgressRate(
-            List<Chapter> chapters,
-            Map<Long, LearningProgress> progressByChapterId
-    ) {
-        if (chapters.isEmpty()) {
-            return 0;
-        }
-
-        int totalProgressRate = 0;
-
-        for (Chapter chapter : chapters) {
-            LearningProgress progress = progressByChapterId.get(chapter.getId());
-            totalProgressRate += progress == null ? 0 : progress.getProgressRate();
-        }
-
-        return Math.min(100, (int) Math.floor(totalProgressRate / (double) chapters.size()));
-    }
-
-    private boolean isQuizAvailable(
-            List<Chapter> chapters,
-            Map<Long, LearningProgress> progressByChapterId
-    ) {
-        if (chapters.isEmpty()) {
-            return false;
-        }
-
-        return chapters.stream()
-                .allMatch(chapter -> {
-                    LearningProgress progress = progressByChapterId.get(chapter.getId());
-                    return progress != null && progress.isCompleted();
-                });
-    }
-    */
 
     private Map<Long, LearningProgress> loadProgressMap(Long userId, Long courseId, List<Chapter> chapters) {
         Map<Long, LearningProgress> progressByChapterId = learningProgressRepository.findByUserIdAndCourseId(userId, courseId)

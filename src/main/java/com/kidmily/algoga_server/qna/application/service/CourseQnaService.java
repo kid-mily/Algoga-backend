@@ -24,12 +24,6 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.function.Function;
 
-/**
- * 강의 Q&A 애플리케이션 서비스. 기존 CourseService에 있던 Q&A 로직을 그대로 옮긴 구현으로,
- * 동작과 예외(에러코드)는 기존과 동일하다.
- *
- * <p>코스 존재 확인/수강 접근 검증은 Q&A 자체 흐름에 필요한 최소 로직만 자체 보유한다.
- */
 @Service
 @RequiredArgsConstructor
 @Transactional

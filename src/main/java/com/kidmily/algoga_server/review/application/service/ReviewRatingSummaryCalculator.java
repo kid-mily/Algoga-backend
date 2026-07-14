@@ -5,11 +5,6 @@ import com.kidmily.algoga_server.review.domain.model.CourseReview;
 
 import java.util.List;
 
-/**
- * 강의 리뷰 평점 요약(별점 분포/평균/비율) 계산 유틸리티.
- *
- * <p>집계·평균·비율·반올림 로직과 결과 값은 기존 CourseReviewService 로직과 동일하며 의존성이 없다.
- */
 public final class ReviewRatingSummaryCalculator {
 
     private ReviewRatingSummaryCalculator() {

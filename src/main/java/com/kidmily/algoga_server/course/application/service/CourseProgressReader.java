@@ -16,11 +16,6 @@ import java.util.Optional;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-/**
- * 코스 학습 진도를 DB와 캐시에서 조회/병합하는 책임을 CourseService에서 분리한 협력 객체.
- *
- * <p>DB 진도와 캐시 진도를 병합하는 규칙(더 최신 진도 우선)은 기존 CourseService 로직과 동일하다.
- */
 @Slf4j
 @Component
 @RequiredArgsConstructor

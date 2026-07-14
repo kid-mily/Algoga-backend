@@ -16,10 +16,6 @@ import org.springframework.stereotype.Component;
 import java.time.LocalDateTime;
 import java.util.List;
 
-/**
- * 코스 수료 가능 여부 검증 정책. 기존 CourseService.completeCourse의 검증 순서를 그대로 옮긴 것으로,
- * 검증 순서와 예외(에러코드)는 기존과 동일하다.
- */
 @Component
 @RequiredArgsConstructor
 public class CourseCompletionPolicy {

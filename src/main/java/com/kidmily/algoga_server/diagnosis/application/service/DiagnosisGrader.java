@@ -8,12 +8,6 @@ import com.kidmily.algoga_server.learning.exception.LearningException;
 import java.util.List;
 import java.util.Map;
 
-/**
- * 진단 제출 채점 로직을 DiagnosisService에서 분리한 유틸리티.
- *
- * <p>정답/국가 검증, 정답 수 집계, 점수·레벨 산정 로직은 기존 DiagnosisService 로직과 동일하며 의존성이 없다.
- * 호출 전에 questionMap이 모든 답안의 문항을 포함하고 있어야 한다(기존과 동일한 전제).
- */
 public final class DiagnosisGrader {
 
     private DiagnosisGrader() {

@@ -8,9 +8,6 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.stream.Collectors;
 
-/**
- * 진단 문항/답안 입력 검증 유틸리티. 기존 DiagnosisService의 검증 로직과 동일하며 의존성이 없다.
- */
 public final class DiagnosisInputValidator {
 
     private DiagnosisInputValidator() {

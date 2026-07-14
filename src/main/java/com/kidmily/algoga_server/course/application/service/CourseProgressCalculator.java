@@ -5,11 +5,6 @@ import com.kidmily.algoga_server.learningprogress.domain.model.LearningProgress;
 
 import java.util.List;
 
-/**
- * 코스 진행률/완료 챕터 수/총 재생시간 등 순수 계산 로직을 CourseService에서 분리한 유틸리티.
- *
- * <p>상태와 외부 의존성이 없으며, 계산 결과는 기존 CourseService 로직과 동일하다.
- */
 public final class CourseProgressCalculator {
 
     private CourseProgressCalculator() {
