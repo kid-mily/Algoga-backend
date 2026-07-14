@@ -1,5 +1,7 @@
 package com.kidmily.algoga_server.stats.application.service;
 
+import com.kidmily.algoga_server.booking.domain.model.Booking;
+import com.kidmily.algoga_server.booking.domain.repository.BookingRepository;
 import com.kidmily.algoga_server.payment.domain.model.Payment;
 import com.kidmily.algoga_server.payment.domain.model.PaymentStatus;
 import com.kidmily.algoga_server.payment.domain.repository.PaymentRepository;
@@ -31,6 +33,7 @@ public class InflowStatsService {
     private final UserRepository userRepository;
     private final PaymentRepository paymentRepository;
     private final RefundRepository refundRepository;
+    private final BookingRepository bookingRepository;
 
     @Transactional(readOnly = true)
     public InflowSummaryResponse getSummary(LocalDate from, LocalDate to) {
@@ -58,9 +61,10 @@ public class InflowStatsService {
         baos.write(new byte[]{(byte) 0xEF, (byte) 0xBB, (byte) 0xBF}, 0, 3); // Excel UTF-8 BOM
         try (java.io.PrintWriter w = new java.io.PrintWriter(
                 new java.io.OutputStreamWriter(baos, java.nio.charset.StandardCharsets.UTF_8))) {
-            w.println("유입경로,가입자수,순매출,1인당매출(ARPU)");
+            w.println("유입경로,가입자수,순매출,1인당매출(ARPU),예약수,예약전환율(%)");
             for (InflowChannelResponse r : rows) {
-                w.printf("%s,%d,%d,%d%n", r.channel(), r.signupCount(), r.netRevenue(), r.arpu());
+                w.printf("%s,%d,%d,%d,%d,%.2f%n", r.channel(), r.signupCount(), r.netRevenue(),
+                        r.arpu(), r.bookingCount(), r.bookingConversionRate());
             }
         }
         return baos.toByteArray();
@@ -94,16 +98,27 @@ public class InflowStatsService {
             refundByChannel.merge(channelByUser.getOrDefault(r.getUserId(), ETC), (long) r.getAmount(), Long::sum);
         }
 
+        // 5) 경로별 예약 수(기간 내 생성) — 예약 전환율 계산용
+        Map<String, Long> bookingByChannel = new HashMap<>();
+        for (Booking b : bookingRepository.findByCreatedAtBetween(fromDt, toDt)) {
+            if (b.getUserId() == null) continue;
+            bookingByChannel.merge(channelByUser.getOrDefault(b.getUserId(), ETC), 1L, Long::sum);
+        }
+
         Set<String> channels = new TreeSet<>();
         channels.addAll(signupsByChannel.keySet());
         channels.addAll(revenueByChannel.keySet());
+        channels.addAll(bookingByChannel.keySet());
 
         List<InflowChannelResponse> rows = new ArrayList<>();
         for (String ch : channels) {
             long signups = signupsByChannel.getOrDefault(ch, 0L);
             long net = revenueByChannel.getOrDefault(ch, 0L) - refundByChannel.getOrDefault(ch, 0L);
             long arpu = signups == 0 ? 0 : net / signups;
-            rows.add(new InflowChannelResponse(ch, signups, net, arpu));
+            long bookingCount = bookingByChannel.getOrDefault(ch, 0L);
+            double conversionRate = signups == 0 ? 0.0
+                    : Math.round((double) bookingCount / signups * 10000.0) / 100.0;
+            rows.add(new InflowChannelResponse(ch, signups, net, arpu, bookingCount, conversionRate));
         }
         rows.sort(Comparator.comparingLong(InflowChannelResponse::netRevenue).reversed());
         return rows;

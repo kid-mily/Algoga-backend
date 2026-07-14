@@ -1,5 +1,7 @@
 package com.kidmily.algoga_server.stats.application.service;
 
+import com.kidmily.algoga_server.booking.domain.model.Booking;
+import com.kidmily.algoga_server.booking.domain.repository.BookingRepository;
 import com.kidmily.algoga_server.payment.domain.model.Payment;
 import com.kidmily.algoga_server.payment.domain.model.PaymentStatus;
 import com.kidmily.algoga_server.payment.domain.repository.PaymentRepository;
@@ -31,9 +33,16 @@ class InflowStatsServiceTest {
     @Mock private UserRepository userRepository;
     @Mock private PaymentRepository paymentRepository;
     @Mock private RefundRepository refundRepository;
+    @Mock private BookingRepository bookingRepository;
 
     @InjectMocks
     private InflowStatsService service;
+
+    private Booking book(Long userId) {
+        Booking b = mock(Booking.class);
+        when(b.getUserId()).thenReturn(userId);
+        return b;
+    }
 
     private UserRepository.SignupPathStat stat(String path, long count) {
         return new UserRepository.SignupPathStat() {
@@ -78,6 +87,12 @@ class InflowStatsServiceTest {
                 .thenReturn(List.of(p1, p2));
         RefundRequest r1 = refund(1L, 200_000);
         when(refundRepository.findAllByStatus(RefundStatus.COMPLETED)).thenReturn(List.of(r1));
+        // 검색(user1) 예약 2건, 광고(user2) 예약 1건 (mock은 when() 밖에서 먼저 생성)
+        Booking b1 = book(1L);
+        Booking b2 = book(1L);
+        Booking b3 = book(2L);
+        when(bookingRepository.findByCreatedAtBetween(any(LocalDateTime.class), any(LocalDateTime.class)))
+                .thenReturn(List.of(b1, b2, b3));
 
         LocalDate from = LocalDate.of(2026, 1, 1);
         LocalDate to = LocalDate.of(2026, 12, 31);
@@ -89,10 +104,14 @@ class InflowStatsServiceTest {
         assertEquals(100, search.signupCount());
         assertEquals(800_000, search.netRevenue()); // 100만 - 20만
         assertEquals(8_000, search.arpu());          // 80만/100
+        assertEquals(2, search.bookingCount());
+        assertEquals(2.0, search.bookingConversionRate());  // 2/100 × 100
 
         InflowChannelResponse ad = channels.get(1);
         assertEquals(500_000, ad.netRevenue());
         assertEquals(10_000, ad.arpu());             // 50만/50
+        assertEquals(1, ad.bookingCount());
+        assertEquals(2.0, ad.bookingConversionRate());      // 1/50 × 100
 
         InflowSummaryResponse summary = service.getSummary(from, to);
         assertEquals(150, summary.totalSignups());
