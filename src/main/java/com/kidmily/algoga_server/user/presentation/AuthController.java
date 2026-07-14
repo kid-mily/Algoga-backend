@@ -198,7 +198,7 @@ public class AuthController {
 
     // 토큰 재발급 API (이것도 응답은 쿠키로 줌)
     @Operation(summary = "토큰 재발급", description = "만료된 Access Token을 수명이 남아있는 Refresh Token 쿠키를 이용해 자동으로 연장(재발급)합니다.")
-    @ApiErrorCodeExample(domain = AuthErrorCode.class, value = {"REFRESH_TOKEN_NOT_FOUND"}) // 유효하지 않거나 없을 때 에러 명시
+    @ApiErrorCodeExample(domain = AuthErrorCode.class, value = {"REFRESH_TOKEN_NOT_FOUND", "SESSION_IDLE_TIMEOUT"}) // 유효하지 않거나 없을 때, 30분 미활동으로 만료됐을 때 에러 명시
     @PostMapping("/refresh")
     public ApiResponse<Void> refreshToken(HttpServletRequest request, HttpServletResponse response) {
         String refreshToken = null;
