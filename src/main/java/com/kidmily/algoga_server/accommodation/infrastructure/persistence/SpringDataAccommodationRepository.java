@@ -6,4 +6,5 @@ import java.util.List;
 
 public interface SpringDataAccommodationRepository extends JpaRepository<AccommodationJpaEntity, Long> {
     List<AccommodationJpaEntity> findByCountryId(Long countryId);
+    List<AccommodationJpaEntity> findByIdIn(List<Long> ids);
 }

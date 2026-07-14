@@ -1,5 +1,9 @@
 package com.kidmily.algoga_server.packages.application.service;
 
+import com.kidmily.algoga_server.accommodation.domain.model.Accommodation;
+import com.kidmily.algoga_server.accommodation.domain.repository.AccommodationRepository;
+import com.kidmily.algoga_server.country.domain.model.Country;
+import com.kidmily.algoga_server.country.domain.repository.CountryRepository;
 import com.kidmily.algoga_server.flight.application.usecase.FlightSearchUseCase;
 import com.kidmily.algoga_server.flight.domain.model.FlightInfo;
 import com.kidmily.algoga_server.flight.presentation.api.response.FlightSearchResponse;
@@ -18,6 +22,10 @@ import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -27,31 +35,66 @@ public class PackageQueryService implements PackageQueryUseCase {
 
     private final PackageRepository packageRepository;
     private final FlightSearchUseCase flightSearchUseCase;
+    private final AccommodationRepository accommodationRepository;
+    private final CountryRepository countryRepository;
 
     @Override
     public List<PackageResponse> getAll() {
-        return packageRepository.findAll()
-                .stream()
-                .map(this::toResponseWithFlight)
-                .toList();
+        return toResponses(packageRepository.findAll());
     }
 
     @Override
     public List<PackageResponse> getByCountry(Long countryId) {
-        return packageRepository.findByCountryId(countryId)
-                .stream()
-                .map(this::toResponseWithFlight)
-                .toList();
+        return toResponses(packageRepository.findByCountryId(countryId));
     }
 
     @Override
     public PackageResponse getById(Long packageId) {
         TravelPackage travelPackage = packageRepository.findById(packageId)
                 .orElseThrow(() -> new BusinessException(PackageErrorCode.PACKAGE_NOT_FOUND));
-        return toResponseWithFlight(travelPackage);
+
+        Accommodation accommodation = travelPackage.getAccommodationId() == null ? null
+                : accommodationRepository.findById(travelPackage.getAccommodationId()).orElse(null);
+        String countryName = travelPackage.getCountryId() == null ? null
+                : countryRepository.findById(travelPackage.getCountryId()).map(Country::getName).orElse(null);
+
+        return toResponseWithFlight(travelPackage, accommodation, countryName);
     }
 
-    private PackageResponse toResponseWithFlight(TravelPackage travelPackage) {
+    /**
+     * 목록 응답 변환. 숙소/국가를 패키지마다 개별 조회하면 N+1이 되므로,
+     * 필요한 id를 모아 한 번에 조회(배치)한 뒤 각 패키지에 매핑한다.
+     */
+    private List<PackageResponse> toResponses(List<TravelPackage> packages) {
+        List<Long> accommodationIds = packages.stream()
+                .map(TravelPackage::getAccommodationId)
+                .filter(Objects::nonNull)
+                .distinct()
+                .toList();
+        Map<Long, Accommodation> accommodationById = accommodationRepository.findByIdIn(accommodationIds)
+                .stream()
+                .collect(Collectors.toMap(Accommodation::getId, Function.identity()));
+
+        List<Long> countryIds = packages.stream()
+                .map(TravelPackage::getCountryId)
+                .filter(Objects::nonNull)
+                .distinct()
+                .toList();
+        Map<Long, String> countryNameById = countryRepository.findAllByIdIn(countryIds)
+                .stream()
+                .collect(Collectors.toMap(Country::getId, Country::getName));
+
+        return packages.stream()
+                .map(p -> toResponseWithFlight(
+                        p,
+                        accommodationById.get(p.getAccommodationId()),
+                        countryNameById.get(p.getCountryId())))
+                .toList();
+    }
+
+    private PackageResponse toResponseWithFlight(TravelPackage travelPackage,
+                                                 Accommodation accommodation,
+                                                 String countryName) {
         long nights = ChronoUnit.DAYS.between(travelPackage.getCheckInDate(), travelPackage.getCheckOutDate());
 
         FlightSearchResponse outbound = null;
@@ -68,7 +111,7 @@ public class PackageQueryService implements PackageQueryUseCase {
             log.warn("[PackageQueryService] 항공편 실시간 조회 실패 - packageId: {}, error: {}",
                     travelPackage.getId(), e.getMessage());
         }
-        return PackageResponse.of(travelPackage, outbound, returnFlight, nights);
+        return PackageResponse.of(travelPackage, outbound, returnFlight, nights, accommodation, countryName);
     }
 
     /**
