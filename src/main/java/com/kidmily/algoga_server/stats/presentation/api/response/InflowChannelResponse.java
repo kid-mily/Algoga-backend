@@ -15,5 +15,11 @@ public record InflowChannelResponse(
         long netRevenue,
 
         @Schema(description = "1인당 매출(ARPU) = 순매출/가입자수", example = "158065")
-        long arpu
+        long arpu,
+
+        @Schema(description = "해당 유입경로 유저의 예약 수(기간 내 생성)", example = "84")
+        long bookingCount,
+
+        @Schema(description = "예약 전환율(%) = 예약 수 / 가입자 수 × 100 (이미 % 값)", example = "13.5")
+        double bookingConversionRate
 ) {}
