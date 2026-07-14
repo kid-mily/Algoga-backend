@@ -58,5 +58,11 @@ public interface SpringDataCourseRepository extends JpaRepository<CourseJpaEntit
             @Param("countryIds") List<Long> countryIds,
             @Param("status") String status
     );
+
+    List<CourseJpaEntity> findByCountryIdAndLevelNotAndStatusAndDeletedFalseOrderByIdDesc(
+            Long countryId,
+            String level,
+            String status
+    );
 }
 

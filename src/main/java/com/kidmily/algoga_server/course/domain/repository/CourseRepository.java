@@ -46,6 +46,8 @@ public interface CourseRepository {
 
     List<Course> findPublishedByCountryIdAndLevel(Long countryId, String level);
 
+    List<Course> findPublishedByCountryIdAndLevelNot(Long countryId, String level);
+
     long countPublishedByCountryId(Long countryId);
 
     Map<Long, Long> countPublishedByCountryIds(List<Long> countryIds);

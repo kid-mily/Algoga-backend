@@ -230,7 +230,8 @@ public class DiagnosisService implements DiagnosisUseCase {
                 toLevelName(result.level()),
                 result.createdAt(),
                 answerResults,
-                courseUseCase.getRecommendedCoursesByCountryAndLevel(result.countryId(), result.level())
+                courseUseCase.getRecommendedCoursesByCountryAndLevel(result.countryId(), result.level()),
+                courseUseCase.getOtherLevelCoursesByCountryAndLevel(result.countryId(), result.level())
         );
     }
 

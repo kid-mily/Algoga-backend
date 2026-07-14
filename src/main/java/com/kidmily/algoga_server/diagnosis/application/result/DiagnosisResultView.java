@@ -15,6 +15,7 @@ public record DiagnosisResultView(
         String levelName,
         LocalDateTime submittedAt,
         List<DiagnosisAnswerResult> answers,
-        List<CourseResult> recommendedCourses
+        List<CourseResult> recommendedCourses,
+        List<CourseResult> otherLevelCourses
 ) {
 }

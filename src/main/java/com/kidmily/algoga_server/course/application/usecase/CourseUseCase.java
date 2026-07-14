@@ -49,6 +49,8 @@ public interface CourseUseCase {
 
     List<CourseResult> getRecommendedCoursesByCountryAndLevel(Long countryId, String level);
 
+    List<CourseResult> getOtherLevelCoursesByCountryAndLevel(Long countryId, String level);
+
     long countPublishedCoursesByCountry(Long countryId);
 
     Map<Long, Long> countPublishedCoursesByCountryIds(List<Long> countryIds);
