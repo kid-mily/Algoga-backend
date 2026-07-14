@@ -27,7 +27,8 @@ public enum AuthErrorCode implements BaseErrorCode {
     EMAIL_NOT_VERIFIED(HttpStatus.BAD_REQUEST, "AUTH_014", "이메일 인증이 완료되지 않았습니다."),
     BLACKLISTED_USER(HttpStatus.FORBIDDEN, "AUTH_015", "블랙리스트에 등록되어 접근이 영구히 제한된 계정입니다. 고객센터에 문의하세요."),
     INVALID_REFERRAL_CODE(HttpStatus.BAD_REQUEST, "AUTH_016", "유효하지 않은 추천인 코드입니다."),
-    DUPLICATE_LOGIN(HttpStatus.UNAUTHORIZED, "AUTH_017", "다른 기기에서 로그인되어 세션이 종료되었습니다.");
+    DUPLICATE_LOGIN(HttpStatus.UNAUTHORIZED, "AUTH_017", "다른 기기에서 로그인되어 세션이 종료되었습니다."),
+    SESSION_IDLE_TIMEOUT(HttpStatus.UNAUTHORIZED, "AUTH_018", "장시간 활동이 없어 세션이 만료되었습니다. 다시 로그인해주세요.");
 
     private final HttpStatus status;
     private final String code;

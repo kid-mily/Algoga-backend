@@ -355,6 +355,14 @@ public class AuthService implements SocialLoginProcessor {
             throw new AuthException(AuthErrorCode.REFRESH_TOKEN_NOT_FOUND);
         }
 
+        // 🌟 idle 타임아웃 체크: ACTIVE_AT은 요청이 있을 때마다 필터에서 TTL이 갱신되므로,
+        //    이게 비어있다는 건 accessTokenExpiration(30분)보다 오래 아무 활동도 없었다는 뜻 -> 세션 강제 종료
+        String activeAccessToken = redisTemplate.opsForValue().get("ACTIVE_AT:" + email);
+        if (activeAccessToken == null) {
+            redisTemplate.delete("RT:" + email);
+            throw new AuthException(AuthErrorCode.SESSION_IDLE_TIMEOUT);
+        }
+
         String newAccessToken = globalJwtProvider.createUserAccessToken(email);
 
         // 재발급도 "같은 세션의 연장"이므로 활성 세션 표시를 새 토큰으로 갱신 (여기서 안 갱신하면 재발급 직후 본인 요청이 바로 튕겨나감)

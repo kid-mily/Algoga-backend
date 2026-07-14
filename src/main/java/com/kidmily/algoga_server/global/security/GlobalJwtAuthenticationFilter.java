@@ -11,6 +11,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -21,6 +22,7 @@ import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.JwtException;
 
 import java.io.IOException;
+import java.util.concurrent.TimeUnit;
 
 @Slf4j
 @Component
@@ -30,6 +32,9 @@ public class GlobalJwtAuthenticationFilter extends OncePerRequestFilter {
     private final GlobalJwtProvider globalJwtProvider;
     private final CustomUserDetailsService customUserDetailsService;
     private final RedisTemplate<String, String> redisTemplate;
+
+    @Value("${jwt.access-token-expiration}")
+    private long accessTokenExpiration;
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
@@ -74,6 +79,11 @@ public class GlobalJwtAuthenticationFilter extends OncePerRequestFilter {
                         response.setContentType("application/json;charset=UTF-8");
                         response.getWriter().write("{\"code\":\"AUTH_017\",\"message\":\"다른 기기에서 로그인되어 세션이 종료되었습니다.\"}");
                         return;
+                    }
+
+                    // 🌟 요청이 들어왔다 = 활동 중이다 -> idle 타임아웃(30분) 타이머를 다시 밀어줌 (sliding expiration)
+                    if (activeAccessToken != null) {
+                        redisTemplate.expire("ACTIVE_AT:" + email, accessTokenExpiration, TimeUnit.MILLISECONDS);
                     }
 
                     CustomUserDetails userDetails = (CustomUserDetails) customUserDetailsService.loadUserByUsername(email);
