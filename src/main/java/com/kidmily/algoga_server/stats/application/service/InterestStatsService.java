@@ -5,6 +5,7 @@ import com.kidmily.algoga_server.country.domain.repository.CountryRepository;
 import com.kidmily.algoga_server.course.domain.repository.CourseRepository;
 import com.kidmily.algoga_server.completion.domain.repository.CourseCompletionRepository;
 import com.kidmily.algoga_server.enrollment.domain.repository.EnrollmentRepository;
+import com.kidmily.algoga_server.learningprogress.domain.repository.LearningProgressRepository;
 import com.kidmily.algoga_server.stats.presentation.api.response.InterestCountryResponse;
 import com.kidmily.algoga_server.stats.presentation.api.response.InterestLectureResponse;
 import com.kidmily.algoga_server.stats.presentation.api.response.InterestSummaryResponse;
@@ -31,9 +32,11 @@ public class InterestStatsService {
     private final EnrollmentRepository enrollmentRepository;
     private final CourseCompletionRepository courseCompletionRepository;
     private final CountryRepository countryRepository;
+    private final LearningProgressRepository learningProgressRepository;
 
     private record Snapshot(List<Course> courses, Map<Long, Long> enroll,
-                            Map<Long, Long> complete, Map<Long, String> countryName) {}
+                            Map<Long, Long> complete, Map<Long, Integer> progress,
+                            Map<Long, String> countryName) {}
 
     private Snapshot load() {
         List<Course> courses = courseRepository.findAllByDeletedFalse(Pageable.unpaged()).getContent();
@@ -41,6 +44,7 @@ public class InterestStatsService {
 
         Map<Long, Long> enroll = courseIds.isEmpty() ? Map.of() : enrollmentRepository.countByCourseIds(courseIds);
         Map<Long, Long> complete = courseIds.isEmpty() ? Map.of() : courseCompletionRepository.countByCourseIds(courseIds);
+        Map<Long, Integer> progress = courseIds.isEmpty() ? Map.of() : learningProgressRepository.averageProgressRateByCourseIds(courseIds);
 
         List<Long> countryIds = courses.stream().map(Course::getCountryId)
                 .filter(Objects::nonNull).distinct().toList();
@@ -48,11 +52,22 @@ public class InterestStatsService {
         if (!countryIds.isEmpty()) {
             countryRepository.findAllByIdIn(countryIds).forEach(c -> countryName.put(c.getId(), c.getName()));
         }
-        return new Snapshot(courses, enroll, complete, countryName);
+        return new Snapshot(courses, enroll, complete, progress, countryName);
     }
 
     private double completionRate(long enroll, long complete) {
         return enroll == 0 ? 0.0 : Math.round((double) complete / enroll * 10000.0) / 100.0;
+    }
+
+    // 수료율 기준 상태: 60% 이상 NORMAL(정상), 30% 이상 WARNING(주의), 30% 미만 RISK(위험)
+    private String completionStatus(double rate) {
+        if (rate >= 60.0) {
+            return "NORMAL";
+        }
+        if (rate >= RISKY_THRESHOLD) {
+            return "WARNING";
+        }
+        return "RISK";
     }
 
     @Transactional(readOnly = true)
@@ -93,8 +108,10 @@ public class InterestStatsService {
         for (Course c : sorted) {
             long e = s.enroll().getOrDefault(c.getId(), 0L);
             long comp = s.complete().getOrDefault(c.getId(), 0L);
+            int progress = s.progress().getOrDefault(c.getId(), 0);
             String country = s.countryName().getOrDefault(c.getCountryId(), ETC);
-            rows.add(new InterestLectureResponse(rank++, c.getTitle(), country, e, completionRate(e, comp)));
+            double rate = completionRate(e, comp);
+            rows.add(new InterestLectureResponse(rank++, c.getTitle(), country, e, progress, rate, completionStatus(rate)));
         }
         return rows;
     }
@@ -106,9 +123,9 @@ public class InterestStatsService {
         baos.write(new byte[]{(byte) 0xEF, (byte) 0xBB, (byte) 0xBF}, 0, 3);
         try (java.io.PrintWriter w = new java.io.PrintWriter(
                 new java.io.OutputStreamWriter(baos, java.nio.charset.StandardCharsets.UTF_8))) {
-            w.println("순위,강의명,나라,수강자수,수료율(%)");
+            w.println("순위,강의명,나라,수강자수,평균진도율(%),수료율(%),상태");
             for (InterestLectureResponse r : rows) {
-                w.printf("%d,%s,%s,%d,%s%n", r.rank(), r.lectureTitle(), r.country(), r.enrollCount(), r.completionRate());
+                w.printf("%d,%s,%s,%d,%d,%s,%s%n", r.rank(), r.lectureTitle(), r.country(), r.enrollCount(), r.averageProgressRate(), r.completionRate(), r.completionStatus());
             }
         }
         return baos.toByteArray();

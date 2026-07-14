@@ -7,7 +7,9 @@ import com.kidmily.algoga_server.learningprogress.infrastructure.persistence.rep
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 @Repository
@@ -91,6 +93,19 @@ public class LearningProgressRepositoryAdapter implements LearningProgressReposi
                 .stream()
                 .map(this::toDomain)
                 .toList();
+    }
+
+    @Override
+    public Map<Long, Integer> averageProgressRateByCourseIds(List<Long> courseIds) {
+        if (courseIds == null || courseIds.isEmpty()) {
+            return Map.of();
+        }
+
+        Map<Long, Integer> result = new HashMap<>();
+        for (Object[] row : springDataLearningProgressRepository.averageProgressRateByCourseIds(courseIds)) {
+            result.put(((Number) row[0]).longValue(), ((Number) row[1]).intValue());
+        }
+        return result;
     }
 
     @Override
