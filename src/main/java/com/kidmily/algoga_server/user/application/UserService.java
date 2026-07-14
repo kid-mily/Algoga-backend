@@ -19,7 +19,6 @@ import com.kidmily.algoga_server.user.presentation.request.UpdateProfileRequest;
 import com.kidmily.algoga_server.user.presentation.request.VerifyPasswordRequest;
 import com.kidmily.algoga_server.user.presentation.response.AdminUserListResponse;
 import com.kidmily.algoga_server.user.presentation.response.AuthTokenResponse;
-import com.kidmily.algoga_server.user.presentation.response.SignupPathStatResponse;
 import com.kidmily.algoga_server.user.presentation.response.UserProfileResponse;
 import com.kidmily.algoga_server.user.settings.UserStorageSettings;
 import lombok.RequiredArgsConstructor;
@@ -33,12 +32,6 @@ import org.springframework.web.multipart.MultipartFile;
 import com.kidmily.algoga_server.global.event.UserWithdrawnEvent;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.redis.core.RedisTemplate;
-import java.io.ByteArrayOutputStream;
-import java.io.OutputStreamWriter;
-import java.io.PrintWriter;
-import java.nio.charset.StandardCharsets;
-import java.time.LocalDateTime;
-import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 @Slf4j
@@ -229,32 +222,6 @@ public class UserService {
         eventPublisher.publishEvent(new UserWithdrawnEvent(user.getId(), email));
 
         log.info("회원 탈퇴 처리 완료 및 이벤트 발행 [기존 이메일: {}, 식별자: {}]", email, user.getId());
-    }
-
-    // 가입 경로 통계 조회 (관리자 통게용, 가입일 기준 기간 필터)
-    @Transactional(readOnly = true)
-    public List<SignupPathStatResponse> getSignupPathStats(LocalDateTime from, LocalDateTime to) {
-        return userRepository.countUsersBySignupPath(from, to).stream()
-                .map(SignupPathStatResponse::from)
-                .toList();
-    }
-
-    // 가입 경로 통계 CSV 내보내기 (엑셀에서 바로 열리도록 UTF-8 BOM 포함)
-    @Transactional(readOnly = true)
-    public byte[] getSignupPathStatsCsv(LocalDateTime from, LocalDateTime to) {
-        List<SignupPathStatResponse> stats = getSignupPathStats(from, to);
-
-        ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        baos.writeBytes(new byte[]{(byte) 0xEF, (byte) 0xBB, (byte) 0xBF}); // BOM for Excel UTF-8
-
-        try (PrintWriter writer = new PrintWriter(new OutputStreamWriter(baos, StandardCharsets.UTF_8))) {
-            writer.println("유입 경로,가입자 수");
-            for (SignupPathStatResponse item : stats) {
-                writer.printf("%s,%d%n", item.path(), item.count());
-            }
-        }
-
-        return baos.toByteArray();
     }
 
     // 관리자용: 전체 유저 리스트 조회 로직
