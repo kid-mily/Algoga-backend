@@ -10,7 +10,13 @@ import lombok.NoArgsConstructor;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "payments")
+@Table(
+        name = "payments",
+        uniqueConstraints = @UniqueConstraint(
+                name = "uk_payments_idempotency_key",
+                columnNames = "idempotency_key"
+        )
+)
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class PaymentJpaEntity {

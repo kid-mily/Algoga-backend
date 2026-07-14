@@ -91,6 +91,10 @@ public class PaymentTransactionService {
                 log.warn("[PaymentTransactionService] 이미 완료된 결제 - idempotencyKey: {}", idempotencyKey);
                 throw new BusinessException(PaymentErrorCode.DUPLICATE_PAYMENT);
             }
+            // 이전 시도가 FAILED로 남아 있으면 정상적인 재시도다. idempotency_key UNIQUE 제약과
+            // 충돌하지 않도록(그리고 FAILED 행이 누적되지 않도록) 기존 행을 지우고 새로 기록한다.
+            log.info("[PaymentTransactionService] 실패한 이전 결제 재시도 - 기존 FAILED 행 삭제 후 재기록 - idempotencyKey: {}", idempotencyKey);
+            paymentRepository.deleteByIdempotencyKey(idempotencyKey);
         });
 
         int couponDiscount = 0;
@@ -222,6 +226,10 @@ public class PaymentTransactionService {
                 log.warn("[PaymentTransactionService] 이미 완료된 강의 결제 - courseId: {}", command.courseId());
                 throw new BusinessException(PaymentErrorCode.DUPLICATE_PAYMENT);
             }
+            // 이전 시도가 FAILED로 남아 있으면 정상적인 재시도다. idempotency_key UNIQUE 제약과
+            // 충돌하지 않도록(그리고 FAILED 행이 누적되지 않도록) 기존 행을 지우고 새로 기록한다.
+            log.info("[PaymentTransactionService] 실패한 이전 강의 결제 재시도 - 기존 FAILED 행 삭제 후 재기록 - idempotencyKey: {}", idempotencyKey);
+            paymentRepository.deleteByIdempotencyKey(idempotencyKey);
         });
 
         if (command.usedCouponId() != null) {
