@@ -10,7 +10,7 @@ import com.kidmily.algoga_server.friend.exception.FriendException;
 import com.kidmily.algoga_server.user.domain.User;
 import com.kidmily.algoga_server.user.domain.UserRepository;
 import lombok.RequiredArgsConstructor;
-import org.springframework.cache.annotation.Cacheable;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -21,6 +21,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
@@ -33,21 +34,28 @@ FriendQueryService implements FriendQueryUseCase {
     private final UserRepository userRepository;
     private final RedisTemplate<String, String> redisTemplate;
 
-    // 여러 유저의 온라인 여부를 한 번에 조회 (유저 수만큼 Redis를 개별 조회하지 않도록 배치 처리)
+    // 여러 유저의 온라인 여부를 조회한다.
+    //
+    // 주의: ElastiCache Serverless(및 클러스터 모드)에서는 MGET처럼 여러 키를 한 번에 다루는 명령은
+    // 모든 키가 같은 해시 슬롯에 있어야 하고, 아니면 CROSSSLOT 에러가 난다.
+    // ONLINE:{id} 키들은 슬롯이 흩어지므로 multiGet(MGET)을 쓰면 실패한다.
+    // → 단일 키 GET(각각 단일 슬롯이라 클러스터 안전)을 반복해서 조회한다.
+    // 또한 온라인 여부는 부가 정보이므로, Redis 장애 시에도 친구 목록 자체는 반환되도록 예외를 삼킨다.
     private Set<Long> findOnlineUserIds(List<Long> userIds) {
         if (userIds.isEmpty()) {
             return Set.of();
         }
 
-        List<String> keys = userIds.stream().map(id -> ONLINE_KEY_PREFIX + id).toList();
-        List<String> values = redisTemplate.opsForValue().multiGet(keys);
-
         Set<Long> onlineUserIds = new HashSet<>();
-        if (values != null) {
-            for (int i = 0; i < userIds.size(); i++) {
-                if ("true".equals(values.get(i))) {
-                    onlineUserIds.add(userIds.get(i));
+        for (Long id : userIds) {
+            try {
+                String value = redisTemplate.opsForValue().get(ONLINE_KEY_PREFIX + id);
+                if ("true".equals(value)) {
+                    onlineUserIds.add(id);
                 }
+            } catch (Exception e) {
+                // 온라인 정보 조회 실패는 목록 조회를 막지 않는다(부가 정보). 해당 유저는 오프라인으로 간주.
+                log.warn("[FriendQueryService] 온라인 상태 조회 실패 - userId: {}, cause: {}", id, e.toString());
             }
         }
         return onlineUserIds;

@@ -34,6 +34,54 @@ Do not record all existing endpoints just because they exist.
 
 ## Recent API Changes
 
+#### 2026-07-14
+
+#### Endpoint
+
+`GET /api/v1/admin/stats/interest/lectures`
+
+#### What Changed
+
+- Added `averageProgressRate` to each lecture interest statistics item.
+- Existing request parameters, endpoint path, and existing response fields remain unchanged.
+
+#### Request
+
+```json
+{}
+```
+
+#### Response
+
+```json
+{
+  "rank": 1,
+  "lectureTitle": "도쿄 완전 정복 2024",
+  "country": "일본",
+  "enrollCount": 1842,
+  "averageProgressRate": 72,
+  "completionRate": 64.2
+}
+```
+
+#### Error Codes
+
+-
+
+#### Frontend Impact
+
+- API changed: yes
+- Endpoint: `GET /api/v1/admin/stats/interest/lectures`
+- Request change: no
+- Response change: yes, `averageProgressRate` added
+- ErrorCode change: no
+- Breaking change: no
+- Frontend action needed: use `averageProgressRate` for the average progress column in the statistics manager lecture table.
+
+#### Notes
+
+- CSV download at `GET /api/v1/admin/stats/interest/lectures/csv` now includes the average progress rate column.
+
 ### Template
 
 #### Date
