@@ -16,10 +16,6 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
-/**
- * 퀴즈 접근/응시 조건 검증 정책. 기존 QuizService의 코스/수강/챕터 완료 검증 로직을 그대로 옮긴 것으로,
- * 검증 조건과 예외(에러코드)는 기존과 동일하다.
- */
 @Component
 @RequiredArgsConstructor
 public class QuizAccessPolicy {

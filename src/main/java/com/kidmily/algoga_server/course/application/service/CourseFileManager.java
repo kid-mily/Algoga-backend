@@ -14,18 +14,14 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.IntStream;
 
-/**
- * 코스 파일/썸네일 스토리지 처리 책임을 CourseService에서 분리한 협력 객체.
- *
- * <p>업로드/삭제 동작과 반환값은 기존 CourseService 로직과 동일하다.
- */
+
 @Component
 @RequiredArgsConstructor
 public class CourseFileManager {
 
     // 강의자료로 허용하는 문서 확장자(소문자). 그 외 형식은 업로드를 거부한다.
     private static final Set<String> ALLOWED_COURSE_FILE_EXTENSIONS = Set.of(
-            "pdf", "doc", "docx", "ppt", "pptx", "xls", "xlsx", "hwp", "hwpx"
+            "pdf", "doc", "docx", "ppt", "pptx", "xls", "xlsx", "hwp", "hwpx", "txt"
     );
 
     private final CourseFileStoragePort fileStoragePort;

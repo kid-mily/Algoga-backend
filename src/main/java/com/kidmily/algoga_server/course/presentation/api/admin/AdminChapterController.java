@@ -181,7 +181,6 @@ public class AdminChapterController {
         );
     }
 
-    // [리팩토링] 웹 타입(MultipartFile)을 application command 경계 이전에 내부 타입(UploadFile)으로 변환. (AdminCourseController와 동일한 방식)
     private UploadFile toUploadFile(MultipartFile file) {
         if (file == null || file.isEmpty()) {
             return null;

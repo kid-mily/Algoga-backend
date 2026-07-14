@@ -12,11 +12,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-/**
- * 퀴즈 제출 채점 로직을 QuizService에서 분리한 유틸리티.
- *
- * <p>제출 검증, 정답 채점, 점수 계산 로직은 기존 QuizService 로직과 동일하다. 상태와 외부 의존성이 없다.
- */
 public final class QuizGrader {
 
     private QuizGrader() {

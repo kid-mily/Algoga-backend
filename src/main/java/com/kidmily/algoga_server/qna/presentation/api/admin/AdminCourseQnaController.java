@@ -7,8 +7,6 @@ import com.kidmily.algoga_server.global.exception.GlobalErrorCode;
 import com.kidmily.algoga_server.qna.application.command.AnswerCourseQnaCommand;
 import com.kidmily.algoga_server.qna.application.command.CreateCourseQnaCommentCommand;
 import com.kidmily.algoga_server.qna.application.result.CourseQnaDetailResult;
-// [리팩토링] Q&A 로직을 qna 도메인의 CourseQnaUseCase로 분리하여 CourseUseCase 의존 제거. 삭제 대신 이력 보존용으로 주석 처리함.
-//import com.kidmily.algoga_server.course.application.usecase.CourseUseCase;
 import com.kidmily.algoga_server.qna.application.usecase.CourseQnaUseCase;
 import com.kidmily.algoga_server.learning.exception.LearningErrorCode;
 import com.kidmily.algoga_server.qna.presentation.request.AnswerCourseQnaRequest;
@@ -34,8 +32,6 @@ import java.util.List;
 @RequiredArgsConstructor
 public class AdminCourseQnaController {
 
-    // [리팩토링] Q&A 유스케이스를 qna 도메인으로 분리. 기존 CourseUseCase 주입을 CourseQnaUseCase로 대체함.
-    //private final CourseUseCase courseUseCase;
     private final CourseQnaUseCase courseQnaUseCase;
 
     @Operation(summary = "관리자 강의 Q&A 목록 조회")

@@ -28,11 +28,6 @@ import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-/**
- * 내 강의 목록 항목(MyCourseResult) 조립 책임을 CourseService에서 분리한 협력 객체.
- *
- * <p>조립 결과와 값 계산은 기존 CourseService 로직과 동일하다.
- */
 @Component
 @RequiredArgsConstructor
 public class MyCourseResultAssembler {

@@ -1,7 +1,5 @@
 package com.kidmily.algoga_server.course.application.service;
 
-// [리팩토링] course 도메인 서비스가 global 포트 대신 course 포트(UploadFile 기반)를 사용하도록 교체. 기존 import는 이력 보존용으로 주석 처리함.
-//import com.kidmily.algoga_server.global.port.out.FileStoragePort;
 import com.kidmily.algoga_server.course.application.port.CourseFileStoragePort;
 import com.kidmily.algoga_server.course.application.command.CreateChapterCommand;
 import com.kidmily.algoga_server.course.application.command.UpdateChapterCommand;
@@ -28,8 +26,6 @@ public class ChapterService implements ChapterUseCase {
 
     private final ChapterRepository chapterRepository;
     private final CourseRepository courseRepository;
-    // [리팩토링] global FileStoragePort -> course CourseFileStoragePort (key/버킷/예외 동일). 기존 필드는 이력 보존용으로 주석 처리함.
-    //private final FileStoragePort fileStoragePort;
     private final CourseFileStoragePort fileStoragePort;
     private final CourseStorageSettings storageSettings;
 

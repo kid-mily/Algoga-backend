@@ -7,11 +7,6 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 
-/**
- * 학습 진도 관련 순수 계산 유틸리티(다음 챕터 탐색, 코스 진행률, 퀴즈 응시 가능 여부).
- *
- * <p>계산 결과는 기존 LearningProgressService 로직과 동일하며 상태·외부 의존성이 없다.
- */
 public final class LearningProgressCalculator {
 
     private LearningProgressCalculator() {

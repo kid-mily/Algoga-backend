@@ -3,9 +3,6 @@ package com.kidmily.algoga_server.quiz.application.service;
 import com.kidmily.algoga_server.learning.exception.LearningErrorCode;
 import com.kidmily.algoga_server.learning.exception.LearningException;
 
-/**
- * 퀴즈 입력(선택지/정답 번호) 검증 유틸리티. 기존 QuizService의 검증 로직과 동일하며 의존성이 없다.
- */
 public final class QuizInputValidator {
 
     private QuizInputValidator() {

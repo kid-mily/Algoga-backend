@@ -25,8 +25,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import com.kidmily.algoga_server.country.domain.model.Country;
 
-// [리팩토링] 입력 검증을 DiagnosisInputValidator로 이관하여 미사용이 된 import. 삭제 대신 이력 보존용으로 주석 처리함.
-//import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
@@ -126,26 +124,6 @@ public class DiagnosisService implements DiagnosisUseCase {
             throw new LearningException(LearningErrorCode.DIAGNOSIS_QUESTION_NOT_FOUND);
         }
 
-        // [리팩토링] 채점(정답/국가 검증 + 점수·레벨 산정)을 DiagnosisGrader로 이관. 아래 원본 코드는 삭제 대신 이력 보존용으로 주석 처리함.
-        /*
-        int correctCount = 0;
-
-        for (SubmitDiagnosisAnswerCommand answer : command.answers()) {
-            DiagnosisQuestion question = questionMap.get(answer.questionId());
-
-            if (!question.active() || !question.countryId().equals(command.countryId())) {
-                throw new LearningException(LearningErrorCode.INVALID_DIAGNOSIS_ANSWER);
-            }
-
-            if (question.correctOption() == answer.selectedOption()) {
-                correctCount++;
-            }
-        }
-
-        int totalCount = command.answers().size();
-        int score = calculateScore(correctCount, totalCount);
-        String level = calculateLevel(score);
-        */
         DiagnosisGrader.Result grading = DiagnosisGrader.grade(command.answers(), questionMap, command.countryId());
         int correctCount = grading.correctCount();
         int totalCount = grading.totalCount();
@@ -267,48 +245,6 @@ public class DiagnosisService implements DiagnosisUseCase {
                 .map(Country::getName)
                 .orElse(null);
     }
-
-    // [리팩토링] 입력 검증을 DiagnosisInputValidator로 이관하여 미사용. 삭제 대신 이력 보존용으로 주석 처리함.
-    /*
-    private void validateDiagnosisQuestion(Integer correctOption, Integer questionOrder) {
-        if (correctOption == null || correctOption < 1 || correctOption > 4) {
-            throw new LearningException(LearningErrorCode.INVALID_DIAGNOSIS_ANSWER);
-        }
-
-        if (questionOrder == null || questionOrder < 1) {
-            throw new LearningException(LearningErrorCode.INVALID_DIAGNOSIS_ANSWER);
-        }
-    }
-
-    private void validateDuplicateAnswers(List<SubmitDiagnosisAnswerCommand> answers) {
-        LinkedHashSet<Long> uniqueQuestionIds = answers.stream()
-                .map(SubmitDiagnosisAnswerCommand::questionId)
-                .collect(Collectors.toCollection(LinkedHashSet::new));
-
-        if (uniqueQuestionIds.size() != answers.size()) {
-            throw new LearningException(LearningErrorCode.INVALID_DIAGNOSIS_ANSWER);
-        }
-    }
-    */
-
-    // [리팩토링] 점수·레벨 산정을 DiagnosisGrader로 이관하여 미사용. 삭제 대신 이력 보존용으로 주석 처리함.
-    /*
-    private int calculateScore(int correctCount, int totalCount) {
-        return correctCount * 100 / totalCount;
-    }
-
-    private String calculateLevel(int score) {
-        if (score <= 40) {
-            return "BEGINNER";
-        }
-
-        if (score <= 70) {
-            return "INTERMEDIATE";
-        }
-
-        return "ADVANCED";
-    }
-    */
 
     private String toLevelName(String level) {
         return switch (level) {

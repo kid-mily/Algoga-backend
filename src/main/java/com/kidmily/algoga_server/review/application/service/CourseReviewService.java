@@ -89,34 +89,6 @@ public class CourseReviewService implements CourseReviewUseCase {
 
         List<CourseReview> reviews = courseReviewRepository.findByCourseId(courseId);
 
-        // [리팩토링] 평점 요약 계산을 ReviewRatingSummaryCalculator로 이관. 아래 원본 코드는 삭제 대신 이력 보존용으로 주석 처리함.
-        /*
-        int totalReviewCount = reviews.size();
-
-        int fiveStarCount = countByRating(reviews, 5);
-        int fourStarCount = countByRating(reviews, 4);
-        int threeStarCount = countByRating(reviews, 3);
-        int twoStarCount = countByRating(reviews, 2);
-        int oneStarCount = countByRating(reviews, 1);
-
-        double averageRating = calculateAverageRating(reviews);
-
-        CourseReviewSummaryResult result = new CourseReviewSummaryResult(
-                courseId,
-                averageRating,
-                totalReviewCount,
-                fiveStarCount,
-                fourStarCount,
-                threeStarCount,
-                twoStarCount,
-                oneStarCount,
-                calculateRate(fiveStarCount, totalReviewCount),
-                calculateRate(fourStarCount, totalReviewCount),
-                calculateRate(threeStarCount, totalReviewCount),
-                calculateRate(twoStarCount, totalReviewCount),
-                calculateRate(oneStarCount, totalReviewCount)
-        );
-        */
         CourseReviewSummaryResult result = ReviewRatingSummaryCalculator.summarize(courseId, reviews);
 
         log.info("[Course Review Query] 리뷰 요약 조회 완료. courseId={}, totalReviewCount={}, averageRating={}",
@@ -161,47 +133,6 @@ public class CourseReviewService implements CourseReviewUseCase {
         CourseReview review = findReview(courseId, reviewId);
         courseReviewRepository.save(review.hide());
     }
-
-    // [리팩토링] 평점 요약 계산을 ReviewRatingSummaryCalculator로 이관하여 미사용. 삭제 대신 이력 보존용으로 주석 처리함.
-    /*
-    private int countByRating(
-            List<CourseReview> reviews,
-            int rating
-    ) {
-        return (int) reviews.stream()
-                .filter(review -> review.getRating() == rating)
-                .count();
-    }
-
-    private double calculateAverageRating(List<CourseReview> reviews) {
-        if (reviews.isEmpty()) {
-            return 0.0;
-        }
-
-        double average = reviews.stream()
-                .mapToInt(CourseReview::getRating)
-                .average()
-                .orElse(0.0);
-
-        return roundToOneDecimal(average);
-    }
-
-    private double calculateRate(
-            int count,
-            int total
-    ) {
-        if (total == 0) {
-            return 0.0;
-        }
-
-        double rate = (count * 100.0) / total;
-        return roundToOneDecimal(rate);
-    }
-
-    private double roundToOneDecimal(double value) {
-        return Math.round(value * 10.0) / 10.0;
-    }
-    */
 
     private void validateCourse(Long courseId) {
         if (courseRepository.findById(courseId).isEmpty()) {

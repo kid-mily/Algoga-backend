@@ -17,11 +17,6 @@ import org.springframework.stereotype.Component;
 import java.util.List;
 import java.util.Optional;
 
-/**
- * 관리자 강의 수강생 목록 항목(CourseStudentResult) 조립 책임을 CourseService에서 분리한 협력 객체.
- *
- * <p>조립 결과와 값 계산은 기존 CourseService 로직과 동일하다.
- */
 @Component
 @RequiredArgsConstructor
 public class CourseStudentResultAssembler {

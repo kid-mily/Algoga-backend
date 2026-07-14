@@ -1,7 +1,5 @@
 package com.kidmily.algoga_server.course.application.service;
 
-// [리팩토링] 파일 스토리지 책임이 CourseFileManager로 이관되어 이 mock 타입은 미사용. 삭제 대신 이력 보존용으로 주석 처리함.
-//import com.kidmily.algoga_server.global.port.out.FileStoragePort;
 import com.kidmily.algoga_server.course.application.port.UserProfilePort;
 import com.kidmily.algoga_server.course.application.result.CourseClassroomResult;
 import com.kidmily.algoga_server.course.domain.model.Chapter;
@@ -21,8 +19,6 @@ import com.kidmily.algoga_server.country.domain.repository.MapRepository;
 import com.kidmily.algoga_server.quiz.domain.repository.QuizSubmissionRepository;
 import com.kidmily.algoga_server.learning.exception.LearningErrorCode;
 import com.kidmily.algoga_server.learning.exception.LearningException;
-// [리팩토링] 파일 스토리지 설정 의존성이 CourseFileManager로 이관되어 이 mock 타입은 미사용. 삭제 대신 이력 보존용으로 주석 처리함.
-//import com.kidmily.algoga_server.course.settings.CourseStorageSettings;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -66,11 +62,7 @@ class CourseServiceClassroomTest {
     @Mock private MapRepository mapRepository;
     @Mock private EnrollmentRepository enrollmentRepository;
     @Mock private UserProfilePort userProfilePort;
-    // [리팩토링] 파일 스토리지 책임이 CourseFileManager로 이관되어 CourseService 생성자에서 제거됨. 아래 두 mock은 미사용이 되어 주석 처리함.
-    //@Mock private FileStoragePort fileStoragePort;
-    //@Mock private CourseStorageSettings storageSettings;
     @Mock private CourseFileManager courseFileManager;
-    // [리팩토링] 진도 조회/병합 책임이 CourseProgressReader로 이관되어 CourseService 생성자에 추가됨.
     @Mock private CourseProgressReader courseProgressReader;
 
     @InjectMocks
@@ -140,8 +132,6 @@ class CourseServiceClassroomTest {
         courseService.deleteCourse(COURSE_ID);
 
         verify(courseRepository).softDelete(COURSE_ID);
-        // [리팩토링] 파일 처리 책임이 CourseFileManager로 이관됨. 기존 fileStoragePort 검증을 courseFileManager 검증으로 대체함.
-        //verifyNoInteractions(fileStoragePort);
         verifyNoInteractions(courseFileManager);
     }
 
@@ -153,8 +143,6 @@ class CourseServiceClassroomTest {
         when(enrollmentRepository.findByUserIdAndCourseId(USER_ID, COURSE_ID))
                 .thenReturn(Optional.of(enrollment(LocalDateTime.now().plusMonths(6))));
         when(chapterRepository.findByCourseId(COURSE_ID)).thenReturn(chapters);
-        // [리팩토링] 진도 조회/병합이 CourseProgressReader로 이관됨. 기존 learningProgressRepository 스텁을 reader 스텁으로 대체함.
-        //when(learningProgressRepository.findByUserIdAndCourseId(USER_ID, COURSE_ID)).thenReturn(progresses);
         Map<Long, LearningProgress> progressByChapterId = progresses.stream()
                 .collect(Collectors.toMap(LearningProgress::getChapterId, Function.identity()));
         when(courseProgressReader.loadProgressMapWithCache(eq(USER_ID), eq(COURSE_ID), anyList()))
