@@ -2,8 +2,10 @@ package com.kidmily.algoga_server.learningprogress.application.service;
 
 import com.kidmily.algoga_server.learningprogress.application.command.UpdateLearningProgressCommand;
 import com.kidmily.algoga_server.learningprogress.application.port.LearningProgressCachePort;
-import com.kidmily.algoga_server.course.application.result.CourseClassroomChapterResult;
+// [리팩토링] 강의실 조립을 CourseClassroomAssembler로 이관하여 미사용이 된 import. 삭제 대신 이력 보존용으로 주석 처리함.
+//import com.kidmily.algoga_server.course.application.result.CourseClassroomChapterResult;
 import com.kidmily.algoga_server.course.application.result.CourseClassroomResult;
+import com.kidmily.algoga_server.course.application.service.CourseClassroomAssembler;
 import com.kidmily.algoga_server.learningprogress.application.result.LearningProgressResult;
 import com.kidmily.algoga_server.learningprogress.application.usecase.LearningProgressUseCase;
 import com.kidmily.algoga_server.course.domain.model.Chapter;
@@ -22,7 +24,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
+// [리팩토링] 강의실 조립을 CourseClassroomAssembler로 이관하여 미사용이 된 import. 삭제 대신 이력 보존용으로 주석 처리함.
+//import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
@@ -78,10 +81,10 @@ public class LearningProgressService implements LearningProgressUseCase {
         Map<Long, LearningProgress> progressByChapterId = loadProgressMap(command.userId(), command.courseId(), chapters);
         progressByChapterId.put(savedProgress.getChapterId(), savedProgress);
 
-        Long nextChapterId = findNextChapterId(chapters, chapter);
+        Long nextChapterId = LearningProgressCalculator.findNextChapterId(chapters, chapter);
         boolean nextChapterUnlocked = savedProgress.isCompleted() && nextChapterId != null;
-        int courseProgressRate = calculateCourseProgressRate(chapters, progressByChapterId);
-        boolean quizAvailable = isQuizAvailable(chapters, progressByChapterId);
+        int courseProgressRate = LearningProgressCalculator.calculateCourseProgressRate(chapters, progressByChapterId);
+        boolean quizAvailable = LearningProgressCalculator.isQuizAvailable(chapters, progressByChapterId);
         CourseClassroomResult classroom = createClassroomResult(command.userId(), course, chapters, progressByChapterId);
 
         log.info("[Learning Progress Command] update completed. userId={}, courseId={}, chapterId={}, progressRate={}, completed={}, nextChapterId={}, nextChapterUnlocked={}, quizAvailable={}",
@@ -158,6 +161,8 @@ public class LearningProgressService implements LearningProgressUseCase {
                 .filter(value -> value.isAccessibleAt(LocalDateTime.now()))
                 .orElseThrow(() -> new LearningException(LearningErrorCode.NOT_ENROLLED));
 
+        // [리팩토링] 강의실 결과 조립이 CourseClassroomAssembler와 완전 중복되어 재사용으로 대체. 아래 원본 코드는 삭제 대신 이력 보존용으로 주석 처리함.
+        /*
         boolean previousChaptersCompleted = true;
         List<CourseClassroomChapterResult> chapterResults = new ArrayList<>();
 
@@ -192,6 +197,8 @@ public class LearningProgressService implements LearningProgressUseCase {
                 quizAvailable,
                 chapterResults
         );
+        */
+        return CourseClassroomAssembler.assemble(course, enrollment, chapters, progressByChapterId);
     }
 
     private void validateEnrollment(Long userId, Long courseId) {
@@ -238,6 +245,8 @@ public class LearningProgressService implements LearningProgressUseCase {
         }
     }
 
+    // [리팩토링] 순수 계산(다음 챕터/진행률/퀴즈 가능 여부)을 LearningProgressCalculator로 이관하여 미사용. 삭제 대신 이력 보존용으로 주석 처리함.
+    /*
     private Long findNextChapterId(List<Chapter> chapters, Chapter currentChapter) {
         return chapters.stream()
                 .filter(chapter -> chapter.getChapterOrder() > currentChapter.getChapterOrder())
@@ -278,6 +287,7 @@ public class LearningProgressService implements LearningProgressUseCase {
                     return progress != null && progress.isCompleted();
                 });
     }
+    */
 
     private Map<Long, LearningProgress> loadProgressMap(Long userId, Long courseId, List<Chapter> chapters) {
         Map<Long, LearningProgress> progressByChapterId = learningProgressRepository.findByUserIdAndCourseId(userId, courseId)

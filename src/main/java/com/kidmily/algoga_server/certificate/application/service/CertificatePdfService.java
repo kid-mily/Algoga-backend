@@ -1,5 +1,6 @@
 package com.kidmily.algoga_server.certificate.application.service;
 
+import com.kidmily.algoga_server.certificate.application.usecase.CertificateUseCase;
 import com.kidmily.algoga_server.course.domain.model.Course;
 import com.kidmily.algoga_server.completion.domain.model.CourseCompletion;
 import com.kidmily.algoga_server.completion.domain.repository.CourseCompletionRepository;
@@ -29,7 +30,7 @@ import java.util.List;
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
-public class CertificatePdfService {
+public class CertificatePdfService implements CertificateUseCase {
 
     private static final String CLASSPATH_KOREAN_FONT = "fonts/NotoSansKR-VF.ttf";
 
@@ -53,6 +54,7 @@ public class CertificatePdfService {
     private final CourseRepository courseRepository;
     private final CourseCompletionRepository courseCompletionRepository;
 
+    @Override
     public byte[] generateCertificatePdf(Long userId, String userName, Long courseId) {
         log.info("[Certificate Query] 수료증 PDF 발급 요청. userId={}, courseId={}", userId, courseId);
 

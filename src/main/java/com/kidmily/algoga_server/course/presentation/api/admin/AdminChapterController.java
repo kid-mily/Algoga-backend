@@ -5,8 +5,10 @@ import com.kidmily.algoga_server.global.common.api.response.ApiResponse;
 import com.kidmily.algoga_server.global.exception.GlobalErrorCode;
 import com.kidmily.algoga_server.course.application.command.CreateChapterCommand;
 import com.kidmily.algoga_server.course.application.command.UpdateChapterCommand;
+import com.kidmily.algoga_server.course.application.port.UploadFile;
 import com.kidmily.algoga_server.course.application.usecase.ChapterUseCase;
 import com.kidmily.algoga_server.learning.exception.LearningErrorCode;
+import com.kidmily.algoga_server.learning.exception.LearningException;
 import com.kidmily.algoga_server.course.presentation.request.admin.CreateChapterRequest;
 import com.kidmily.algoga_server.course.presentation.request.admin.UpdateChapterRequest;
 import com.kidmily.algoga_server.course.presentation.response.AdminChapterResponse;
@@ -24,6 +26,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
 import java.util.List;
 
 @Tag(name = "Admin Chapter", description = "콘텐츠 매니저 챕터 관리 API")
@@ -90,7 +93,7 @@ public class AdminChapterController {
                 courseId,
                 request.title(),
                 request.description(),
-                videoFile,
+                toUploadFile(videoFile),
                 request.durationSeconds(),
                 request.chapterOrder()
         );
@@ -138,7 +141,7 @@ public class AdminChapterController {
         UpdateChapterCommand command = new UpdateChapterCommand(
                 request.title(),
                 request.description(),
-                videoFile,
+                toUploadFile(videoFile),
                 request.durationSeconds(),
                 request.chapterOrder()
         );
@@ -176,5 +179,23 @@ public class AdminChapterController {
                         "챕터 삭제에 성공했습니다."
                 )
         );
+    }
+
+    // [리팩토링] 웹 타입(MultipartFile)을 application command 경계 이전에 내부 타입(UploadFile)으로 변환. (AdminCourseController와 동일한 방식)
+    private UploadFile toUploadFile(MultipartFile file) {
+        if (file == null || file.isEmpty()) {
+            return null;
+        }
+
+        try {
+            return new UploadFile(
+                    file.getOriginalFilename(),
+                    file.getContentType(),
+                    file.getSize(),
+                    file.getInputStream()
+            );
+        } catch (IOException exception) {
+            throw new LearningException(LearningErrorCode.FILE_UPLOAD_FAILED);
+        }
     }
 }

@@ -6,7 +6,8 @@ package com.kidmily.algoga_server.course.application.service;
 import com.kidmily.algoga_server.course.application.command.CreateCourseCommand;
 import com.kidmily.algoga_server.course.application.command.UpdateCourseCommand;
 import com.kidmily.algoga_server.course.application.result.CourseResult;
-import com.kidmily.algoga_server.course.application.result.CourseClassroomChapterResult;
+// [리팩토링] 강의실 조립을 CourseClassroomAssembler로 이관하여 미사용이 된 import. 삭제 대신 이력 보존용으로 주석 처리함.
+//import com.kidmily.algoga_server.course.application.result.CourseClassroomChapterResult;
 import com.kidmily.algoga_server.course.application.result.CourseClassroomResult;
 import com.kidmily.algoga_server.course.application.result.CourseStudentResult;
 import com.kidmily.algoga_server.course.application.result.MyCourseResult;
@@ -17,8 +18,10 @@ import com.kidmily.algoga_server.course.domain.model.CourseFile;
 import com.kidmily.algoga_server.course.domain.model.CourseLevel;
 import com.kidmily.algoga_server.course.domain.model.CourseStatus;
 import com.kidmily.algoga_server.completion.application.result.CourseCompletionResult;
-import com.kidmily.algoga_server.completion.domain.model.CourseCompletion;
-import com.kidmily.algoga_server.completion.domain.repository.CourseCompletionRepository;
+import com.kidmily.algoga_server.completion.application.service.CourseCompletionRegistrar;
+// [리팩토링] 수료 로직을 CourseCompletionRegistrar로 이관하여 미사용이 된 import. 삭제 대신 이력 보존용으로 주석 처리함.
+//import com.kidmily.algoga_server.completion.domain.model.CourseCompletion;
+//import com.kidmily.algoga_server.completion.domain.repository.CourseCompletionRepository;
 import com.kidmily.algoga_server.country.domain.model.Country;
 import com.kidmily.algoga_server.country.domain.repository.MapRepository;
 import com.kidmily.algoga_server.enrollment.domain.model.Enrollment;
@@ -44,7 +47,9 @@ import com.kidmily.algoga_server.course.application.usecase.CourseUseCase;
 //import com.kidmily.algoga_server.review.domain.model.CourseReview;
 // [리팩토링] my-course/수강생 결과 조립을 assembler로 이관하여 미사용이 된 import. 삭제 대신 이력 보존용으로 주석 처리함.
 //import com.kidmily.algoga_server.review.domain.repository.CourseReviewRepository;
-import com.kidmily.algoga_server.quiz.domain.repository.QuizSubmissionRepository;
+import com.kidmily.algoga_server.course.application.policy.CourseCompletionPolicy;
+// [리팩토링] 수료 검증을 CourseCompletionPolicy로 이관하여 미사용이 된 import. 삭제 대신 이력 보존용으로 주석 처리함.
+//import com.kidmily.algoga_server.quiz.domain.repository.QuizSubmissionRepository;
 import com.kidmily.algoga_server.learning.exception.LearningErrorCode;
 import com.kidmily.algoga_server.learning.exception.LearningException;
 // [리팩토링] 파일 스토리지 로직을 CourseFileManager로 이관하여 미사용. 삭제 대신 이력 보존용으로 주석 처리함.
@@ -61,8 +66,9 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import com.kidmily.algoga_server.global.event.CourseCompletionCompletedEvent;
-import org.springframework.context.ApplicationEventPublisher;
+// [리팩토링] 수료 로직을 CourseCompletionRegistrar로 이관하여 미사용이 된 import들. 삭제 대신 이력 보존용으로 주석 처리함.
+//import com.kidmily.algoga_server.global.event.CourseCompletionCompletedEvent;
+//import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.cache.annotation.CacheEvict;
 
 import org.springframework.data.domain.PageImpl;
@@ -85,8 +91,12 @@ public class CourseService implements CourseUseCase {
     // [리팩토링] 진도 캐시 조회/병합 책임을 CourseProgressReader로 이관. 캐시 포트 의존성은 그쪽으로 이동하여 주석 처리함.
     //private final LearningProgressCachePort learningProgressCachePort;
     private final CourseProgressReader courseProgressReader;
-    private final CourseCompletionRepository courseCompletionRepository;
-    private final QuizSubmissionRepository quizSubmissionRepository;
+    // [리팩토링] 수료 생성/이벤트 로직을 CourseCompletionRegistrar로 이관하여 미사용. 삭제 대신 이력 보존용으로 주석 처리함.
+    //private final CourseCompletionRepository courseCompletionRepository;
+    private final CourseCompletionRegistrar courseCompletionRegistrar;
+    // [리팩토링] 수료 검증을 CourseCompletionPolicy로 이관하여 quizSubmissionRepository 미사용. 삭제 대신 이력 보존용으로 주석 처리함.
+    //private final QuizSubmissionRepository quizSubmissionRepository;
+    private final CourseCompletionPolicy courseCompletionPolicy;
     // [리팩토링] my-course/수강생 결과 조립을 assembler로 이관하여 미사용. 삭제 대신 이력 보존용으로 주석 처리함.
     //private final CourseReviewRepository courseReviewRepository;
     // [리팩토링] Q&A 로직을 CourseQnaService로 분리하여 미사용. 삭제 대신 이력 보존용으로 주석 처리함.
@@ -101,7 +111,8 @@ public class CourseService implements CourseUseCase {
     //private final CourseFileStoragePort fileStoragePort;
     //private final CourseStorageSettings storageSettings;
     private final CourseFileManager courseFileManager;
-    private final ApplicationEventPublisher eventPublisher;
+    // [리팩토링] 수료 이벤트 발행을 CourseCompletionRegistrar로 이관하여 미사용. 삭제 대신 이력 보존용으로 주석 처리함.
+    //private final ApplicationEventPublisher eventPublisher;
     private final PublishedCourseListCacheService publishedCourseListCacheService;
 
     @Override
@@ -266,12 +277,10 @@ public class CourseService implements CourseUseCase {
 
     @Override
     public CourseCompletionResult completeCourse(CompleteCourseCommand command) {
-        validateAccessibleEnrollment(command.userId(), command.courseId());
-        findCourseIncludingDeleted(command.courseId());
-        validateNotCompleted(command.userId(), command.courseId());
-        validateAllChaptersCompleted(command.userId(), command.courseId());
-        validateQuizSubmitted(command.userId(), command.courseId());
+        courseCompletionPolicy.validateCompletable(command.userId(), command.courseId());
 
+        // [리팩토링] 수료 생성/이벤트 로직을 CourseCompletionRegistrar로 이관. 아래 원본 코드는 삭제 대신 이력 보존용으로 주석 처리함.
+        /*
         CourseCompletion courseCompletion = CourseCompletion.create(
                 command.userId(),
                 command.courseId()
@@ -287,6 +296,8 @@ public class CourseService implements CourseUseCase {
         ));
 
         return CourseCompletionResult.from(savedCompletion);
+        */
+        return courseCompletionRegistrar.register(command.userId(), command.courseId());
     }
 
     @Override
@@ -334,6 +345,8 @@ public class CourseService implements CourseUseCase {
         List<Chapter> chapters = chapterRepository.findByCourseId(courseId);
         Map<Long, LearningProgress> progressByChapterId = courseProgressReader.loadProgressMapWithCache(userId, courseId, chapters);
 
+        // [리팩토링] 강의실 결과 조립을 CourseClassroomAssembler로 이관. 아래 원본 조립 코드는 삭제 대신 이력 보존용으로 주석 처리함.
+        /*
         List<CourseClassroomChapterResult> chapterResults = new java.util.ArrayList<>();
         boolean previousChaptersCompleted = true;
 
@@ -368,6 +381,8 @@ public class CourseService implements CourseUseCase {
                 quizAvailable,
                 chapterResults
         );
+        */
+        return CourseClassroomAssembler.assemble(course, enrollment, chapters, progressByChapterId);
     }
 
     // [리팩토링] Q&A 유스케이스를 qna 도메인의 CourseQnaService로 이관. 아래 구현들은 삭제 대신 이력 보존용으로 주석 처리함.
@@ -557,6 +572,8 @@ public class CourseService implements CourseUseCase {
                 .orElseThrow(() -> new LearningException(LearningErrorCode.COURSE_NOT_FOUND));
     }
 
+    // [리팩토링] 수료 검증을 CourseCompletionPolicy로 이관하여 미사용. 삭제 대신 이력 보존용으로 주석 처리함.
+    /*
     private void validateAccessibleEnrollment(Long userId, Long courseId) {
         boolean accessible = enrollmentRepository.findByUserIdAndCourseId(userId, courseId)
                 .map(enrollment -> enrollment.isAccessibleAt(LocalDateTime.now()))
@@ -566,6 +583,7 @@ public class CourseService implements CourseUseCase {
             throw new LearningException(LearningErrorCode.NOT_ENROLLED);
         }
     }
+    */
 
     private void validateCountry(Long countryId) {
         mapRepository.findActiveCountryById(countryId)
@@ -618,6 +636,8 @@ public class CourseService implements CourseUseCase {
         }
     }
 
+    // [리팩토링] 수료 검증을 CourseCompletionPolicy로 이관하여 미사용. 삭제 대신 이력 보존용으로 주석 처리함.
+    /*
     private void validateNotCompleted(Long userId, Long courseId) {
         if (courseCompletionRepository.existsByUserIdAndCourseId(userId, courseId)) {
             throw new LearningException(LearningErrorCode.COURSE_ALREADY_COMPLETED);
@@ -642,6 +662,7 @@ public class CourseService implements CourseUseCase {
             throw new LearningException(LearningErrorCode.QUIZ_LOCKED);
         }
     }
+    */
 
     // [리팩토링] 아래 진도 조회/캐시 병합 메서드들을 CourseProgressReader로 이관하여 미사용. 삭제 대신 이력 보존용으로 주석 처리함.
     /*
@@ -743,11 +764,14 @@ public class CourseService implements CourseUseCase {
     }
     */
 
+    // [리팩토링] 수료 검증을 CourseCompletionPolicy로 이관하여 미사용. 삭제 대신 이력 보존용으로 주석 처리함.
+    /*
     private void validateQuizSubmitted(Long userId, Long courseId) {
         if (!quizSubmissionRepository.existsByUserIdAndCourseId(userId, courseId)) {
             throw new LearningException(LearningErrorCode.QUIZ_NOT_SUBMITTED);
         }
     }
+    */
 
     // [리팩토링] 수강생 결과 조립을 CourseStudentResultAssembler로 이관하여 미사용. 삭제 대신 이력 보존용으로 주석 처리함.
     /*

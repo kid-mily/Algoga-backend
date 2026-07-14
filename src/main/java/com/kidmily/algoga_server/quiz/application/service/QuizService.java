@@ -1,46 +1,60 @@
 package com.kidmily.algoga_server.quiz.application.service;
 
-import com.kidmily.algoga_server.global.event.CourseCompletionCompletedEvent;
+// [리팩토링] 수료 로직을 CourseCompletionRegistrar로 이관하여 미사용이 된 import. 삭제 대신 이력 보존용으로 주석 처리함.
+//import com.kidmily.algoga_server.global.event.CourseCompletionCompletedEvent;
 import com.kidmily.algoga_server.quiz.application.command.CreateQuizCommand;
 import com.kidmily.algoga_server.quiz.application.command.SubmitQuizAnswerCommand;
 import com.kidmily.algoga_server.quiz.application.command.SubmitQuizCommand;
 import com.kidmily.algoga_server.quiz.application.command.UpdateQuizCommand;
-import com.kidmily.algoga_server.learningprogress.application.port.LearningProgressCachePort;
+// [리팩토링] 검증 로직을 QuizAccessPolicy로 이관하여 미사용이 된 import. 삭제 대신 이력 보존용으로 주석 처리함.
+//import com.kidmily.algoga_server.learningprogress.application.port.LearningProgressCachePort;
 import com.kidmily.algoga_server.completion.application.result.CourseCompletionResult;
+import com.kidmily.algoga_server.completion.application.service.CourseCompletionRegistrar;
 import com.kidmily.algoga_server.quiz.application.result.QuizResult;
 import com.kidmily.algoga_server.quiz.application.result.QuizSubmissionAnswerResult;
 import com.kidmily.algoga_server.quiz.application.result.QuizSubmissionResult;
 import com.kidmily.algoga_server.quiz.application.result.QuizSubmitResult;
-import com.kidmily.algoga_server.quiz.application.result.WrongQuizAnswerResult;
+// [리팩토링] 채점 로직을 QuizGrader로 이관하여 미사용이 된 import. 삭제 대신 이력 보존용으로 주석 처리함.
+//import com.kidmily.algoga_server.quiz.application.result.WrongQuizAnswerResult;
 import com.kidmily.algoga_server.quiz.application.usecase.QuizUseCase;
-import com.kidmily.algoga_server.course.domain.model.Chapter;
-import com.kidmily.algoga_server.completion.domain.model.CourseCompletion;
-import com.kidmily.algoga_server.learningprogress.domain.model.LearningProgress;
+import com.kidmily.algoga_server.quiz.application.policy.QuizAccessPolicy;
+// [리팩토링] 검증 로직을 QuizAccessPolicy로 이관하여 미사용이 된 import. 삭제 대신 이력 보존용으로 주석 처리함.
+//import com.kidmily.algoga_server.course.domain.model.Chapter;
+// [리팩토링] 수료 로직을 CourseCompletionRegistrar로 이관하여 미사용이 된 import. 삭제 대신 이력 보존용으로 주석 처리함.
+//import com.kidmily.algoga_server.completion.domain.model.CourseCompletion;
+//import com.kidmily.algoga_server.learningprogress.domain.model.LearningProgress;
 import com.kidmily.algoga_server.quiz.domain.model.Quiz;
 import com.kidmily.algoga_server.quiz.domain.model.QuizSubmission;
 import com.kidmily.algoga_server.quiz.domain.model.QuizSubmissionAnswer;
-import com.kidmily.algoga_server.course.domain.repository.ChapterRepository;
-import com.kidmily.algoga_server.completion.domain.repository.CourseCompletionRepository;
-import com.kidmily.algoga_server.course.domain.repository.CourseRepository;
-import com.kidmily.algoga_server.enrollment.domain.repository.EnrollmentRepository;
-import com.kidmily.algoga_server.learningprogress.domain.repository.LearningProgressRepository;
+// [리팩토링] 검증 로직을 QuizAccessPolicy로 이관하여 미사용이 된 import들. 삭제 대신 이력 보존용으로 주석 처리함.
+//import com.kidmily.algoga_server.course.domain.repository.ChapterRepository;
+// [리팩토링] 수료 로직을 CourseCompletionRegistrar로 이관하여 미사용이 된 import. 삭제 대신 이력 보존용으로 주석 처리함.
+//import com.kidmily.algoga_server.completion.domain.repository.CourseCompletionRepository;
+//import com.kidmily.algoga_server.course.domain.repository.CourseRepository;
+//import com.kidmily.algoga_server.enrollment.domain.repository.EnrollmentRepository;
+//import com.kidmily.algoga_server.learningprogress.domain.repository.LearningProgressRepository;
 import com.kidmily.algoga_server.quiz.domain.repository.QuizRepository;
 import com.kidmily.algoga_server.quiz.domain.repository.QuizSubmissionAnswerRepository;
 import com.kidmily.algoga_server.quiz.domain.repository.QuizSubmissionRepository;
 import com.kidmily.algoga_server.learning.exception.LearningErrorCode;
 import com.kidmily.algoga_server.learning.exception.LearningException;
 import lombok.RequiredArgsConstructor;
-import org.springframework.context.ApplicationEventPublisher;
+// [리팩토링] 수료 로직을 CourseCompletionRegistrar로 이관하여 미사용이 된 import. 삭제 대신 이력 보존용으로 주석 처리함.
+//import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.HashSet;
+// [리팩토링] 검증 로직을 QuizAccessPolicy로 이관하여 미사용이 된 import. 삭제 대신 이력 보존용으로 주석 처리함.
+//import java.time.LocalDateTime;
+// [리팩토링] 채점 로직을 QuizGrader로 이관하여 미사용이 된 import. 삭제 대신 이력 보존용으로 주석 처리함.
+//import java.util.ArrayList;
+//import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
+// [리팩토링] 수료 로직을 CourseCompletionRegistrar로 이관하여 미사용이 된 import. 삭제 대신 이력 보존용으로 주석 처리함.
+//import java.util.Optional;
+// [리팩토링] 채점 로직을 QuizGrader로 이관하여 미사용이 된 import. 삭제 대신 이력 보존용으로 주석 처리함.
+//import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -49,21 +63,25 @@ import java.util.stream.Collectors;
 @Transactional
 public class QuizService implements QuizUseCase {
 
-    private final CourseRepository courseRepository;
-    private final ChapterRepository chapterRepository;
-    private final LearningProgressRepository learningProgressRepository;
-    private final LearningProgressCachePort learningProgressCachePort;
-    private final EnrollmentRepository enrollmentRepository;
+    // [리팩토링] 코스/수강/챕터완료 검증을 QuizAccessPolicy로 이관하여 미사용. 삭제 대신 이력 보존용으로 주석 처리함.
+    //private final CourseRepository courseRepository;
+    //private final ChapterRepository chapterRepository;
+    //private final LearningProgressRepository learningProgressRepository;
+    //private final LearningProgressCachePort learningProgressCachePort;
+    //private final EnrollmentRepository enrollmentRepository;
+    private final QuizAccessPolicy quizAccessPolicy;
     private final QuizRepository quizRepository;
     private final QuizSubmissionRepository quizSubmissionRepository;
     private final QuizSubmissionAnswerRepository quizSubmissionAnswerRepository;
-    private final CourseCompletionRepository courseCompletionRepository;
-    private final ApplicationEventPublisher eventPublisher;
+    // [리팩토링] 수료 생성/이벤트 로직을 CourseCompletionRegistrar로 이관하여 미사용. 삭제 대신 이력 보존용으로 주석 처리함.
+    //private final CourseCompletionRepository courseCompletionRepository;
+    //private final ApplicationEventPublisher eventPublisher;
+    private final CourseCompletionRegistrar courseCompletionRegistrar;
 
     @Override
     @Transactional(readOnly = true)
     public List<QuizResult> getQuizzes(Long courseId) {
-        validateActiveCourse(courseId);
+        quizAccessPolicy.validateActiveCourse(courseId);
 
         return quizRepository.findByCourseId(courseId).stream()
                 .map(QuizResult::from)
@@ -73,9 +91,9 @@ public class QuizService implements QuizUseCase {
     @Override
     @Transactional(readOnly = true)
     public List<QuizResult> getQuizzes(Long userId, Long courseId) {
-        validateEnrollment(userId, courseId);
-        validateCourseExists(courseId);
-        validateAllChaptersCompleted(userId, courseId);
+        quizAccessPolicy.validateEnrollment(userId, courseId);
+        quizAccessPolicy.validateCourseExists(courseId);
+        quizAccessPolicy.validateAllChaptersCompleted(userId, courseId);
 
         List<Quiz> quizzes = quizRepository.findByCourseId(courseId);
         if (quizzes.isEmpty()) {
@@ -89,9 +107,9 @@ public class QuizService implements QuizUseCase {
 
     @Override
     public QuizResult createQuiz(CreateQuizCommand command) {
-        validateActiveCourse(command.courseId());
-        validateOptions(command.option1(), command.option2(), command.option3(), command.option4());
-        validateCorrectOption(command.correctOption());
+        quizAccessPolicy.validateActiveCourse(command.courseId());
+        QuizInputValidator.validateOptions(command.option1(), command.option2(), command.option3(), command.option4());
+        QuizInputValidator.validateCorrectOption(command.correctOption());
 
         Quiz savedQuiz = quizRepository.save(Quiz.create(
                 command.courseId(),
@@ -109,9 +127,9 @@ public class QuizService implements QuizUseCase {
 
     @Override
     public QuizResult updateQuiz(Long courseId, Long quizId, UpdateQuizCommand command) {
-        validateActiveCourse(courseId);
-        validateOptions(command.option1(), command.option2(), command.option3(), command.option4());
-        validateCorrectOption(command.correctOption());
+        quizAccessPolicy.validateActiveCourse(courseId);
+        QuizInputValidator.validateOptions(command.option1(), command.option2(), command.option3(), command.option4());
+        QuizInputValidator.validateCorrectOption(command.correctOption());
 
         Quiz updatedQuiz = quizRepository.updateBasicInfo(
                 quizId,
@@ -130,7 +148,7 @@ public class QuizService implements QuizUseCase {
 
     @Override
     public void deleteQuiz(Long courseId, Long quizId) {
-        validateActiveCourse(courseId);
+        quizAccessPolicy.validateActiveCourse(courseId);
 
         if (!quizRepository.delete(quizId, courseId)) {
             throw new LearningException(LearningErrorCode.QUIZ_NOT_FOUND);
@@ -139,9 +157,9 @@ public class QuizService implements QuizUseCase {
 
     @Override
     public QuizSubmitResult submitQuiz(SubmitQuizCommand command) {
-        validateEnrollment(command.userId(), command.courseId());
-        validateCourseExists(command.courseId());
-        validateAllChaptersCompleted(command.userId(), command.courseId());
+        quizAccessPolicy.validateEnrollment(command.userId(), command.courseId());
+        quizAccessPolicy.validateCourseExists(command.courseId());
+        quizAccessPolicy.validateAllChaptersCompleted(command.userId(), command.courseId());
 
         List<Quiz> quizzes = quizRepository.findByCourseId(command.courseId());
         if (quizzes.isEmpty()) {
@@ -151,6 +169,8 @@ public class QuizService implements QuizUseCase {
         Map<Long, Quiz> quizMap = quizzes.stream()
                 .collect(Collectors.toMap(Quiz::getId, Function.identity()));
 
+        // [리팩토링] 제출 검증/채점/점수계산을 QuizGrader로 이관. 아래 원본 채점 코드는 삭제 대신 이력 보존용으로 주석 처리함.
+        /*
         validateSubmission(command.answers(), quizMap, quizzes.size());
 
         int correctCount = 0;
@@ -174,18 +194,20 @@ public class QuizService implements QuizUseCase {
         }
 
         int score = calculateScore(correctCount, quizzes.size());
+        */
+        QuizGrader.Result grading = QuizGrader.grade(command.answers(), quizMap, quizzes.size());
 
         QuizSubmission savedSubmission = quizSubmissionRepository.save(QuizSubmission.create(
                 command.userId(),
                 command.courseId(),
-                quizzes.size(),
-                correctCount,
-                score
+                grading.totalCount(),
+                grading.correctCount(),
+                grading.score()
         ));
 
         saveSubmissionAnswers(savedSubmission.getId(), command.answers(), quizMap);
 
-        CourseCompletionResult completion = completeCourseIfNeeded(
+        CourseCompletionResult completion = courseCompletionRegistrar.register(
                 command.userId(),
                 command.courseId()
         );
@@ -193,20 +215,20 @@ public class QuizService implements QuizUseCase {
         return new QuizSubmitResult(
                 command.userId(),
                 command.courseId(),
-                quizzes.size(),
-                correctCount,
-                score,
+                grading.totalCount(),
+                grading.correctCount(),
+                grading.score(),
                 completion != null,
                 completion,
-                wrongAnswers
+                grading.wrongAnswers()
         );
     }
 
     @Override
     @Transactional(readOnly = true)
     public QuizSubmissionResult getMyQuizSubmission(Long userId, Long courseId) {
-        validateEnrollment(userId, courseId);
-        validateCourseExists(courseId);
+        quizAccessPolicy.validateEnrollment(userId, courseId);
+        quizAccessPolicy.validateCourseExists(courseId);
 
         QuizSubmission submission = quizSubmissionRepository.findByUserIdAndCourseId(userId, courseId)
                 .orElseThrow(() -> new LearningException(LearningErrorCode.QUIZ_NOT_SUBMITTED));
@@ -237,6 +259,8 @@ public class QuizService implements QuizUseCase {
         quizSubmissionAnswerRepository.saveAll(answers);
     }
 
+    // [리팩토링] 수료 생성/이벤트 로직을 CourseCompletionRegistrar로 이관하여 미사용. 삭제 대신 이력 보존용으로 주석 처리함.
+    /*
     private CourseCompletionResult completeCourseIfNeeded(Long userId, Long courseId) {
         Optional<CourseCompletion> existingCompletion =
                 courseCompletionRepository.findByUserIdAndCourseId(userId, courseId);
@@ -258,7 +282,10 @@ public class QuizService implements QuizUseCase {
 
         return CourseCompletionResult.from(savedCompletion);
     }
+    */
 
+    // [리팩토링] 코스/수강/챕터완료 검증을 QuizAccessPolicy로 이관하여 미사용. 삭제 대신 이력 보존용으로 주석 처리함.
+    /*
     private void validateActiveCourse(Long courseId) {
         if (courseRepository.findByIdAndDeletedFalse(courseId).isEmpty()) {
             throw new LearningException(LearningErrorCode.COURSE_NOT_FOUND);
@@ -319,7 +346,10 @@ public class QuizService implements QuizUseCase {
             return Optional.empty();
         }
     }
+    */
 
+    // [리팩토링] 입력 검증을 QuizInputValidator로 이관하여 미사용. 삭제 대신 이력 보존용으로 주석 처리함.
+    /*
     private void validateOptions(String option1, String option2, String option3, String option4) {
         if (isBlank(option1) || isBlank(option2) || isBlank(option3) || isBlank(option4)) {
             throw new LearningException(LearningErrorCode.INVALID_QUIZ_OPTION);
@@ -331,7 +361,10 @@ public class QuizService implements QuizUseCase {
             throw new LearningException(LearningErrorCode.INVALID_QUIZ_ANSWER);
         }
     }
+    */
 
+    // [리팩토링] 제출 검증/점수계산을 QuizGrader로 이관하여 미사용. 삭제 대신 이력 보존용으로 주석 처리함.
+    /*
     private void validateSubmission(List<SubmitQuizAnswerCommand> answers, Map<Long, Quiz> quizMap, int quizCount) {
         if (answers == null || answers.size() != quizCount) {
             throw new LearningException(LearningErrorCode.INVALID_QUIZ_SUBMISSION);
@@ -359,8 +392,12 @@ public class QuizService implements QuizUseCase {
 
         return (int) Math.round((correctCount * 100.0) / totalCount);
     }
+    */
 
+    // [리팩토링] 입력 검증을 QuizInputValidator로 이관하여 미사용. 삭제 대신 이력 보존용으로 주석 처리함.
+    /*
     private boolean isBlank(String value) {
         return value == null || value.isBlank();
     }
+    */
 }

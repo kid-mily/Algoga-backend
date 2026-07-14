@@ -89,6 +89,8 @@ public class CourseReviewService implements CourseReviewUseCase {
 
         List<CourseReview> reviews = courseReviewRepository.findByCourseId(courseId);
 
+        // [리팩토링] 평점 요약 계산을 ReviewRatingSummaryCalculator로 이관. 아래 원본 코드는 삭제 대신 이력 보존용으로 주석 처리함.
+        /*
         int totalReviewCount = reviews.size();
 
         int fiveStarCount = countByRating(reviews, 5);
@@ -114,6 +116,8 @@ public class CourseReviewService implements CourseReviewUseCase {
                 calculateRate(twoStarCount, totalReviewCount),
                 calculateRate(oneStarCount, totalReviewCount)
         );
+        */
+        CourseReviewSummaryResult result = ReviewRatingSummaryCalculator.summarize(courseId, reviews);
 
         log.info("[Course Review Query] 리뷰 요약 조회 완료. courseId={}, totalReviewCount={}, averageRating={}",
                 courseId, result.totalReviewCount(), result.averageRating());
@@ -158,6 +162,8 @@ public class CourseReviewService implements CourseReviewUseCase {
         courseReviewRepository.save(review.hide());
     }
 
+    // [리팩토링] 평점 요약 계산을 ReviewRatingSummaryCalculator로 이관하여 미사용. 삭제 대신 이력 보존용으로 주석 처리함.
+    /*
     private int countByRating(
             List<CourseReview> reviews,
             int rating
@@ -195,6 +201,7 @@ public class CourseReviewService implements CourseReviewUseCase {
     private double roundToOneDecimal(double value) {
         return Math.round(value * 10.0) / 10.0;
     }
+    */
 
     private void validateCourse(Long courseId) {
         if (courseRepository.findById(courseId).isEmpty()) {

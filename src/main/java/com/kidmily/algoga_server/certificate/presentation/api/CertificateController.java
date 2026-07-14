@@ -1,7 +1,11 @@
-package com.kidmily.algoga_server.completion.presentation.api;
+// [리팩토링] 파일 위치(certificate)와 맞지 않던 잘못된 패키지 선언 정정. 기존 선언은 이력 보존용으로 주석 처리함.
+//package com.kidmily.algoga_server.completion.presentation.api;
+package com.kidmily.algoga_server.certificate.presentation.api;
 
 import com.kidmily.algoga_server.global.annotation.swagger.ApiErrorCodeExample;
-import com.kidmily.algoga_server.certificate.application.service.CertificatePdfService;
+// [리팩토링] 컨벤션상 구현체 대신 유스케이스 인터페이스 주입. 기존 import는 이력 보존용으로 주석 처리함.
+//import com.kidmily.algoga_server.certificate.application.service.CertificatePdfService;
+import com.kidmily.algoga_server.certificate.application.usecase.CertificateUseCase;
 import com.kidmily.algoga_server.learning.exception.LearningErrorCode;
 import com.kidmily.algoga_server.learning.presentation.support.CurrentUserIdResolver;
 import io.swagger.v3.oas.annotations.Operation;
@@ -30,7 +34,9 @@ import java.nio.charset.StandardCharsets;
 @RequiredArgsConstructor
 public class CertificateController {
 
-    private final CertificatePdfService certificatePdfService;
+    // [리팩토링] 구현체 대신 유스케이스 인터페이스 주입. 기존 필드는 이력 보존용으로 주석 처리함.
+    //private final CertificatePdfService certificatePdfService;
+    private final CertificateUseCase certificateUseCase;
 
     @Operation(
             summary = "수료증 PDF 발급",
@@ -62,7 +68,7 @@ public class CertificateController {
         Long currentUserId = CurrentUserIdResolver.resolveLoginRequired(userDetails);
         String userName = CurrentUserIdResolver.resolveNameNullable(userDetails);
 
-        byte[] pdfBytes = certificatePdfService.generateCertificatePdf(
+        byte[] pdfBytes = certificateUseCase.generateCertificatePdf(
                 currentUserId,
                 userName,
                 courseId
