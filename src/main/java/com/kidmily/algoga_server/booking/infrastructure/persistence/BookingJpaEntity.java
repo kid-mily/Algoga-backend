@@ -60,8 +60,10 @@ public class BookingJpaEntity {
     @Column(name = "nights")
     private int nights;
 
+    // 래퍼(Boolean)로 둬서 과거(컬럼 추가 이전) 예약의 installment_allowed=NULL 행도 조회 시 안 터지게 한다.
+    // primitive boolean이면 NULL 로드 시 "Can not set boolean field ... to null" 로 500 발생.
     @Column(name = "installment_allowed")
-    private boolean installmentAllowed;
+    private Boolean installmentAllowed;
 
     @Column(name = "created_at")
     private LocalDateTime createdAt;
