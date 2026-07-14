@@ -6,6 +6,7 @@ import com.kidmily.algoga_server.course.domain.repository.CourseRepository;
 import com.kidmily.algoga_server.country.domain.model.Country;
 import com.kidmily.algoga_server.completion.domain.repository.CourseCompletionRepository;
 import com.kidmily.algoga_server.enrollment.domain.repository.EnrollmentRepository;
+import com.kidmily.algoga_server.learningprogress.domain.repository.LearningProgressRepository;
 import com.kidmily.algoga_server.stats.presentation.api.response.InterestLectureResponse;
 import com.kidmily.algoga_server.stats.presentation.api.response.InterestSummaryResponse;
 import org.junit.jupiter.api.DisplayName;
@@ -33,6 +34,7 @@ class InterestStatsServiceTest {
     @Mock private EnrollmentRepository enrollmentRepository;
     @Mock private CourseCompletionRepository courseCompletionRepository;
     @Mock private CountryRepository countryRepository;
+    @Mock private LearningProgressRepository learningProgressRepository;
 
     @InjectMocks
     private InterestStatsService service;
@@ -52,6 +54,7 @@ class InterestStatsServiceTest {
                 .thenReturn(new PageImpl<>(List.of(c10, c20)));
         when(enrollmentRepository.countByCourseIds(anyList())).thenReturn(Map.of(10L, 100L, 20L, 50L));
         when(courseCompletionRepository.countByCourseIds(anyList())).thenReturn(Map.of(10L, 71L, 20L, 10L));
+        when(learningProgressRepository.averageProgressRateByCourseIds(anyList())).thenReturn(Map.of(10L, 72, 20L, 38));
         Country jp = mock(Country.class);
         when(jp.getId()).thenReturn(1L);
         when(jp.getName()).thenReturn("일본");
@@ -69,7 +72,9 @@ class InterestStatsServiceTest {
         assertEquals("A강의", lectures.get(0).lectureTitle());
         assertEquals("일본", lectures.get(0).country());
         assertEquals(100, lectures.get(0).enrollCount());
+        assertEquals(72, lectures.get(0).averageProgressRate());
         assertEquals(71.0, lectures.get(0).completionRate());   // 71/100
+        assertEquals(38, lectures.get(1).averageProgressRate());
         assertEquals(20.0, lectures.get(1).completionRate());   // 10/50
     }
 

@@ -17,6 +17,12 @@ public record InterestLectureResponse(
         @Schema(description = "수강자 수", example = "748")
         long enrollCount,
 
+        @Schema(description = "평균 진도율(%)", example = "72")
+        int averageProgressRate,
+
         @Schema(description = "수료율(%)", example = "71.0")
-        double completionRate
+        double completionRate,
+
+        @Schema(description = "수료율 상태 (NORMAL: 정상, WARNING: 주의, RISK: 위험)", example = "NORMAL")
+        String completionStatus
 ) {}
