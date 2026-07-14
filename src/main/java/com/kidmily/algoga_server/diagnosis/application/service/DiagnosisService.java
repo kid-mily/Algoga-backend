@@ -25,7 +25,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import com.kidmily.algoga_server.country.domain.model.Country;
 
-import java.util.LinkedHashSet;
+// [리팩토링] 입력 검증을 DiagnosisInputValidator로 이관하여 미사용이 된 import. 삭제 대신 이력 보존용으로 주석 처리함.
+//import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
@@ -64,7 +65,7 @@ public class DiagnosisService implements DiagnosisUseCase {
     @Override
     public DiagnosisQuestionResult createQuestion(CreateDiagnosisQuestionCommand command) {
         validateCountry(command.countryId());
-        validateDiagnosisQuestion(command.correctOption(), command.questionOrder());
+        DiagnosisInputValidator.validateDiagnosisQuestion(command.correctOption(), command.questionOrder());
 
         DiagnosisQuestion question = new DiagnosisQuestion(
                 null,
@@ -88,7 +89,7 @@ public class DiagnosisService implements DiagnosisUseCase {
         DiagnosisQuestion existingQuestion = diagnosisQuestionRepository.findById(questionId)
                 .orElseThrow(() -> new LearningException(LearningErrorCode.DIAGNOSIS_QUESTION_NOT_FOUND));
 
-        validateDiagnosisQuestion(command.correctOption(), command.questionOrder());
+        DiagnosisInputValidator.validateDiagnosisQuestion(command.correctOption(), command.questionOrder());
 
         DiagnosisQuestion question = new DiagnosisQuestion(
                 existingQuestion.id(),
@@ -110,7 +111,7 @@ public class DiagnosisService implements DiagnosisUseCase {
     @Override
     public DiagnosisResultView submitResult(SubmitDiagnosisCommand command) {
         validateCountry(command.countryId());
-        validateDuplicateAnswers(command.answers());
+        DiagnosisInputValidator.validateDuplicateAnswers(command.answers());
 
         List<Long> questionIds = command.answers()
                 .stream()
@@ -125,6 +126,8 @@ public class DiagnosisService implements DiagnosisUseCase {
             throw new LearningException(LearningErrorCode.DIAGNOSIS_QUESTION_NOT_FOUND);
         }
 
+        // [리팩토링] 채점(정답/국가 검증 + 점수·레벨 산정)을 DiagnosisGrader로 이관. 아래 원본 코드는 삭제 대신 이력 보존용으로 주석 처리함.
+        /*
         int correctCount = 0;
 
         for (SubmitDiagnosisAnswerCommand answer : command.answers()) {
@@ -142,6 +145,12 @@ public class DiagnosisService implements DiagnosisUseCase {
         int totalCount = command.answers().size();
         int score = calculateScore(correctCount, totalCount);
         String level = calculateLevel(score);
+        */
+        DiagnosisGrader.Result grading = DiagnosisGrader.grade(command.answers(), questionMap, command.countryId());
+        int correctCount = grading.correctCount();
+        int totalCount = grading.totalCount();
+        int score = grading.score();
+        String level = grading.level();
 
         DiagnosisResult savedResult = diagnosisResultRepository.save(new DiagnosisResult(
                 null,
@@ -259,6 +268,8 @@ public class DiagnosisService implements DiagnosisUseCase {
                 .orElse(null);
     }
 
+    // [리팩토링] 입력 검증을 DiagnosisInputValidator로 이관하여 미사용. 삭제 대신 이력 보존용으로 주석 처리함.
+    /*
     private void validateDiagnosisQuestion(Integer correctOption, Integer questionOrder) {
         if (correctOption == null || correctOption < 1 || correctOption > 4) {
             throw new LearningException(LearningErrorCode.INVALID_DIAGNOSIS_ANSWER);
@@ -278,7 +289,10 @@ public class DiagnosisService implements DiagnosisUseCase {
             throw new LearningException(LearningErrorCode.INVALID_DIAGNOSIS_ANSWER);
         }
     }
+    */
 
+    // [리팩토링] 점수·레벨 산정을 DiagnosisGrader로 이관하여 미사용. 삭제 대신 이력 보존용으로 주석 처리함.
+    /*
     private int calculateScore(int correctCount, int totalCount) {
         return correctCount * 100 / totalCount;
     }
@@ -294,6 +308,7 @@ public class DiagnosisService implements DiagnosisUseCase {
 
         return "ADVANCED";
     }
+    */
 
     private String toLevelName(String level) {
         return switch (level) {

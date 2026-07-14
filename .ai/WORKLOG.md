@@ -404,6 +404,74 @@ Record completed work here by date. Keep entries factual and useful for future d
 - `./gradlew build -x test` passed.
 - `./gradlew testClasses` passed.
 
+### 2026-07-13 CourseService Responsibility Split And Q&A Domain Move
+
+#### Summary
+
+- Split `CourseService` responsibilities into focused collaborators and moved Q&A ownership into the `qna` domain, on branch `refactor/lms-cleanup-architecture`. PR merged into `develop`.
+- API URLs, request fields, response fields, JSON structure, and `LMS_###` error code values unchanged.
+
+#### Changed Files
+
+- New (course.application.service): `CourseFileManager`, `CourseProgressCalculator`, `CourseProgressReader`, `CourseStudentResultAssembler`, `MyCourseResultAssembler`.
+- New (qna): `qna.application.usecase.CourseQnaUseCase`, `qna.application.service.CourseQnaService`.
+- Modified: `course.application.service.CourseService`, `course.application.usecase.CourseUseCase`, `qna.presentation.api.CourseQnaController`, `qna.presentation.api.admin.AdminCourseQnaController`, `course.application.service.CourseServiceClassroomTest`.
+- Dead code: `course.infrastructure.document.LocalFileStorageManager` commented out (superseded by S3).
+- Unrelated author edits pushed in the same PR: `benefit/UserCoupon`, `payment/PaymentQueryService`, `payment/PaymentTransactionService`.
+
+#### Verification
+
+- `./gradlew compileJava` passed with existing warnings.
+- `./gradlew test --tests "*CourseServiceClassroomTest"` passed.
+
+#### Problems
+
+- Local working tree showed ~1,295 CRLF-only modified files (global `core.autocrlf`); committed only the intended files explicitly to avoid whitespace-only noise.
+- A stale `.git/index.lock` appeared after a shell error (PowerShell backtick continuation run in Git Bash); removed with `rm -f .git/index.lock`.
+
+#### Resolution
+
+- Staged specific file paths (not `git add .`), keeping the CRLF noise and unrelated files out of the intended scope.
+- Re-wired `CourseServiceClassroomTest` mocks for the new constructor: added `CourseFileManager` and `CourseProgressReader` mocks and stubbed `CourseProgressReader.loadProgressMapWithCache`.
+
+#### Notes for Next Time
+
+- Relocated/dead code is intentionally kept as comments (reason-tagged) for history; delete in a final cleanup slice once stabilized.
+- Dependency direction is now `qna -> course` (course no longer depends on qna).
+- Next likely slices: extract `completeCourse` completion validators/policy and `getCourseClassroom` chapter-locking assembly; optionally other large services (`QuizService`, `DiagnosisService`, `CertificatePdfService`).
+
+### 2026-07-14 Service SRP Decomposition (Second Wave) And Convention Fixes
+
+#### Summary
+
+- Continued SRP decomposition across the remaining large LMS services and applied two convention fixes. API URLs/request/response/JSON and `LMS_###` error codes unchanged. Currently uncommitted.
+
+#### Changed Files
+
+- Course: new `course.application.policy.CourseCompletionPolicy`, `course.application.service.CourseClassroomAssembler`; `CourseService.completeCourse`/`getCourseClassroom` delegate.
+- Quiz: new `quiz.application.policy.QuizAccessPolicy`, `quiz.application.service.QuizGrader`, `quiz.application.service.QuizInputValidator`; `QuizService` delegates.
+- Diagnosis: new `diagnosis.application.service.DiagnosisGrader`, `DiagnosisInputValidator`; `DiagnosisService` delegates.
+- Review: new `review.application.service.ReviewRatingSummaryCalculator`; `CourseReviewService.getReviewSummary` delegates.
+- LearningProgress: `createClassroomResult` reuses `CourseClassroomAssembler`; new `learningprogress.application.service.LearningProgressCalculator`.
+- Shared: new `completion.application.service.CourseCompletionRegistrar` (used by `CourseService.completeCourse` and `QuizService.submitQuiz`, replacing duplicated completion creation).
+- #1: `CertificateController` package `completion.presentation.api` -> `certificate.presentation.api`; new `certificate.application.usecase.CertificateUseCase` (implemented by `CertificatePdfService`); controller injects the use case.
+- #2: `CreateChapterCommand`/`UpdateChapterCommand` `MultipartFile` -> `UploadFile`; `AdminChapterController.toUploadFile` conversion; `ChapterService` uses `CourseFileStoragePort`.
+
+#### Verification
+
+- Per-slice `./gradlew compileJava` passed. `*CourseServiceClassroomTest` and `*DiagnosisServiceTest` passed. Other services compile-verified (no dedicated tests).
+
+#### Problems / Notes
+
+- `ChapterService` port switch (`global` `FileStoragePort` -> `course` `CourseFileStoragePort`) is safe because both S3 adapters generate identical keys (`directory/UUID.ext`), same bucket, same exception -> response `videoUrl` unchanged.
+- `CertificatePdfService` left as-is (single responsibility; length is just PDF-drawing primitives).
+- #3/#4 (cross-domain ports/adapters for `CourseCompletionPolicy`/`QuizAccessPolicy`) deferred by decision: over-engineering for one LMS module sharing a datastore.
+
+#### Notes for Next Time
+
+- Before deleting commented-out code, run a full `./gradlew build` once as a safety gate.
+- New pure utils (Grader/Calculator/Assembler) are ideal cheap unit-test targets.
+
 #### Notes
 
 - Java source/test references to `com.kidmily.algoga_server.lms` were removed.
