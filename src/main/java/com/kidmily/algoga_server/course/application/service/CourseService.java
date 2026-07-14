@@ -377,4 +377,15 @@ public class CourseService implements CourseUseCase {
                 .orElse(defaultStatus);
     }
 
+    @Override
+    @Transactional(readOnly = true)
+    public List<CourseResult> getOtherLevelCoursesByCountryAndLevel(Long countryId, String level) {
+        validateCountry(countryId);
+        validateCourseLevel(level);
+
+        return courseRepository.findPublishedByCountryIdAndLevelNot(countryId, level).stream()
+                .map(CourseResult::from)
+                .toList();
+    }
+
 }

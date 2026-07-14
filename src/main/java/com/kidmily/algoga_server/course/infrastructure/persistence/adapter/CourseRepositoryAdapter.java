@@ -188,6 +188,19 @@ public class CourseRepositoryAdapter implements CourseRepository {
                 List.of()
         );
     }
+
+    @Override
+    public List<Course> findPublishedByCountryIdAndLevelNot(Long countryId, String level) {
+        return springDataCourseRepository
+                .findByCountryIdAndLevelNotAndStatusAndDeletedFalseOrderByIdDesc(
+                        countryId,
+                        level,
+                        PUBLISHED
+                )
+                .stream()
+                .map(courseMapper::toDomain)
+                .toList();
+    }
 }
 
 

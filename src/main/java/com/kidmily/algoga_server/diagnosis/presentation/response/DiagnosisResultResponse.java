@@ -40,8 +40,11 @@ public record DiagnosisResultResponse(
         @Schema(description = "문항별 채점 결과")
         List<DiagnosisAnswerResultResponse> answers,
 
-        @Schema(description = "추천 강의 목록")
-        List<CourseListResponse> recommendedCourses
+        @Schema(description = "내 진단 등급에 맞는 추천 강의 목록")
+        List<CourseListResponse> recommendedCourses,
+
+        @Schema(description = "내 진단 등급이 아닌 나머지 등급 강의 목록")
+        List<CourseListResponse> otherLevelCourses
 ) {
     public static DiagnosisResultResponse from(DiagnosisResultView result) {
         return new DiagnosisResultResponse(
@@ -58,6 +61,9 @@ public record DiagnosisResultResponse(
                         .map(DiagnosisAnswerResultResponse::from)
                         .toList(),
                 result.recommendedCourses().stream()
+                        .map(CourseListResponse::from)
+                        .toList(),
+                result.otherLevelCourses().stream()
                         .map(CourseListResponse::from)
                         .toList()
         );
