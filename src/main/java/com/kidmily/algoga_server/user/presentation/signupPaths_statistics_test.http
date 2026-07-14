@@ -29,15 +29,6 @@ Cookie: accessToken=eyJhbGciOiJIUzM4NCJ9.eyJzdWIiOiJzdXBlcl9hZG1pbiIsInR5cGUiOiJ
 
 ### --------------------------------------------------
 
-### 4. 유저 가입 경로 통계 조회 API 테스트
-# 기대 결과: "검색", "지인추천" 등의 경로별로 가입한 유저 수가 집계되어 나옵니다.
-GET {{baseUrl}}/api/v1/admin/users/statistics/signup-paths
-Cookie: accessToken=eyJhbGciOiJIUzM4NCJ9.eyJzdWIiOiJzdXBlcl9hZG1pbiIsInR5cGUiOiJBRE1JTiIsImlkIjoxLCJyb2xlIjoiUk9MRV9TVVBFUl9BRE1JTiIsImlhdCI6MTc4MTg1NjIzMSwiZXhwIjoxNzgxODU4MDMxfQ.Th4dwnwi6i5RDKRpkZqzJGW8t_avotFjGj46klJH78QT126BcW9l6VaIeiyzAPWs
-
-
-
-### --------------------------------------------------
-
 
 
 ### 2. 신규 회원가입 (Personal Code 6자리 생성 테스트)
