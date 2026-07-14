@@ -73,7 +73,7 @@ public class CourseFileManager {
                 .mapToObj(index -> {
                     UploadFile file = validFiles.get(index);
 
-                    String fileUrl = fileStoragePort.uploadFile(
+                    String fileUrl = fileStoragePort.uploadAttachmentFile(
                             file,
                             storageSettings.getCourseFileDirectory()
                     );

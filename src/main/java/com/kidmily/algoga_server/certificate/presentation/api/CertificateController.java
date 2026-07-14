@@ -5,6 +5,7 @@ package com.kidmily.algoga_server.certificate.presentation.api;
 import com.kidmily.algoga_server.global.annotation.swagger.ApiErrorCodeExample;
 // [리팩토링] 컨벤션상 구현체 대신 유스케이스 인터페이스 주입. 기존 import는 이력 보존용으로 주석 처리함.
 //import com.kidmily.algoga_server.certificate.application.service.CertificatePdfService;
+import com.kidmily.algoga_server.certificate.application.result.CertificatePdf;
 import com.kidmily.algoga_server.certificate.application.usecase.CertificateUseCase;
 import com.kidmily.algoga_server.learning.exception.LearningErrorCode;
 import com.kidmily.algoga_server.learning.presentation.support.CurrentUserIdResolver;
@@ -68,13 +69,13 @@ public class CertificateController {
         Long currentUserId = CurrentUserIdResolver.resolveLoginRequired(userDetails);
         String userName = CurrentUserIdResolver.resolveNameNullable(userDetails);
 
-        byte[] pdfBytes = certificateUseCase.generateCertificatePdf(
+        CertificatePdf certificate = certificateUseCase.generateCertificatePdf(
                 currentUserId,
                 userName,
                 courseId
         );
 
-        String filename = "certificate-course-" + courseId + ".pdf";
+        String filename = certificate.fileName();
 
         ContentDisposition contentDisposition = ContentDisposition.attachment()
                 .filename(filename, StandardCharsets.UTF_8)
@@ -82,9 +83,9 @@ public class CertificateController {
 
         return ResponseEntity.ok()
                 .contentType(MediaType.APPLICATION_PDF)
-                .contentLength(pdfBytes.length)
+                .contentLength(certificate.content().length)
                 .cacheControl(CacheControl.noCache())
                 .header(HttpHeaders.CONTENT_DISPOSITION, contentDisposition.toString())
-                .body(pdfBytes);
+                .body(certificate.content());
     }
 }

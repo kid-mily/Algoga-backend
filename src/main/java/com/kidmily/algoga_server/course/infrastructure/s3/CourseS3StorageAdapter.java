@@ -13,6 +13,8 @@ import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.DeleteObjectRequest;
 import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.util.UUID;
 
 @Slf4j
@@ -25,6 +27,19 @@ public class CourseS3StorageAdapter implements CourseFileStoragePort {
 
     @Override
     public String uploadFile(UploadFile file, String directory) {
+        return upload(file, directory, null);
+    }
+
+    @Override
+    public String uploadAttachmentFile(UploadFile file, String directory) {
+        if (file == null || file.isEmpty()) {
+            return null;
+        }
+
+        return upload(file, directory, attachmentContentDisposition(file.originalFilename()));
+    }
+
+    private String upload(UploadFile file, String directory, String contentDisposition) {
         if (file == null || file.isEmpty()) {
             return null;
         }
@@ -37,14 +52,18 @@ public class CourseS3StorageAdapter implements CourseFileStoragePort {
         String key = directory + "/" + UUID.randomUUID() + extension;
 
         try {
-            PutObjectRequest putObjectRequest = PutObjectRequest.builder()
+            PutObjectRequest.Builder requestBuilder = PutObjectRequest.builder()
                     .bucket(s3Settings.getBucket())
                     .key(key)
-                    .contentType(file.contentType())
-                    .build();
+                    .contentType(file.contentType());
+
+            // 강의자료 등 첨부 파일은 다운로드 시 원본 파일명으로 저장되도록 Content-Disposition을 설정한다.
+            if (contentDisposition != null) {
+                requestBuilder.contentDisposition(contentDisposition);
+            }
 
             s3Client.putObject(
-                    putObjectRequest,
+                    requestBuilder.build(),
                     RequestBody.fromInputStream(file.inputStream(), file.size())
             );
 
@@ -54,6 +73,15 @@ public class CourseS3StorageAdapter implements CourseFileStoragePort {
             log.error("[Course S3 Upload Error] file upload failed: {}", exception.getMessage(), exception);
             throw new BusinessException(GlobalErrorCode.SERVER_ERROR);
         }
+    }
+
+    // 다운로드 시 원본 파일명으로 저장되도록 하는 Content-Disposition 값. 한글 등은 RFC 5987(UTF-8) 방식으로 인코딩한다.
+    private String attachmentContentDisposition(String originalFilename) {
+        String fileName = (originalFilename == null || originalFilename.isBlank())
+                ? "download"
+                : originalFilename;
+        String encoded = URLEncoder.encode(fileName, StandardCharsets.UTF_8).replace("+", "%20");
+        return "attachment; filename*=UTF-8''" + encoded;
     }
 
     @Override
