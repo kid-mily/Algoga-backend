@@ -1,9 +1,11 @@
 package com.kidmily.algoga_server.stats.application.service;
 
+import com.kidmily.algoga_server.accommodation.domain.model.Accommodation;
 import com.kidmily.algoga_server.accommodation.domain.repository.AccommodationRepository;
 import com.kidmily.algoga_server.booking.domain.model.Booking;
 import com.kidmily.algoga_server.booking.domain.model.BookingStatus;
 import com.kidmily.algoga_server.booking.domain.repository.BookingRepository;
+import com.kidmily.algoga_server.country.domain.model.Country;
 import com.kidmily.algoga_server.country.domain.repository.CountryRepository;
 import com.kidmily.algoga_server.payment.domain.model.Payment;
 import com.kidmily.algoga_server.payment.domain.model.PaymentStatus;
@@ -13,6 +15,7 @@ import com.kidmily.algoga_server.refund.domain.model.RefundRequest;
 import com.kidmily.algoga_server.refund.domain.model.RefundStatus;
 import com.kidmily.algoga_server.refund.domain.repository.RefundRepository;
 import com.kidmily.algoga_server.stats.presentation.api.response.CancelStatsResponse;
+import com.kidmily.algoga_server.stats.presentation.api.response.RefundByCountryResponse;
 import com.kidmily.algoga_server.stats.presentation.api.response.RefundSummaryResponse;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -24,10 +27,11 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.*;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 /*
  * RefundStatsService 단위 테스트
@@ -115,5 +119,52 @@ class RefundStatsServiceTest {
         assertEquals(1, res.unpaidCancel());   // b4
         assertEquals(83.33, res.cancelRate());     // 5/6
         assertEquals(66.67, res.paidCancelRate()); // 4/6
+    }
+
+    private RefundRequest refundFor(Long bookingId, int amount) {
+        return RefundRequest.reconstitute(1L, bookingId, 1L, 1L, "홍길동", RefundStatus.COMPLETED,
+                "단순변심", null, amount, LocalDateTime.now(), LocalDateTime.now());
+    }
+
+    @Test
+    @DisplayName("나라별 환불 — 예약건수·환불율·평가를 함께 반환한다")
+    void 나라별_환불_필드확장() {
+        // 환불 1건 30만 (booking 1 → 숙소1 → 일본)
+        when(refundRepository.findAllByStatus(RefundStatus.COMPLETED))
+                .thenReturn(List.of(refundFor(1L, 300_000)));
+        when(bookingRepository.findById(1L)).thenReturn(Optional.of(booking(1L, BookingStatus.REFUNDED)));
+
+        Accommodation acc = mock(Accommodation.class);
+        when(acc.getId()).thenReturn(1L);
+        when(acc.getCountryId()).thenReturn(1L);
+        when(accommodationRepository.findById(1L)).thenReturn(Optional.of(acc));
+
+        Country jp = mock(Country.class);
+        when(jp.getId()).thenReturn(1L);
+        when(jp.getName()).thenReturn("일본");
+        when(countryRepository.findAllByIdIn(anyList())).thenReturn(List.of(jp));
+
+        // 예약 건수용: 숙소1 예약 4건
+        when(bookingRepository.findByCreatedAtBetween(any(), any())).thenReturn(List.of(
+                booking(1L, BookingStatus.REFUNDED), booking(2L, BookingStatus.FULL_PAID),
+                booking(3L, BookingStatus.FULL_PAID), booking(4L, BookingStatus.DEPOSIT_PAID)));
+
+        // 매출용: 예약결제 합 100만 → 환불율 30% → 위험
+        when(paymentRepository.findByCreatedAtBetween(any(), any())).thenReturn(List.of(
+                payment(1L, PaymentType.FULL, 1_000_000, PaymentStatus.SUCCESS)));
+
+        // when
+        List<RefundByCountryResponse> res = refundStatsService.getByCountry(
+                LocalDate.now().minusDays(30), LocalDate.now());
+
+        // then
+        assertEquals(1, res.size());
+        RefundByCountryResponse jpRow = res.get(0);
+        assertEquals("일본", jpRow.countryName());
+        assertEquals(4, jpRow.bookingCount());
+        assertEquals(1, jpRow.refundCount());
+        assertEquals(300_000, jpRow.refundAmount());
+        assertEquals(30.0, jpRow.refundRate());  // 30만 / 100만
+        assertEquals("위험", jpRow.grade());
     }
 }
