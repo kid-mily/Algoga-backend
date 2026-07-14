@@ -12,7 +12,9 @@ import com.kidmily.algoga_server.payment.domain.repository.PaymentRepository;
 import com.kidmily.algoga_server.refund.domain.model.RefundRequest;
 import com.kidmily.algoga_server.refund.domain.model.RefundStatus;
 import com.kidmily.algoga_server.refund.domain.repository.RefundRepository;
+import com.kidmily.algoga_server.stats.domain.model.TrendUnit;
 import com.kidmily.algoga_server.stats.presentation.api.response.CancelStatsResponse;
+import com.kidmily.algoga_server.stats.presentation.api.response.OverviewTrendPointResponse;
 import com.kidmily.algoga_server.stats.presentation.api.response.RefundSummaryResponse;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -115,5 +117,58 @@ class RefundStatsServiceTest {
         assertEquals(1, res.unpaidCancel());   // b4
         assertEquals(83.33, res.cancelRate());     // 5/6
         assertEquals(66.67, res.paidCancelRate()); // 4/6
+    }
+
+    private Payment paymentAt(PaymentType type, int amount, PaymentStatus status, LocalDateTime at) {
+        return Payment.reconstitute(1L, 1L, null, 1L, type, amount, 0, null,
+                status, "k" + at, "portone", "TOSSPAY", "홍길동", at);
+    }
+
+    private RefundRequest refundAt(int amount, LocalDateTime at) {
+        return RefundRequest.reconstitute(1L, 1L, 1L, 1L, "홍길동", RefundStatus.COMPLETED,
+                "단순변심", null, amount, at, at);
+    }
+
+    @Test
+    @DisplayName("DAY 단위 추이 — 날짜별로 총매출·환불·순매출을 버킷팅한다")
+    void 추이_일별_버킷팅() {
+        // given: 7/10 매출 100만, 7/11 환불 20만, 7/12 매출 30만
+        when(paymentRepository.findByCreatedAtBetween(any(), any())).thenReturn(List.of(
+                paymentAt(PaymentType.FULL, 1_000_000, PaymentStatus.SUCCESS, LocalDateTime.of(2026, 7, 10, 9, 0)),
+                paymentAt(PaymentType.DEPOSIT, 300_000, PaymentStatus.SUCCESS, LocalDateTime.of(2026, 7, 12, 15, 0))));
+        when(refundRepository.findAllByStatus(RefundStatus.COMPLETED)).thenReturn(List.of(
+                refundAt(200_000, LocalDateTime.of(2026, 7, 11, 12, 0))));
+
+        // when
+        List<OverviewTrendPointResponse> trend = refundStatsService.getTrend(
+                LocalDate.of(2026, 7, 10), LocalDate.of(2026, 7, 12), TrendUnit.DAY);
+
+        // then: 3일치 버킷
+        assertEquals(3, trend.size());
+        assertEquals("2026-07-10", trend.get(0).label());
+        assertEquals(1_000_000, trend.get(0).totalRevenue());
+        assertEquals(0, trend.get(0).refund());
+        assertEquals(1_000_000, trend.get(0).netRevenue());
+        assertEquals("2026-07-11", trend.get(1).label());
+        assertEquals(200_000, trend.get(1).refund());
+        assertEquals(-200_000, trend.get(1).netRevenue());
+        assertEquals("2026-07-12", trend.get(2).label());
+        assertEquals(300_000, trend.get(2).totalRevenue());
+    }
+
+    @Test
+    @DisplayName("HOUR 단위 추이 — 하루면 24개 시간 버킷, 해당 시간에 매출이 잡힌다")
+    void 추이_시간별_버킷팅() {
+        when(paymentRepository.findByCreatedAtBetween(any(), any())).thenReturn(List.of(
+                paymentAt(PaymentType.FULL, 500_000, PaymentStatus.SUCCESS, LocalDateTime.of(2026, 7, 14, 14, 30))));
+        when(refundRepository.findAllByStatus(RefundStatus.COMPLETED)).thenReturn(List.of());
+
+        List<OverviewTrendPointResponse> trend = refundStatsService.getTrend(
+                LocalDate.of(2026, 7, 14), LocalDate.of(2026, 7, 14), TrendUnit.HOUR);
+
+        assertEquals(24, trend.size());
+        assertEquals("14:00", trend.get(14).label());
+        assertEquals(500_000, trend.get(14).totalRevenue());
+        assertEquals(0, trend.get(13).totalRevenue()); // 13시엔 없음
     }
 }

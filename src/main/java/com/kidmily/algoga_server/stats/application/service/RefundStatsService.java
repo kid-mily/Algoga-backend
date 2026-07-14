@@ -15,6 +15,7 @@ import com.kidmily.algoga_server.refund.domain.model.RefundRequest;
 import com.kidmily.algoga_server.refund.domain.model.RefundStatus;
 import com.kidmily.algoga_server.refund.domain.repository.RefundRepository;
 import com.kidmily.algoga_server.stats.application.usecase.RefundStatsUseCase;
+import com.kidmily.algoga_server.stats.domain.model.TrendUnit;
 import com.kidmily.algoga_server.stats.presentation.api.response.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -24,6 +25,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.YearMonth;
+import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -77,6 +79,66 @@ public class RefundStatsService implements RefundStatsUseCase {
             result.add(new RefundTrendResponse(month.toString(), revenue, refund, revenue - refund));
         }
         return result;
+    }
+
+    private static final DateTimeFormatter HOUR_LABEL = DateTimeFormatter.ofPattern("HH:00");
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<OverviewTrendPointResponse> getTrend(LocalDate from, LocalDate to, TrendUnit unit) {
+        List<Payment> payments = bookingPayments(from, to);
+        List<RefundRequest> refunds = completedRefunds(from, to);
+
+        return switch (unit) {
+            case HOUR -> buildTrend(from, to, payments, refunds,
+                    Granularity.HOUR, HOUR_LABEL);
+            case DAY -> buildTrend(from, to, payments, refunds,
+                    Granularity.DAY, null);
+            case MONTH -> buildTrend(from, to, payments, refunds,
+                    Granularity.MONTH, null);
+        };
+    }
+
+    private enum Granularity { HOUR, DAY, MONTH }
+
+    /** 지정 단위로 [from, to] 구간의 총매출·환불·순매출을 버킷팅한다. */
+    private List<OverviewTrendPointResponse> buildTrend(
+            LocalDate from, LocalDate to, List<Payment> payments, List<RefundRequest> refunds,
+            Granularity field, DateTimeFormatter hourLabelFmt) {
+
+        LocalDateTime start = from.atStartOfDay();
+        LocalDateTime end = to.plusDays(1).atStartOfDay();
+
+        List<OverviewTrendPointResponse> result = new ArrayList<>();
+        LocalDateTime cursor = start;
+        while (cursor.isBefore(end)) {
+            final LocalDateTime bucketStart = cursor;
+            final LocalDateTime bucketEnd = switch (field) {
+                case HOUR -> bucketStart.plusHours(1);
+                case DAY -> bucketStart.plusDays(1);
+                case MONTH -> bucketStart.plusMonths(1);
+            };
+
+            long revenue = payments.stream()
+                    .filter(p -> inRange(p.getCreatedAt(), bucketStart, bucketEnd))
+                    .mapToLong(Payment::getAmount).sum();
+            long refund = refunds.stream()
+                    .filter(r -> inRange(r.getCreatedAt(), bucketStart, bucketEnd))
+                    .mapToLong(RefundRequest::getAmount).sum();
+
+            String label = switch (field) {
+                case HOUR -> bucketStart.format(hourLabelFmt);
+                case DAY -> bucketStart.toLocalDate().toString();
+                case MONTH -> YearMonth.from(bucketStart).toString();
+            };
+            result.add(new OverviewTrendPointResponse(label, revenue, refund, revenue - refund));
+            cursor = bucketEnd;
+        }
+        return result;
+    }
+
+    private boolean inRange(LocalDateTime t, LocalDateTime start, LocalDateTime end) {
+        return t != null && !t.isBefore(start) && t.isBefore(end);
     }
 
     @Override

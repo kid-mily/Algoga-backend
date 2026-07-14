@@ -3,9 +3,11 @@ package com.kidmily.algoga_server.stats.application.service;
 import com.kidmily.algoga_server.stats.application.usecase.BalanceStatsUseCase;
 import com.kidmily.algoga_server.stats.application.usecase.OverviewStatsUseCase;
 import com.kidmily.algoga_server.stats.application.usecase.RefundStatsUseCase;
+import com.kidmily.algoga_server.stats.domain.model.TrendUnit;
 import com.kidmily.algoga_server.stats.presentation.api.response.BalanceSummaryResponse;
 import com.kidmily.algoga_server.stats.presentation.api.response.OverviewMonthlyResponse;
 import com.kidmily.algoga_server.stats.presentation.api.response.OverviewResponse;
+import com.kidmily.algoga_server.stats.presentation.api.response.OverviewTrendPointResponse;
 import com.kidmily.algoga_server.stats.presentation.api.response.RefundSummaryResponse;
 import com.kidmily.algoga_server.stats.presentation.api.response.RefundTrendResponse;
 import lombok.RequiredArgsConstructor;
@@ -53,5 +55,11 @@ public class OverviewStatsService implements OverviewStatsUseCase {
                 refund.refundRate(),
                 balance.balanceConversionRate(),
                 monthly);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<OverviewTrendPointResponse> getTrend(LocalDate from, LocalDate to, TrendUnit unit) {
+        return refundStatsUseCase.getTrend(from, to, unit);
     }
 }
