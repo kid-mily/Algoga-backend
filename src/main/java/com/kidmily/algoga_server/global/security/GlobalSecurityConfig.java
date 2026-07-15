@@ -51,8 +51,13 @@ public class GlobalSecurityConfig {
                         .requestMatchers("/api/v1/users/**").authenticated()
                         .requestMatchers("/api/v1/chat/**").authenticated()
                         .requestMatchers("/api/v1/friends/**").authenticated()
-                        // 예약은 로그인 유저 전제(컨트롤러가 인증 principal 사용) → 미인증은 500이 아니라 401로 떨어지게
+                        // 예약/결제/환불은 로그인 유저 전제(컨트롤러가 인증 principal 사용) → 미인증은 500(NPE)이 아니라 401로 떨어지게
                         .requestMatchers("/api/v1/bookings/**").authenticated()
+                        // 결제: 웹훅만 외부(PortOne)가 호출하므로 공개, 나머지 결제 API는 로그인 필수 (permitAll보다 먼저 매칭돼야 함)
+                        .requestMatchers("/api/v1/payments/webhook").permitAll()
+                        .requestMatchers("/api/v1/payments/**").authenticated()
+                        // 환불 요청(유저): 로그인 필수 (어드민 환불은 위 /api/v1/admin/** 에서 이미 롤 체크됨)
+                        .requestMatchers("/api/v1/refund-requests/**").authenticated()
                         // 모든 경로에 대해 일단 통과(permitAll)시키도록
                         // (세부 권한은 각 컨트롤러의 @PreAuthorize에서 처리)
                         .anyRequest().permitAll()
