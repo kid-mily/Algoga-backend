@@ -8,6 +8,7 @@ import java.util.Optional;
 public interface AccommodationRepository {
     Accommodation save(Accommodation accommodation);
     Optional<Accommodation> findById(Long id);
+    List<Accommodation> findByIdIn(List<Long> ids);
     List<Accommodation> findByCountryId(Long countryId);
     void deleteById(Long id);
 }

@@ -30,6 +30,17 @@ public class AccommodationRepositoryAdapter implements AccommodationRepository {
     }
 
     @Override
+    public List<Accommodation> findByIdIn(List<Long> ids) {
+        if (ids == null || ids.isEmpty()) {
+            return List.of();
+        }
+        return springDataAccommodationRepository.findByIdIn(ids)
+                .stream()
+                .map(accommodationMapper::toDomain)
+                .toList();
+    }
+
+    @Override
     public List<Accommodation> findByCountryId(Long countryId) {
         return springDataAccommodationRepository.findByCountryId(countryId)
                 .stream()
