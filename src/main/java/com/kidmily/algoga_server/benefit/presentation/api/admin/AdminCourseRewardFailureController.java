@@ -1,7 +1,7 @@
 package com.kidmily.algoga_server.benefit.presentation.api.admin;
 
 import com.kidmily.algoga_server.benefit.application.command.RetryCourseRewardFailureCommand;
-import com.kidmily.algoga_server.benefit.application.usecase.CourseRewardFailureUseCase;
+import com.kidmily.algoga_server.benefit.application.usecase.CourseRewardUseCase;
 import com.kidmily.algoga_server.benefit.domain.model.CourseRewardFailureStatus;
 import com.kidmily.algoga_server.benefit.exception.BenefitErrorCode;
 import com.kidmily.algoga_server.benefit.presentation.response.CourseRewardFailureResponse;
@@ -23,7 +23,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class AdminCourseRewardFailureController {
 
-    private final CourseRewardFailureUseCase courseRewardFailureUseCase;
+    private final CourseRewardUseCase courseRewardUseCase;
 
     @Operation(
             summary = "강의 보상 실패 목록 조회",
@@ -35,7 +35,7 @@ public class AdminCourseRewardFailureController {
             @Parameter(description = "보상 실패 상태", example = "PENDING")
             @RequestParam(defaultValue = "PENDING") CourseRewardFailureStatus status
     ) {
-        List<CourseRewardFailureResponse> response = courseRewardFailureUseCase.getFailures(status)
+        List<CourseRewardFailureResponse> response = courseRewardUseCase.getFailures(status)
                 .stream()
                 .map(CourseRewardFailureResponse::from)
                 .toList();
@@ -65,7 +65,7 @@ public class AdminCourseRewardFailureController {
             @PathVariable Long failureId
     ) {
         CourseRewardFailureResponse response = CourseRewardFailureResponse.from(
-                courseRewardFailureUseCase.retryFailure(
+                courseRewardUseCase.retryFailure(
                         new RetryCourseRewardFailureCommand(failureId)
                 )
         );

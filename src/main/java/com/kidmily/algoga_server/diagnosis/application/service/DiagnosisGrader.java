@@ -2,8 +2,8 @@ package com.kidmily.algoga_server.diagnosis.application.service;
 
 import com.kidmily.algoga_server.diagnosis.application.command.SubmitDiagnosisAnswerCommand;
 import com.kidmily.algoga_server.diagnosis.domain.model.DiagnosisQuestion;
-import com.kidmily.algoga_server.learning.exception.LearningErrorCode;
-import com.kidmily.algoga_server.learning.exception.LearningException;
+import com.kidmily.algoga_server.diagnosis.exception.DiagnosisErrorCode;
+import com.kidmily.algoga_server.diagnosis.exception.DiagnosisException;
 
 import java.util.List;
 import java.util.Map;
@@ -27,7 +27,7 @@ public final class DiagnosisGrader {
             DiagnosisQuestion question = questionMap.get(answer.questionId());
 
             if (!question.active() || !question.countryId().equals(countryId)) {
-                throw new LearningException(LearningErrorCode.INVALID_DIAGNOSIS_ANSWER);
+                throw new DiagnosisException(DiagnosisErrorCode.INVALID_DIAGNOSIS_ANSWER);
             }
 
             if (question.correctOption() == answer.selectedOption()) {

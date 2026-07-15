@@ -3,8 +3,8 @@ package com.kidmily.algoga_server.certificate.presentation.api;
 import com.kidmily.algoga_server.global.annotation.swagger.ApiErrorCodeExample;
 import com.kidmily.algoga_server.certificate.application.result.CertificatePdf;
 import com.kidmily.algoga_server.certificate.application.usecase.CertificateUseCase;
-import com.kidmily.algoga_server.learning.exception.LearningErrorCode;
-import com.kidmily.algoga_server.learning.presentation.support.CurrentUserIdResolver;
+import com.kidmily.algoga_server.certificate.exception.CertificateErrorCode;
+import com.kidmily.algoga_server.certificate.presentation.support.CurrentUserIdResolver;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -48,7 +48,7 @@ public class CertificateController {
                     schema = @Schema(type = "string", format = "binary")
             )
     )
-    @ApiErrorCodeExample(domain = LearningErrorCode.class, value = {
+    @ApiErrorCodeExample(domain = CertificateErrorCode.class, value = {
             "LOGIN_REQUIRED",
             "COURSE_NOT_FOUND",
             "COURSE_COMPLETION_NOT_FOUND"

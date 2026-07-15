@@ -6,8 +6,8 @@ import com.kidmily.algoga_server.course.domain.model.Chapter;
 import com.kidmily.algoga_server.course.domain.repository.ChapterRepository;
 import com.kidmily.algoga_server.course.domain.repository.CourseRepository;
 import com.kidmily.algoga_server.enrollment.domain.repository.EnrollmentRepository;
-import com.kidmily.algoga_server.learning.exception.LearningErrorCode;
-import com.kidmily.algoga_server.learning.exception.LearningException;
+import com.kidmily.algoga_server.course.exception.CourseErrorCode;
+import com.kidmily.algoga_server.course.exception.CourseException;
 import com.kidmily.algoga_server.learningprogress.domain.model.LearningProgress;
 import com.kidmily.algoga_server.quiz.domain.repository.QuizSubmissionRepository;
 import lombok.RequiredArgsConstructor;
@@ -41,18 +41,18 @@ public class CourseCompletionPolicy {
                 .orElse(false);
 
         if (!accessible) {
-            throw new LearningException(LearningErrorCode.NOT_ENROLLED);
+            throw new CourseException(CourseErrorCode.NOT_ENROLLED);
         }
     }
 
     private void validateCourseExists(Long courseId) {
         courseRepository.findById(courseId)
-                .orElseThrow(() -> new LearningException(LearningErrorCode.COURSE_NOT_FOUND));
+                .orElseThrow(() -> new CourseException(CourseErrorCode.COURSE_NOT_FOUND));
     }
 
     private void validateNotCompleted(Long userId, Long courseId) {
         if (courseCompletionRepository.existsByUserIdAndCourseId(userId, courseId)) {
-            throw new LearningException(LearningErrorCode.COURSE_ALREADY_COMPLETED);
+            throw new CourseException(CourseErrorCode.COURSE_ALREADY_COMPLETED);
         }
     }
 
@@ -60,7 +60,7 @@ public class CourseCompletionPolicy {
         List<Chapter> chapters = chapterRepository.findByCourseId(courseId);
 
         if (chapters.isEmpty()) {
-            throw new LearningException(LearningErrorCode.QUIZ_LOCKED);
+            throw new CourseException(CourseErrorCode.QUIZ_LOCKED);
         }
 
         List<Long> incompleteChapterIds = chapters.stream()
@@ -71,13 +71,13 @@ public class CourseCompletionPolicy {
                 .toList();
 
         if (!incompleteChapterIds.isEmpty()) {
-            throw new LearningException(LearningErrorCode.QUIZ_LOCKED);
+            throw new CourseException(CourseErrorCode.QUIZ_LOCKED);
         }
     }
 
     private void validateQuizSubmitted(Long userId, Long courseId) {
         if (!quizSubmissionRepository.existsByUserIdAndCourseId(userId, courseId)) {
-            throw new LearningException(LearningErrorCode.QUIZ_NOT_SUBMITTED);
+            throw new CourseException(CourseErrorCode.QUIZ_NOT_SUBMITTED);
         }
     }
 }

@@ -4,8 +4,8 @@ import com.kidmily.algoga_server.course.application.port.CourseFileStoragePort;
 import com.kidmily.algoga_server.course.application.port.UploadFile;
 import com.kidmily.algoga_server.course.domain.model.CourseFile;
 import com.kidmily.algoga_server.course.settings.CourseStorageSettings;
-import com.kidmily.algoga_server.learning.exception.LearningErrorCode;
-import com.kidmily.algoga_server.learning.exception.LearningException;
+import com.kidmily.algoga_server.course.exception.CourseErrorCode;
+import com.kidmily.algoga_server.course.exception.CourseException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -102,7 +102,7 @@ public class CourseFileManager {
         String extension = extractExtension(file.originalFilename());
 
         if (!ALLOWED_COURSE_FILE_EXTENSIONS.contains(extension)) {
-            throw new LearningException(LearningErrorCode.INVALID_COURSE_FILE_TYPE);
+            throw new CourseException(CourseErrorCode.INVALID_COURSE_FILE_TYPE);
         }
     }
 

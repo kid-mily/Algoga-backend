@@ -18,8 +18,8 @@ import com.kidmily.algoga_server.quiz.domain.model.QuizSubmissionAnswer;
 import com.kidmily.algoga_server.quiz.domain.repository.QuizRepository;
 import com.kidmily.algoga_server.quiz.domain.repository.QuizSubmissionAnswerRepository;
 import com.kidmily.algoga_server.quiz.domain.repository.QuizSubmissionRepository;
-import com.kidmily.algoga_server.learning.exception.LearningErrorCode;
-import com.kidmily.algoga_server.learning.exception.LearningException;
+import com.kidmily.algoga_server.quiz.exception.QuizErrorCode;
+import com.kidmily.algoga_server.quiz.exception.QuizException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -59,7 +59,7 @@ public class QuizService implements QuizUseCase {
 
         List<Quiz> quizzes = quizRepository.findByCourseId(courseId);
         if (quizzes.isEmpty()) {
-            throw new LearningException(LearningErrorCode.QUIZ_NOT_FOUND);
+            throw new QuizException(QuizErrorCode.QUIZ_NOT_FOUND);
         }
 
         return quizzes.stream()
@@ -103,7 +103,7 @@ public class QuizService implements QuizUseCase {
                 command.option4(),
                 command.correctOption(),
                 command.explanation()
-        ).orElseThrow(() -> new LearningException(LearningErrorCode.QUIZ_NOT_FOUND));
+        ).orElseThrow(() -> new QuizException(QuizErrorCode.QUIZ_NOT_FOUND));
 
         return QuizResult.from(updatedQuiz);
     }
@@ -113,7 +113,7 @@ public class QuizService implements QuizUseCase {
         quizAccessPolicy.validateActiveCourse(courseId);
 
         if (!quizRepository.delete(quizId, courseId)) {
-            throw new LearningException(LearningErrorCode.QUIZ_NOT_FOUND);
+            throw new QuizException(QuizErrorCode.QUIZ_NOT_FOUND);
         }
     }
 
@@ -125,7 +125,7 @@ public class QuizService implements QuizUseCase {
 
         List<Quiz> quizzes = quizRepository.findByCourseId(command.courseId());
         if (quizzes.isEmpty()) {
-            throw new LearningException(LearningErrorCode.QUIZ_NOT_FOUND);
+            throw new QuizException(QuizErrorCode.QUIZ_NOT_FOUND);
         }
 
         Map<Long, Quiz> quizMap = quizzes.stream()
@@ -167,7 +167,7 @@ public class QuizService implements QuizUseCase {
         quizAccessPolicy.validateCourseExists(courseId);
 
         QuizSubmission submission = quizSubmissionRepository.findByUserIdAndCourseId(userId, courseId)
-                .orElseThrow(() -> new LearningException(LearningErrorCode.QUIZ_NOT_SUBMITTED));
+                .orElseThrow(() -> new QuizException(QuizErrorCode.QUIZ_NOT_SUBMITTED));
 
         List<QuizSubmissionAnswerResult> answers = quizSubmissionAnswerRepository.findBySubmissionId(submission.getId())
                 .stream()

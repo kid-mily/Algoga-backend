@@ -1,7 +1,7 @@
 package com.kidmily.algoga_server.benefit.application.listener;
 
 import com.kidmily.algoga_server.benefit.application.command.IssueWelcomeCouponCommand;
-import com.kidmily.algoga_server.benefit.application.usecase.WelcomeCouponUseCase;
+import com.kidmily.algoga_server.benefit.application.usecase.CouponUseCase;
 import com.kidmily.algoga_server.global.event.UserSignedUpEvent;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -15,7 +15,7 @@ import org.springframework.transaction.event.TransactionalEventListener;
 @RequiredArgsConstructor
 public class WelcomeCouponEventListener {
 
-    private final WelcomeCouponUseCase welcomeCouponUseCase;
+    private final CouponUseCase couponUseCase;
 
     @Async
     @TransactionalEventListener(
@@ -26,7 +26,7 @@ public class WelcomeCouponEventListener {
         log.info("[WelcomeCoupon] Signup event received. userId={}", event.userId());
 
         try {
-            welcomeCouponUseCase.issueWelcomeCoupon(
+            couponUseCase.issueWelcomeCoupon(
                     new IssueWelcomeCouponCommand(event.userId())
             );
         } catch (Exception exception) {
