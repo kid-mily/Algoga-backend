@@ -29,11 +29,12 @@ import com.kidmily.algoga_server.course.settings.cache.CourseCacheType;
 import com.kidmily.algoga_server.learningprogress.domain.model.LearningProgress;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.Cache;
+import org.springframework.cache.CacheManager;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.cache.annotation.CacheEvict;
 
 import org.springframework.data.domain.PageImpl;
 import java.time.LocalDateTime;
@@ -58,9 +59,9 @@ public class CourseService implements CourseUseCase {
     private final CourseStudentResultAssembler courseStudentResultAssembler;
     private final CourseFileManager courseFileManager;
     private final PublishedCourseListCacheService publishedCourseListCacheService;
+    private final CacheManager cacheManager;
 
     @Override
-    @CacheEvict(cacheNames = CourseCacheType.Const.PUBLIC_COURSE_LIST, allEntries = true)
     public Long createCourse(CreateCourseCommand command) {
         validateCountry(command.countryId());
         validateMaxRewardMileage(command.maxRewardMileage());
@@ -82,7 +83,9 @@ public class CourseService implements CourseUseCase {
                 normalizeCourseStatus(command.status(), "DRAFT")
         );
 
-        return courseRepository.save(newCourse).getId();
+        Long savedCourseId = courseRepository.save(newCourse).getId();
+        evictPublicCourseListCache(command.countryId());
+        return savedCourseId;
     }
 
     @Override
@@ -140,7 +143,6 @@ public class CourseService implements CourseUseCase {
     }
 
     @Override
-    @CacheEvict(cacheNames = CourseCacheType.Const.PUBLIC_COURSE_LIST, allEntries = true)
     public CourseResult updateCourse(Long courseId, UpdateCourseCommand command) {
         validateMaxRewardMileage(command.maxRewardMileage());
 
@@ -173,17 +175,19 @@ public class CourseService implements CourseUseCase {
                 normalizeCourseStatus(command.status(), course.getStatus())
         ).orElseThrow(() -> new CourseException(CourseErrorCode.COURSE_NOT_FOUND));
 
+        evictPublicCourseListCache(course.getCountryId());
         return CourseResult.from(updatedCourse);
     }
 
     @Override
-    @CacheEvict(cacheNames = CourseCacheType.Const.PUBLIC_COURSE_LIST, allEntries = true)
     public void deleteCourse(Long courseId) {
-        findCourse(courseId);
+        Course course = findCourse(courseId);
 
         if (!courseRepository.softDelete(courseId)) {
             throw new CourseException(CourseErrorCode.COURSE_NOT_FOUND);
         }
+
+        evictPublicCourseListCache(course.getCountryId());
     }
 
     @Override
@@ -375,6 +379,26 @@ public class CourseService implements CourseUseCase {
         return CourseStatus.find(status)
                 .map(CourseStatus::name)
                 .orElse(defaultStatus);
+    }
+
+    private void evictPublicCourseListCache(Long countryId) {
+        if (countryId == null) {
+            return;
+        }
+
+        try {
+            Cache cache = cacheManager.getCache(CourseCacheType.Const.PUBLIC_COURSE_LIST);
+            if (cache != null) {
+                cache.evictIfPresent(countryId);
+            }
+        } catch (RuntimeException exception) {
+            log.warn(
+                    "[Course Cache Evict Failed] cacheName={}, countryId={}, message={}",
+                    CourseCacheType.Const.PUBLIC_COURSE_LIST,
+                    countryId,
+                    exception.getMessage()
+            );
+        }
     }
 
     @Override
