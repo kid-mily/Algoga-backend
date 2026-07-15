@@ -3,7 +3,7 @@ package com.kidmily.algoga_server.benefit.presentation.api.admin;
 import com.kidmily.algoga_server.global.annotation.swagger.ApiErrorCodeExample;
 import com.kidmily.algoga_server.global.common.api.response.ApiResponse;
 import com.kidmily.algoga_server.benefit.application.result.CouponStatisticsResult;
-import com.kidmily.algoga_server.benefit.application.usecase.CouponStatisticsUseCase;
+import com.kidmily.algoga_server.benefit.application.usecase.CouponUseCase;
 import com.kidmily.algoga_server.benefit.exception.BenefitErrorCode;
 import com.kidmily.algoga_server.benefit.presentation.response.CouponStatisticsResponse;
 import io.swagger.v3.oas.annotations.Operation;
@@ -20,7 +20,7 @@ import org.springframework.web.bind.annotation.*;
 @RequiredArgsConstructor
 public class CouponStatisticsController {
 
-    private final CouponStatisticsUseCase couponStatisticsUseCase;
+    private final CouponUseCase couponUseCase;
 
     @Operation(
             summary = "쿠폰 통계 조회",
@@ -43,7 +43,7 @@ public class CouponStatisticsController {
             @Parameter(description = "국가 ID 필터", example = "1")
             @RequestParam(required = false) Long countryId
     ) {
-        CouponStatisticsResult result = couponStatisticsUseCase.getCouponStatistics(
+        CouponStatisticsResult result = couponUseCase.getCouponStatistics(
                 courseId,
                 countryId
         );

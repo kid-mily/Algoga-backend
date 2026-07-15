@@ -6,7 +6,7 @@ import com.kidmily.algoga_server.global.common.api.response.ApiResponse;
 import com.kidmily.algoga_server.global.exception.GlobalErrorCode;
 import com.kidmily.algoga_server.benefit.application.command.AdminMileageTransactionCommand;
 import com.kidmily.algoga_server.benefit.application.result.AdminMileageHistoryResult;
-import com.kidmily.algoga_server.benefit.application.usecase.AdminMileageUseCase;
+import com.kidmily.algoga_server.benefit.application.usecase.MileageUseCase;
 import com.kidmily.algoga_server.benefit.exception.BenefitErrorCode;
 import com.kidmily.algoga_server.benefit.presentation.request.AdminMileageTransactionRequest;
 import com.kidmily.algoga_server.benefit.presentation.response.AdminMileageHistoryResponse;
@@ -29,7 +29,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class AdminMileageController {
 
-    private final AdminMileageUseCase adminMileageUseCase;
+    private final MileageUseCase mileageUseCase;
 
     @Operation(
             summary = "사용자별 마일리지 목록 조회",
@@ -39,7 +39,7 @@ public class AdminMileageController {
     @GetMapping
     public ResponseEntity<ApiResponse<AdminMileageSummaryResponse>> getMileageUsers() {
         AdminMileageSummaryResponse response = AdminMileageSummaryResponse.from(
-                adminMileageUseCase.getMileageUsers()
+                mileageUseCase.getMileageUsers()
         );
 
         return ResponseEntity.ok(
@@ -62,7 +62,7 @@ public class AdminMileageController {
             @Parameter(description = "사용자 ID", example = "1")
             @PathVariable Long userId
     ) {
-        List<AdminMileageHistoryResponse> response = adminMileageUseCase.getUserMileageHistories(userId)
+        List<AdminMileageHistoryResponse> response = mileageUseCase.getUserMileageHistories(userId)
                 .stream()
                 .map(AdminMileageHistoryResponse::from)
                 .toList();
@@ -102,7 +102,7 @@ public class AdminMileageController {
                 request.reason()
         );
 
-        AdminMileageHistoryResult result = adminMileageUseCase.earnMileage(command);
+        AdminMileageHistoryResult result = mileageUseCase.earnMileage(command);
 
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(ApiResponse.created(
@@ -139,7 +139,7 @@ public class AdminMileageController {
                 request.reason()
         );
 
-        AdminMileageHistoryResult result = adminMileageUseCase.useMileage(command);
+        AdminMileageHistoryResult result = mileageUseCase.useMileage(command);
 
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(ApiResponse.created(

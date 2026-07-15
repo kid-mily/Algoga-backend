@@ -2,7 +2,6 @@ package com.kidmily.algoga_server.benefit.application.listener;
 
 import com.kidmily.algoga_server.benefit.application.command.RecordCourseRewardFailureCommand;
 import com.kidmily.algoga_server.benefit.application.command.RewardCourseCommand;
-import com.kidmily.algoga_server.benefit.application.usecase.CourseRewardFailureUseCase;
 import com.kidmily.algoga_server.benefit.application.usecase.CourseRewardUseCase;
 import com.kidmily.algoga_server.global.event.CourseCompletionCompletedEvent;
 import lombok.RequiredArgsConstructor;
@@ -17,7 +16,6 @@ import org.springframework.transaction.event.TransactionalEventListener;
 public class CourseCompletionRewardEventListener {
 
     private final CourseRewardUseCase courseRewardUseCase;
-    private final CourseRewardFailureUseCase courseRewardFailureUseCase;
 
     @TransactionalEventListener(
             phase = TransactionPhase.AFTER_COMMIT,
@@ -35,7 +33,7 @@ public class CourseCompletionRewardEventListener {
             log.info("[CourseCompletionReward] Reward granted. userId={}, courseId={}, completionId={}",
                     event.userId(), event.courseId(), event.completionId());
         } catch (Exception exception) {
-            courseRewardFailureUseCase.recordFailure(
+            courseRewardUseCase.recordFailure(
                     new RecordCourseRewardFailureCommand(
                             event.userId(),
                             event.courseId(),

@@ -1,8 +1,8 @@
 package com.kidmily.algoga_server.diagnosis.application.service;
 
 import com.kidmily.algoga_server.diagnosis.application.command.SubmitDiagnosisAnswerCommand;
-import com.kidmily.algoga_server.learning.exception.LearningErrorCode;
-import com.kidmily.algoga_server.learning.exception.LearningException;
+import com.kidmily.algoga_server.diagnosis.exception.DiagnosisErrorCode;
+import com.kidmily.algoga_server.diagnosis.exception.DiagnosisException;
 
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -15,11 +15,11 @@ public final class DiagnosisInputValidator {
 
     public static void validateDiagnosisQuestion(Integer correctOption, Integer questionOrder) {
         if (correctOption == null || correctOption < 1 || correctOption > 4) {
-            throw new LearningException(LearningErrorCode.INVALID_DIAGNOSIS_ANSWER);
+            throw new DiagnosisException(DiagnosisErrorCode.INVALID_DIAGNOSIS_ANSWER);
         }
 
         if (questionOrder == null || questionOrder < 1) {
-            throw new LearningException(LearningErrorCode.INVALID_DIAGNOSIS_ANSWER);
+            throw new DiagnosisException(DiagnosisErrorCode.INVALID_DIAGNOSIS_ANSWER);
         }
     }
 
@@ -29,7 +29,7 @@ public final class DiagnosisInputValidator {
                 .collect(Collectors.toCollection(LinkedHashSet::new));
 
         if (uniqueQuestionIds.size() != answers.size()) {
-            throw new LearningException(LearningErrorCode.INVALID_DIAGNOSIS_ANSWER);
+            throw new DiagnosisException(DiagnosisErrorCode.INVALID_DIAGNOSIS_ANSWER);
         }
     }
 }

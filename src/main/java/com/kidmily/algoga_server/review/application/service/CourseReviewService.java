@@ -11,8 +11,8 @@ import com.kidmily.algoga_server.review.domain.model.CourseReview;
 import com.kidmily.algoga_server.completion.domain.repository.CourseCompletionRepository;
 import com.kidmily.algoga_server.course.domain.repository.CourseRepository;
 import com.kidmily.algoga_server.review.domain.repository.CourseReviewRepository;
-import com.kidmily.algoga_server.learning.exception.LearningErrorCode;
-import com.kidmily.algoga_server.learning.exception.LearningException;
+import com.kidmily.algoga_server.review.exception.ReviewErrorCode;
+import com.kidmily.algoga_server.review.exception.ReviewException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -47,7 +47,7 @@ public class CourseReviewService implements CourseReviewUseCase {
         )) {
             log.warn("[Course Review Command] 리뷰 등록 실패. 이미 리뷰를 작성했습니다. courseId={}, userId={}",
                     command.courseId(), command.userId());
-            throw new LearningException(LearningErrorCode.REVIEW_ALREADY_EXISTS);
+            throw new ReviewException(ReviewErrorCode.REVIEW_ALREADY_EXISTS);
         }
 
         CourseReview courseReview = CourseReview.create(
@@ -137,7 +137,7 @@ public class CourseReviewService implements CourseReviewUseCase {
     private void validateCourse(Long courseId) {
         if (courseRepository.findById(courseId).isEmpty()) {
             log.warn("[Course Review] 후기 처리 실패. 존재하지 않는 강의입니다. courseId={}", courseId);
-            throw new LearningException(LearningErrorCode.COURSE_NOT_FOUND);
+            throw new ReviewException(ReviewErrorCode.COURSE_NOT_FOUND);
         }
     }
 
@@ -148,14 +148,14 @@ public class CourseReviewService implements CourseReviewUseCase {
         if (!courseCompletionRepository.existsByUserIdAndCourseId(userId, courseId)) {
             log.warn("[Course Review] 리뷰 처리 실패. 강의 이수 내역이 없습니다. userId={}, courseId={}",
                     userId, courseId);
-            throw new LearningException(LearningErrorCode.COURSE_COMPLETION_NOT_FOUND);
+            throw new ReviewException(ReviewErrorCode.COURSE_COMPLETION_NOT_FOUND);
         }
     }
 
     private void validateRating(int rating) {
         if (rating < 1 || rating > 5) {
             log.warn("[Course Review] 리뷰 평점 검증 실패. rating={}", rating);
-            throw new LearningException(LearningErrorCode.INVALID_REVIEW_RATING);
+            throw new ReviewException(ReviewErrorCode.INVALID_REVIEW_RATING);
         }
     }
 
@@ -173,6 +173,6 @@ public class CourseReviewService implements CourseReviewUseCase {
     }
     private CourseReview findReview(Long courseId, Long reviewId) {
         return courseReviewRepository.findByIdAndCourseId(reviewId, courseId)
-                .orElseThrow(() -> new LearningException(LearningErrorCode.REVIEW_NOT_FOUND));
+                .orElseThrow(() -> new ReviewException(ReviewErrorCode.REVIEW_NOT_FOUND));
     }
 }

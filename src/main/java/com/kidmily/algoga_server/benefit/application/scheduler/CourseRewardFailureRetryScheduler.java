@@ -2,7 +2,7 @@ package com.kidmily.algoga_server.benefit.application.scheduler;
 
 import com.kidmily.algoga_server.benefit.application.command.RetryCourseRewardFailureCommand;
 import com.kidmily.algoga_server.benefit.application.result.CourseRewardFailureResult;
-import com.kidmily.algoga_server.benefit.application.usecase.CourseRewardFailureUseCase;
+import com.kidmily.algoga_server.benefit.application.usecase.CourseRewardUseCase;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -18,12 +18,12 @@ class CourseRewardFailureRetryScheduler {
 
     private static final int MAX_RETRY_COUNT = 3;
 
-    private final CourseRewardFailureUseCase courseRewardFailureUseCase;
+    private final CourseRewardUseCase courseRewardUseCase;
 
     @Scheduled(cron = "0 */10 * * * *")
     public void retryCourseRewardFailures() {
         List<CourseRewardFailureResult> retryableFailures =
-                courseRewardFailureUseCase.getRetryableFailures(MAX_RETRY_COUNT);
+                courseRewardUseCase.getRetryableFailures(MAX_RETRY_COUNT);
 
         if (retryableFailures.isEmpty()) {
             return;
@@ -33,7 +33,7 @@ class CourseRewardFailureRetryScheduler {
 
         for (CourseRewardFailureResult failure : retryableFailures) {
             try {
-                courseRewardFailureUseCase.retryFailure(
+                courseRewardUseCase.retryFailure(
                         new RetryCourseRewardFailureCommand(failure.failureId())
                 );
 

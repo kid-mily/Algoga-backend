@@ -6,8 +6,8 @@ import com.kidmily.algoga_server.course.domain.model.Course;
 import com.kidmily.algoga_server.completion.domain.model.CourseCompletion;
 import com.kidmily.algoga_server.completion.domain.repository.CourseCompletionRepository;
 import com.kidmily.algoga_server.course.domain.repository.CourseRepository;
-import com.kidmily.algoga_server.learning.exception.LearningErrorCode;
-import com.kidmily.algoga_server.learning.exception.LearningException;
+import com.kidmily.algoga_server.certificate.exception.CertificateErrorCode;
+import com.kidmily.algoga_server.certificate.exception.CertificateException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.pdfbox.pdmodel.PDDocument;
@@ -63,13 +63,13 @@ public class CertificatePdfService implements CertificateUseCase {
                 .orElseThrow(() -> {
                     log.warn("[Certificate Query] 수료증 발급 실패. 강의 이수 내역이 없습니다. userId={}, courseId={}",
                             userId, courseId);
-                    return new LearningException(LearningErrorCode.COURSE_COMPLETION_NOT_FOUND);
+                    return new CertificateException(CertificateErrorCode.COURSE_COMPLETION_NOT_FOUND);
                 });
 
         Course course = courseRepository.findById(courseId)
                 .orElseThrow(() -> {
                     log.warn("[Certificate Query] 수료증 발급 실패. 존재하지 않는 강의입니다. courseId={}", courseId);
-                    return new LearningException(LearningErrorCode.COURSE_NOT_FOUND);
+                    return new CertificateException(CertificateErrorCode.COURSE_NOT_FOUND);
                 });
 
         try {

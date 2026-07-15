@@ -23,8 +23,8 @@ import com.kidmily.algoga_server.course.domain.repository.CourseRepository;
 import com.kidmily.algoga_server.course.application.command.CompleteCourseCommand;
 import com.kidmily.algoga_server.course.application.usecase.CourseUseCase;
 import com.kidmily.algoga_server.course.application.policy.CourseCompletionPolicy;
-import com.kidmily.algoga_server.learning.exception.LearningErrorCode;
-import com.kidmily.algoga_server.learning.exception.LearningException;
+import com.kidmily.algoga_server.course.exception.CourseErrorCode;
+import com.kidmily.algoga_server.course.exception.CourseException;
 import com.kidmily.algoga_server.course.settings.cache.CourseCacheType;
 import com.kidmily.algoga_server.learningprogress.domain.model.LearningProgress;
 import lombok.RequiredArgsConstructor;
@@ -133,7 +133,7 @@ public class CourseService implements CourseUseCase {
         Course course = findCourseIncludingDeleted(courseId);
 
         if (!course.isDeleted()) {
-            throw new LearningException(LearningErrorCode.COURSE_NOT_FOUND);
+            throw new CourseException(CourseErrorCode.COURSE_NOT_FOUND);
         }
 
         return CourseResult.from(course);
@@ -171,7 +171,7 @@ public class CourseService implements CourseUseCase {
                 targetCourseFiles,
                 command.level(),
                 normalizeCourseStatus(command.status(), course.getStatus())
-        ).orElseThrow(() -> new LearningException(LearningErrorCode.COURSE_NOT_FOUND));
+        ).orElseThrow(() -> new CourseException(CourseErrorCode.COURSE_NOT_FOUND));
 
         return CourseResult.from(updatedCourse);
     }
@@ -182,7 +182,7 @@ public class CourseService implements CourseUseCase {
         findCourse(courseId);
 
         if (!courseRepository.softDelete(courseId)) {
-            throw new LearningException(LearningErrorCode.COURSE_NOT_FOUND);
+            throw new CourseException(CourseErrorCode.COURSE_NOT_FOUND);
         }
     }
 
@@ -231,7 +231,7 @@ public class CourseService implements CourseUseCase {
     public CourseClassroomResult getCourseClassroom(Long userId, Long courseId) {
         var enrollment = enrollmentRepository.findByUserIdAndCourseId(userId, courseId)
                 .filter(value -> value.isAccessibleAt(LocalDateTime.now()))
-                .orElseThrow(() -> new LearningException(LearningErrorCode.NOT_ENROLLED));
+                .orElseThrow(() -> new CourseException(CourseErrorCode.NOT_ENROLLED));
 
         Course course = findCourseIncludingDeleted(courseId);
 
@@ -251,10 +251,10 @@ public class CourseService implements CourseUseCase {
     @Transactional(readOnly = true)
     public CourseResult getPublishedCourse(Long courseId) {
         Course course = courseRepository.findByIdAndDeletedFalse(courseId)
-                .orElseThrow(() -> new LearningException(LearningErrorCode.COURSE_NOT_FOUND));
+                .orElseThrow(() -> new CourseException(CourseErrorCode.COURSE_NOT_FOUND));
 
         if (!"PUBLISHED".equals(course.getStatus())) {
-            throw new LearningException(LearningErrorCode.COURSE_NOT_FOUND);
+            throw new CourseException(CourseErrorCode.COURSE_NOT_FOUND);
         }
 
         return CourseResult.from(course);
@@ -308,17 +308,17 @@ public class CourseService implements CourseUseCase {
 
     private Course findCourse(Long courseId) {
         return courseRepository.findByIdAndDeletedFalse(courseId)
-                .orElseThrow(() -> new LearningException(LearningErrorCode.COURSE_NOT_FOUND));
+                .orElseThrow(() -> new CourseException(CourseErrorCode.COURSE_NOT_FOUND));
     }
 
     private Course findCourseIncludingDeleted(Long courseId) {
         return courseRepository.findById(courseId)
-                .orElseThrow(() -> new LearningException(LearningErrorCode.COURSE_NOT_FOUND));
+                .orElseThrow(() -> new CourseException(CourseErrorCode.COURSE_NOT_FOUND));
     }
 
     private void validateCountry(Long countryId) {
         mapRepository.findActiveCountryById(countryId)
-                .orElseThrow(() -> new LearningException(LearningErrorCode.COUNTRY_NOT_FOUND));
+                .orElseThrow(() -> new CourseException(CourseErrorCode.COUNTRY_NOT_FOUND));
     }
 
     private List<Long> resolveCountryFilter(Long countryId, String countryName) {
@@ -357,13 +357,13 @@ public class CourseService implements CourseUseCase {
 
     private void validateCourseLevel(String level) {
         if (CourseLevel.find(level).isEmpty()) {
-            throw new LearningException(LearningErrorCode.INVALID_COURSE_LEVEL);
+            throw new CourseException(CourseErrorCode.INVALID_COURSE_LEVEL);
         }
     }
 
     private void validateMaxRewardMileage(Integer maxRewardMileage) {
         if (maxRewardMileage == null || maxRewardMileage < 0) {
-            throw new LearningException(LearningErrorCode.INVALID_COURSE_REWARD_MILEAGE);
+            throw new CourseException(CourseErrorCode.INVALID_COURSE_REWARD_MILEAGE);
         }
     }
 

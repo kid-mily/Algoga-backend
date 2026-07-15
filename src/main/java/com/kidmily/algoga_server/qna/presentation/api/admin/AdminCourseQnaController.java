@@ -8,7 +8,7 @@ import com.kidmily.algoga_server.qna.application.command.AnswerCourseQnaCommand;
 import com.kidmily.algoga_server.qna.application.command.CreateCourseQnaCommentCommand;
 import com.kidmily.algoga_server.qna.application.result.CourseQnaDetailResult;
 import com.kidmily.algoga_server.qna.application.usecase.CourseQnaUseCase;
-import com.kidmily.algoga_server.learning.exception.LearningErrorCode;
+import com.kidmily.algoga_server.qna.exception.QnaErrorCode;
 import com.kidmily.algoga_server.qna.presentation.request.AnswerCourseQnaRequest;
 import com.kidmily.algoga_server.qna.presentation.request.CreateCourseQnaCommentRequest;
 import com.kidmily.algoga_server.qna.presentation.response.AdminCourseQnaCommentResponse;
@@ -35,7 +35,7 @@ public class AdminCourseQnaController {
     private final CourseQnaUseCase courseQnaUseCase;
 
     @Operation(summary = "관리자 강의 Q&A 목록 조회")
-    @ApiErrorCodeExample(domain = LearningErrorCode.class, value = {"COURSE_NOT_FOUND"})
+    @ApiErrorCodeExample(domain = QnaErrorCode.class, value = {"COURSE_NOT_FOUND"})
     @PreAuthorize("hasAnyAuthority('CONTENT_MANAGER', 'ROLE_CONTENT_MANAGER', 'SUPER_ADMIN', 'ROLE_SUPER_ADMIN')")
     @GetMapping
     public ResponseEntity<ApiResponse<List<AdminCourseQnaResponse>>> getQnas(
@@ -57,7 +57,7 @@ public class AdminCourseQnaController {
     }
 
     @Operation(summary = "관리자 강의 Q&A 상세 조회")
-    @ApiErrorCodeExample(domain = LearningErrorCode.class, value = {
+    @ApiErrorCodeExample(domain = QnaErrorCode.class, value = {
             "COURSE_NOT_FOUND",
             "QNA_NOT_FOUND"
     })
@@ -83,7 +83,7 @@ public class AdminCourseQnaController {
 
     @Operation(summary = "강의 Q&A 답변 등록")
     @ApiErrorCodeExample(domain = GlobalErrorCode.class, value = {"INVALID_REQUEST"})
-    @ApiErrorCodeExample(domain = LearningErrorCode.class, value = {
+    @ApiErrorCodeExample(domain = QnaErrorCode.class, value = {
             "COURSE_NOT_FOUND",
             "QNA_NOT_FOUND",
             "QNA_ALREADY_ANSWERED"
@@ -121,7 +121,7 @@ public class AdminCourseQnaController {
 
     @Operation(summary = "강의 Q&A 관리자 댓글/대댓글 등록")
     @ApiErrorCodeExample(domain = GlobalErrorCode.class, value = {"INVALID_REQUEST"})
-    @ApiErrorCodeExample(domain = LearningErrorCode.class, value = {
+    @ApiErrorCodeExample(domain = QnaErrorCode.class, value = {
             "COURSE_NOT_FOUND",
             "QNA_NOT_FOUND",
             "QNA_COMMENT_NOT_FOUND"

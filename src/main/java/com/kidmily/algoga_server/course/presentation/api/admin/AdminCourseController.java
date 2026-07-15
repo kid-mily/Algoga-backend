@@ -9,8 +9,8 @@ import com.kidmily.algoga_server.course.application.command.CreateCourseCommand;
 import com.kidmily.algoga_server.course.application.command.UpdateCourseCommand;
 import com.kidmily.algoga_server.course.application.port.UploadFile;
 import com.kidmily.algoga_server.course.application.usecase.CourseUseCase;
-import com.kidmily.algoga_server.learning.exception.LearningErrorCode;
-import com.kidmily.algoga_server.learning.exception.LearningException;
+import com.kidmily.algoga_server.course.exception.CourseErrorCode;
+import com.kidmily.algoga_server.course.exception.CourseException;
 import com.kidmily.algoga_server.course.presentation.request.admin.CreateCourseRequest;
 import com.kidmily.algoga_server.course.presentation.request.admin.UpdateCourseRequest;
 import com.kidmily.algoga_server.course.presentation.response.AdminCourseResponse;
@@ -48,7 +48,7 @@ public class AdminCourseController {
             description = "콘텐츠 매니저가 강의 기본 정보와 썸네일, 선택 첨부파일을 등록합니다."
     )
     @ApiErrorCodeExample(domain = GlobalErrorCode.class, value = {"INVALID_REQUEST"})
-    @ApiErrorCodeExample(domain = LearningErrorCode.class, value = {"COUNTRY_NOT_FOUND", "FILE_UPLOAD_FAILED", "INVALID_COURSE_FILE_TYPE"})
+    @ApiErrorCodeExample(domain = CourseErrorCode.class, value = {"COUNTRY_NOT_FOUND", "FILE_UPLOAD_FAILED", "INVALID_COURSE_FILE_TYPE"})
     @PreAuthorize("hasAnyAuthority('CONTENT_MANAGER', 'ROLE_CONTENT_MANAGER', 'SUPER_ADMIN', 'ROLE_SUPER_ADMIN')")
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<ApiResponse<Long>> createCourse(
@@ -155,7 +155,7 @@ public class AdminCourseController {
             summary = "어드민 삭제 강의 상세 조회",
             description = "Soft Delete 처리된 강의의 상세 정보를 조회합니다."
     )
-    @ApiErrorCodeExample(domain = LearningErrorCode.class, value = {"COURSE_NOT_FOUND"})
+    @ApiErrorCodeExample(domain = CourseErrorCode.class, value = {"COURSE_NOT_FOUND"})
     @PreAuthorize("hasAnyAuthority('CONTENT_MANAGER', 'ROLE_CONTENT_MANAGER', 'SUPER_ADMIN', 'ROLE_SUPER_ADMIN')")
     @GetMapping("/deleted/{courseId}")
     public ResponseEntity<ApiResponse<AdminCourseResponse>> getDeletedCourse(
@@ -177,7 +177,7 @@ public class AdminCourseController {
             summary = "어드민 강의 상세 조회",
             description = "강의 ID를 기준으로 삭제되지 않은 강의 상세 정보를 조회합니다."
     )
-    @ApiErrorCodeExample(domain = LearningErrorCode.class, value = {"COURSE_NOT_FOUND"})
+    @ApiErrorCodeExample(domain = CourseErrorCode.class, value = {"COURSE_NOT_FOUND"})
     @PreAuthorize("hasAnyAuthority('CONTENT_MANAGER', 'ROLE_CONTENT_MANAGER', 'SUPER_ADMIN', 'ROLE_SUPER_ADMIN')")
     @GetMapping("/{courseId}")
     public ResponseEntity<ApiResponse<AdminCourseResponse>> getCourse(
@@ -200,7 +200,7 @@ public class AdminCourseController {
             description = "강의 제목, 설명, 가격, 난이도, 썸네일, 첨부파일을 수정합니다. 파일을 보내지 않으면 기존 파일 경로를 유지합니다."
     )
     @ApiErrorCodeExample(domain = GlobalErrorCode.class, value = {"INVALID_REQUEST"})
-    @ApiErrorCodeExample(domain = LearningErrorCode.class, value = {"COURSE_NOT_FOUND", "FILE_UPLOAD_FAILED", "INVALID_COURSE_FILE_TYPE"})
+    @ApiErrorCodeExample(domain = CourseErrorCode.class, value = {"COURSE_NOT_FOUND", "FILE_UPLOAD_FAILED", "INVALID_COURSE_FILE_TYPE"})
     @PreAuthorize("hasAnyAuthority('CONTENT_MANAGER', 'ROLE_CONTENT_MANAGER', 'SUPER_ADMIN', 'ROLE_SUPER_ADMIN')")
     @PutMapping(value = "/{courseId}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<ApiResponse<AdminCourseResponse>> updateCourse(
@@ -248,7 +248,7 @@ public class AdminCourseController {
             summary = "어드민 강의 삭제",
             description = "강의를 실제 삭제하지 않고 Soft Delete 처리합니다."
     )
-    @ApiErrorCodeExample(domain = LearningErrorCode.class, value = {"COURSE_NOT_FOUND"})
+    @ApiErrorCodeExample(domain = CourseErrorCode.class, value = {"COURSE_NOT_FOUND"})
     @PreAuthorize("hasAnyAuthority('CONTENT_MANAGER', 'ROLE_CONTENT_MANAGER', 'SUPER_ADMIN', 'ROLE_SUPER_ADMIN')")
     @DeleteMapping("/{courseId}")
     public ResponseEntity<ApiResponse<Void>> deleteCourse(
@@ -278,7 +278,7 @@ public class AdminCourseController {
                     file.getInputStream()
             );
         } catch (IOException exception) {
-            throw new LearningException(LearningErrorCode.FILE_UPLOAD_FAILED);
+            throw new CourseException(CourseErrorCode.FILE_UPLOAD_FAILED);
         }
     }
 
