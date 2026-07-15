@@ -2,6 +2,7 @@ package com.kidmily.algoga_server.qna.presentation.request;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
 
 @Schema(description = "강의 Q&A 댓글 등록 요청")
 public record CreateCourseQnaCommentRequest(
@@ -11,6 +12,7 @@ public record CreateCourseQnaCommentRequest(
 
         @Schema(description = "댓글 내용", example = "추가로 궁금한 점이 있습니다.")
         @NotBlank(message = "댓글 내용은 필수입니다.")
+        @Size(max = 1000, message = "댓글 내용은 1000자 이하로 입력해주세요.")
         String content
 ) {
 }
