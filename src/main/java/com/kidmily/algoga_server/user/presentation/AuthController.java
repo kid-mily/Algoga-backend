@@ -42,7 +42,7 @@ public class AuthController {
 
     // 일반 회원가입
     @Operation(summary = "일반 회원가입", description = "모든 필수 항목 입력 및 유효성 검사를 거쳐 계정을 생성합니다.")
-    @ApiErrorCodeExample(domain = UserErrorCode.class, value = {"ALREADY_EXISTS_EMAIL"})
+    @ApiErrorCodeExample(domain = AuthErrorCode.class, value = {"DUPLICATE_EMAIL"})
     @io.swagger.v3.oas.annotations.responses.ApiResponses({
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "201", description = "회원가입 성공"),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "약관 미동의 또는 입력값 유효성 검사 실패")
@@ -167,7 +167,7 @@ public class AuthController {
 
     // 이메일 인증번호 발송 API
     @Operation(summary = "회원가입 이메일 인증번호 발송", description = "입력한 이메일로 6자리 인증번호를 발송합니다.")
-    @ApiErrorCodeExample(domain = UserErrorCode.class, value = {"ALREADY_EXISTS_EMAIL"})
+    @ApiErrorCodeExample(domain = AuthErrorCode.class, value = {"DUPLICATE_EMAIL"})
     @PostMapping("/email/send-code")
     public ApiResponse<Void> sendEmailCode(@RequestBody @Valid SendEmailCodeRequest request) {
         authService.sendVerificationCode(request);
@@ -176,7 +176,7 @@ public class AuthController {
 
     // 이메일 인증번호 확인 API
     @Operation(summary = "회원가입 이메일 인증번호 확인", description = "발송된 6자리 인증번호가 맞는지 확인합니다.")
-    @ApiErrorCodeExample(domain = UserErrorCode.class, value = {"INVALID_USER_INFO"})
+    @ApiErrorCodeExample(domain = AuthErrorCode.class, value = {"EMAIL_AUTH_CODE_MISMATCH"})
     @PostMapping("/email/verify-code")
     public ApiResponse<Void> verifyEmailCode(@RequestBody @Valid VerifyEmailCodeRequest request) {
         authService.verifyEmailCode(request);
@@ -185,7 +185,8 @@ public class AuthController {
 
     // 소셜 추가정보 회원가입 API
     @Operation(summary = "소셜 추가정보 회원가입", description = "소셜 로그인 성공 후 최초 가입 시, 필수 추가 정보(전화번호, 성별, 닉네임 등)를 입력받아 회원가입을 완료합니다.")
-    @ApiErrorCodeExample(domain = UserErrorCode.class, value = {"ALREADY_EXISTS_EMAIL", "ALREADY_EXISTS_PHONE"})
+    @ApiErrorCodeExample(domain = AuthErrorCode.class, value = {"DUPLICATE_EMAIL"})
+    @ApiErrorCodeExample(domain = UserErrorCode.class, value = {"ALREADY_EXISTS_PHONE"})
     @io.swagger.v3.oas.annotations.responses.ApiResponses({
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "201", description = "소셜 회원가입 성공"),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "입력값 유효성 검사 실패 또는 필수값 누락")
