@@ -7,8 +7,8 @@ import com.kidmily.algoga_server.course.application.command.CreateChapterCommand
 import com.kidmily.algoga_server.course.application.command.UpdateChapterCommand;
 import com.kidmily.algoga_server.course.application.port.UploadFile;
 import com.kidmily.algoga_server.course.application.usecase.ChapterUseCase;
-import com.kidmily.algoga_server.learning.exception.LearningErrorCode;
-import com.kidmily.algoga_server.learning.exception.LearningException;
+import com.kidmily.algoga_server.course.exception.CourseErrorCode;
+import com.kidmily.algoga_server.course.exception.CourseException;
 import com.kidmily.algoga_server.course.presentation.request.admin.CreateChapterRequest;
 import com.kidmily.algoga_server.course.presentation.request.admin.UpdateChapterRequest;
 import com.kidmily.algoga_server.course.presentation.response.AdminChapterResponse;
@@ -41,7 +41,7 @@ public class AdminChapterController {
             summary = "챕터 목록 조회",
             description = "특정 강의에 등록된 챕터 목록을 조회합니다."
     )
-    @ApiErrorCodeExample(domain = LearningErrorCode.class, value = {"COURSE_NOT_FOUND"})
+    @ApiErrorCodeExample(domain = CourseErrorCode.class, value = {"COURSE_NOT_FOUND"})
     @PreAuthorize("hasAnyAuthority('CONTENT_MANAGER', 'ROLE_CONTENT_MANAGER', 'SUPER_ADMIN', 'ROLE_SUPER_ADMIN')")
     @GetMapping
     public ResponseEntity<ApiResponse<List<AdminChapterResponse>>> getChapters(
@@ -67,7 +67,7 @@ public class AdminChapterController {
             description = "콘텐츠 매니저가 특정 강의에 챕터를 등록합니다."
     )
     @ApiErrorCodeExample(domain = GlobalErrorCode.class, value = {"INVALID_REQUEST"})
-    @ApiErrorCodeExample(domain = LearningErrorCode.class, value = {
+    @ApiErrorCodeExample(domain = CourseErrorCode.class, value = {
             "COURSE_NOT_FOUND",
             "FILE_UPLOAD_FAILED",
             "CHAPTER_VIDEO_REQUIRED",
@@ -113,7 +113,7 @@ public class AdminChapterController {
             description = "특정 강의의 챕터 제목, 영상, 재생 시간, 노출 순서를 수정합니다. 영상 파일을 보내지 않으면 기존 영상 경로를 유지합니다."
     )
     @ApiErrorCodeExample(domain = GlobalErrorCode.class, value = {"INVALID_REQUEST"})
-    @ApiErrorCodeExample(domain = LearningErrorCode.class, value = {
+    @ApiErrorCodeExample(domain = CourseErrorCode.class, value = {
             "COURSE_NOT_FOUND",
             "CHAPTER_NOT_FOUND",
             "FILE_UPLOAD_FAILED",
@@ -161,7 +161,7 @@ public class AdminChapterController {
             summary = "챕터 삭제",
             description = "특정 강의의 챕터를 실제 삭제하지 않고 Soft Delete 처리합니다."
     )
-    @ApiErrorCodeExample(domain = LearningErrorCode.class, value = {"COURSE_NOT_FOUND", "CHAPTER_NOT_FOUND"})
+    @ApiErrorCodeExample(domain = CourseErrorCode.class, value = {"COURSE_NOT_FOUND", "CHAPTER_NOT_FOUND"})
     @PreAuthorize("hasAnyAuthority('CONTENT_MANAGER', 'ROLE_CONTENT_MANAGER', 'SUPER_ADMIN', 'ROLE_SUPER_ADMIN')")
     @DeleteMapping("/{chapterId}")
     public ResponseEntity<ApiResponse<Void>> deleteChapter(
@@ -194,7 +194,7 @@ public class AdminChapterController {
                     file.getInputStream()
             );
         } catch (IOException exception) {
-            throw new LearningException(LearningErrorCode.FILE_UPLOAD_FAILED);
+            throw new CourseException(CourseErrorCode.FILE_UPLOAD_FAILED);
         }
     }
 }

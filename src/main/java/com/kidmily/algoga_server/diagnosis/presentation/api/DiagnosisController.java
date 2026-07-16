@@ -6,13 +6,14 @@ import com.kidmily.algoga_server.diagnosis.application.command.SubmitDiagnosisAn
 import com.kidmily.algoga_server.diagnosis.application.command.SubmitDiagnosisCommand;
 import com.kidmily.algoga_server.course.application.usecase.CourseUseCase;
 import com.kidmily.algoga_server.diagnosis.application.usecase.DiagnosisUseCase;
-import com.kidmily.algoga_server.learning.exception.LearningErrorCode;
+import com.kidmily.algoga_server.diagnosis.exception.DiagnosisErrorCode;
+import com.kidmily.algoga_server.course.exception.CourseErrorCode;
 import com.kidmily.algoga_server.diagnosis.presentation.request.DiagnosisAnswerRequest;
 import com.kidmily.algoga_server.diagnosis.presentation.request.DiagnosisSubmitRequest;
 import com.kidmily.algoga_server.course.presentation.response.CourseListResponse;
 import com.kidmily.algoga_server.diagnosis.presentation.response.DiagnosisQuestionResponse;
 import com.kidmily.algoga_server.diagnosis.presentation.response.DiagnosisResultResponse;
-import com.kidmily.algoga_server.learning.presentation.support.CurrentUserIdResolver;
+import com.kidmily.algoga_server.diagnosis.presentation.support.CurrentUserIdResolver;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
@@ -33,7 +34,7 @@ public class DiagnosisController {
     private final DiagnosisUseCase diagnosisUseCase;
 
     @Operation(summary = "진단평가 문제 목록 조회")
-    @ApiErrorCodeExample(domain = LearningErrorCode.class, value = {
+    @ApiErrorCodeExample(domain = DiagnosisErrorCode.class, value = {
             "DIAGNOSIS_LOGIN_REQUIRED",
             "COUNTRY_NOT_FOUND",
             "DIAGNOSIS_QUESTION_NOT_FOUND"
@@ -58,7 +59,7 @@ public class DiagnosisController {
     }
 
     @Operation(summary = "진단평가 나라/level별 추천 강의 조회")
-    @ApiErrorCodeExample(domain = LearningErrorCode.class, value = {
+    @ApiErrorCodeExample(domain = CourseErrorCode.class, value = {
             "COUNTRY_NOT_FOUND",
             "INVALID_COURSE_LEVEL",
             "COURSE_NOT_FOUND"
@@ -84,7 +85,7 @@ public class DiagnosisController {
     }
 
     @Operation(summary = "진단평가 답안 제출 및 결과 저장")
-    @ApiErrorCodeExample(domain = LearningErrorCode.class, value = {
+    @ApiErrorCodeExample(domain = DiagnosisErrorCode.class, value = {
             "COUNTRY_NOT_FOUND",
             "DIAGNOSIS_QUESTION_NOT_FOUND",
             "INVALID_DIAGNOSIS_ANSWER"
@@ -117,7 +118,7 @@ public class DiagnosisController {
     }
 
     @Operation(summary = "내 최신 진단평가 결과 조회")
-    @ApiErrorCodeExample(domain = LearningErrorCode.class, value = {
+    @ApiErrorCodeExample(domain = DiagnosisErrorCode.class, value = {
             "DIAGNOSIS_LOGIN_REQUIRED",
             "DIAGNOSIS_RESULT_NOT_FOUND"
     })

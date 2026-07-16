@@ -10,5 +10,7 @@ public interface SpringDataQuizRepository extends JpaRepository<QuizJpaEntity, L
 
     List<QuizJpaEntity> findByCourseIdAndDeletedFalseOrderByIdAsc(Long courseId);
 
+    long countByCourseIdAndDeletedFalse(Long courseId);
+
     Optional<QuizJpaEntity> findByIdAndCourseIdAndDeletedFalse(Long id, Long courseId);
 }

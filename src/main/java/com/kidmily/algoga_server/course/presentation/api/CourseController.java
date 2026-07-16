@@ -3,7 +3,7 @@ package com.kidmily.algoga_server.course.presentation.api;
 import com.kidmily.algoga_server.global.common.api.response.ApiResponse;
 import com.kidmily.algoga_server.course.application.usecase.CourseUseCase;
 import com.kidmily.algoga_server.course.presentation.response.CourseListResponse;
-import com.kidmily.algoga_server.learning.presentation.support.CurrentUserIdResolver;
+import com.kidmily.algoga_server.course.presentation.support.CurrentUserIdResolver;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;

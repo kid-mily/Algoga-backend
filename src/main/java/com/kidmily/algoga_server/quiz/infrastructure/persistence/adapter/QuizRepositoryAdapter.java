@@ -43,6 +43,11 @@ public class QuizRepositoryAdapter implements QuizRepository {
     }
 
     @Override
+    public long countByCourseId(Long courseId) {
+        return springDataQuizRepository.countByCourseIdAndDeletedFalse(courseId);
+    }
+
+    @Override
     public Optional<Quiz> findByIdAndCourseId(Long quizId, Long courseId) {
         return springDataQuizRepository.findByIdAndCourseIdAndDeletedFalse(quizId, courseId)
                 .map(this::toDomain);

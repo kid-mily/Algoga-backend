@@ -3,7 +3,7 @@ package com.kidmily.algoga_server.benefit.presentation.api.admin;
 import com.kidmily.algoga_server.admin.settings.annotation.CurrentManager;
 import com.kidmily.algoga_server.benefit.application.command.CreateCouponPolicyCommand;
 import com.kidmily.algoga_server.benefit.application.command.UpdateCouponPolicyCommand;
-import com.kidmily.algoga_server.benefit.application.usecase.CouponPolicyUseCase;
+import com.kidmily.algoga_server.benefit.application.usecase.CouponUseCase;
 import com.kidmily.algoga_server.benefit.exception.BenefitErrorCode;
 import com.kidmily.algoga_server.benefit.presentation.request.CreateCouponPolicyRequest;
 import com.kidmily.algoga_server.benefit.presentation.request.UpdateCouponPolicyRequest;
@@ -36,7 +36,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class AdminCouponController {
 
-    private final CouponPolicyUseCase couponPolicyUseCase;
+    private final CouponUseCase couponUseCase;
 
     @Operation(
             summary = "강의별 쿠폰 정책 등록",
@@ -66,7 +66,7 @@ public class AdminCouponController {
                 request.discountValue()
         );
 
-        var couponPolicy = couponPolicyUseCase.createCouponPolicy(command);
+        var couponPolicy = couponUseCase.createCouponPolicy(command);
 
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(ApiResponse.created(
@@ -87,7 +87,7 @@ public class AdminCouponController {
             @Parameter(description = "강의 ID", example = "3")
             @PathVariable Long courseId
     ) {
-        List<CouponPolicyResponse> response = couponPolicyUseCase.getCouponPolicies(courseId)
+        List<CouponPolicyResponse> response = couponUseCase.getCouponPolicies(courseId)
                 .stream()
                 .map(CouponPolicyResponse::from)
                 .toList();
@@ -131,7 +131,7 @@ public class AdminCouponController {
                 request.discountValue()
         );
 
-        var couponPolicy = couponPolicyUseCase.updateCouponPolicy(command);
+        var couponPolicy = couponUseCase.updateCouponPolicy(command);
 
         return ResponseEntity.ok(
                 ApiResponse.success(
@@ -156,7 +156,7 @@ public class AdminCouponController {
             @Parameter(description = "쿠폰 정책 ID", example = "12")
             @PathVariable Long couponPolicyId
     ) {
-        couponPolicyUseCase.deactivateCouponPolicy(courseId, couponPolicyId);
+        couponUseCase.deactivateCouponPolicy(courseId, couponPolicyId);
 
         return ResponseEntity.ok(
                 ApiResponse.success(

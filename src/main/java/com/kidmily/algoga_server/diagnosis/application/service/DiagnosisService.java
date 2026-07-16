@@ -18,8 +18,8 @@ import com.kidmily.algoga_server.diagnosis.domain.repository.DiagnosisAnswerRepo
 import com.kidmily.algoga_server.diagnosis.domain.repository.DiagnosisQuestionRepository;
 import com.kidmily.algoga_server.diagnosis.domain.repository.DiagnosisResultRepository;
 import com.kidmily.algoga_server.country.domain.repository.MapRepository;
-import com.kidmily.algoga_server.learning.exception.LearningErrorCode;
-import com.kidmily.algoga_server.learning.exception.LearningException;
+import com.kidmily.algoga_server.diagnosis.exception.DiagnosisErrorCode;
+import com.kidmily.algoga_server.diagnosis.exception.DiagnosisException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -85,7 +85,7 @@ public class DiagnosisService implements DiagnosisUseCase {
     @Override
     public DiagnosisQuestionResult updateQuestion(Long questionId, UpdateDiagnosisQuestionCommand command) {
         DiagnosisQuestion existingQuestion = diagnosisQuestionRepository.findById(questionId)
-                .orElseThrow(() -> new LearningException(LearningErrorCode.DIAGNOSIS_QUESTION_NOT_FOUND));
+                .orElseThrow(() -> new DiagnosisException(DiagnosisErrorCode.DIAGNOSIS_QUESTION_NOT_FOUND));
 
         DiagnosisInputValidator.validateDiagnosisQuestion(command.correctOption(), command.questionOrder());
 
@@ -121,7 +121,7 @@ public class DiagnosisService implements DiagnosisUseCase {
                 .collect(Collectors.toMap(DiagnosisQuestion::id, Function.identity()));
 
         if (questionMap.size() != questionIds.size()) {
-            throw new LearningException(LearningErrorCode.DIAGNOSIS_QUESTION_NOT_FOUND);
+            throw new DiagnosisException(DiagnosisErrorCode.DIAGNOSIS_QUESTION_NOT_FOUND);
         }
 
         DiagnosisGrader.Result grading = DiagnosisGrader.grade(command.answers(), questionMap, command.countryId());
@@ -147,7 +147,7 @@ public class DiagnosisService implements DiagnosisUseCase {
                 .toList();
 
         if (userProfilePort.findProfile(command.userId()).isEmpty()) {
-            throw new LearningException(LearningErrorCode.INVALID_DIAGNOSIS_ANSWER);
+            throw new DiagnosisException(DiagnosisErrorCode.INVALID_DIAGNOSIS_ANSWER);
         }
 
         userProfilePort.updateDiagnosisResult(command.userId(), command.countryId(), level, score);
@@ -161,7 +161,7 @@ public class DiagnosisService implements DiagnosisUseCase {
         List<DiagnosisResult> results = diagnosisResultRepository.findLatestResultsByCountry(userId);
 
         if (results.isEmpty()) {
-            throw new LearningException(LearningErrorCode.DIAGNOSIS_RESULT_NOT_FOUND);
+            throw new DiagnosisException(DiagnosisErrorCode.DIAGNOSIS_RESULT_NOT_FOUND);
         }
 
         return results.stream()
@@ -185,7 +185,7 @@ public class DiagnosisService implements DiagnosisUseCase {
     @Override
     public void deleteQuestion(Long questionId) {
         if (!diagnosisQuestionRepository.existsById(questionId)) {
-            throw new LearningException(LearningErrorCode.DIAGNOSIS_QUESTION_NOT_FOUND);
+            throw new DiagnosisException(DiagnosisErrorCode.DIAGNOSIS_QUESTION_NOT_FOUND);
         }
 
         diagnosisAnswerRepository.deleteByQuestionId(questionId);
@@ -237,7 +237,7 @@ public class DiagnosisService implements DiagnosisUseCase {
 
     private void validateCountry(Long countryId) {
         if (mapRepository.findActiveCountryById(countryId).isEmpty()) {
-            throw new LearningException(LearningErrorCode.COUNTRY_NOT_FOUND);
+            throw new DiagnosisException(DiagnosisErrorCode.COUNTRY_NOT_FOUND);
         }
     }
 

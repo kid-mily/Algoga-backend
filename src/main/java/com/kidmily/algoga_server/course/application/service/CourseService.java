@@ -23,17 +23,18 @@ import com.kidmily.algoga_server.course.domain.repository.CourseRepository;
 import com.kidmily.algoga_server.course.application.command.CompleteCourseCommand;
 import com.kidmily.algoga_server.course.application.usecase.CourseUseCase;
 import com.kidmily.algoga_server.course.application.policy.CourseCompletionPolicy;
-import com.kidmily.algoga_server.learning.exception.LearningErrorCode;
-import com.kidmily.algoga_server.learning.exception.LearningException;
+import com.kidmily.algoga_server.course.exception.CourseErrorCode;
+import com.kidmily.algoga_server.course.exception.CourseException;
 import com.kidmily.algoga_server.course.settings.cache.CourseCacheType;
 import com.kidmily.algoga_server.learningprogress.domain.model.LearningProgress;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.Cache;
+import org.springframework.cache.CacheManager;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.cache.annotation.CacheEvict;
 
 import org.springframework.data.domain.PageImpl;
 import java.time.LocalDateTime;
@@ -58,9 +59,9 @@ public class CourseService implements CourseUseCase {
     private final CourseStudentResultAssembler courseStudentResultAssembler;
     private final CourseFileManager courseFileManager;
     private final PublishedCourseListCacheService publishedCourseListCacheService;
+    private final CacheManager cacheManager;
 
     @Override
-    @CacheEvict(cacheNames = CourseCacheType.Const.PUBLIC_COURSE_LIST, allEntries = true)
     public Long createCourse(CreateCourseCommand command) {
         validateCountry(command.countryId());
         validateMaxRewardMileage(command.maxRewardMileage());
@@ -82,7 +83,9 @@ public class CourseService implements CourseUseCase {
                 normalizeCourseStatus(command.status(), "DRAFT")
         );
 
-        return courseRepository.save(newCourse).getId();
+        Long savedCourseId = courseRepository.save(newCourse).getId();
+        evictPublicCourseListCache(command.countryId());
+        return savedCourseId;
     }
 
     @Override
@@ -133,14 +136,13 @@ public class CourseService implements CourseUseCase {
         Course course = findCourseIncludingDeleted(courseId);
 
         if (!course.isDeleted()) {
-            throw new LearningException(LearningErrorCode.COURSE_NOT_FOUND);
+            throw new CourseException(CourseErrorCode.COURSE_NOT_FOUND);
         }
 
         return CourseResult.from(course);
     }
 
     @Override
-    @CacheEvict(cacheNames = CourseCacheType.Const.PUBLIC_COURSE_LIST, allEntries = true)
     public CourseResult updateCourse(Long courseId, UpdateCourseCommand command) {
         validateMaxRewardMileage(command.maxRewardMileage());
 
@@ -171,19 +173,21 @@ public class CourseService implements CourseUseCase {
                 targetCourseFiles,
                 command.level(),
                 normalizeCourseStatus(command.status(), course.getStatus())
-        ).orElseThrow(() -> new LearningException(LearningErrorCode.COURSE_NOT_FOUND));
+        ).orElseThrow(() -> new CourseException(CourseErrorCode.COURSE_NOT_FOUND));
 
+        evictPublicCourseListCache(course.getCountryId());
         return CourseResult.from(updatedCourse);
     }
 
     @Override
-    @CacheEvict(cacheNames = CourseCacheType.Const.PUBLIC_COURSE_LIST, allEntries = true)
     public void deleteCourse(Long courseId) {
-        findCourse(courseId);
+        Course course = findCourse(courseId);
 
         if (!courseRepository.softDelete(courseId)) {
-            throw new LearningException(LearningErrorCode.COURSE_NOT_FOUND);
+            throw new CourseException(CourseErrorCode.COURSE_NOT_FOUND);
         }
+
+        evictPublicCourseListCache(course.getCountryId());
     }
 
     @Override
@@ -231,7 +235,7 @@ public class CourseService implements CourseUseCase {
     public CourseClassroomResult getCourseClassroom(Long userId, Long courseId) {
         var enrollment = enrollmentRepository.findByUserIdAndCourseId(userId, courseId)
                 .filter(value -> value.isAccessibleAt(LocalDateTime.now()))
-                .orElseThrow(() -> new LearningException(LearningErrorCode.NOT_ENROLLED));
+                .orElseThrow(() -> new CourseException(CourseErrorCode.NOT_ENROLLED));
 
         Course course = findCourseIncludingDeleted(courseId);
 
@@ -251,10 +255,10 @@ public class CourseService implements CourseUseCase {
     @Transactional(readOnly = true)
     public CourseResult getPublishedCourse(Long courseId) {
         Course course = courseRepository.findByIdAndDeletedFalse(courseId)
-                .orElseThrow(() -> new LearningException(LearningErrorCode.COURSE_NOT_FOUND));
+                .orElseThrow(() -> new CourseException(CourseErrorCode.COURSE_NOT_FOUND));
 
         if (!"PUBLISHED".equals(course.getStatus())) {
-            throw new LearningException(LearningErrorCode.COURSE_NOT_FOUND);
+            throw new CourseException(CourseErrorCode.COURSE_NOT_FOUND);
         }
 
         return CourseResult.from(course);
@@ -308,17 +312,17 @@ public class CourseService implements CourseUseCase {
 
     private Course findCourse(Long courseId) {
         return courseRepository.findByIdAndDeletedFalse(courseId)
-                .orElseThrow(() -> new LearningException(LearningErrorCode.COURSE_NOT_FOUND));
+                .orElseThrow(() -> new CourseException(CourseErrorCode.COURSE_NOT_FOUND));
     }
 
     private Course findCourseIncludingDeleted(Long courseId) {
         return courseRepository.findById(courseId)
-                .orElseThrow(() -> new LearningException(LearningErrorCode.COURSE_NOT_FOUND));
+                .orElseThrow(() -> new CourseException(CourseErrorCode.COURSE_NOT_FOUND));
     }
 
     private void validateCountry(Long countryId) {
         mapRepository.findActiveCountryById(countryId)
-                .orElseThrow(() -> new LearningException(LearningErrorCode.COUNTRY_NOT_FOUND));
+                .orElseThrow(() -> new CourseException(CourseErrorCode.COUNTRY_NOT_FOUND));
     }
 
     private List<Long> resolveCountryFilter(Long countryId, String countryName) {
@@ -357,13 +361,13 @@ public class CourseService implements CourseUseCase {
 
     private void validateCourseLevel(String level) {
         if (CourseLevel.find(level).isEmpty()) {
-            throw new LearningException(LearningErrorCode.INVALID_COURSE_LEVEL);
+            throw new CourseException(CourseErrorCode.INVALID_COURSE_LEVEL);
         }
     }
 
     private void validateMaxRewardMileage(Integer maxRewardMileage) {
         if (maxRewardMileage == null || maxRewardMileage < 0) {
-            throw new LearningException(LearningErrorCode.INVALID_COURSE_REWARD_MILEAGE);
+            throw new CourseException(CourseErrorCode.INVALID_COURSE_REWARD_MILEAGE);
         }
     }
 
@@ -375,6 +379,26 @@ public class CourseService implements CourseUseCase {
         return CourseStatus.find(status)
                 .map(CourseStatus::name)
                 .orElse(defaultStatus);
+    }
+
+    private void evictPublicCourseListCache(Long countryId) {
+        if (countryId == null) {
+            return;
+        }
+
+        try {
+            Cache cache = cacheManager.getCache(CourseCacheType.Const.PUBLIC_COURSE_LIST);
+            if (cache != null) {
+                cache.evictIfPresent(countryId);
+            }
+        } catch (RuntimeException exception) {
+            log.warn(
+                    "[Course Cache Evict Failed] cacheName={}, countryId={}, message={}",
+                    CourseCacheType.Const.PUBLIC_COURSE_LIST,
+                    countryId,
+                    exception.getMessage()
+            );
+        }
     }
 
     @Override

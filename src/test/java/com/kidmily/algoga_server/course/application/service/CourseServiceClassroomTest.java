@@ -17,8 +17,8 @@ import com.kidmily.algoga_server.enrollment.domain.repository.EnrollmentReposito
 import com.kidmily.algoga_server.learningprogress.domain.repository.LearningProgressRepository;
 import com.kidmily.algoga_server.country.domain.repository.MapRepository;
 import com.kidmily.algoga_server.quiz.domain.repository.QuizSubmissionRepository;
-import com.kidmily.algoga_server.learning.exception.LearningErrorCode;
-import com.kidmily.algoga_server.learning.exception.LearningException;
+import com.kidmily.algoga_server.course.exception.CourseErrorCode;
+import com.kidmily.algoga_server.course.exception.CourseException;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -104,12 +104,12 @@ class CourseServiceClassroomTest {
         when(enrollmentRepository.findByUserIdAndCourseId(USER_ID, COURSE_ID))
                 .thenReturn(Optional.of(enrollment(LocalDateTime.now().minusSeconds(1))));
 
-        LearningException exception = assertThrows(
-                LearningException.class,
+        CourseException exception = assertThrows(
+                CourseException.class,
                 () -> courseService.getCourseClassroom(USER_ID, COURSE_ID)
         );
 
-        assertSame(LearningErrorCode.NOT_ENROLLED, exception.getErrorCode());
+        assertSame(CourseErrorCode.NOT_ENROLLED, exception.getErrorCode());
     }
 
     @Test

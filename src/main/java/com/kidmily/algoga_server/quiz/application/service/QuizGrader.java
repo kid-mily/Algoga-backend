@@ -1,7 +1,7 @@
 package com.kidmily.algoga_server.quiz.application.service;
 
-import com.kidmily.algoga_server.learning.exception.LearningErrorCode;
-import com.kidmily.algoga_server.learning.exception.LearningException;
+import com.kidmily.algoga_server.quiz.exception.QuizErrorCode;
+import com.kidmily.algoga_server.quiz.exception.QuizException;
 import com.kidmily.algoga_server.quiz.application.command.SubmitQuizAnswerCommand;
 import com.kidmily.algoga_server.quiz.application.result.WrongQuizAnswerResult;
 import com.kidmily.algoga_server.quiz.domain.model.Quiz;
@@ -59,7 +59,7 @@ public final class QuizGrader {
 
     private static void validateSubmission(List<SubmitQuizAnswerCommand> answers, Map<Long, Quiz> quizMap, int quizCount) {
         if (answers == null || answers.size() != quizCount) {
-            throw new LearningException(LearningErrorCode.INVALID_QUIZ_SUBMISSION);
+            throw new QuizException(QuizErrorCode.INVALID_QUIZ_SUBMISSION);
         }
 
         Set<Long> submittedQuizIds = new HashSet<>();
@@ -72,7 +72,7 @@ public final class QuizGrader {
                     || answer.selectedOption() > 4
                     || !quizMap.containsKey(answer.quizId())
                     || !submittedQuizIds.add(answer.quizId())) {
-                throw new LearningException(LearningErrorCode.INVALID_QUIZ_SUBMISSION);
+                throw new QuizException(QuizErrorCode.INVALID_QUIZ_SUBMISSION);
             }
         }
     }

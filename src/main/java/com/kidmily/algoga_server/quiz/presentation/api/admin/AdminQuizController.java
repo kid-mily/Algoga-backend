@@ -6,7 +6,7 @@ import com.kidmily.algoga_server.global.exception.GlobalErrorCode;
 import com.kidmily.algoga_server.quiz.application.command.CreateQuizCommand;
 import com.kidmily.algoga_server.quiz.application.command.UpdateQuizCommand;
 import com.kidmily.algoga_server.quiz.application.usecase.QuizUseCase;
-import com.kidmily.algoga_server.learning.exception.LearningErrorCode;
+import com.kidmily.algoga_server.quiz.exception.QuizErrorCode;
 import com.kidmily.algoga_server.quiz.presentation.request.admin.CreateQuizRequest;
 import com.kidmily.algoga_server.quiz.presentation.request.admin.UpdateQuizRequest;
 import com.kidmily.algoga_server.quiz.presentation.response.AdminQuizResponse;
@@ -34,7 +34,7 @@ public class AdminQuizController {
             summary = "퀴즈 목록 조회",
             description = "특정 강의에 등록된 퀴즈 목록을 조회합니다. 콘텐츠 매니저용 API이므로 정답과 해설도 함께 반환합니다."
     )
-    @ApiErrorCodeExample(domain = LearningErrorCode.class, value = {"COURSE_NOT_FOUND"})
+    @ApiErrorCodeExample(domain = QuizErrorCode.class, value = {"COURSE_NOT_FOUND"})
     @PreAuthorize("hasAnyAuthority('CONTENT_MANAGER', 'ROLE_CONTENT_MANAGER', 'SUPER_ADMIN', 'ROLE_SUPER_ADMIN')")
     @GetMapping
     public ResponseEntity<ApiResponse<List<AdminQuizResponse>>> getQuizzes(
@@ -60,7 +60,7 @@ public class AdminQuizController {
             description = "특정 강의에 객관식 4지선다 퀴즈를 등록합니다."
     )
     @ApiErrorCodeExample(domain = GlobalErrorCode.class, value = {"INVALID_REQUEST"})
-    @ApiErrorCodeExample(domain = LearningErrorCode.class, value = {"COURSE_NOT_FOUND", "INVALID_QUIZ_OPTION", "INVALID_QUIZ_ANSWER"})
+    @ApiErrorCodeExample(domain = QuizErrorCode.class, value = {"COURSE_NOT_FOUND", "INVALID_QUIZ_OPTION", "INVALID_QUIZ_ANSWER", "QUIZ_LIMIT_EXCEEDED"})
     @PreAuthorize("hasAnyAuthority('CONTENT_MANAGER', 'ROLE_CONTENT_MANAGER', 'SUPER_ADMIN', 'ROLE_SUPER_ADMIN')")
     @PostMapping
     public ResponseEntity<ApiResponse<AdminQuizResponse>> createQuiz(
@@ -95,7 +95,7 @@ public class AdminQuizController {
             description = "특정 강의에 등록된 퀴즈 문제, 보기, 정답, 해설을 수정합니다."
     )
     @ApiErrorCodeExample(domain = GlobalErrorCode.class, value = {"INVALID_REQUEST"})
-    @ApiErrorCodeExample(domain = LearningErrorCode.class, value = {"COURSE_NOT_FOUND", "QUIZ_NOT_FOUND", "INVALID_QUIZ_OPTION", "INVALID_QUIZ_ANSWER"})
+    @ApiErrorCodeExample(domain = QuizErrorCode.class, value = {"COURSE_NOT_FOUND", "QUIZ_NOT_FOUND", "INVALID_QUIZ_OPTION", "INVALID_QUIZ_ANSWER"})
     @PreAuthorize("hasAnyAuthority('CONTENT_MANAGER', 'ROLE_CONTENT_MANAGER', 'SUPER_ADMIN', 'ROLE_SUPER_ADMIN')")
     @PutMapping("/{quizId}")
     public ResponseEntity<ApiResponse<AdminQuizResponse>> updateQuiz(
@@ -132,7 +132,7 @@ public class AdminQuizController {
             summary = "퀴즈 삭제",
             description = "특정 강의의 퀴즈를 실제 삭제하지 않고 Soft Delete 처리합니다."
     )
-    @ApiErrorCodeExample(domain = LearningErrorCode.class, value = {"COURSE_NOT_FOUND", "QUIZ_NOT_FOUND"})
+    @ApiErrorCodeExample(domain = QuizErrorCode.class, value = {"COURSE_NOT_FOUND", "QUIZ_NOT_FOUND"})
     @PreAuthorize("hasAnyAuthority('CONTENT_MANAGER', 'ROLE_CONTENT_MANAGER', 'SUPER_ADMIN', 'ROLE_SUPER_ADMIN')")
     @DeleteMapping("/{quizId}")
     public ResponseEntity<ApiResponse<Void>> deleteQuiz(

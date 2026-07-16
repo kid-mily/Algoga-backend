@@ -6,11 +6,11 @@ import com.kidmily.algoga_server.global.exception.GlobalErrorCode;
 import com.kidmily.algoga_server.review.application.command.CreateCourseReviewCommand;
 import com.kidmily.algoga_server.review.application.result.CourseReviewSummaryResult;
 import com.kidmily.algoga_server.review.application.usecase.CourseReviewUseCase;
-import com.kidmily.algoga_server.learning.exception.LearningErrorCode;
+import com.kidmily.algoga_server.review.exception.ReviewErrorCode;
 import com.kidmily.algoga_server.review.presentation.request.CreateCourseReviewRequest;
 import com.kidmily.algoga_server.review.presentation.response.CourseReviewResponse;
 import com.kidmily.algoga_server.review.presentation.response.CourseReviewSummaryResponse;
-import com.kidmily.algoga_server.learning.presentation.support.CurrentUserIdResolver;
+import com.kidmily.algoga_server.review.presentation.support.CurrentUserIdResolver;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -36,7 +36,7 @@ public class CourseReviewController {
             description = "강의 이수 완료한 사용자가 특정 강의에 리뷰를 등록합니다. 리뷰는 수정 및 삭제할 수 없습니다."
     )
     @ApiErrorCodeExample(domain = GlobalErrorCode.class, value = {"INVALID_REQUEST"})
-    @ApiErrorCodeExample(domain = LearningErrorCode.class, value = {
+    @ApiErrorCodeExample(domain = ReviewErrorCode.class, value = {
             "COURSE_NOT_FOUND",
             "COURSE_COMPLETION_NOT_FOUND",
             "REVIEW_ALREADY_EXISTS",
@@ -74,7 +74,7 @@ public class CourseReviewController {
             summary = "강의 리뷰 목록 조회",
             description = "특정 강의에 등록된 리뷰 목록을 조회합니다."
     )
-    @ApiErrorCodeExample(domain = LearningErrorCode.class, value = {"COURSE_NOT_FOUND"})
+    @ApiErrorCodeExample(domain = ReviewErrorCode.class, value = {"COURSE_NOT_FOUND"})
     @GetMapping
     public ResponseEntity<ApiResponse<List<CourseReviewResponse>>> getReviews(
             @Parameter(description = "강의 ID", example = "3")
@@ -98,7 +98,7 @@ public class CourseReviewController {
             summary = "강의 리뷰 요약 조회",
             description = "특정 강의의 평균 평점, 전체 리뷰 수, 별점별 리뷰 수와 비율을 조회합니다."
     )
-    @ApiErrorCodeExample(domain = LearningErrorCode.class, value = {"COURSE_NOT_FOUND"})
+    @ApiErrorCodeExample(domain = ReviewErrorCode.class, value = {"COURSE_NOT_FOUND"})
     @GetMapping("/summary")
     public ResponseEntity<ApiResponse<CourseReviewSummaryResponse>> getReviewSummary(
             @Parameter(description = "강의 ID", example = "3")

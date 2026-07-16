@@ -1,7 +1,7 @@
 package com.kidmily.algoga_server.benefit.application.listener;
 
 import com.kidmily.algoga_server.benefit.application.command.RewardReferralSignupCommand;
-import com.kidmily.algoga_server.benefit.application.usecase.ReferralRewardUseCase;
+import com.kidmily.algoga_server.benefit.application.usecase.MileageUseCase;
 import com.kidmily.algoga_server.global.event.UserSignedUpEvent;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -15,7 +15,7 @@ import org.springframework.transaction.event.TransactionalEventListener;
 @RequiredArgsConstructor
 public class ReferralRewardEventListener {
 
-    private final ReferralRewardUseCase referralRewardUseCase;
+    private final MileageUseCase mileageUseCase;
 
     @Async
     @TransactionalEventListener(
@@ -31,7 +31,7 @@ public class ReferralRewardEventListener {
                 event.userId(), event.referrerUserId(), event.referralCode());
 
         try {
-            referralRewardUseCase.rewardReferralSignup(
+            mileageUseCase.rewardReferralSignup(
                     new RewardReferralSignupCommand(
                             event.userId(),
                             event.referrerUserId(),
