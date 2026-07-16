@@ -27,4 +27,5 @@ public interface ChatUseCase {
     List<ChatRoomMemberResponse> getRoomMembers(Long roomId, Long userId);
     ChatRoomResponse addMembers(Long roomId, Long requesterId, List<Long> targetUserIds);
     void renameRoom(Long roomId, Long requesterId, String roomName);
+    void softDeleteDirectRoom(Long userIdA, Long userIdB);
 }
