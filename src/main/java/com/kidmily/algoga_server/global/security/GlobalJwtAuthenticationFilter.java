@@ -12,6 +12,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import com.kidmily.algoga_server.global.util.RedisKeys;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -62,7 +63,7 @@ public class GlobalJwtAuthenticationFilter extends OncePerRequestFilter {
                     String email = globalJwtProvider.getSubject(token);
 
                     // 블랙리스트 검증 로직
-                    String isBlacklisted = redisTemplate.opsForValue().get("BLACKLIST:" + email);
+                    String isBlacklisted = redisTemplate.opsForValue().get(RedisKeys.BLACKLIST_PREFIX + email);
                     if ("true".equals(isBlacklisted)) {
                         log.warn("블랙리스트 유저의 비정상적 API 접근 시도 차단: {}", email);
                         response.setStatus(HttpServletResponse.SC_FORBIDDEN); // 403
@@ -72,7 +73,7 @@ public class GlobalJwtAuthenticationFilter extends OncePerRequestFilter {
                     }
 
                     // 이중 로그인(중복 로그인) 검증: 다른 기기에서 새로 로그인해서 활성 세션이 바뀌었으면 이 토큰은 더 이상 유효한 세션이 아님
-                    String activeAccessToken = redisTemplate.opsForValue().get("ACTIVE_AT:" + email);
+                    String activeAccessToken = redisTemplate.opsForValue().get(RedisKeys.ACTIVE_AT_PREFIX + email);
                     if (activeAccessToken != null && !activeAccessToken.equals(token)) {
                         log.warn("다른 기기에서 로그인되어 종료된 세션의 접근 차단: {}", email);
                         response.setStatus(HttpServletResponse.SC_UNAUTHORIZED); // 401
@@ -83,7 +84,7 @@ public class GlobalJwtAuthenticationFilter extends OncePerRequestFilter {
 
                     // 🌟 요청이 들어왔다 = 활동 중이다 -> idle 타임아웃(30분) 타이머를 다시 밀어줌 (sliding expiration)
                     if (activeAccessToken != null) {
-                        redisTemplate.expire("ACTIVE_AT:" + email, accessTokenExpiration, TimeUnit.MILLISECONDS);
+                        redisTemplate.expire(RedisKeys.ACTIVE_AT_PREFIX + email, accessTokenExpiration, TimeUnit.MILLISECONDS);
                     }
 
                     CustomUserDetails userDetails = (CustomUserDetails) customUserDetailsService.loadUserByUsername(email);

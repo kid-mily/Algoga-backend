@@ -9,7 +9,6 @@ import com.kidmily.algoga_server.user.exception.UserErrorCode;
 import com.kidmily.algoga_server.user.presentation.request.UpdatePasswordRequest;
 import com.kidmily.algoga_server.user.presentation.request.UpdateProfileRequest;
 import com.kidmily.algoga_server.user.presentation.request.VerifyEmailCodeRequest;
-import com.kidmily.algoga_server.user.presentation.request.VerifyPasswordRequest;
 import com.kidmily.algoga_server.user.presentation.response.AuthTokenResponse;
 import com.kidmily.algoga_server.user.presentation.response.UserProfileResponse;
 import com.kidmily.algoga_server.user.settings.CustomUserDetails;

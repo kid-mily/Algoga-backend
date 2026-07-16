@@ -2,6 +2,7 @@ package com.kidmily.algoga_server.user.application;
 
 import com.kidmily.algoga_server.global.event.UserBlacklistedEvent;
 import com.kidmily.algoga_server.global.event.UserUnblacklistedEvent; // 🌟 추가
+import com.kidmily.algoga_server.global.util.RedisKeys;
 import com.kidmily.algoga_server.user.domain.User;
 import com.kidmily.algoga_server.user.domain.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -25,10 +26,10 @@ public class UserEventListener {
         User user = userRepository.findById(event.userId())
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 유저입니다."));
 
-        redisTemplate.delete("RT:" + user.getEmail());
+        redisTemplate.delete(RedisKeys.REFRESH_TOKEN_PREFIX + user.getEmail());
 
         redisTemplate.opsForValue().set(
-                "BLACKLIST:" + user.getEmail(),
+                RedisKeys.BLACKLIST_PREFIX + user.getEmail(),
                 "true",
                 30,
                 TimeUnit.MINUTES
@@ -44,7 +45,7 @@ public class UserEventListener {
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 유저입니다."));
 
         // Redis에서 블랙리스트 상태값을 삭제하여 즉시 로그인 가능하도록 조치
-        redisTemplate.delete("BLACKLIST:" + user.getEmail());
+        redisTemplate.delete(RedisKeys.BLACKLIST_PREFIX + user.getEmail());
 
         log.info("[Security Event Hook] 유저 블랙리스트 해제 완료, 로그인 제한 해제: {}", user.getEmail());
     }
