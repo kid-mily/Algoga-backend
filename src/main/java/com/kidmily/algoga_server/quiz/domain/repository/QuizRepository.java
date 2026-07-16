@@ -11,6 +11,8 @@ public interface QuizRepository {
 
     List<Quiz> findByCourseId(Long courseId);
 
+    long countByCourseId(Long courseId);
+
     Optional<Quiz> findByIdAndCourseId(Long quizId, Long courseId);
 
     Optional<Quiz> updateBasicInfo(
