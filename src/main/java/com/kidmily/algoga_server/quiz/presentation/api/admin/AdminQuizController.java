@@ -60,7 +60,7 @@ public class AdminQuizController {
             description = "특정 강의에 객관식 4지선다 퀴즈를 등록합니다."
     )
     @ApiErrorCodeExample(domain = GlobalErrorCode.class, value = {"INVALID_REQUEST"})
-    @ApiErrorCodeExample(domain = QuizErrorCode.class, value = {"COURSE_NOT_FOUND", "INVALID_QUIZ_OPTION", "INVALID_QUIZ_ANSWER"})
+    @ApiErrorCodeExample(domain = QuizErrorCode.class, value = {"COURSE_NOT_FOUND", "INVALID_QUIZ_OPTION", "INVALID_QUIZ_ANSWER", "QUIZ_LIMIT_EXCEEDED"})
     @PreAuthorize("hasAnyAuthority('CONTENT_MANAGER', 'ROLE_CONTENT_MANAGER', 'SUPER_ADMIN', 'ROLE_SUPER_ADMIN')")
     @PostMapping
     public ResponseEntity<ApiResponse<AdminQuizResponse>> createQuiz(

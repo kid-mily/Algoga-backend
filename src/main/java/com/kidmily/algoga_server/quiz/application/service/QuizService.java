@@ -34,6 +34,8 @@ import java.util.stream.Collectors;
 @Transactional
 public class QuizService implements QuizUseCase {
 
+    private static final int MAX_QUIZ_COUNT = 5;
+
     private final QuizAccessPolicy quizAccessPolicy;
     private final QuizRepository quizRepository;
     private final QuizSubmissionRepository quizSubmissionRepository;
@@ -70,6 +72,7 @@ public class QuizService implements QuizUseCase {
     @Override
     public QuizResult createQuiz(CreateQuizCommand command) {
         quizAccessPolicy.validateActiveCourse(command.courseId());
+        validateQuizLimit(command.courseId());
         QuizInputValidator.validateOptions(command.option1(), command.option2(), command.option3(), command.option4());
         QuizInputValidator.validateCorrectOption(command.correctOption());
 
@@ -85,6 +88,12 @@ public class QuizService implements QuizUseCase {
         ));
 
         return QuizResult.from(savedQuiz);
+    }
+
+    private void validateQuizLimit(Long courseId) {
+        if (quizRepository.countByCourseId(courseId) >= MAX_QUIZ_COUNT) {
+            throw new QuizException(QuizErrorCode.QUIZ_LIMIT_EXCEEDED);
+        }
     }
 
     @Override
