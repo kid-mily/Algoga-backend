@@ -39,7 +39,6 @@ dependencies {
     // JWT를 생성, 파싱, 검증하는 데 필요한 인터페이스, 추상 클래스, 예외 클래스, 데이터 모델(예: Claims, JwsHeader 등)이 포함
     implementation 'io.jsonwebtoken:jjwt-api:0.12.6'
     implementation 'org.springframework.boot:spring-boot-starter-actuator'
-    implementation 'org.springframework.ai:spring-ai-starter-vector-store-redis'
     // jjwt-api에서 정의된 인터페이스들의 구체적인 구현체를 제공하는 모듈
     runtimeOnly 'io.jsonwebtoken:jjwt-impl:0.12.6'
     // JWT의 페이로드(payload)와 헤더(header)를 JSON 형식으로 직렬화(serialization)하거나 역직렬화(deserialization)하는 데 필요한 Jackson 라이브러리 연동을 제공하는 모듈
@@ -53,10 +52,6 @@ dependencies {
     // Redis 의존성
     implementation 'org.springframework.boot:spring-boot-starter-data-redis'
 
-    // 1. Spring AI 모듈 버전 관리를 위한 BOM 추가
-    implementation platform('org.springframework.ai:spring-ai-bom:1.1.7')
-
-    implementation 'org.springframework.ai:spring-ai-starter-model-ollama'
     // OAuth2 소셜 로그인 라이브러리
     implementation 'org.springframework.boot:spring-boot-starter-oauth2-client'
     // Resilience4j 서킷브레이커
@@ -82,12 +77,7 @@ dependencies {
     annotationProcessor "org.projectlombok:lombok-mapstruct-binding:0.2.0"
     implementation 'com.bucket4j:bucket4j-redis:8.10.1'
     implementation 'org.redisson:redisson:3.27.2'
-   
-}
-dependencyManagement {
-    imports {
-        mavenBom "org.springframework.ai:spring-ai-bom:$springAiVersion"
-    }
+
 }
 
 tasks.named('test') {

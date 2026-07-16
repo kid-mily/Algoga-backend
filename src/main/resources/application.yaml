@@ -80,22 +80,15 @@ spring:
           starttls:
             enable: true
 
-  ai:
-    openai:
-      base-url: https://api.groq.com/openai/v1
-      api-key: ${LLM_KEY}
-      chat:
-        options:
-          model: openai/gpt-oss-20b # 챗봇 답변용 모델
-          temperature: 0.7
+# 챗봇 RAG(검색+증강+생성)를 담당하는 외부 Python 서버 주소
+rag:
+  python:
+    base-url: ${RAG_PYTHON_URL:http://localhost:8000}
 
-    ollama:
-      base-url: http://localhost:11434
-      chat:
-        enabled: false
-      embedding:
-        options:
-          model: bge-m3 # 벡터 필터링용 모델
+# 챗봇 내부 API(Python 역호출) 보호용 공유 시크릿. Python 의 INTERNAL_API_KEY 와 동일해야 함.
+chatbot:
+  internal:
+    api-key: ${CHATBOT_INTERNAL_API_KEY:}
 
 server:
   port: 15000
@@ -187,7 +180,7 @@ resilience4j:
         waitDurationInOpenState: 10s # 서킷이 열린 후 10초 대기 후 반열림 상태로 전환
         failureRateThreshold: 50 # 실패율 50% 이상이면 서킷 오픈 (호출 차단)
     instances:
-      groqLlmApi:
+      pythonRagApi:
         baseConfig: default
       portone:
         # CLOSED → OPEN: 10번 호출 중 50% 이상 실패 시

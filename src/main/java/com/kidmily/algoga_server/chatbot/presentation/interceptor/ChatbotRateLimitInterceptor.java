@@ -75,7 +75,7 @@ public class ChatbotRateLimitInterceptor implements HandlerInterceptor {
         response.setCharacterEncoding(StandardCharsets.UTF_8.name());
 
         String gentleText = "짧은 시간에 너무 많은 질문이 입력되었습니다. 안정적인 답변 생성을 위해 잠시 후 다시 질문해 주시면 친절히 안내해 드릴게요! 😊";
-        ChatbotAnswerResponse answerResponse = new ChatbotAnswerResponse(gentleText, false);
+        ChatbotAnswerResponse answerResponse = ChatbotAnswerResponse.rateLimited(gentleText);
         ApiResponse<ChatbotAnswerResponse> apiResponse = ApiResponse.success("CHATBOT_RATE_LIMITED", "요청 제한 적용", answerResponse);
 
         response.getWriter().write(objectMapper.writeValueAsString(apiResponse));

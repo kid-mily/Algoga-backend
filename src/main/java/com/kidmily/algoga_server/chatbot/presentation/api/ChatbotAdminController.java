@@ -28,16 +28,6 @@ public class ChatbotAdminController {
     private final ChatbotAdminCommandUseCase commandUseCase;
     private final ChatbotAdminQueryUseCase queryUseCase;
 
-    @PostMapping("/knowledges")
-    @Operation(summary = "[RAG 지식] 정책/약관 및 예상 질문 일괄 등록", description = "1개의 정책 내용과 N개의 예상 질문을 일괄 등록하고 Vector DB에 동기화합니다.")
-    public ResponseEntity<ApiResponse<Void>> registerKnowledge(
-            @Valid @RequestBody RegisterKnowledgeRequest request, 
-            @CurrentManager Long managerId) {
-            
-        commandUseCase.registerKnowledge(new RegisterKnowledgeCommand(managerId, request.content(), request.expectedQueries()));
-        return ResponseEntity.ok(ApiResponse.success("KNOWLEDGE_CREATED", "성공적으로 정책 지식과 예상 질문이 등록되었습니다.", null));
-    }
-
     @PostMapping("/suggested-questions")
     @Operation(summary = "[버튼 지식] 예상 질문 등록")
     public ResponseEntity<ApiResponse<Void>> registerSuggestedQuestion(@Valid @RequestBody RegisterSuggestedQuestionRequest request) {
