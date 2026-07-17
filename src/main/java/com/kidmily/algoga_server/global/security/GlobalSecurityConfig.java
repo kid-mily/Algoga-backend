@@ -51,6 +51,7 @@ public class GlobalSecurityConfig {
                         .requestMatchers("/api/v1/users/**").authenticated()
                         .requestMatchers("/api/v1/chat/**").authenticated()
                         .requestMatchers("/api/v1/friends/**").authenticated()
+                        .requestMatchers("/api/v1/itineraries/**").authenticated()
                         // 모든 경로에 대해 일단 통과(permitAll)시키도록
                         // (세부 권한은 각 컨트롤러의 @PreAuthorize에서 처리)
                         .anyRequest().permitAll()
