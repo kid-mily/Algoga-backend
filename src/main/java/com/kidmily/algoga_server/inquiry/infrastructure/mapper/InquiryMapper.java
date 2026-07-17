@@ -14,7 +14,8 @@ public interface InquiryMapper {
         return Inquiry.reconstitute(
                 entity.getInquiryId(), entity.getUserId(), entity.getManagerId(),
                 entity.getCategory(), entity.getTitle(), entity.getContent(),
-                entity.getAnswer(), entity.getStatus(), entity.getCreatedAt(), entity.getAnsweredAt()
+                entity.getAnswer(), entity.getStatus(), entity.getCreatedAt(), entity.getAnsweredAt(),
+                entity.getAnswerRead()
         );
     }
 }
