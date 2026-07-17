@@ -39,13 +39,16 @@ public class ChatbotQueryService implements ChatbotQueryUseCase {
         chatLogRepository.findByUserId(userId, null, 1000).forEach(log -> {
             String status = log.isFiltered() ? "FILTERED" : "COMPLETED";
             unifiedList.add(new UnifiedChatHistoryResponse(
-                    "CHAT_" + log.getChatLogId(), "CHATBOT", log.getQuestion(), log.getAnswer(), status, log.getCreatedAt()
+                    "CHAT_" + log.getChatLogId(), "CHATBOT", log.getQuestion(), log.getAnswer(), status, log.getCreatedAt(),
+                    false
             ));
         });
 
         inquiryRepository.findByUserId(userId).forEach(inq -> {
+            // 답변 등록됐지만 사용자가 아직 확인 안 함 → 챗봇 '답변 완료' 뱃지 (inquiry 도메인이 상태 소유)
             unifiedList.add(new UnifiedChatHistoryResponse(
-                    "INQ_" + inq.getInquiryId(), "INQUIRY", inq.getQuestion(), inq.getAnswer(), inq.getStatus().name(), inq.getCreatedAt()
+                    "INQ_" + inq.getInquiryId(), "INQUIRY", inq.getQuestion(), inq.getAnswer(), inq.getStatus().name(), inq.getCreatedAt(),
+                    inq.isAnswerUnread()
             ));
         });
 

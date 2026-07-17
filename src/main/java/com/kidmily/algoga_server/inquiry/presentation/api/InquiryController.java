@@ -52,4 +52,16 @@ public class InquiryController {
         inquiryCommandUseCase.createInquiry(userId, request.category(), request.title(), request.content());
         return ResponseEntity.ok(ApiResponse.success("INQUIRY_CREATED", "성공적으로 1:1 문의가 접수되었습니다.", null));
     }
+
+    @PatchMapping("/{id}/answer/read")
+    @Operation(summary = "문의 답변 확인 처리", description = "챗봇 창에서 사용자가 해당 문의의 답변을 확인했을 때 호출합니다. '답변 완료' 뱃지를 해제합니다.")
+    @ApiErrorCodeExample(domain = InquiryErrorCode.class, value = {"INQUIRY_NOT_FOUND"})
+    public ResponseEntity<ApiResponse<Void>> markAnswerRead(
+            @PathVariable("id") Long id,
+            @AuthenticationPrincipal CustomUserDetails userDetails
+    ) {
+        Long userId = userDetails.getUser().getId();
+        inquiryCommandUseCase.markAnswerRead(userId, id);
+        return ResponseEntity.ok(ApiResponse.success("INQUIRY_ANSWER_READ", "문의 답변을 확인 처리했습니다.", null));
+    }
 }

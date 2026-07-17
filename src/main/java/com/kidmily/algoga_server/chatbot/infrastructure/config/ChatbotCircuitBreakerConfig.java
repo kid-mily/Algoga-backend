@@ -11,7 +11,7 @@ public class ChatbotCircuitBreakerConfig implements CircuitBreakerPolicy {
 
     @Override
     public String getCircuitBreakerName() {
-        return "groqLlmApi";
+        return "pythonRagApi";
     }
 
     @Override

@@ -38,10 +38,14 @@ public class InquiryEntity {
 
     @Column(name = "manager_id") private Long managerId;
 
+    // 답변을 사용자가 확인했는지 여부. nullable → 기존 데이터(과거 답변)는 null 로 남고 도메인에서 '확인함'으로 간주.
+    @Column(name = "answer_read") private Boolean answerRead;
+
     @Builder
-    public InquiryEntity(Long inquiryId, Long userId, Long managerId, InquiryCategory category, String title, String content, String answer, InquiryStatus status, Instant createdAt, Instant answeredAt) {
+    public InquiryEntity(Long inquiryId, Long userId, Long managerId, InquiryCategory category, String title, String content, String answer, InquiryStatus status, Instant createdAt, Instant answeredAt, Boolean answerRead) {
         this.inquiryId = inquiryId; this.userId = userId; this.managerId = managerId;
         this.category = category; this.title = title; this.content = content;
         this.answer = answer; this.status = status; this.createdAt = createdAt; this.answeredAt = answeredAt;
+        this.answerRead = answerRead;
     }
 }
