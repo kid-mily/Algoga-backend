@@ -2,14 +2,17 @@ package com.kidmily.algoga_server.payment.presentation;
 
 import com.kidmily.algoga_server.global.annotation.swagger.ApiErrorCodeExample;
 import com.kidmily.algoga_server.global.common.api.response.ApiResponse;
+import com.kidmily.algoga_server.payment.application.command.CreateBundlePaymentCommand;
 import com.kidmily.algoga_server.payment.application.command.CreateLecturePaymentCommand;
 import com.kidmily.algoga_server.payment.application.command.CreatePaymentCommand;
 import com.kidmily.algoga_server.payment.application.usecase.PaymentCommandUseCase;
 import com.kidmily.algoga_server.payment.application.usecase.PaymentQueryUseCase;
 import com.kidmily.algoga_server.payment.exception.PaymentErrorCode;
+import com.kidmily.algoga_server.payment.presentation.api.request.CreateBundlePaymentRequest;
 import com.kidmily.algoga_server.payment.presentation.api.request.CreateLecturePaymentRequest;
 import com.kidmily.algoga_server.payment.presentation.api.request.CreatePaymentRequest;
 import com.kidmily.algoga_server.payment.presentation.api.request.WebhookRequest;
+import com.kidmily.algoga_server.payment.presentation.api.response.BundlePaymentResponse;
 import com.kidmily.algoga_server.payment.presentation.api.response.PaymentResponse;
 import com.kidmily.algoga_server.user.settings.CustomUserDetails;
 import io.swagger.v3.oas.annotations.Operation;
@@ -78,6 +81,40 @@ public class PaymentController {
         Long paymentId = paymentCommandUseCase.handleLecturePayment(command);
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(ApiResponse.created("LECTURE_PAYMENT_CREATED", "강의 결제가 완료되었습니다.", paymentId));
+    }
+
+    @PostMapping("/bundle")
+    @Operation(summary = "패키지+강의 통합 결제",
+            description = "PortOne 결제 **1회**로 패키지(예약)와 강의를 함께 결제합니다.\n\n"
+                    + "**금액 규칙**\n"
+                    + "- 총액 = 패키지분 + 강의 정가 합계 − 쿠폰할인 − 마일리지\n"
+                    + "- 패키지분: `paymentType=DEPOSIT`이면 예약금(30%), `FULL`이면 전액\n"
+                    + "- 강의는 분할 개념이 없어 **항상 정가 전액**, 쿠폰·마일리지는 **패키지분에만** 적용\n\n"
+                    + "**주의**\n"
+                    + "- `courseIds`에는 이미 결제한 강의를 넣으면 안 됩니다(`isPaid=true` 제외). 넣으면 DUPLICATE_PAYMENT.\n"
+                    + "- 완강 후 예약(installmentAllowed=false)은 `FULL`만 가능합니다.\n"
+                    + "- 결제 성공 시 강의 수강권이 자동 생성됩니다.")
+    @ApiErrorCodeExample(domain = PaymentErrorCode.class,
+            value = {"BOOKING_NOT_FOUND", "COURSE_NOT_FOUND", "DUPLICATE_PAYMENT",
+                    "INVALID_PAYMENT_AMOUNT", "INVALID_PAYMENT_TYPE", "INSTALLMENT_NOT_ALLOWED", "PORTONE_API_ERROR"})
+    public ResponseEntity<ApiResponse<BundlePaymentResponse>> createBundlePayment(
+            @Valid @RequestBody CreateBundlePaymentRequest request,
+            @AuthenticationPrincipal CustomUserDetails userDetails
+    ) {
+        Long userId = userDetails.getUser().getId();
+        CreateBundlePaymentCommand command = new CreateBundlePaymentCommand(
+                request.bookingId(),
+                request.courseIds(),
+                userId,
+                request.paymentType(),
+                request.amount(),
+                request.usedMileage(),
+                request.usedCouponId(),
+                request.portonePaymentId()
+        );
+        BundlePaymentResponse response = paymentCommandUseCase.handleBundlePayment(command);
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(ApiResponse.created("BUNDLE_PAYMENT_CREATED", "패키지+강의 결제가 완료되었습니다.", response));
     }
 
     @GetMapping("/calculate/lecture")

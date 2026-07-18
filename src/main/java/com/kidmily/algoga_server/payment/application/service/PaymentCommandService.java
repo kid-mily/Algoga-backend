@@ -2,9 +2,11 @@ package com.kidmily.algoga_server.payment.application.service;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.kidmily.algoga_server.global.lock.DistributedLock;
+import com.kidmily.algoga_server.payment.application.command.CreateBundlePaymentCommand;
 import com.kidmily.algoga_server.payment.application.command.CreateLecturePaymentCommand;
 import com.kidmily.algoga_server.payment.application.command.CreatePaymentCommand;
 import com.kidmily.algoga_server.payment.application.usecase.PaymentCommandUseCase;
+import com.kidmily.algoga_server.payment.presentation.api.response.BundlePaymentResponse;
 import com.kidmily.algoga_server.payment.infrastructure.portone.PortOneClient;
 import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.Timer;
@@ -74,6 +76,39 @@ public class PaymentCommandService implements PaymentCommandUseCase {
         log.info("[PaymentCommandService] PortOne 검증 결과 - status: {}, amount: {}, method: {}", portoneStatus, paidAmount, paymentMethod);
 
         return paymentTransactionService.saveLecturePayment(command, portoneStatus, paidAmount, paymentMethod);
+    }
+
+    /**
+     * 패키지+강의 통합 결제. PortOne 결제 1건을 검증한 뒤,
+     * 예약 결제 1건 + 강의 결제 N건으로 나눠 기록한다.
+     * 락은 예약 단위로 잡아 같은 예약에 대한 동시 결제를 막는다.
+     */
+    @DistributedLock(key = "'payment:' + #command.bookingId()")
+    @Override
+    public BundlePaymentResponse handleBundlePayment(CreateBundlePaymentCommand command) {
+        log.info("[PaymentCommandService] 통합 결제 요청 - bookingId: {}, courseIds: {}, type: {}, amount: {}",
+                command.bookingId(), command.courseIds(), command.paymentType(), command.amount());
+
+        return paymentDurationSeconds.record(() -> {
+            JsonNode portoneResult = portoneApiDurationSeconds.record(
+                    () -> portOneClient.getPayment(command.portonePaymentId())
+            );
+            String portoneStatus = portoneResult.path("status").asText();
+            int paidAmount = portoneResult.path("amount").path("total").asInt();
+            String paymentMethod = extractPaymentMethod(portoneResult);
+            log.info("[PaymentCommandService] PortOne 검증 결과 - status: {}, amount: {}, method: {}",
+                    portoneStatus, paidAmount, paymentMethod);
+
+            BundlePaymentResponse response =
+                    paymentTransactionService.saveBundlePayment(command, portoneStatus, paidAmount, paymentMethod);
+
+            if ("PAID".equals(portoneStatus)) {
+                paymentSuccessTotal.increment();
+            } else {
+                paymentFailedTotal.increment();
+            }
+            return response;
+        });
     }
 
     @Override
