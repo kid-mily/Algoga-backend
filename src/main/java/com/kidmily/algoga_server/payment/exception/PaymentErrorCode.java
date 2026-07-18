@@ -23,7 +23,8 @@ public enum PaymentErrorCode implements BaseErrorCode {
     COUPON_NOT_OWNED(HttpStatus.FORBIDDEN, "PAY_012", "본인의 쿠폰이 아닙니다."),
     INSUFFICIENT_MILEAGE(HttpStatus.BAD_REQUEST, "PAY_013", "마일리지 잔액이 부족합니다."),
     PORTONE_CIRCUIT_OPEN(HttpStatus.SERVICE_UNAVAILABLE, "PAY_014", "결제 서비스가 일시적으로 중단되었습니다. 잠시 후 다시 시도해주세요."),
-    INSTALLMENT_NOT_ALLOWED(HttpStatus.BAD_REQUEST, "PAY_015", "이 예약은 일시불(전액) 결제만 가능합니다.");
+    INSTALLMENT_NOT_ALLOWED(HttpStatus.BAD_REQUEST, "PAY_015", "이 예약은 일시불(전액) 결제만 가능합니다."),
+    INVALID_PAYMENT_TYPE(HttpStatus.BAD_REQUEST, "PAY_016", "통합 결제는 예약금(DEPOSIT) 또는 일시불(FULL)만 가능합니다.");
 
     private final HttpStatus status;
     private final String code;
