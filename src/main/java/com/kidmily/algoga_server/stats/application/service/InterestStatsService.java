@@ -83,8 +83,24 @@ public class InterestStatsService {
         return new InterestSummaryResponse(totalEnroll, avg, risky);
     }
 
+    /**
+     * 검색어 매칭(대소문자 무시, 공백 제거). 검색어가 없으면 전부 통과.
+     */
+    private boolean matches(String search, String... targets) {
+        if (search == null || search.isBlank()) {
+            return true;
+        }
+        String keyword = search.strip().toLowerCase();
+        for (String target : targets) {
+            if (target != null && target.toLowerCase().contains(keyword)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     @Transactional(readOnly = true)
-    public List<InterestCountryResponse> getCountries() {
+    public List<InterestCountryResponse> getCountries(String search) {
         Snapshot s = load();
         Map<String, Long> byCountry = new HashMap<>();
         for (Course c : s.courses()) {
@@ -93,12 +109,17 @@ public class InterestStatsService {
         }
         return byCountry.entrySet().stream()
                 .map(e -> new InterestCountryResponse(e.getKey(), e.getValue()))
+                .filter(r -> matches(search, r.country()))
                 .sorted(Comparator.comparingLong(InterestCountryResponse::enrollCount).reversed())
                 .toList();
     }
 
+    /**
+     * 강의별 관심도. 순위(rank)는 <b>검색 필터 전에</b> 전체 기준으로 매긴다.
+     * (검색해도 그 강의의 실제 전체 순위가 유지되도록 — 필터 후 매기면 매번 #1부터 다시 매겨짐)
+     */
     @Transactional(readOnly = true)
-    public List<InterestLectureResponse> getLectures() {
+    public List<InterestLectureResponse> getLectures(String search) {
         Snapshot s = load();
         List<Course> sorted = s.courses().stream()
                 .sorted(Comparator.comparingLong((Course c) -> s.enroll().getOrDefault(c.getId(), 0L)).reversed())
@@ -113,12 +134,14 @@ public class InterestStatsService {
             double rate = completionRate(e, comp);
             rows.add(new InterestLectureResponse(rank++, c.getTitle(), country, e, progress, rate, completionStatus(rate)));
         }
-        return rows;
+        return rows.stream()
+                .filter(r -> matches(search, r.lectureTitle(), r.country()))
+                .toList();
     }
 
     @Transactional(readOnly = true)
-    public byte[] getLecturesCsv() {
-        List<InterestLectureResponse> rows = getLectures();
+    public byte[] getLecturesCsv(String search) {
+        List<InterestLectureResponse> rows = getLectures(search);
         java.io.ByteArrayOutputStream baos = new java.io.ByteArrayOutputStream();
         baos.write(new byte[]{(byte) 0xEF, (byte) 0xBB, (byte) 0xBF}, 0, 3);
         try (java.io.PrintWriter w = new java.io.PrintWriter(
