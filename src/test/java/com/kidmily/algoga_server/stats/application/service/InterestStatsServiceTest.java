@@ -65,7 +65,7 @@ class InterestStatsServiceTest {
     @DisplayName("강의별 수강자·수료율을 수강자 내림차순 순위로 반환한다")
     void 강의별_수료율_순위() {
         stubCommon();
-        List<InterestLectureResponse> lectures = service.getLectures();
+        List<InterestLectureResponse> lectures = service.getLectures(null);
 
         assertEquals(2, lectures.size());
         assertEquals(1, lectures.get(0).rank());
@@ -76,6 +76,30 @@ class InterestStatsServiceTest {
         assertEquals(71.0, lectures.get(0).completionRate());   // 71/100
         assertEquals(38, lectures.get(1).averageProgressRate());
         assertEquals(20.0, lectures.get(1).completionRate());   // 10/50
+    }
+
+    @Test
+    @DisplayName("검색어로 강의명을 필터링하되 순위는 전체 기준을 유지한다")
+    void 강의_검색_순위유지() {
+        stubCommon();
+
+        // 전체 2건 중 2순위인 B강의만 검색 → rank 는 1이 아니라 전체 기준 2 여야 한다
+        List<InterestLectureResponse> lectures = service.getLectures("B강의");
+
+        assertEquals(1, lectures.size());
+        assertEquals("B강의", lectures.get(0).lectureTitle());
+        assertEquals(2, lectures.get(0).rank());
+    }
+
+    @Test
+    @DisplayName("검색어로 나라명도 매칭되고, 검색어가 없으면 전체를 반환한다")
+    void 강의_검색_나라명_및_빈검색어() {
+        stubCommon();
+
+        assertEquals(2, service.getLectures("일본").size()); // 나라명 매칭
+        assertEquals(2, service.getLectures("").size());     // 빈 문자열 = 전체
+        assertEquals(2, service.getLectures(null).size());   // null = 전체
+        assertEquals(0, service.getLectures("없는강의").size());
     }
 
     @Test
