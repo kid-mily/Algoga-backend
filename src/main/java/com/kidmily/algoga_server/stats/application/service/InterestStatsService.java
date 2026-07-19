@@ -140,6 +140,21 @@ public class InterestStatsService {
     }
 
     @Transactional(readOnly = true)
+    public byte[] getCountriesCsv(String search) {
+        List<InterestCountryResponse> rows = getCountries(search);
+        java.io.ByteArrayOutputStream baos = new java.io.ByteArrayOutputStream();
+        baos.write(new byte[]{(byte) 0xEF, (byte) 0xBB, (byte) 0xBF}, 0, 3); // Excel UTF-8 BOM
+        try (java.io.PrintWriter w = new java.io.PrintWriter(
+                new java.io.OutputStreamWriter(baos, java.nio.charset.StandardCharsets.UTF_8))) {
+            w.println("나라,수강신청수");
+            for (InterestCountryResponse r : rows) {
+                w.printf("%s,%d%n", r.country(), r.enrollCount());
+            }
+        }
+        return baos.toByteArray();
+    }
+
+    @Transactional(readOnly = true)
     public byte[] getLecturesCsv(String search) {
         List<InterestLectureResponse> rows = getLectures(search);
         java.io.ByteArrayOutputStream baos = new java.io.ByteArrayOutputStream();

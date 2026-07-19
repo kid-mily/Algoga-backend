@@ -48,6 +48,20 @@ public class InterestStatsController {
                 "INTEREST_COUNTRIES", "나라별 수강 수 조회에 성공했습니다.", interestStatsService.getCountries(search)));
     }
 
+    @GetMapping("/countries/csv")
+    @Operation(summary = "[어드민] 나라별 수강 수 CSV 다운로드",
+            description = "`search`를 주면 검색 결과만 CSV로 내려받습니다(화면과 동일한 필터).")
+    public ResponseEntity<byte[]> getCountriesCsv(
+            @RequestParam(required = false) String search
+    ) {
+        byte[] csv = interestStatsService.getCountriesCsv(search);
+        String filename = URLEncoder.encode("나라별_수강수.csv", StandardCharsets.UTF_8);
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename*=UTF-8''" + filename)
+                .contentType(MediaType.parseMediaType("text/csv; charset=UTF-8"))
+                .body(csv);
+    }
+
     @GetMapping("/lectures")
     @Operation(summary = "[어드민] 강의별 수강자·수료율",
             description = "강의별 수강자 수·수료율·나라(수강자 내림차순 순위)를 조회합니다.\n\n"
