@@ -9,6 +9,8 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -16,6 +18,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
 import java.util.List;
 
@@ -36,6 +40,22 @@ public class OverviewStatsController {
     ) {
         return ResponseEntity.ok(ApiResponse.success(
                 "OVERVIEW_STATS", "돈 요약 조회에 성공했습니다.", overviewStatsUseCase.getOverview(from, to)));
+    }
+
+    @GetMapping("/csv")
+    @Operation(summary = "[어드민] 월별 매출 상세 CSV 다운로드",
+            description = "화면의 '월별 매출 상세' 표를 그대로 CSV로 내려받습니다. "
+                    + "컬럼: 월, 총매출, 환불액, 순매출, 환불율(%), 전월대비(%)")
+    public ResponseEntity<byte[]> getMonthlyCsv(
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to
+    ) {
+        byte[] csv = overviewStatsUseCase.getMonthlyCsv(from, to);
+        String filename = URLEncoder.encode("월별_매출_상세.csv", StandardCharsets.UTF_8);
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename*=UTF-8''" + filename)
+                .contentType(MediaType.parseMediaType("text/csv; charset=UTF-8"))
+                .body(csv);
     }
 
     @GetMapping("/trend")

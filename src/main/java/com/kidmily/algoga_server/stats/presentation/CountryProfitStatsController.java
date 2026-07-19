@@ -43,23 +43,30 @@ public class CountryProfitStatsController {
     }
 
     @GetMapping
-    @Operation(summary = "[어드민] 나라별 수익성 목록", description = "나라별 예약수·총매출·순매출·환불율·잔금전환율·취소율·점유율(순매출 기준)을 순매출 내림차순으로 조회합니다.")
+    @Operation(summary = "[어드민] 나라별 수익성 목록",
+            description = "나라별 예약수·총매출·순매출·환불율·잔금전환율·취소율·점유율(순매출 기준)을 순매출 내림차순으로 조회합니다.\n\n"
+                    + "- `search`: 국가명 부분 일치(대소문자 무시). 생략 시 전체 조회\n"
+                    + "- ⚠️ `share`(점유율)는 검색 필터 전 **전체 순매출 기준**으로 계산됩니다. "
+                    + "검색해도 해당 국가의 실제 점유율이 유지됩니다.")
     public ResponseEntity<ApiResponse<List<CountryProfitResponse>>> getList(
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
-            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to,
+            @RequestParam(required = false) String search
     ) {
         return ResponseEntity.ok(ApiResponse.success(
                 "COUNTRY_PROFIT_LIST", "나라별 수익성 조회에 성공했습니다.",
-                countryProfitStatsUseCase.getList(from, to)));
+                countryProfitStatsUseCase.getList(from, to, search)));
     }
 
     @GetMapping("/csv")
-    @Operation(summary = "[어드민] 나라별 수익성 CSV 다운로드")
+    @Operation(summary = "[어드민] 나라별 수익성 CSV 다운로드",
+            description = "`search`를 주면 검색 결과만 CSV로 내려받습니다(화면과 동일한 필터).")
     public ResponseEntity<byte[]> getCsv(
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
-            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to,
+            @RequestParam(required = false) String search
     ) {
-        byte[] csv = countryProfitStatsUseCase.getCsv(from, to);
+        byte[] csv = countryProfitStatsUseCase.getCsv(from, to, search);
         String filename = URLEncoder.encode("나라별_수익성.csv", StandardCharsets.UTF_8);
         return ResponseEntity.ok()
                 .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename*=UTF-8''" + filename)

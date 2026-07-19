@@ -109,9 +109,23 @@ public class BalanceStatsService implements BalanceStatsUseCase {
         return new BalanceAgingResponse(curve, countryBalance(balanceStage));
     }
 
+    /** 검색어 매칭(대소문자 무시, 공백 제거). 검색어가 없으면 전부 통과. */
+    private boolean matches(String search, String... targets) {
+        if (search == null || search.isBlank()) {
+            return true;
+        }
+        String keyword = search.strip().toLowerCase();
+        for (String target : targets) {
+            if (target != null && target.toLowerCase().contains(keyword)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     @Override
     @Transactional(readOnly = true)
-    public List<UnpaidBookingResponse> getUnpaidList(LocalDate from, LocalDate to) {
+    public List<UnpaidBookingResponse> getUnpaidList(LocalDate from, LocalDate to, String search) {
         List<Booking> depositPaid = filterByStatus(bookingsInPeriod(from, to), BookingStatus.DEPOSIT_PAID);
         Map<Long, Payment> depositPayments = depositPaymentByBooking(depositPaid);
         Map<Long, String> accommodationNames = accommodationNames(depositPaid);
@@ -128,6 +142,7 @@ public class BalanceStatsService implements BalanceStatsUseCase {
                             b.getBookingNumber(), userName, accommodationNames.get(b.getAccommodationId()),
                             b.getBalancePrice(), depositDate, elapsed, b.getCheckInDate(), dday);
                 })
+                .filter(r -> matches(search, r.userName(), r.productName()))
                 .sorted(Comparator.comparing(UnpaidBookingResponse::dday,
                         Comparator.nullsLast(Comparator.naturalOrder())))
                 .toList();
@@ -135,8 +150,8 @@ public class BalanceStatsService implements BalanceStatsUseCase {
 
     @Override
     @Transactional(readOnly = true)
-    public byte[] getUnpaidCsv(LocalDate from, LocalDate to) {
-        List<UnpaidBookingResponse> rows = getUnpaidList(from, to);
+    public byte[] getUnpaidCsv(LocalDate from, LocalDate to, String search) {
+        List<UnpaidBookingResponse> rows = getUnpaidList(from, to, search);
 
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         baos.write(new byte[]{(byte) 0xEF, (byte) 0xBB, (byte) 0xBF}, 0, 3); // Excel UTF-8 BOM

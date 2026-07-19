@@ -55,23 +55,28 @@ public class BalanceStatsController {
     }
 
     @GetMapping("/unpaid")
-    @Operation(summary = "[어드민] 미납 예약 리스트", description = "잔금 미납(DEPOSIT_PAID) 예약 목록을 D-day 임박 순으로 조회합니다.")
+    @Operation(summary = "[어드민] 미납 예약 리스트",
+            description = "잔금 미납(DEPOSIT_PAID) 예약 목록을 D-day 임박 순으로 조회합니다.\n\n"
+                    + "- `search`: **고객명 또는 상품명(숙소명)** 부분 일치(대소문자 무시). 생략 시 전체 조회")
     public ResponseEntity<ApiResponse<List<UnpaidBookingResponse>>> getUnpaidList(
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
-            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to,
+            @RequestParam(required = false) String search
     ) {
         return ResponseEntity.ok(ApiResponse.success(
                 "BALANCE_UNPAID", "미납 예약 목록 조회에 성공했습니다.",
-                balanceStatsUseCase.getUnpaidList(from, to)));
+                balanceStatsUseCase.getUnpaidList(from, to, search)));
     }
 
     @GetMapping("/unpaid/csv")
-    @Operation(summary = "[어드민] 미납 예약 CSV 다운로드")
+    @Operation(summary = "[어드민] 미납 예약 CSV 다운로드",
+            description = "`search`를 주면 검색 결과만 CSV로 내려받습니다(화면과 동일한 필터).")
     public ResponseEntity<byte[]> getUnpaidCsv(
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
-            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to,
+            @RequestParam(required = false) String search
     ) {
-        byte[] csv = balanceStatsUseCase.getUnpaidCsv(from, to);
+        byte[] csv = balanceStatsUseCase.getUnpaidCsv(from, to, search);
         String filename = URLEncoder.encode("잔금_미납_예약.csv", StandardCharsets.UTF_8);
         return ResponseEntity.ok()
                 .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename*=UTF-8''" + filename)

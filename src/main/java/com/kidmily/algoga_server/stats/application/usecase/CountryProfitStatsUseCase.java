@@ -10,7 +10,8 @@ public interface CountryProfitStatsUseCase {
 
     CountryProfitSummaryResponse getSummary(LocalDate from, LocalDate to);
 
-    List<CountryProfitResponse> getList(LocalDate from, LocalDate to);
+    /** @param search 국가명 부분 일치. null/빈값이면 전체 */
+    List<CountryProfitResponse> getList(LocalDate from, LocalDate to, String search);
 
-    byte[] getCsv(LocalDate from, LocalDate to);
+    byte[] getCsv(LocalDate from, LocalDate to, String search);
 }
