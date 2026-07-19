@@ -13,4 +13,7 @@ public interface OverviewStatsUseCase {
 
     /** 총매출·환불·순매출 추이를 지정 단위(HOUR/DAY/MONTH)로 조회. 기간 프리셋별 그래프용. */
     List<OverviewTrendPointResponse> getTrend(LocalDate from, LocalDate to, TrendUnit unit);
+
+    /** 월별 매출 상세(월/총매출/환불액/순매출/환불율/전월대비) CSV */
+    byte[] getMonthlyCsv(LocalDate from, LocalDate to);
 }
