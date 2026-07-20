@@ -70,6 +70,16 @@ public class CourseQnaRepositoryAdapter implements CourseQnaRepository {
                 .toList();
     }
 
+    @Override
+    public List<Long> findIdsByUserId(Long userId) {
+        return springDataCourseQnaRepository.findIdsByUserId(userId);
+    }
+
+    @Override
+    public void deleteAllByUserId(Long userId) {
+        springDataCourseQnaRepository.deleteByUserId(userId);
+    }
+
     private CourseQna toDomain(CourseQnaJpaEntity entity) {
         return CourseQna.withId(
                 entity.getId(),

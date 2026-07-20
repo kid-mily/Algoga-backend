@@ -23,4 +23,6 @@ public interface SpringDataCourseCompletionRepository extends JpaRepository<Cour
             GROUP BY c.courseId
             """)
     List<Object[]> countByCourseIds(@Param("courseIds") List<Long> courseIds);
+
+    void deleteByUserId(Long userId);
 }

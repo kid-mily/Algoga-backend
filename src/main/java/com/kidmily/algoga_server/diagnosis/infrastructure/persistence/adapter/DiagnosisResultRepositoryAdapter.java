@@ -57,6 +57,16 @@ public class DiagnosisResultRepositoryAdapter implements DiagnosisResultReposito
                 .toList();
     }
 
+    @Override
+    public List<Long> findIdsByUserId(Long userId) {
+        return springDataDiagnosisResultRepository.findIdsByUserId(userId);
+    }
+
+    @Override
+    public void deleteAllByUserId(Long userId) {
+        springDataDiagnosisResultRepository.deleteByUserId(userId);
+    }
+
     private DiagnosisResult toDomain(DiagnosisResultJpaEntity entity) {
         return new DiagnosisResult(
                 entity.getId(),

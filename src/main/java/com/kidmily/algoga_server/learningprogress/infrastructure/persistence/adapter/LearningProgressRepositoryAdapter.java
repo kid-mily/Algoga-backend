@@ -119,6 +119,11 @@ public class LearningProgressRepositoryAdapter implements LearningProgressReposi
         );
     }
 
+    @Override
+    public void deleteAllByUserId(Long userId) {
+        springDataLearningProgressRepository.deleteByUserId(userId);
+    }
+
     private LearningProgress toDomain(LearningProgressJpaEntity entity) {
         return LearningProgress.withId(
                 entity.getId(),

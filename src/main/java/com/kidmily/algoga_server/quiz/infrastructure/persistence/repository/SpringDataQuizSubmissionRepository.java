@@ -24,4 +24,9 @@ public interface SpringDataQuizSubmissionRepository extends JpaRepository<QuizSu
     );
 
     boolean existsByUserIdAndCourseId(Long userId, Long courseId);
+
+    @Query("SELECT q.id FROM QuizSubmissionJpaEntity q WHERE q.userId = :userId")
+    List<Long> findIdsByUserId(@Param("userId") Long userId);
+
+    void deleteByUserId(Long userId);
 }

@@ -10,4 +10,6 @@ public interface SpringDataMileageHistoryRepository extends JpaRepository<Mileag
     List<MileageHistoryJpaEntity> findAllByOrderByCreatedAtDesc();
 
     List<MileageHistoryJpaEntity> findByUserIdOrderByCreatedAtDesc(Long userId);
+
+    void deleteByUserId(Long userId);
 }

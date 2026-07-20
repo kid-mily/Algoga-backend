@@ -74,6 +74,11 @@ public class CourseCompletionRepositoryAdapter implements CourseCompletionReposi
         return result;
     }
 
+    @Override
+    public void deleteAllByUserId(Long userId) {
+        springDataCourseCompletionRepository.deleteByUserId(userId);
+    }
+
     private CourseCompletion toDomain(CourseCompletionJpaEntity entity) {
         return CourseCompletion.withId(
                 entity.getId(),

@@ -58,6 +58,16 @@ public class CourseQnaCommentRepositoryAdapter implements CourseQnaCommentReposi
                 .toList();
     }
 
+    @Override
+    public void deleteByQnaId(Long qnaId) {
+        springDataCourseQnaCommentRepository.deleteByQnaId(qnaId);
+    }
+
+    @Override
+    public void deleteAllByUserId(Long userId) {
+        springDataCourseQnaCommentRepository.deleteByUserId(userId);
+    }
+
     private CourseQnaComment toDomain(CourseQnaCommentJpaEntity entity) {
         return CourseQnaComment.withId(
                 entity.getId(),

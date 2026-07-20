@@ -94,6 +94,7 @@ class PaymentQueryServiceTest {
         MileageHistory history = mock(MileageHistory.class);
         when(history.getType()).thenReturn("EARN");
         when(history.getAmount()).thenReturn(500);
+        when(history.isAvailableAt(any())).thenReturn(true);
         when(mileageHistoryRepository.findByUserId(1L)).thenReturn(List.of(history));
 
         // when & then

@@ -29,4 +29,9 @@ public interface SpringDataDiagnosisResultRepository extends JpaRepository<Diagn
     List<DiagnosisResultJpaEntity> findByUserIdAndCountryIdOrderByCreatedAtDesc(Long userId, Long countryId);
 
     List<DiagnosisResultJpaEntity> findAllByOrderByCreatedAtDesc();
+
+    @Query("SELECT d.id FROM DiagnosisResultJpaEntity d WHERE d.userId = :userId")
+    List<Long> findIdsByUserId(@Param("userId") Long userId);
+
+    void deleteByUserId(Long userId);
 }

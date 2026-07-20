@@ -17,6 +17,7 @@ public interface SpringDataEnrollmentRepository extends JpaRepository<Enrollment
     List<EnrollmentJpaEntity> findByCourseId(Long courseId);
     boolean existsByUserIdAndCourseId(Long userId, Long courseId);
     long countByCourseId(Long courseId);
+    void deleteByUserId(Long userId);
 
     @Query("""
             SELECT e.courseId, COUNT(e.id)

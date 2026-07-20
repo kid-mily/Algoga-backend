@@ -17,4 +17,5 @@ public interface EnrollmentRepository {
     boolean existsByUserIdAndCourseId(Long userId, Long courseId);
     long countByCourseId(Long courseId);
     Map<Long, Long> countByCourseIds(List<Long> courseIds);
+    void deleteAllByUserId(Long userId);
 }
