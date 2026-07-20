@@ -250,6 +250,7 @@ FriendQueryService implements FriendQueryUseCase {
                 .map(rel -> rel.getRequesterId().equals(userId) ? rel.getReceiverId() : rel.getRequesterId())
                 .toList();
 
+
         // 3.최적화를 위해 UserRepository에서 닉네임만 맵으로 가져오는 로직
         java.util.Map<Long, String> friendNicknameMap = userRepository.findAllById(friendIds).stream()
                 .collect(java.util.stream.Collectors.toMap(User::getId, User::getNickname));
