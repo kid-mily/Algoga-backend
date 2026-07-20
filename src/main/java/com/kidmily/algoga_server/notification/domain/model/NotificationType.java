@@ -9,11 +9,11 @@ public enum NotificationType {
 
     // 학습
     COURSE_REGISTERED("강의 수강 등록", NotificationCategory.LEARNING), // 필요없음
-    COURSE_COMPLETED("강의 수강 완료", NotificationCategory.LEARNING), // publishEvent 호출해야함
-    DDAY_REMINDER("D-day 알림", NotificationCategory.LEARNING),
+    COURSE_COMPLETED("강의 수강 완료", NotificationCategory.LEARNING),  // ⭐완료
+    DDAY_REMINDER("D-day 알림", NotificationCategory.LEARNING),  // ⭐완료
 
     // Q&A
-    QNA_ANSWERED("Q&A 답변 등록", NotificationCategory.QNA),
+    QNA_ANSWERED("Q&A 답변 등록", NotificationCategory.QNA),  // ⭐완료
 
     // 커뮤니티
     POST_COMMENTED("게시글 댓글", NotificationCategory.COMMUNITY), // ⭐완료

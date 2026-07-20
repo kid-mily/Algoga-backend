@@ -19,6 +19,8 @@ import com.kidmily.algoga_server.qna.domain.repository.CourseQnaRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import com.kidmily.algoga_server.notification.domain.event.QnaAnsweredEvent;
+import org.springframework.context.ApplicationEventPublisher;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -34,6 +36,7 @@ public class CourseQnaService implements CourseQnaUseCase {
     private final CourseRepository courseRepository;
     private final EnrollmentRepository enrollmentRepository;
     private final UserProfilePort userProfilePort;
+    private final ApplicationEventPublisher eventPublisher;
 
     @Override
     public CourseQnaResult createQna(CreateCourseQnaCommand command) {
@@ -100,8 +103,15 @@ public class CourseQnaService implements CourseQnaUseCase {
         }
 
         CourseQna answeredQna = qna.answer(command.managerId(), command.answer());
+        CourseQnaResult result = toCourseQnaResult(courseQnaRepository.save(answeredQna));
 
-        return toCourseQnaResult(courseQnaRepository.save(answeredQna));
+        eventPublisher.publishEvent(new QnaAnsweredEvent(
+                answeredQna.getUserId(),
+                "관리자",
+                command.qnaId(),
+                command.answer()
+        ));
+        return result;
     }
 
     @Override

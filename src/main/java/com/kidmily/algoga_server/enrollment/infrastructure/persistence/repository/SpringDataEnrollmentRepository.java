@@ -6,6 +6,8 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
+import com.kidmily.algoga_server.enrollment.domain.model.EnrollmentStatus;
+import java.time.LocalDateTime;
 
 import java.util.List;
 import java.util.Optional;
@@ -26,4 +28,16 @@ public interface SpringDataEnrollmentRepository extends JpaRepository<Enrollment
             GROUP BY e.courseId
             """)
     List<Object[]> countByCourseIds(@Param("courseIds") List<Long> courseIds);
+
+    @Query("""
+        SELECT e FROM EnrollmentJpaEntity e
+        WHERE e.status = :status
+        AND e.accessExpiresAt >= :start
+        AND e.accessExpiresAt < :end
+        """)
+    List<EnrollmentJpaEntity> findExpiringBetween(
+            @Param("status") EnrollmentStatus status,
+            @Param("start") LocalDateTime start,
+            @Param("end") LocalDateTime end
+    );
 }
