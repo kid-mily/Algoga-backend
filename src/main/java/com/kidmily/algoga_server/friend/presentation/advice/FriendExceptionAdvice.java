@@ -6,7 +6,7 @@ import org.slf4j.Logger;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 @Slf4j
-// 🌟 친구(Friend) 도메인의 API 컨트롤러에서 발생하는 예외만 쏙 골라 캐치하도록 패키지 제한
+// 친구(Friend) 도메인의 API 컨트롤러에서 발생하는 예외만 골라 캐치하도록 패키지 제한
 @RestControllerAdvice(basePackages = "com.kidmily.algoga_server.friend.presentation.api")
 public class FriendExceptionAdvice implements CommonExceptionAdvice {
 
