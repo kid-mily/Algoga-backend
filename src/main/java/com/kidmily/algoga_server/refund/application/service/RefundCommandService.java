@@ -231,12 +231,20 @@ public class RefundCommandService implements RefundCommandUseCase {
                 .orElseThrow(() -> new BusinessException(RefundErrorCode.PAYMENT_NOT_FOUND));
 
         // 2. PortOne 실제 환불 API 호출 — 트랜잭션 밖에서 수행 (DB 커넥션 점유 방지)
-        portOneClient.cancelPayment(
-                payment.getPortonePaymentId(),
-                refundRequest.getAmount(),
-                refundRequest.getReason()
-        );
-        log.info("[RefundCommandService] PortOne 환불 API 호출 완료 - portonePaymentId: {}", payment.getPortonePaymentId());
+        //    단, 환불금액 0원(체크인 7일 미만 = 환불 불가 정책)이면 PG를 부르지 않는다.
+        //    PortOne은 cancelAmount > 0 을 요구해서, 0원으로 호출하면
+        //    400 INVALID_REQUEST("cancelAmount violated the rule GREATER_THAN")로 거부되고
+        //    그 예외 때문에 DB 상태 전이까지 통째로 막혀 환불건이 APPROVED에 영구히 머문다.
+        if (refundRequest.getAmount() > 0) {
+            portOneClient.cancelPayment(
+                    payment.getPortonePaymentId(),
+                    refundRequest.getAmount(),
+                    refundRequest.getReason()
+            );
+            log.info("[RefundCommandService] PortOne 환불 API 호출 완료 - portonePaymentId: {}", payment.getPortonePaymentId());
+        } else {
+            log.info("[RefundCommandService] 환불금액 0원 - PortOne 취소 생략하고 상태만 완료 처리 - refundId: {}", refundId);
+        }
 
         // 3. PortOne 환불 성공 후 DB 상태 업데이트
         completeRefundInTransaction(refundRequest, payment);

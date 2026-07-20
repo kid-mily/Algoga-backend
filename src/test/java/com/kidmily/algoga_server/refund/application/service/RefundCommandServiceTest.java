@@ -1,5 +1,6 @@
 package com.kidmily.algoga_server.refund.application.service;
 
+import com.kidmily.algoga_server.booking.domain.model.Booking;
 import com.kidmily.algoga_server.booking.domain.repository.BookingRepository;
 import com.kidmily.algoga_server.global.exception.BusinessException;
 import com.kidmily.algoga_server.payment.domain.model.Payment;
@@ -97,6 +98,50 @@ class RefundCommandServiceTest {
 
         // then : reject() 에 거절 사유가 전달되었는지 검증
         verify(refund).reject("규정 외 요청");
+    }
+
+    @Test
+    @DisplayName("[회귀] 환불금액 0원이면 PortOne 취소를 호출하지 않는다")
+    void 환불금액_0원이면_PG_호출_생략() {
+        // 체크인 7일 미만은 환불 정책상 0원인데, 예전엔 그 0원을 그대로 PortOne에 넘겨
+        // 400 INVALID_REQUEST(cancelAmount > 0 위반)를 맞고 상태 전이까지 막혔다.
+        RefundRequest refund = mock(RefundRequest.class);
+        when(refund.getStatus()).thenReturn(RefundStatus.APPROVED);
+        when(refund.getPaymentId()).thenReturn(10L);
+        when(refund.getAmount()).thenReturn(0);
+        when(refund.getBookingId()).thenReturn(100L);
+        when(refundRepository.findById(1L)).thenReturn(Optional.of(refund));
+
+        Payment payment = mock(Payment.class);
+        when(paymentRepository.findById(10L)).thenReturn(Optional.of(payment));
+        when(bookingRepository.findById(100L)).thenReturn(Optional.of(mock(Booking.class)));
+
+        refundCommandService.complete(1L);
+
+        verifyNoInteractions(portOneClient);
+        verify(refund).complete();
+    }
+
+    @Test
+    @DisplayName("환불금액이 0보다 크면 PortOne 취소를 호출한다")
+    void 환불금액_있으면_PG_호출() {
+        RefundRequest refund = mock(RefundRequest.class);
+        when(refund.getStatus()).thenReturn(RefundStatus.APPROVED);
+        when(refund.getPaymentId()).thenReturn(10L);
+        when(refund.getAmount()).thenReturn(920_000);
+        when(refund.getReason()).thenReturn("고객 변심");
+        when(refund.getBookingId()).thenReturn(100L);
+        when(refundRepository.findById(1L)).thenReturn(Optional.of(refund));
+
+        Payment payment = mock(Payment.class);
+        when(payment.getPortonePaymentId()).thenReturn("portone-real-1");
+        when(paymentRepository.findById(10L)).thenReturn(Optional.of(payment));
+        when(bookingRepository.findById(100L)).thenReturn(Optional.of(mock(Booking.class)));
+
+        refundCommandService.complete(1L);
+
+        verify(portOneClient).cancelPayment("portone-real-1", 920_000, "고객 변심");
+        verify(refund).complete();
     }
 
     @Test
