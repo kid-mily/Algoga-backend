@@ -69,7 +69,8 @@ public class InquiryAdminController {
 
         var responseList = pageData.content().stream()
                 .map(dto -> new InquiryAdminResponse(
-                        dto.inquiryId(), dto.userId(), dto.category(), dto.title(), dto.content(),
+                        dto.inquiryId(), dto.userId(), dto.userName(), dto.userNickname(),
+                        dto.category(), dto.title(), dto.content(),
                         dto.answer(), dto.status(), dto.createdAt(), dto.answeredAt()
                 )).toList();
 
@@ -79,6 +80,25 @@ public class InquiryAdminController {
         );
 
         return ResponseEntity.ok(ApiResponse.success("ADMIN_INQUIRIES_LOADED", "문의 목록 조회 성공", finalResponse));
+    }
+
+    @GetMapping("/{id}")
+    @Operation(summary = "1:1 문의 단건 상세 조회", description = "문의 ID로 단건 문의 상세를 조회합니다. 답변 등록 화면에서 해당 문의 내용과 작성자 정보를 불러올 때 사용합니다.")
+    @ApiErrorCodeExample(domain = InquiryErrorCode.class, value = {
+            "INQUIRY_NOT_FOUND"
+    })
+    public ResponseEntity<ApiResponse<InquiryAdminResponse>> getInquiry(
+            @PathVariable("id") Long id
+    ) {
+        var dto = queryUseCase.getAdminInquiry(id);
+
+        InquiryAdminResponse response = new InquiryAdminResponse(
+                dto.inquiryId(), dto.userId(), dto.userName(), dto.userNickname(),
+                dto.category(), dto.title(), dto.content(),
+                dto.answer(), dto.status(), dto.createdAt(), dto.answeredAt()
+        );
+
+        return ResponseEntity.ok(ApiResponse.success("ADMIN_INQUIRY_LOADED", "문의 상세 조회 성공", response));
     }
 
     @PutMapping("/{id}/answer")
