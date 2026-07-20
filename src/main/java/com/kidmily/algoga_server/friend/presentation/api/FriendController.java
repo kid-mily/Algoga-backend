@@ -61,10 +61,15 @@ public class FriendController {
         return ApiResponse.success("FRIEND_BLOCK_LIST_SUCCESS", "차단한 유저 목록을 조회했습니다.", response);
     }
 
-    @Operation(summary = "사용자 코드로 친구 검색", description = "개인 번호로 상대방을 검색합니다.")
+    @Operation(summary = "사용자 코드로 친구 검색", description = "개인 번호로 상대방을 검색합니다. 본인/이미 친구/차단 관계 등으로 요청이 불가능하면 requestAvailable=false와 함께 안내 문구가 내려갑니다.")
     @GetMapping("/users/search")
-    public ApiResponse<FriendResponse> searchUserByCode(@RequestParam String code) {
-        FriendView view = queryUseCase.searchUserByCode(code);
+    public ApiResponse<FriendResponse> searchUserByCode(
+            @AuthenticationPrincipal CustomUserDetails userDetails,
+            @RequestParam String code) {
+
+        if (userDetails == null) throw new FriendException(FriendErrorCode.USER_NOT_FOUND);
+
+        FriendView view = queryUseCase.searchUserByCode(userDetails.getUser().getId(), code);
         return ApiResponse.success("USER_SEARCH_SUCCESS", "유저를 검색했습니다.", FriendResponse.from(view));
     }
 
