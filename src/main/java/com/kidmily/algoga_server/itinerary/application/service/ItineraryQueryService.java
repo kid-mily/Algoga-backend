@@ -1,5 +1,6 @@
 package com.kidmily.algoga_server.itinerary.application.service;
 
+import com.kidmily.algoga_server.itinerary.application.result.PurchasedTrip;
 import com.kidmily.algoga_server.itinerary.application.usecase.ItineraryQueryUseCase;
 import com.kidmily.algoga_server.itinerary.domain.model.Itinerary;
 import com.kidmily.algoga_server.itinerary.domain.repository.ItineraryRepository;
@@ -17,6 +18,7 @@ import java.util.List;
 public class ItineraryQueryService implements ItineraryQueryUseCase {
 
     private final ItineraryRepository itineraryRepository;
+    private final PurchasedTripReader purchasedTripReader;
 
     @Override
     public List<Itinerary> getMyItineraries(Long userId) {
@@ -32,5 +34,10 @@ public class ItineraryQueryService implements ItineraryQueryUseCase {
             throw new ItineraryException(ItineraryErrorCode.ITINERARY_NOT_FOUND);
         }
         return itinerary;
+    }
+
+    @Override
+    public List<PurchasedTrip> getPurchasedTrips(Long userId) {
+        return purchasedTripReader.listUsable(userId);
     }
 }

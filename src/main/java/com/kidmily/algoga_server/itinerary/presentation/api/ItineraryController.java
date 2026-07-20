@@ -10,6 +10,7 @@ import com.kidmily.algoga_server.itinerary.exception.ItineraryErrorCode;
 import com.kidmily.algoga_server.itinerary.presentation.api.request.RecommendItineraryRequest;
 import com.kidmily.algoga_server.itinerary.presentation.api.response.ItineraryResponse;
 import com.kidmily.algoga_server.itinerary.presentation.api.response.ItinerarySummaryResponse;
+import com.kidmily.algoga_server.itinerary.presentation.api.response.PurchasedTripResponse;
 import com.kidmily.algoga_server.user.settings.CustomUserDetails;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -37,6 +38,9 @@ public class ItineraryController {
     @ApiErrorCodeExample(domain = ItineraryErrorCode.class, value = {
             "NON_PACKAGE_INPUT_REQUIRED",
             "INVALID_DATE_RANGE",
+            "PACKAGE_ID_REQUIRED",
+            "BOOKING_ID_REQUIRED",
+            "BOOKING_NOT_AVAILABLE",
             "AI_SERVER_ERROR"
     })
     public ResponseEntity<ApiResponse<ItineraryResponse>> recommend(
@@ -45,13 +49,28 @@ public class ItineraryController {
     ) {
         Long userId = userDetails.getUser().getId();
         RecommendItineraryCommand command = new RecommendItineraryCommand(
-                userId, request.tripType(), request.packageId(), request.destination(),
+                userId, request.tripType(), request.packageId(), request.bookingId(), request.destination(),
                 request.startDate(), request.endDate(),
                 request.preferences(), request.purpose(), request.companion(), request.budget(), request.headcount()
         );
         Itinerary itinerary = commandUseCase.recommend(command);
         return ResponseEntity.ok(ApiResponse.success("ITINERARY_CREATED", "AI 일정 추천이 생성되었습니다.",
                 ItineraryResponse.from(itinerary)));
+    }
+
+    @GetMapping("/purchased-trips")
+    @Operation(summary = "내 구매(예약) 여행 목록",
+            description = "일정 추천에 사용할 수 있는 내 구매(예약) 여행을 최신순으로 조회합니다. "
+                    + "tripType=BOOKING 선택지 제공용이며, 응답의 bookingId 를 추천 요청에 그대로 전달합니다. "
+                    + "(취소요청·환불 완료 예약은 제외)")
+    public ResponseEntity<ApiResponse<List<PurchasedTripResponse>>> getPurchasedTrips(
+            @AuthenticationPrincipal CustomUserDetails userDetails
+    ) {
+        Long userId = userDetails.getUser().getId();
+        List<PurchasedTripResponse> list = queryUseCase.getPurchasedTrips(userId).stream()
+                .map(PurchasedTripResponse::from)
+                .toList();
+        return ResponseEntity.ok(ApiResponse.success("PURCHASED_TRIPS_LOADED", "구매 여행 목록 조회 성공", list));
     }
 
     @GetMapping

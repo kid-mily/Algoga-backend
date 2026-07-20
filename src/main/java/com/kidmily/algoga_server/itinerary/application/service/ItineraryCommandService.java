@@ -6,9 +6,9 @@ import com.kidmily.algoga_server.itinerary.application.command.RecommendItinerar
 import com.kidmily.algoga_server.itinerary.application.port.out.ItineraryAiPort;
 import com.kidmily.algoga_server.itinerary.application.port.out.ItineraryAiResult;
 import com.kidmily.algoga_server.itinerary.application.port.out.ItineraryGenerationCommand;
+import com.kidmily.algoga_server.itinerary.application.result.PurchasedTrip;
 import com.kidmily.algoga_server.itinerary.application.usecase.ItineraryCommandUseCase;
 import com.kidmily.algoga_server.itinerary.domain.model.Itinerary;
-import com.kidmily.algoga_server.itinerary.domain.model.TripType;
 import com.kidmily.algoga_server.itinerary.domain.repository.ItineraryRepository;
 import com.kidmily.algoga_server.itinerary.exception.ItineraryErrorCode;
 import com.kidmily.algoga_server.itinerary.exception.ItineraryException;
@@ -41,6 +41,7 @@ public class ItineraryCommandService implements ItineraryCommandUseCase {
 
     private final CourseUseCase courseUseCase;
     private final PackageQueryUseCase packageQueryUseCase;
+    private final PurchasedTripReader purchasedTripReader;
     private final ItineraryAiPort itineraryAiPort;
     private final ItineraryRepository itineraryRepository;
 
@@ -58,26 +59,40 @@ public class ItineraryCommandService implements ItineraryCommandUseCase {
                 .toList();
 
         // 2) 여행 유형 분기로 목적지/기간/패키지가격 확정
-        boolean packageTrip = command.tripType() == TripType.PACKAGE;
+        boolean packageTrip = command.tripType().isPackageTrip();
         String destination = command.destination();
         LocalDate startDate = command.startDate();
         LocalDate endDate = command.endDate();
         Integer packagePrice = null;
 
-        if (packageTrip) {
-            // PACKAGE: packageId 로 목적지·기간·가격을 조회해 채운다
-            if (command.packageId() == null) {
-                throw new ItineraryException(ItineraryErrorCode.PACKAGE_ID_REQUIRED);
+        switch (command.tripType()) {
+            case PACKAGE -> {
+                // 전체 패키지 카탈로그: packageId 로 목적지·기간·가격을 조회해 채운다
+                if (command.packageId() == null) {
+                    throw new ItineraryException(ItineraryErrorCode.PACKAGE_ID_REQUIRED);
+                }
+                PackageResponse pkg = packageQueryUseCase.getById(command.packageId());
+                destination = StringUtils.hasText(pkg.countryName()) ? pkg.countryName() : pkg.name();
+                startDate = pkg.checkInDate();
+                endDate = pkg.checkOutDate();
+                packagePrice = pkg.totalPrice();
             }
-            PackageResponse pkg = packageQueryUseCase.getById(command.packageId());
-            destination = StringUtils.hasText(pkg.countryName()) ? pkg.countryName() : pkg.name();
-            startDate = pkg.checkInDate();
-            endDate = pkg.checkOutDate();
-            packagePrice = pkg.totalPrice();
-        } else {
-            // FREE: 목적지·기간 사용자 입력 필수
-            if (!StringUtils.hasText(destination) || startDate == null || endDate == null) {
-                throw new ItineraryException(ItineraryErrorCode.NON_PACKAGE_INPUT_REQUIRED);
+            case BOOKING -> {
+                // 구매한 예약: bookingId 로 목적지·기간·결제금액을 조회해 채운다(본인 소유만)
+                if (command.bookingId() == null) {
+                    throw new ItineraryException(ItineraryErrorCode.BOOKING_ID_REQUIRED);
+                }
+                PurchasedTrip trip = purchasedTripReader.getUsable(userId, command.bookingId());
+                destination = trip.destination();
+                startDate = trip.startDate();
+                endDate = trip.endDate();
+                packagePrice = trip.price();
+            }
+            case FREE -> {
+                // 자유 여행: 목적지·기간 사용자 입력 필수
+                if (!StringUtils.hasText(destination) || startDate == null || endDate == null) {
+                    throw new ItineraryException(ItineraryErrorCode.NON_PACKAGE_INPUT_REQUIRED);
+                }
             }
         }
 

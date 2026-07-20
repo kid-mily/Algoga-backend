@@ -16,17 +16,21 @@ import java.util.List;
 /**
  * AI 일정 추천 요청.
  * 여행 유형(tripType)은 프론트가 명시한다.
- * - PACKAGE: packageId 필수. 서버가 패키지 조회로 목적지·기간·가격을 채운다.
+ * - PACKAGE: packageId 필수. 서버가 전체 패키지 카탈로그 조회로 목적지·기간·가격을 채운다.
+ * - BOOKING: bookingId 필수. 서버가 내 예약 조회로 목적지·기간·결제금액을 채운다.
  * - FREE   : destination·startDate·endDate 필수(자유여행).
  */
 public record RecommendItineraryRequest(
 
         @NotNull(message = "여행 유형(tripType)을 지정해주세요.")
-        @Schema(description = "여행 유형. PACKAGE(패키지) | FREE(자유여행)", example = "PACKAGE")
+        @Schema(description = "여행 유형. PACKAGE(전체 패키지) | BOOKING(구매한 예약) | FREE(자유여행)", example = "PACKAGE")
         TripType tripType,
 
         @Schema(description = "패키지 ID. tripType=PACKAGE 일 때 필수. 이 값으로 목적지·기간·가격을 조회한다", example = "12", nullable = true)
         Long packageId,
+
+        @Schema(description = "예약 ID. tripType=BOOKING 일 때 필수. 내 예약에서 목적지·기간·결제금액을 조회한다", example = "34", nullable = true)
+        Long bookingId,
 
         @Schema(description = "목적지(tripType=FREE 시 필수, 자유 텍스트). 패키지면 서버가 채움", example = "일본 오사카", nullable = true)
         String destination,

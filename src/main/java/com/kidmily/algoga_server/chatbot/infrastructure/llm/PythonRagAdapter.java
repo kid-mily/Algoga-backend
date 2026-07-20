@@ -78,7 +78,29 @@ public class PythonRagAdapter implements RagPort {
         @SuppressWarnings("unchecked")
         List<String> usedTools = (List<String>) response.getOrDefault("used_tools", List.of());
 
-        return new RagAnswer(answer, usedTools, mode, handoffSummary, handoffInquiry);
+        List<RagAnswer.RagSource> sources = parseSources(response.get("sources"));
+
+        return new RagAnswer(answer, usedTools, mode, handoffSummary, handoffInquiry, sources);
+    }
+
+    /** Python 응답의 sources([{source, page}, ...])를 RagSource 리스트로 변환. page 는 숫자/부재 모두 허용. */
+    @SuppressWarnings("unchecked")
+    private List<RagAnswer.RagSource> parseSources(Object raw) {
+        if (!(raw instanceof List<?> list)) {
+            return List.of();
+        }
+        List<RagAnswer.RagSource> sources = new ArrayList<>();
+        for (Object item : list) {
+            if (item instanceof Map<?, ?> map) {
+                Object source = map.get("source");
+                Object page = map.get("page");
+                sources.add(new RagAnswer.RagSource(
+                        source != null ? source.toString() : null,
+                        (page instanceof Number number) ? number.intValue() : null
+                ));
+            }
+        }
+        return sources;
     }
 
     /**
@@ -89,6 +111,6 @@ public class PythonRagAdapter implements RagPort {
         log.error("[Python RAG] 호출 실패 또는 서킷 오픈 (원인: {})", t.getMessage());
         String message = "현재 AI 상담 서버 연결이 지연되고 있습니다. "
                 + "잠시 후 다시 시도해주시거나, 고객센터(1588-XXXX)로 문의해주세요.";
-        return new RagAnswer(message, List.of(), RagAnswer.MODE_NORMAL, null, null);
+        return new RagAnswer(message, List.of(), RagAnswer.MODE_NORMAL, null, null, List.of());
     }
 }

@@ -10,13 +10,17 @@ import java.util.List;
  * @param mode           NORMAL | REJECTED | AGENT_HANDOFF
  * @param handoffSummary AGENT_HANDOFF 인 경우 LLM 이 만든 대화 요약(상담원용)
  * @param handoffInquiry AGENT_HANDOFF 인 경우 사용자가 입력한 원본 문의내용
+ * @param sources        답변 근거로 채택된 규정 출처 목록(문서/페이지별 채택 빈도 집계용). NORMAL 에서만 채워짐
  */
 public record RagAnswer(String answer, List<String> usedTools, String mode,
-                        String handoffSummary, String handoffInquiry) {
+                        String handoffSummary, String handoffInquiry, List<RagSource> sources) {
 
     public static final String MODE_NORMAL = "NORMAL";
     public static final String MODE_REJECTED = "REJECTED";
     public static final String MODE_AGENT_HANDOFF = "AGENT_HANDOFF";
+
+    /** 채택된 규정 출처 하나(문서명 + 페이지). page 는 없을 수 있어 null 허용. */
+    public record RagSource(String source, Integer page) {}
 
     public boolean isRejected() {
         return MODE_REJECTED.equals(mode);

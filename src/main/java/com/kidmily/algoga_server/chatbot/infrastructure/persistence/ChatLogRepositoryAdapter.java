@@ -6,9 +6,12 @@ import com.kidmily.algoga_server.chatbot.infrastructure.mapper.ChatLogMapper;
 import com.kidmily.algoga_server.chatbot.infrastructure.persistence.entity.ChatLogEntity;
 import com.kidmily.algoga_server.chatbot.infrastructure.persistence.repository.JpaChatLogRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Component;
+
+import java.time.Instant;
 import java.util.List;
 
 @Component
@@ -34,5 +37,11 @@ public class ChatLogRepositoryAdapter implements ChatLogRepository {
             entities = jpaChatLogRepository.findByUserIdAndChatLogIdLessThanOrderByCreatedAtAsc(userId, beforeChatLogId, pageable);
         }
         return entities.stream().map(chatLogMapper::toDomain).toList();
+    }
+
+    @Override
+    public Page<ChatLog> searchForAdmin(Boolean isFiltered, Instant from, Instant toExclusive, String keyword, Pageable pageable) {
+        return jpaChatLogRepository.searchForAdmin(isFiltered, from, toExclusive, keyword, pageable)
+                .map(chatLogMapper::toDomain);
     }
 }

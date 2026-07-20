@@ -5,8 +5,10 @@ import com.kidmily.algoga_server.chatbot.application.port.out.RagAnswer;
 import com.kidmily.algoga_server.chatbot.application.port.out.RagPort;
 import com.kidmily.algoga_server.chatbot.application.usecase.ChatbotCommandUseCase;
 import com.kidmily.algoga_server.chatbot.domain.model.ChatLog;
+import com.kidmily.algoga_server.chatbot.domain.model.RagSourceUsage;
 import com.kidmily.algoga_server.chatbot.domain.model.SuggestedQuestion;
 import com.kidmily.algoga_server.chatbot.domain.repository.ChatLogRepository;
+import com.kidmily.algoga_server.chatbot.domain.repository.RagSourceUsageRepository;
 import com.kidmily.algoga_server.chatbot.domain.repository.SuggestedQuestionRepository;
 import com.kidmily.algoga_server.chatbot.exception.ChatbotErrorCode;
 import com.kidmily.algoga_server.chatbot.exception.ChatbotException;
@@ -30,6 +32,7 @@ public class ChatbotCommandService implements ChatbotCommandUseCase {
     private final RagPort ragPort;
     private final ChatLogRepository chatLogRepository;
     private final SuggestedQuestionRepository suggestedQuestionRepository;
+    private final RagSourceUsageRepository ragSourceUsageRepository;
 
     @Override
     @Transactional
@@ -51,7 +54,16 @@ public class ChatbotCommandService implements ChatbotCommandUseCase {
         }
 
         // 3. 채팅 기록 저장 (상담원 연결 포함 정상 흐름은 모두 남긴다)
-        chatLogRepository.save(ChatLog.createNormal(userId, question, answer));
+        ChatLog savedLog = chatLogRepository.save(ChatLog.createNormal(userId, question, answer));
+
+        // 3-1. 답변 근거로 채택된 규정 출처를 기록 → 문서/페이지별 채택 빈도 집계용
+        //      (Python 이 답변당 (source, page) 기준 중복 제거해 내려준다)
+        if (ragAnswer.sources() != null && !ragAnswer.sources().isEmpty()) {
+            List<RagSourceUsage> usages = ragAnswer.sources().stream()
+                    .map(s -> RagSourceUsage.create(savedLog.getChatLogId(), s.source(), s.page()))
+                    .toList();
+            ragSourceUsageRepository.saveAll(usages);
+        }
 
         // 4. 상담원 연결 전환: 프론트가 mode 를 보고 입력 UI 를 상담원 모드로 바꾸고,
         //    요약(handoffSummary)과 원본 문의내용(handoffInquiry)으로 문의 폼을 채운다.

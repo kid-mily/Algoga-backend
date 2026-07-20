@@ -41,6 +41,12 @@
 **서버 전송은 `code`(enum name), 화면 표시는 라벨.** 응답에는 code·label이 함께 내려온다.
 
 ```ts
+// 여행 유형 (단일선택, 프론트가 진입 맥락으로 분기)
+type TripType = "BOOKING" | "PACKAGE" | "FREE";
+const TRIP_TYPE_LABEL = {
+  BOOKING: "구매한 패키지", PACKAGE: "전체 패키지", FREE: "자유 여행",
+} as const;
+
 // 여행 취향 (다중선택, 최소 1개)
 type TravelPreference = "NATURE" | "FOOD" | "ACTIVITY" | "RELAXATION" | "SHOPPING" | "CULTURE" | "PHOTO";
 const PREFERENCE_LABEL = {
@@ -72,12 +78,15 @@ const COMPANION_LABEL = {
 ```jsonc
 {
   // ── 여행 유형 (프론트가 명시 분기) ──
-  "tripType": "PACKAGE",        // "PACKAGE" | "FREE"
+  "tripType": "BOOKING",        // "BOOKING" | "PACKAGE" | "FREE"
 
-  // tripType=PACKAGE 일 때
+  // tripType=BOOKING 일 때 (구매한 여행)
+  "bookingId": 34,              // 이 값으로 목적지·기간·결제금액을 서버가 조회해 채움
+
+  // tripType=PACKAGE 일 때 (전체 패키지 카탈로그)
   "packageId": 12,              // 이 값으로 목적지·기간·가격을 서버가 조회해 채움
 
-  // tripType=FREE 일 때
+  // tripType=FREE 일 때 (자유 여행)
   "destination": "일본 오사카",  // FREE 시 필수
   "startDate": "2026-08-01",    // FREE 시 필수
   "endDate": "2026-08-03",      // FREE 시 필수
@@ -91,15 +100,18 @@ const COMPANION_LABEL = {
 }
 ```
 
+> `tripType`별로 셋 중 **하나의 식별자만** 보내면 된다: `BOOKING`→`bookingId`, `PACKAGE`→`packageId`, `FREE`→`destination`+기간. 나머지 필드는 보내도 무시됨.
+
 ### 필드 규칙
 | 필드 | 필수 | 규칙 |
 |---|---|---|
-| `tripType` | ✅ | `"PACKAGE"` \| `"FREE"` |
+| `tripType` | ✅ | `"BOOKING"` \| `"PACKAGE"` \| `"FREE"` |
 | `preferences` | ✅ | `TravelPreference[]`, 최소 1개 |
 | `purpose` | ✅ | `TravelPurpose` |
 | `companion` | ✅ | `Companion` |
 | `budget` | ✅ | 0보다 큰 정수(원) |
 | `headcount` | ✅ | 1 이상 |
+| `bookingId` | 조건부 | **`tripType=BOOKING`이면 필수** |
 | `packageId` | 조건부 | **`tripType=PACKAGE`이면 필수** |
 | `destination` `startDate` `endDate` | 조건부 | **`tripType=FREE`이면 필수** |
 
@@ -123,7 +135,7 @@ const COMPANION_LABEL = {
   ],
   "budget": 1000000,
   "estimatedCost": {
-    "packagePrice": 770000,      // 패키지 조회가격(항공+숙소). 자유여행/패키지 없으면 null
+    "packagePrice": 770000,      // 패키지 조회가/예약 결제금액(항공+숙소). 자유여행이면 null
     "foodCost": 180000,          // AI 추정 음식비(여행 전체 총액)
     "totalEstimated": 950000     // packagePrice(없으면 0) + foodCost
   },
@@ -149,6 +161,8 @@ const COMPANION_LABEL = {
 | `ITN_002` | 400 | `tripType=FREE`인데 `destination`/`startDate`/`endDate` 누락 |
 | `ITN_003` | 400 | `endDate`가 `startDate`보다 이전 |
 | `ITN_005` | 400 | `tripType=PACKAGE`인데 `packageId` 누락 |
+| `ITN_006` | 400 | `tripType=BOOKING`인데 `bookingId` 누락 |
+| `ITN_007` | 400 | 내 예약이 아니거나 사용할 수 없는(취소·환불) 예약 |
 | `ITN_001` | 503 | AI 생성 서버(파이썬) 연결 실패/지연 — 잠시 후 재시도 안내 |
 | 공통 validation | 400 | `tripType` 누락, `preferences` 비었거나 `budget`/`headcount` 규칙 위반. `message`에 `필드: 사유` |
 
@@ -156,29 +170,69 @@ const COMPANION_LABEL = {
 
 ---
 
-## 3. 패키지 여행 vs 자유 여행 (분기 규칙) ⭐
+## 3. 여행 유형 분기 (3-모드) ⭐
 
 **프론트가 `tripType`으로 명시 분기**한다. 백엔드는 선언을 받아 검증·조회한다.
+일정 추천 화면에서 사용자는 **① 내가 구매한 여행 / ② 전체 패키지 / ③ 자유 여행** 중 하나로 진입한다.
 
-### `tripType: "PACKAGE"`
-- 프론트는 **`packageId`만** 넘긴다 (패키지 상세/예약 화면에서 진입 → packageId를 앎).
+### `tripType: "BOOKING"` — 내가 구매한 여행
+- **[3-1 구매 여행 목록](#3-1-구매-여행-목록-조회)** 에서 하나를 골라 그 **`bookingId`만** 넘긴다.
+- 서버가 그 예약을 조회해 **목적지(숙소가 속한 국가명)·기간(checkIn~checkOut)·결제금액(totalPrice)** 을 자동으로 채운다.
+- `estimatedCost.packagePrice`에 예약 결제금액이 들어옴.
+- 본인 소유 예약만 사용 가능(서버가 토큰으로 검증). 취소요청·환불 완료 예약은 목록에서 제외됨.
+- `bookingId` 누락 시 `ITN_006`, 내 예약이 아니거나 사용 불가 예약이면 `ITN_007`.
+
+### `tripType: "PACKAGE"` — 전체 패키지 카탈로그
+- **[전체 패키지 목록](#3-2-전체-패키지-목록-조회)** 에서 하나를 골라 그 **`packageId`만** 넘긴다 (아직 구매하지 않은 상품도 추천 가능).
 - 서버가 그 패키지를 조회해 **목적지(국가명)·기간(checkIn~checkOut)·가격(totalPrice)** 을 자동으로 채운다.
-- `destination`/`startDate`/`endDate`는 보낼 필요 없음(보내도 무시됨).
 - `estimatedCost.packagePrice`에 패키지 조회가격이 들어옴.
 - `packageId` 누락 시 `ITN_005`.
 
-### `tripType: "FREE"`
+### `tripType: "FREE"` — 자유 여행
 - **`destination`, `startDate`, `endDate` 반드시 입력** (누락 시 `ITN_002`).
 - 패키지 가격이 없으므로 `packagePrice`는 `null`, 비용은 음식비 위주로 추정됨.
 
+> `BOOKING`·`PACKAGE`는 응답에서 `packageTrip=true`, `FREE`는 `false`.
+
 **프론트 구현 팁**
 ```ts
-// 패키지 상세/예약 화면에서 진입 → packageId만
+// ① 내가 구매한 여행 → 목록에서 선택한 bookingId만
+recommend({ tripType: "BOOKING", bookingId, preferences, purpose, companion, budget, headcount });
+
+// ② 전체 패키지 → 목록에서 선택한 packageId만
 recommend({ tripType: "PACKAGE", packageId, preferences, purpose, companion, budget, headcount });
 
-// 자유여행(직접 계획) 화면 → 목적지·날짜 입력받아 전송
+// ③ 자유여행(직접 계획) → 목적지·날짜 입력받아 전송
 recommend({ tripType: "FREE", destination, startDate, endDate, preferences, purpose, companion, budget, headcount });
 ```
+
+### 3-1. 구매 여행 목록 조회
+`GET /api/v1/itineraries/purchased-trips`
+- `tripType=BOOKING` 선택지를 채우기 위한 목록. **로그인 사용자의 예약** 중 추천에 쓸 수 있는 것만 최신순으로 내려준다.
+- 취소요청(`CANCEL_REQUESTED`)·환불 완료(`REFUNDED`) 예약은 **제외**.
+- `data`: `PurchasedTripResponse[]`
+```jsonc
+[
+  {
+    "bookingId": 34,                       // ← recommend 요청의 bookingId 로 그대로 사용
+    "destination": "일본",                  // 숙소가 속한 국가명(조회 실패 시 숙소명으로 대체)
+    "accommodationName": "신주쿠 프린스 호텔", // 없으면 null
+    "startDate": "2026-08-01",             // 체크인
+    "endDate": "2026-08-03",               // 체크아웃
+    "nights": 2,
+    "price": 770000,                       // 결제 총액(원) = 추천의 packagePrice
+    "status": "FULL_PAID",                 // PENDING | DEPOSIT_PAID | FULL_PAID
+    "bookingNumber": "BK-20260523-00001"
+  }
+  // ...
+]
+```
+> 목록이 비어 있으면(구매 이력 없음) "패키지를 먼저 예약해 주세요" 같은 빈 상태 UI를 노출하고, 전체 패키지(②)나 자유여행(③)으로 유도한다.
+
+### 3-2. 전체 패키지 목록 조회
+`GET /api/v1/packages` *(패키지 도메인 기존 API — 이 도메인 소관 아님)*
+- `tripType=PACKAGE` 선택지를 채우는 카탈로그. 각 항목의 `packageId`를 recommend에 사용.
+- 나라별로 좁히려면 `GET /api/v1/countries/{countryId}/packages`.
 
 ---
 
@@ -214,7 +268,8 @@ recommend({ tripType: "FREE", destination, startDate, endDate, preferences, purp
 
 아래는 **서버가 알아서 수집·반영**한다. 프론트가 보낼 필요 없음.
 - **강의 이력** → 학습한 나라를 "관심 국가"로 간주해 추천에 반영
-- **패키지 내역**(`tripType=PACKAGE`) → `packageId` 조회로 목적지 국가명 + 여행 기간 + 패키지 가격(예상비용 계산) 자동 확정
+- **구매 여행**(`tripType=BOOKING`) → `bookingId` 조회로 목적지 국가명 + 기간 + 결제금액 자동 확정
+- **패키지 내역**(`tripType=PACKAGE`) → `packageId` 조회로 목적지 국가명 + 기간 + 패키지 가격 자동 확정
 - 개인 결제정보는 외부 AI로 전송하지 않음
 
 ---
@@ -222,10 +277,12 @@ recommend({ tripType: "FREE", destination, startDate, endDate, preferences, purp
 ## 6. 구현 체크리스트
 
 - [ ] 요청은 enum `code`로 전송, 화면은 label로 표시 (`preferences`는 배열)
-- [ ] 진입 맥락에 따라 `tripType` 분기: 패키지(=`packageId`만) / 자유여행(=`destination`+기간 입력)
+- [ ] `tripType` 3-모드 분기: 구매여행(=`bookingId`) / 전체패키지(=`packageId`) / 자유여행(=`destination`+기간)
+- [ ] `BOOKING`·`PACKAGE`는 목록 조회 → 선택 UI로 식별자 확정 (구매목록: `GET /itineraries/purchased-trips`, 전체: `GET /packages`)
+- [ ] 구매 목록이 비면 빈 상태 UI + 전체패키지/자유여행으로 유도
 - [ ] 생성 API는 수 초 소요 → 로딩 스피너 + 60초 타임아웃
-- [ ] `ITN_002`(FREE 입력 누락)·`ITN_005`(PACKAGE packageId 누락)·`ITN_003`(날짜 역전)은 폼에서 선검증으로 예방
-- [ ] `ITN_001`(503) 수신 시 "잠시 후 다시 시도" 재시도 UI
+- [ ] 폼 선검증: `ITN_006`(bookingId)·`ITN_005`(packageId)·`ITN_002`(FREE 입력)·`ITN_003`(날짜 역전)
+- [ ] `ITN_007`(사용 불가 예약)·`ITN_001`(503) 수신 시 사용자 안내/재시도 UI
 - [ ] 결과 렌더: `days[].slots[]`를 오전/오후/저녁 카드로, `estimatedCost` 요약, `comment` 노출
 - [ ] `estimatedCost.packagePrice`가 `null`이면(자유여행) 음식비 위주로 표시
 - [ ] 목록/상세 분리 조회 (목록엔 slots 없음)
