@@ -6,7 +6,11 @@ import com.kidmily.algoga_server.payment.application.command.CreateBundlePayment
 import com.kidmily.algoga_server.payment.application.command.CreateLecturePaymentCommand;
 import com.kidmily.algoga_server.payment.application.command.CreatePaymentCommand;
 import com.kidmily.algoga_server.payment.application.usecase.PaymentCommandUseCase;
+import com.kidmily.algoga_server.payment.domain.model.PaymentType;
+import com.kidmily.algoga_server.payment.presentation.api.response.BundlePaymentPreviewResponse;
 import com.kidmily.algoga_server.payment.presentation.api.response.BundlePaymentResponse;
+
+import java.util.List;
 import com.kidmily.algoga_server.payment.infrastructure.portone.PortOneClient;
 import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.Timer;
@@ -76,6 +80,17 @@ public class PaymentCommandService implements PaymentCommandUseCase {
         log.info("[PaymentCommandService] PortOne 검증 결과 - status: {}, amount: {}, method: {}", portoneStatus, paidAmount, paymentMethod);
 
         return paymentTransactionService.saveLecturePayment(command, portoneStatus, paidAmount, paymentMethod);
+    }
+
+    /**
+     * 통합 결제 사전 검증. PortOne을 부르지 않는 순수 조회라 락·타이머 없이 트랜잭션 빈에 바로 위임한다.
+     */
+    @Override
+    public BundlePaymentPreviewResponse previewBundlePayment(Long bookingId, List<Long> courseIds, Long userId,
+                                                             PaymentType paymentType, int usedMileage,
+                                                             Long usedCouponId) {
+        return paymentTransactionService.previewBundlePayment(
+                bookingId, courseIds, userId, paymentType, usedMileage, usedCouponId);
     }
 
     /**

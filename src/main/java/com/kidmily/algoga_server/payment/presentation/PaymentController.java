@@ -12,6 +12,8 @@ import com.kidmily.algoga_server.payment.presentation.api.request.CreateBundlePa
 import com.kidmily.algoga_server.payment.presentation.api.request.CreateLecturePaymentRequest;
 import com.kidmily.algoga_server.payment.presentation.api.request.CreatePaymentRequest;
 import com.kidmily.algoga_server.payment.presentation.api.request.WebhookRequest;
+import com.kidmily.algoga_server.payment.domain.model.PaymentType;
+import com.kidmily.algoga_server.payment.presentation.api.response.BundlePaymentPreviewResponse;
 import com.kidmily.algoga_server.payment.presentation.api.response.BundlePaymentResponse;
 import com.kidmily.algoga_server.payment.presentation.api.response.PaymentResponse;
 import com.kidmily.algoga_server.user.settings.CustomUserDetails;
@@ -115,6 +117,41 @@ public class PaymentController {
         BundlePaymentResponse response = paymentCommandUseCase.handleBundlePayment(command);
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(ApiResponse.created("BUNDLE_PAYMENT_CREATED", "패키지+강의 결제가 완료되었습니다.", response));
+    }
+
+    @GetMapping("/bundle/preview")
+    @Operation(summary = "패키지+강의 통합 결제 사전 검증",
+            description = "PortOne 결제창을 **띄우기 전에** 호출해서 결제 가능 여부와 청구 예정액을 확인합니다. "
+                    + "DB를 바꾸지 않습니다.\n\n"
+                    + "**왜 필요한가**\n"
+                    + "통합 결제 본 API(`POST /bundle`)는 PortOne 결제가 **끝난 뒤** 검증합니다. "
+                    + "이미 산 강의가 섞여 있으면 **돈이 빠져나간 뒤에** DUPLICATE_PAYMENT로 거부되어, "
+                    + "청구는 됐는데 서버에 기록이 없는 상태가 됩니다. 이 API로 먼저 걸러야 합니다.\n\n"
+                    + "**사용법**\n"
+                    + "1. `payable=false`면 결제창을 띄우지 말고 `blockMessage`를 노출\n"
+                    + "2. `blockReason=DUPLICATE_PAYMENT`이고 `alreadyPaidCourseIds`가 있으면, "
+                    + "그 강의를 `courseIds`에서 빼고 다시 호출\n"
+                    + "3. `payable=true`면 `expectedTotal` 금액으로 PortOne 결제 후 `POST /bundle` 호출")
+    public ResponseEntity<ApiResponse<BundlePaymentPreviewResponse>> previewBundlePayment(
+            @RequestParam Long bookingId,
+            @Parameter(description = "함께 결제할 강의 ID 목록. 없으면 생략")
+            @RequestParam(required = false) List<Long> courseIds,
+            @Parameter(description = "DEPOSIT(예약금 30%) 또는 FULL(전액)")
+            @RequestParam PaymentType paymentType,
+            @RequestParam(defaultValue = "0") int usedMileage,
+            @RequestParam(required = false) Long usedCouponId,
+            @AuthenticationPrincipal CustomUserDetails userDetails
+    ) {
+        BundlePaymentPreviewResponse response = paymentCommandUseCase.previewBundlePayment(
+                bookingId,
+                courseIds == null ? List.of() : courseIds,
+                userDetails.getUser().getId(),
+                paymentType,
+                usedMileage,
+                usedCouponId
+        );
+        return ResponseEntity.ok(
+                ApiResponse.success("BUNDLE_PAYMENT_PREVIEW", "통합 결제 사전 검증 결과입니다.", response));
     }
 
     @GetMapping("/calculate/lecture")

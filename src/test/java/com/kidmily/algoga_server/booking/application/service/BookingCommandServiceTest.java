@@ -12,6 +12,10 @@ import com.kidmily.algoga_server.global.exception.BusinessException;
 import com.kidmily.algoga_server.completion.domain.model.CourseCompletion;
 import com.kidmily.algoga_server.completion.domain.repository.CourseCompletionRepository;
 import com.kidmily.algoga_server.course.domain.repository.CourseRepository;
+import com.kidmily.algoga_server.payment.domain.model.Payment;
+import com.kidmily.algoga_server.payment.domain.model.PaymentStatus;
+import com.kidmily.algoga_server.payment.domain.model.PaymentType;
+import com.kidmily.algoga_server.payment.domain.repository.PaymentRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -42,6 +46,7 @@ class BookingCommandServiceTest {
     @Mock private AccommodationRepository accommodationRepository;
     @Mock private CourseRepository courseRepository;
     @Mock private CourseCompletionRepository courseCompletionRepository;
+    @Mock private PaymentRepository paymentRepository;
     @Mock private ApplicationEventPublisher eventPublisher;
 
     @InjectMocks
@@ -110,31 +115,59 @@ class BookingCommandServiceTest {
         verify(bookingRepository).updateStatus(1L, BookingStatus.CANCEL_REQUESTED);
     }
 
+    /** 해당 국가에 강의 1개(id=10)가 열려 있는 상황 */
+    private void countryHasCourse() {
+        Course course = mock(Course.class);
+        when(course.getId()).thenReturn(10L);
+        when(courseRepository.findPublishedByCountryId(1L)).thenReturn(List.of(course));
+    }
+
+    /** 이 유저가 courseId 강의를 단과로 결제한 이력 */
+    private void purchasedLecture(Long courseId) {
+        Payment payment = mock(Payment.class);
+        when(payment.getCourseId()).thenReturn(courseId);
+        when(paymentRepository.findByUserIdAndPaymentTypeAndStatusAndCourseIdIsNotNull(
+                1L, PaymentType.LECTURE_ONLY, PaymentStatus.SUCCESS)).thenReturn(List.of(payment));
+    }
+
+    /** 강의를 산 적 없는 유저 */
+    private void noLecturePurchase() {
+        when(paymentRepository.findByUserIdAndPaymentTypeAndStatusAndCourseIdIsNotNull(
+                1L, PaymentType.LECTURE_ONLY, PaymentStatus.SUCCESS)).thenReturn(List.of());
+    }
+
+    private void completed(Long courseId) {
+        CourseCompletion completion = mock(CourseCompletion.class);
+        when(completion.getCourseId()).thenReturn(courseId);
+        when(courseCompletionRepository.findByUserIdAndCourseIdIn(eq(1L), anyList()))
+                .thenReturn(List.of(completion));
+    }
+
     @Test
-    @DisplayName("LOUNGE 예약은 완강 체크 없이 생성되고 분할 결제가 허용된다(installmentAllowed=true)")
-    void 라운지_예약_분할허용() {
-        accommodationMock();
+    @DisplayName("강의를 산 적 없는 유저는 라운지에서 자유롭게 예약되고 분할 결제가 허용된다(installmentAllowed=true)")
+    void 신규유저_라운지_예약_분할허용() {
+        Accommodation acc = accommodationMock();
+        when(acc.getCountryId()).thenReturn(1L);
+        countryHasCourse();
+        noLecturePurchase();
 
         bookingCommandService.handle(command(BookingSource.LOUNGE));
 
         ArgumentCaptor<Booking> captor = ArgumentCaptor.forClass(Booking.class);
         verify(bookingRepository).save(captor.capture());
         assertTrue(captor.getValue().isInstallmentAllowed());
-        // 라운지 경로는 완강 조회를 하지 않는다
-        verifyNoInteractions(courseRepository, courseCompletionRepository);
+        // 구매 이력이 없으면 완강 여부는 조회조차 하지 않는다
+        verifyNoInteractions(courseCompletionRepository);
     }
 
     @Test
-    @DisplayName("COMPLETION 예약은 완강 시 생성되고 일시불만 허용된다(installmentAllowed=false)")
+    @DisplayName("COMPLETION 예약은 구매한 강의를 완강했으면 생성되고 일시불만 허용된다(installmentAllowed=false)")
     void 완강후_예약_일시불고정() {
         Accommodation acc = accommodationMock();
         when(acc.getCountryId()).thenReturn(1L);
-
-        Course course = mock(Course.class);
-        when(course.getId()).thenReturn(10L);
-        when(courseRepository.findPublishedByCountryId(1L)).thenReturn(List.of(course));
-        when(courseCompletionRepository.findByUserIdAndCourseIdIn(eq(1L), anyList()))
-                .thenReturn(List.of(mock(CourseCompletion.class)));
+        countryHasCourse();
+        purchasedLecture(10L);
+        completed(10L);
 
         bookingCommandService.handle(command(BookingSource.COMPLETION));
 
@@ -144,20 +177,36 @@ class BookingCommandServiceTest {
     }
 
     @Test
-    @DisplayName("COMPLETION 예약인데 완강 안 했으면 LECTURE_NOT_COMPLETED 예외가 발생하고 저장되지 않는다")
+    @DisplayName("COMPLETION 예약인데 구매한 강의를 완강 안 했으면 LECTURE_NOT_COMPLETED 로 차단된다")
     void 미완강_예약_차단() {
         Accommodation acc = mock(Accommodation.class);
         when(accommodationRepository.findById(1L)).thenReturn(Optional.of(acc));
         when(acc.getCountryId()).thenReturn(1L);
-
-        Course course = mock(Course.class);
-        when(course.getId()).thenReturn(10L);
-        when(courseRepository.findPublishedByCountryId(1L)).thenReturn(List.of(course));
+        countryHasCourse();
+        purchasedLecture(10L);
         when(courseCompletionRepository.findByUserIdAndCourseIdIn(eq(1L), anyList()))
                 .thenReturn(List.of());
 
         assertThrows(BusinessException.class, () ->
                 bookingCommandService.handle(command(BookingSource.COMPLETION)));
+        verify(bookingRepository, never()).save(any());
+    }
+
+    @Test
+    @DisplayName("[회귀] 단과만 결제하고 완강 안 한 유저는 LOUNGE 로 우회해도 예약이 차단된다")
+    void 미완강_유저는_라운지_우회로도_차단된다() {
+        // 예전에는 완강 검사가 bookingSource=COMPLETION 일 때만 돌아서,
+        // 클라이언트가 LOUNGE(기본값)로 보내면 정책이 그대로 뚫렸다.
+        Accommodation acc = mock(Accommodation.class);
+        when(accommodationRepository.findById(1L)).thenReturn(Optional.of(acc));
+        when(acc.getCountryId()).thenReturn(1L);
+        countryHasCourse();
+        purchasedLecture(10L);
+        when(courseCompletionRepository.findByUserIdAndCourseIdIn(eq(1L), anyList()))
+                .thenReturn(List.of());
+
+        assertThrows(BusinessException.class, () ->
+                bookingCommandService.handle(command(BookingSource.LOUNGE)));
         verify(bookingRepository, never()).save(any());
     }
 }
