@@ -23,9 +23,11 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.data.redis.core.ValueOperations;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.util.Optional;
+import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -50,6 +52,7 @@ class UserServiceTest {
     @Mock private UserStorageSettings storageSettings;
     @Mock private ApplicationEventPublisher eventPublisher;
     @Mock private RedisTemplate<String, String> redisTemplate;
+    @Mock private ValueOperations<String, String> valueOperations;
     @Mock private BookingQueryUseCase bookingQueryUseCase;
     @Mock private RefundQueryUseCase refundQueryUseCase;
     @Mock private EmailVerificationHelper emailVerificationHelper;
@@ -90,12 +93,13 @@ class UserServiceTest {
     }
 
     @Test
-    @DisplayName("탈퇴 전용 마커가 있으면 정상 탈퇴 처리되고, 탈퇴 마커와 토큰이 삭제되며 이벤트가 발행된다")
+    @DisplayName("탈퇴 전용 마커가 있으면 정상 탈퇴 처리되고, 탈퇴 마커/토큰 삭제 + 30일 재가입 쿨다운 마커 설정 + 이벤트가 발행된다")
     void withdraw_verified_succeedsAndConsumesOwnMarker() {
         User user = activeUser();
         when(userRepository.findByEmail(EMAIL)).thenReturn(Optional.of(user));
         when(bookingQueryUseCase.hasActiveBooking(1L)).thenReturn(false);
         when(refundQueryUseCase.hasActiveRefund(1L)).thenReturn(false);
+        when(redisTemplate.opsForValue()).thenReturn(valueOperations);
 
         userService.withdraw(EMAIL);
 
@@ -103,6 +107,7 @@ class UserServiceTest {
         assertThat(user.isDeleted()).isTrue();
         verify(redisTemplate).delete(RedisKeys.REFRESH_TOKEN_PREFIX + EMAIL);
         verify(redisTemplate).delete(RedisKeys.MYPAGE_AUTH_SUCCESS_WITHDRAW_PREFIX + EMAIL);
+        verify(valueOperations).set(RedisKeys.WITHDRAWN_EMAIL_PREFIX + EMAIL, "true", 30L, TimeUnit.DAYS);
         verify(eventPublisher).publishEvent(any(UserWithdrawnEvent.class));
     }
 

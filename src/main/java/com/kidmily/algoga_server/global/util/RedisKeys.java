@@ -17,6 +17,9 @@ public final class RedisKeys {
     public static final String MYPAGE_AUTH_SUCCESS_PASSWORD_PREFIX = "MYPAGE_AUTH_SUCCESS:PASSWORD:";
     public static final String MYPAGE_AUTH_SUCCESS_WITHDRAW_PREFIX = "MYPAGE_AUTH_SUCCESS:WITHDRAW:";
 
+    // 탈퇴 후 30일간 같은 이메일로 재가입을 막기 위한 쿨다운 마커 (TTL 30일, 자연 만료로 해제됨)
+    public static final String WITHDRAWN_EMAIL_PREFIX = "WITHDRAWN_EMAIL:";
+
     private RedisKeys() {
     }
 }

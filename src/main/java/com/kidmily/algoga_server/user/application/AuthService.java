@@ -68,6 +68,11 @@ public class AuthService implements SocialLoginProcessor {
             throw new AuthException(AuthErrorCode.DUPLICATE_EMAIL);
         }
 
+        // 탈퇴 후 30일 이내에 같은 이메일로 재가입 시도하는지 확인
+        if (redisTemplate.hasKey(RedisKeys.WITHDRAWN_EMAIL_PREFIX + email)) {
+            throw new AuthException(AuthErrorCode.RECENTLY_WITHDRAWN_EMAIL);
+        }
+
         emailVerificationHelper.sendCode(
                 email,
                 RedisKeys.AUTH_CODE_PREFIX,
@@ -94,6 +99,11 @@ public class AuthService implements SocialLoginProcessor {
         // 이메일 중복 검사
         if (userRepository.existsByEmail(email)) {
             throw new AuthException(AuthErrorCode.DUPLICATE_EMAIL);
+        }
+
+        // 탈퇴 후 30일 이내에 같은 이메일로 재가입 시도하는지 확인
+        if (redisTemplate.hasKey(RedisKeys.WITHDRAWN_EMAIL_PREFIX + email)) {
+            throw new AuthException(AuthErrorCode.RECENTLY_WITHDRAWN_EMAIL);
         }
 
         // 아이디(username) 중복 검사
@@ -371,6 +381,11 @@ public class AuthService implements SocialLoginProcessor {
         // 1. 이메일 중복 검사
         if (userRepository.existsByEmail(email)) {
             throw new AuthException(AuthErrorCode.DUPLICATE_EMAIL);
+        }
+
+        // 1-0. 탈퇴 후 30일 이내에 같은 이메일로 재가입 시도하는지 확인
+        if (redisTemplate.hasKey(RedisKeys.WITHDRAWN_EMAIL_PREFIX + email)) {
+            throw new AuthException(AuthErrorCode.RECENTLY_WITHDRAWN_EMAIL);
         }
 
         // 1-1. 전화번호 중복 검사 (일반 회원가입/마이페이지 수정과 동일하게 체크)

@@ -208,6 +208,9 @@ public class UserService {
         // 탈퇴가 끝났으니 인증 성공 마커(Redis) 삭제
         redisTemplate.delete(RedisKeys.MYPAGE_AUTH_SUCCESS_WITHDRAW_PREFIX + email);
 
+        // 탈퇴 후 30일간 같은 이메일로 재가입 못 하도록 쿨다운 마커 설정 (TTL 지나면 자동 해제)
+        redisTemplate.opsForValue().set(RedisKeys.WITHDRAWN_EMAIL_PREFIX + email, "true", 30, TimeUnit.DAYS);
+
         // 탈퇴 이벤트 퍼블리싱
         // 이제 다른 도메인(쿠폰, 예약 등) 담당자들이 이 이벤트를 듣고 각자 데이터를 지웁니다.
         eventPublisher.publishEvent(new UserWithdrawnEvent(user.getId(), email));
