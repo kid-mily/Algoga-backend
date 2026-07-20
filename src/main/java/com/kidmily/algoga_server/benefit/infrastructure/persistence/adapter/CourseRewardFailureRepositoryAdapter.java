@@ -87,4 +87,9 @@ public class CourseRewardFailureRepositoryAdapter implements CourseRewardFailure
                 .map(this::toDomain)
                 .toList();
     }
+
+    @Override
+    public void deleteAllByUserId(Long userId) {
+        springDataCourseRewardFailureRepository.deleteByUserId(userId);
+    }
 }
