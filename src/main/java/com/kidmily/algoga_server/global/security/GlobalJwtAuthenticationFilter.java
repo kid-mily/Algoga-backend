@@ -23,6 +23,7 @@ import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.JwtException;
 
 import java.io.IOException;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 @Slf4j
@@ -36,6 +37,28 @@ public class GlobalJwtAuthenticationFilter extends OncePerRequestFilter {
 
     @Value("${jwt.access-token-expiration}")
     private long accessTokenExpiration;
+
+    // 로그인/가입/토큰재발급처럼 "기존 세션 상태와 무관하게 항상 동작해야 하는" 엔드포인트 목록.
+    // 브라우저에 예전 세션의 낡은(만료됐거나 다른 기기 로그인으로 무효화된) accessToken 쿠키가 남아있으면
+    // 이 필터가 실제 로직 실행 전에 그 쿠키부터 검증하다가 401로 막아버리는 문제가 있었다.
+    // (신규 로그인 시도 자체가 예전 쿠키 때문에 "다른 기기에서 로그인됨"으로 거부되는 버그의 원인)
+    private static final Set<String> PUBLIC_AUTH_PATHS = Set.of(
+            "/api/v1/auth/login",
+            "/api/v1/auth/signup",
+            "/api/v1/auth/social/signup",
+            "/api/v1/auth/refresh",
+            "/api/v1/auth/logout",
+            "/api/v1/auth/find-id",
+            "/api/v1/auth/find-password",
+            "/api/v1/auth/username/check",
+            "/api/v1/auth/email/send-code",
+            "/api/v1/auth/email/verify-code"
+    );
+
+    @Override
+    protected boolean shouldNotFilter(HttpServletRequest request) {
+        return PUBLIC_AUTH_PATHS.contains(request.getRequestURI());
+    }
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
