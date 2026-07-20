@@ -11,4 +11,6 @@ public interface CourseRewardRepository {
     Optional<CourseReward> findByUserIdAndCourseId(Long userId, Long courseId);
 
     boolean existsByUserIdAndCourseId(Long userId, Long courseId);
+
+    void deleteAllByUserId(Long userId);
 }

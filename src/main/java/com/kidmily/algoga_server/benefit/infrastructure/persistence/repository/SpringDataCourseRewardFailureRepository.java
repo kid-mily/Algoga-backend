@@ -20,4 +20,6 @@ public interface SpringDataCourseRewardFailureRepository extends JpaRepository<C
             order by failure.lastFailedAt asc
             """)
     List<CourseRewardFailureJpaEntity> findRetryableFailures(@Param("maxRetryCount") int maxRetryCount);
+
+    void deleteByUserId(Long userId);
 }
