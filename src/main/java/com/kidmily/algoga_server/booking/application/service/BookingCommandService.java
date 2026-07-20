@@ -15,8 +15,13 @@ import com.kidmily.algoga_server.booking.settings.cache.BookingCacheType;
 import com.kidmily.algoga_server.course.domain.model.Course;
 import com.kidmily.algoga_server.global.exception.BusinessException;
 import com.kidmily.algoga_server.global.lock.DistributedLock;
+import com.kidmily.algoga_server.completion.domain.model.CourseCompletion;
 import com.kidmily.algoga_server.completion.domain.repository.CourseCompletionRepository;
 import com.kidmily.algoga_server.course.domain.repository.CourseRepository;
+import com.kidmily.algoga_server.payment.domain.model.Payment;
+import com.kidmily.algoga_server.payment.domain.model.PaymentStatus;
+import com.kidmily.algoga_server.payment.domain.model.PaymentType;
+import com.kidmily.algoga_server.payment.domain.repository.PaymentRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.CacheEvict;
@@ -28,6 +33,8 @@ import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -41,6 +48,7 @@ public class BookingCommandService implements BookingCommandUseCase {
     private final AccommodationRepository accommodationRepository;
     private final CourseRepository courseRepository;
     private final CourseCompletionRepository courseCompletionRepository;
+    private final PaymentRepository paymentRepository;
     private final ApplicationEventPublisher eventPublisher;
 
     @DistributedLock(key = "'booking:' + #command.userId() + ':' + #command.accommodationId() + ':' + #command.checkInDate()")
@@ -61,14 +69,16 @@ public class BookingCommandService implements BookingCommandUseCase {
         int nights = (int) ChronoUnit.DAYS.between(command.checkInDate(), command.checkOutDate());
         if (nights < 1) nights = 1; // 방어: 같은 날/역전 시 최소 1박
 
-        // 경로별 규칙:
-        // - COMPLETION(단과 완강 후 마이페이지 예약): 그 나라 강의 완강 필수 + 일시불만(분할 불가)
-        // - LOUNGE(라운지에서 바로 예약, 기본값): 완강 불필요 + 분할/일시불 선택 가능
-        boolean installmentAllowed = true;
-        if (command.bookingSource() == BookingSource.COMPLETION) {
-            requireCourseCompleted(command.userId(), accommodation.getCountryId());
-            installmentAllowed = false;
-        }
+        // 완강 게이트는 bookingSource 와 무관하게 항상 검사한다.
+        // 예전에는 COMPLETION 일 때만 검사해서, 클라이언트가 LOUNGE(기본값)로 보내면
+        // "단과만 결제하고 완강 안 한 유저"가 그대로 패키지를 예약할 수 있었다.
+        // 정책 강제 주체를 클라이언트 → 서버로 옮긴다.
+        requireCourseCompletedIfPurchased(command.userId(), accommodation.getCountryId());
+
+        // 경로별 결제 방식:
+        // - COMPLETION(단과 완강 후 마이페이지 예약): 일시불만(분할 불가)
+        // - LOUNGE(라운지에서 바로 예약, 기본값): 분할/일시불 선택 가능
+        boolean installmentAllowed = command.bookingSource() != BookingSource.COMPLETION;
 
         int accommodationPrice = accommodation.getPricePerNight() * nights;
         int totalPrice = command.flightPrice() + accommodationPrice;
@@ -138,20 +148,43 @@ public class BookingCommandService implements BookingCommandUseCase {
     }
 
     /**
-     * 완강 후 예약(COMPLETION) 경로 게이트: 해당 국가의 강의를 하나라도 완강했는지 확인한다.
-     * 완강한 강의가 없으면 예약을 막는다.
+     * 완강 게이트: <b>그 나라 강의를 이미 구매한 이력이 있는 유저</b>는 구매한 강의를 전부 완강해야
+     * 패키지를 예약할 수 있다. 예약 경로(bookingSource)와 무관하게 적용된다.
+     * <p>
+     * 강의를 산 적 없는 신규 유저는 대상이 아니다 — 라운지에서 자유롭게 예약할 수 있어야 하고,
+     * 패키지+강의 통합 결제(번들)도 "지금 사는" 것이라 이 시점엔 구매 이력이 없어 통과한다.
      */
-    private void requireCourseCompleted(Long userId, Long countryId) {
-        List<Long> courseIds = courseRepository.findPublishedByCountryId(countryId)
+    private void requireCourseCompletedIfPurchased(Long userId, Long countryId) {
+        List<Long> countryCourseIds = courseRepository.findPublishedByCountryId(countryId)
                 .stream()
                 .map(Course::getId)
                 .toList();
+        if (countryCourseIds.isEmpty()) {
+            return;
+        }
 
-        boolean completed = !courseIds.isEmpty()
-                && !courseCompletionRepository.findByUserIdAndCourseIdIn(userId, courseIds).isEmpty();
+        // 이 유저가 결제 완료한 단과 강의 중 해당 국가 것만 추린다.
+        Set<Long> purchasedInCountry = paymentRepository
+                .findByUserIdAndPaymentTypeAndStatusAndCourseIdIsNotNull(
+                        userId, PaymentType.LECTURE_ONLY, PaymentStatus.SUCCESS)
+                .stream()
+                .map(Payment::getCourseId)
+                .filter(countryCourseIds::contains)
+                .collect(Collectors.toSet());
 
-        if (!completed) {
-            log.warn("[BookingCommandService] 완강 조건 미충족 - userId: {}, countryId: {}", userId, countryId);
+        if (purchasedInCountry.isEmpty()) {
+            return; // 강의를 산 적 없는 유저 — 게이트 대상 아님
+        }
+
+        Set<Long> completed = courseCompletionRepository
+                .findByUserIdAndCourseIdIn(userId, List.copyOf(purchasedInCountry))
+                .stream()
+                .map(CourseCompletion::getCourseId)
+                .collect(Collectors.toSet());
+
+        if (!completed.containsAll(purchasedInCountry)) {
+            log.warn("[BookingCommandService] 완강 조건 미충족 - userId: {}, countryId: {}, 구매: {}, 완강: {}",
+                    userId, countryId, purchasedInCountry, completed);
             throw new BusinessException(BookingErrorCode.LECTURE_NOT_COMPLETED);
         }
     }

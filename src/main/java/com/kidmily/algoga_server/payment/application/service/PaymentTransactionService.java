@@ -14,6 +14,7 @@ import com.kidmily.algoga_server.course.domain.repository.CourseRepository;
 import com.kidmily.algoga_server.payment.application.command.CreateBundlePaymentCommand;
 import com.kidmily.algoga_server.payment.application.command.CreateLecturePaymentCommand;
 import com.kidmily.algoga_server.payment.application.command.CreatePaymentCommand;
+import com.kidmily.algoga_server.payment.presentation.api.response.BundlePaymentPreviewResponse;
 import com.kidmily.algoga_server.payment.presentation.api.response.BundlePaymentResponse;
 import com.kidmily.algoga_server.payment.domain.event.PackagePaymentCompletedEvent;
 import com.kidmily.algoga_server.payment.domain.event.PaymentCompletedEvent;
@@ -456,6 +457,92 @@ public class PaymentTransactionService {
 
         return new BundlePaymentResponse(
                 bookingPaymentId, lecturePaymentIds, bookingAmount, lectureAmount, command.amount());
+    }
+
+    /**
+     * 통합 결제 사전 검증. <b>DB를 전혀 바꾸지 않고</b> 결제 가능 여부와 청구 예정액만 계산한다.
+     * <p>
+     * 통합 결제 본 API({@link #saveBundlePayment})는 PortOne 결제가 <b>끝난 뒤</b> 검증하므로,
+     * 이미 산 강의가 섞여 있으면 돈이 빠져나간 뒤에 거부된다(청구는 됐는데 기록은 없는 상태).
+     * FE는 결제창을 띄우기 전에 이 메서드를 먼저 호출해서 걸러야 한다.
+     */
+    @Transactional(readOnly = true)
+    public BundlePaymentPreviewResponse previewBundlePayment(Long bookingId, List<Long> courseIds, Long userId,
+                                                             PaymentType paymentType, int usedMileage,
+                                                             Long usedCouponId) {
+        if (paymentType != PaymentType.DEPOSIT && paymentType != PaymentType.FULL) {
+            return BundlePaymentPreviewResponse.blocked("INVALID_PAYMENT_TYPE",
+                    "통합 결제는 예약금(DEPOSIT) 또는 일시불(FULL)만 가능합니다.", null);
+        }
+
+        Booking booking = bookingRepository.findById(bookingId).orElse(null);
+        if (booking == null) {
+            return BundlePaymentPreviewResponse.blocked("BOOKING_NOT_FOUND", "예약 정보를 찾을 수 없습니다.", null);
+        }
+        if (!booking.isInstallmentAllowed() && paymentType != PaymentType.FULL) {
+            return BundlePaymentPreviewResponse.blocked("INSTALLMENT_NOT_ALLOWED",
+                    "이 예약은 일시불(전액) 결제만 가능합니다.", null);
+        }
+        if (isAlreadyPaid(generateIdempotencyKey(bookingId, paymentType))) {
+            return BundlePaymentPreviewResponse.blocked("DUPLICATE_PAYMENT",
+                    "이미 결제된 예약입니다.", null);
+        }
+
+        // 강의 검증 — 이미 산 강의는 전부 모아서 알려준다(하나씩 튕기면 FE가 여러 번 호출해야 함)
+        List<Long> distinctCourseIds = courseIds == null ? List.of() : courseIds.stream().distinct().toList();
+        List<Long> alreadyPaid = new java.util.ArrayList<>();
+        int lectureAmount = 0;
+        for (Long courseId : distinctCourseIds) {
+            Course course = courseRepository.findByIdAndDeletedFalse(courseId).orElse(null);
+            if (course == null) {
+                return BundlePaymentPreviewResponse.blocked("COURSE_NOT_FOUND",
+                        "강의 정보를 찾을 수 없습니다. (courseId: " + courseId + ")", null);
+            }
+            if (isAlreadyPaid(lectureIdempotencyKey(courseId, userId))) {
+                alreadyPaid.add(courseId);
+                continue;
+            }
+            lectureAmount += course.getPrice();
+        }
+        if (!alreadyPaid.isEmpty()) {
+            return BundlePaymentPreviewResponse.blocked("DUPLICATE_PAYMENT",
+                    "이미 결제한 강의가 포함되어 있습니다. 해당 강의를 제외하고 다시 시도해주세요.", alreadyPaid);
+        }
+
+        // 쿠폰·마일리지는 패키지분에만 적용 (본 결제와 동일 규칙)
+        int packageBase = getBaseAmount(booking, paymentType);
+        int couponDiscount = 0;
+        if (usedCouponId != null) {
+            try {
+                couponDiscount = calculateCouponDiscount(validateCoupon(usedCouponId, userId), packageBase);
+            } catch (BusinessException e) {
+                return BundlePaymentPreviewResponse.blocked("COUPON_INVALID", e.getMessage(), null);
+            }
+        }
+        if (usedMileage > 0) {
+            try {
+                validateMileageBalance(userId, usedMileage);
+            } catch (BusinessException e) {
+                return BundlePaymentPreviewResponse.blocked("INSUFFICIENT_MILEAGE", e.getMessage(), null);
+            }
+        }
+
+        int packageAmount = packageBase - couponDiscount - usedMileage;
+        if (packageAmount < 0) {
+            return BundlePaymentPreviewResponse.blocked("INVALID_PAYMENT_AMOUNT",
+                    "할인 금액이 패키지 결제액을 초과합니다.", null);
+        }
+
+        log.info("[PaymentTransactionService] 통합 결제 사전 검증 통과 - bookingId: {}, 패키지: {}, 강의: {}",
+                bookingId, packageAmount, lectureAmount);
+        return BundlePaymentPreviewResponse.payable(packageAmount, lectureAmount);
+    }
+
+    /** 해당 멱등키로 이미 성공한 결제가 있는지 (사전 검증용 — 아무것도 지우지 않는다) */
+    private boolean isAlreadyPaid(String idempotencyKey) {
+        return paymentRepository.findByIdempotencyKey(idempotencyKey)
+                .filter(p -> p.getStatus() == PaymentStatus.SUCCESS)
+                .isPresent();
     }
 
     /**
