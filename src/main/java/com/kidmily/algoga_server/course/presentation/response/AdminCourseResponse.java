@@ -26,6 +26,9 @@ public record AdminCourseResponse(
         @Schema(description = "강의 가격", example = "15000")
         Integer price,
 
+        @Schema(description = "maxRewardMileage", example = "5000")
+        Integer maxRewardMileage,
+
         @Schema(description = "강의 썸네일 URL")
         String thumbnailUrl,
 
@@ -55,6 +58,7 @@ public record AdminCourseResponse(
                 course.title(),
                 course.description(),
                 course.price(),
+                course.maxRewardMileage(),
                 course.thumbnailUrl(),
                 course.fileUrls(),
                 course.files().stream().map(CourseFileResponse::from).toList(),
