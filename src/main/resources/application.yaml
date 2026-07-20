@@ -182,6 +182,8 @@ resilience4j:
     instances:
       pythonRagApi:
         baseConfig: default
+      pythonItineraryApi:
+        baseConfig: default
       portone:
         # CLOSED → OPEN: 10번 호출 중 50% 이상 실패 시
         sliding-window-type: COUNT_BASED

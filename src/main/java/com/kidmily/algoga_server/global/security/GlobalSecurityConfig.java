@@ -51,6 +51,7 @@ public class GlobalSecurityConfig {
                         .requestMatchers("/api/v1/users/**").authenticated()
                         .requestMatchers("/api/v1/chat/**").authenticated()
                         .requestMatchers("/api/v1/friends/**").authenticated()
+                        .requestMatchers("/api/v1/itineraries/**").authenticated()
                         // 예약은 로그인 유저 전제(컨트롤러가 인증 principal 사용) → 미인증은 500이 아니라 401로 떨어지게
                         .requestMatchers("/api/v1/bookings/**").authenticated()
                         // 모든 경로에 대해 일단 통과(permitAll)시키도록
