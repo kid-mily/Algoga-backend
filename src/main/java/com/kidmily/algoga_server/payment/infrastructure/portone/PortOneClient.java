@@ -8,6 +8,7 @@ import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
+import org.springframework.web.client.RestClientResponseException;
 
 import java.util.Map;
 
@@ -37,8 +38,14 @@ public class PortOneClient {
                     .uri("/payments/{paymentId}", portonePaymentId)
                     .retrieve()
                     .body(JsonNode.class);
+        } catch (RestClientResponseException e) {
+            // PortOne이 4xx/5xx를 준 경우 — 상태코드와 응답 본문이 원인 판별의 핵심이라 함께 남긴다
+            log.warn("[PortOneClient] PortOne 조회 API 응답 오류 - portonePaymentId: {}, status: {}, body: {}",
+                    portonePaymentId, e.getStatusCode(), e.getResponseBodyAsString());
+            throw new BusinessException(PaymentErrorCode.PORTONE_API_ERROR);
         } catch (Exception e) {
-            log.warn("[PortOneClient] PortOne API 호출 실패 - portonePaymentId: {}", portonePaymentId);
+            // 타임아웃·연결 실패 등 — 스택트레이스까지 남긴다
+            log.warn("[PortOneClient] PortOne 조회 API 호출 실패 - portonePaymentId: {}", portonePaymentId, e);
             throw new BusinessException(PaymentErrorCode.PORTONE_API_ERROR);
         }
     }
@@ -52,8 +59,13 @@ public class PortOneClient {
                     .body(Map.of("reason", reason, "amount", amount))
                     .retrieve()
                     .toBodilessEntity();
+        } catch (RestClientResponseException e) {
+            // 예: 존재하지 않는 결제건 취소 시도(테스트 데이터), 인증 실패 — 둘 다 PAY_005로 올라가므로 로그로만 구분된다
+            log.warn("[PortOneClient] PortOne 취소 API 응답 오류 - portonePaymentId: {}, status: {}, body: {}",
+                    portonePaymentId, e.getStatusCode(), e.getResponseBodyAsString());
+            throw new BusinessException(PaymentErrorCode.PORTONE_API_ERROR);
         } catch (Exception e) {
-            log.warn("[PortOneClient] PortOne 취소 API 호출 실패 - portonePaymentId: {}", portonePaymentId);
+            log.warn("[PortOneClient] PortOne 취소 API 호출 실패 - portonePaymentId: {}", portonePaymentId, e);
             throw new BusinessException(PaymentErrorCode.PORTONE_API_ERROR);
         }
     }
