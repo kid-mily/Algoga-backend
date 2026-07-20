@@ -7,6 +7,7 @@ import com.kidmily.algoga_server.global.infrastructure.mail.EmailSender;
 import com.kidmily.algoga_server.global.security.GlobalJwtProvider;
 import com.kidmily.algoga_server.global.security.dto.SocialAuthResult;
 import com.kidmily.algoga_server.global.security.port.SocialLoginProcessor;
+import com.kidmily.algoga_server.global.util.RedisKeys;
 import com.kidmily.algoga_server.user.domain.Gender;
 import com.kidmily.algoga_server.user.domain.SocialType;
 import com.kidmily.algoga_server.user.domain.User;
@@ -46,6 +47,7 @@ public class AuthService implements SocialLoginProcessor {
     private final EmailSender emailSender;
     private final RedisTemplate<String, String> redisTemplate; // Redis 도구 주입!
     private final ApplicationEventPublisher eventPublisher;
+    private final EmailVerificationHelper emailVerificationHelper;
 
     // 프론트엔드 주소 주입 (HTTP cookie할 때 추가함)
     @Value("${user.app.frontend.base-url}")
@@ -55,6 +57,9 @@ public class AuthService implements SocialLoginProcessor {
     @Value("${jwt.access-token-expiration}")
     private long accessTokenExpiration;
 
+    @Value("${jwt.refresh-token-expiration}")
+    private long refreshTokenExpiration;
+
     // 이메일 인증번호 발송
     public void sendVerificationCode(SendEmailCodeRequest request) {
         String email = request.email().toLowerCase();
@@ -63,20 +68,17 @@ public class AuthService implements SocialLoginProcessor {
             throw new AuthException(AuthErrorCode.DUPLICATE_EMAIL);
         }
 
-        // 6자리 랜덤 난수 생성
-        String code = String.valueOf((int) (Math.random() * 899999) + 100000);
+        // 탈퇴 후 30일 이내에 같은 이메일로 재가입 시도하는지 확인
+        if (redisTemplate.hasKey(RedisKeys.WITHDRAWN_EMAIL_PREFIX + email)) {
+            throw new AuthException(AuthErrorCode.RECENTLY_WITHDRAWN_EMAIL);
+        }
 
-        // Redis에 저장 (키: "AUTH_CODE:이메일", 값: 인증번호, 만료시간: 3분)
-        redisTemplate.opsForValue().set("AUTH_CODE:" + email, code, 3, TimeUnit.MINUTES);
-
-        // 이메일 발송
-        String subject = "[ALGOGA] 회원가입 이메일 인증번호";
-        String body = "안녕하세요, ALGOGA입니다.\n\n"
-                + "요청하신 회원가입 인증번호는 다음과 같습니다.\n"
-                + "인증번호 : [" + code + "]\n\n"
-                + "3분 이내에 입력해 주세요.";
-
-        emailSender.sendEmail(email, subject, body);
+        emailVerificationHelper.sendCode(
+                email,
+                RedisKeys.AUTH_CODE_PREFIX,
+                "[ALGOGA] 회원가입 이메일 인증번호",
+                "안녕하세요, ALGOGA입니다.\n\n요청하신 회원가입 인증번호는 다음과 같습니다."
+        );
         log.info("회원가입 인증번호 발송 완료 [요청 이메일: {}]", email);
     }
 
@@ -84,17 +86,7 @@ public class AuthService implements SocialLoginProcessor {
     public void verifyEmailCode(VerifyEmailCodeRequest request) {
         String email = request.email().toLowerCase();
 
-        // 1. Redis에서 해당 이메일의 인증번호 꺼내기
-        String savedCode = redisTemplate.opsForValue().get("AUTH_CODE:" + email);
-
-        // 2. 검증 (포스트잇이 없거나, 번호가 다르면 에러!)
-        if (savedCode == null || !savedCode.equals(request.code())) {
-            throw new AuthException(AuthErrorCode.EMAIL_AUTH_CODE_MISMATCH);
-        }
-
-        // 3. 인증 성공 시: 기존 포스트잇 떼서 버리고, "인증 완료" 포스트잇을 30분짜리로 새로 붙임
-        redisTemplate.delete("AUTH_CODE:" + email);
-        redisTemplate.opsForValue().set("AUTH_SUCCESS:" + email, "true", 30, TimeUnit.MINUTES);
+        emailVerificationHelper.verifyCode(email, request.code(), RedisKeys.AUTH_CODE_PREFIX, RedisKeys.AUTH_SUCCESS_PREFIX);
 
         log.info("이메일 인증 성공 [이메일: {}]", email);
     }
@@ -109,6 +101,11 @@ public class AuthService implements SocialLoginProcessor {
             throw new AuthException(AuthErrorCode.DUPLICATE_EMAIL);
         }
 
+        // 탈퇴 후 30일 이내에 같은 이메일로 재가입 시도하는지 확인
+        if (redisTemplate.hasKey(RedisKeys.WITHDRAWN_EMAIL_PREFIX + email)) {
+            throw new AuthException(AuthErrorCode.RECENTLY_WITHDRAWN_EMAIL);
+        }
+
         // 아이디(username) 중복 검사
         if (userRepository.existsByUsername(request.username())) {
             throw new AuthException(AuthErrorCode.DUPLICATE_USERNAME);
@@ -116,11 +113,11 @@ public class AuthService implements SocialLoginProcessor {
 
         // 전화번호 중복 검사 추가
         if (userRepository.existsByPhone(request. phone())) {
-            throw new UserException(UserErrorCode.ALREADY_EXISTS_PHONE); // 해당 에러코드 정의 필요
+            throw new UserException(UserErrorCode.ALREADY_EXISTS_PHONE);
         }
 
         // 이메일 인증
-        String isVerified = redisTemplate.opsForValue().get("AUTH_SUCCESS:" + email);
+        String isVerified = redisTemplate.opsForValue().get(RedisKeys.AUTH_SUCCESS_PREFIX + email);
         if (isVerified == null || !isVerified.equals("true")) {
             throw new AuthException(AuthErrorCode.EMAIL_NOT_VERIFIED);
         }
@@ -157,7 +154,7 @@ public class AuthService implements SocialLoginProcessor {
         ));
 
         // 가입이 성공적으로 끝났으니, "인증 완료" 포스트잇도 떼서 버립니다! (청소)
-        redisTemplate.delete("AUTH_SUCCESS:" + email);
+        redisTemplate.delete(RedisKeys.AUTH_SUCCESS_PREFIX + email);
 
         log.info("신규 회원가입 완료 [아이디: {}, 이메일: {}]", user.getUsername(), user.getEmail());
     }
@@ -181,7 +178,7 @@ public class AuthService implements SocialLoginProcessor {
         }
 
         // 블랙리스트 여부 확인
-        String isBlacklisted = redisTemplate.opsForValue().get("BLACKLIST:" + user.getEmail());
+        String isBlacklisted = redisTemplate.opsForValue().get(RedisKeys.BLACKLIST_PREFIX + user.getEmail());
         if ("true".equals(isBlacklisted)) {
             log.warn("블랙리스트 유저의 로그인 시도 차단 [아이디: {}]", user.getUsername());
             throw new AuthException(AuthErrorCode.BLACKLISTED_USER);
@@ -211,15 +208,15 @@ public class AuthService implements SocialLoginProcessor {
 
         // Redis에 Refresh Token 저장
         redisTemplate.opsForValue().set(
-                "RT:" + user.getEmail(),
+                RedisKeys.REFRESH_TOKEN_PREFIX + user.getEmail(),
                 refreshToken,
-                604800000,
+                refreshTokenExpiration,
                 TimeUnit.MILLISECONDS
         );
 
         // 이중 로그인 방지: 이 로그인이 "현재 활성 세션"이 되도록 표시 (기존에 다른 기기에서 로그인해 있었다면 그 세션은 다음 요청부터 즉시 튕겨나감)
         redisTemplate.opsForValue().set(
-                "ACTIVE_AT:" + user.getEmail(),
+                RedisKeys.ACTIVE_AT_PREFIX + user.getEmail(),
                 accessToken,
                 accessTokenExpiration,
                 TimeUnit.MILLISECONDS
@@ -326,12 +323,12 @@ public class AuthService implements SocialLoginProcessor {
     // 8. 로그아웃
     public void logout(String email) {
         // Redis에서 해당 유저의 Refresh Token 삭제
-        redisTemplate.delete("RT:" + email);
+        redisTemplate.delete(RedisKeys.REFRESH_TOKEN_PREFIX + email);
 
         // 🌟 그냥 삭제하면 "한 번도 로그인 기록 없음"과 구분이 안 돼서 필터가 fail-open으로 통과시켜버림
         //    -> 절대 어떤 토큰 문자열과도 일치할 수 없는 값으로 덮어써서, 이 계정의 토큰은 로그아웃 즉시(만료 전이라도) 전부 무효화되도록 함
         redisTemplate.opsForValue().set(
-                "ACTIVE_AT:" + email,
+                RedisKeys.ACTIVE_AT_PREFIX + email,
                 "LOGGED_OUT",
                 accessTokenExpiration,
                 TimeUnit.MILLISECONDS
@@ -343,13 +340,13 @@ public class AuthService implements SocialLoginProcessor {
     // 토큰 재발급을 위한 검증 메서드
     public String refreshAccessToken(String email, String refreshToken) {
         // 블랙리스트 여부 확인하여 재발급 차단
-        String isBlacklisted = redisTemplate.opsForValue().get("BLACKLIST:" + email);
+        String isBlacklisted = redisTemplate.opsForValue().get(RedisKeys.BLACKLIST_PREFIX + email);
         if ("true".equals(isBlacklisted)) {
             log.warn("블랙리스트 유저의 토큰 재발급 시도 차단 [이메일: {}]", email);
             throw new AuthException(AuthErrorCode.BLACKLISTED_USER);
         }
 
-        String savedRefreshToken = redisTemplate.opsForValue().get("RT:" + email);
+        String savedRefreshToken = redisTemplate.opsForValue().get(RedisKeys.REFRESH_TOKEN_PREFIX + email);
 
         if (savedRefreshToken == null || !savedRefreshToken.equals(refreshToken)) {
             throw new AuthException(AuthErrorCode.REFRESH_TOKEN_NOT_FOUND);
@@ -357,9 +354,9 @@ public class AuthService implements SocialLoginProcessor {
 
         // 🌟 idle 타임아웃 체크: ACTIVE_AT은 요청이 있을 때마다 필터에서 TTL이 갱신되므로,
         //    이게 비어있다는 건 accessTokenExpiration(30분)보다 오래 아무 활동도 없었다는 뜻 -> 세션 강제 종료
-        String activeAccessToken = redisTemplate.opsForValue().get("ACTIVE_AT:" + email);
+        String activeAccessToken = redisTemplate.opsForValue().get(RedisKeys.ACTIVE_AT_PREFIX + email);
         if (activeAccessToken == null) {
-            redisTemplate.delete("RT:" + email);
+            redisTemplate.delete(RedisKeys.REFRESH_TOKEN_PREFIX + email);
             throw new AuthException(AuthErrorCode.SESSION_IDLE_TIMEOUT);
         }
 
@@ -367,7 +364,7 @@ public class AuthService implements SocialLoginProcessor {
 
         // 재발급도 "같은 세션의 연장"이므로 활성 세션 표시를 새 토큰으로 갱신 (여기서 안 갱신하면 재발급 직후 본인 요청이 바로 튕겨나감)
         redisTemplate.opsForValue().set(
-                "ACTIVE_AT:" + email,
+                RedisKeys.ACTIVE_AT_PREFIX + email,
                 newAccessToken,
                 accessTokenExpiration,
                 TimeUnit.MILLISECONDS
@@ -384,6 +381,11 @@ public class AuthService implements SocialLoginProcessor {
         // 1. 이메일 중복 검사
         if (userRepository.existsByEmail(email)) {
             throw new AuthException(AuthErrorCode.DUPLICATE_EMAIL);
+        }
+
+        // 1-0. 탈퇴 후 30일 이내에 같은 이메일로 재가입 시도하는지 확인
+        if (redisTemplate.hasKey(RedisKeys.WITHDRAWN_EMAIL_PREFIX + email)) {
+            throw new AuthException(AuthErrorCode.RECENTLY_WITHDRAWN_EMAIL);
         }
 
         // 1-1. 전화번호 중복 검사 (일반 회원가입/마이페이지 수정과 동일하게 체크)
@@ -443,7 +445,7 @@ public class AuthService implements SocialLoginProcessor {
 
         if (isExistingUser) {
             // 블랙리스트 여부 확인
-            String isBlacklisted = redisTemplate.opsForValue().get("BLACKLIST:" + email);
+            String isBlacklisted = redisTemplate.opsForValue().get(RedisKeys.BLACKLIST_PREFIX + email);
             if ("true".equals(isBlacklisted)) {
                 log.warn("블랙리스트 유저의 소셜 로그인 시도 차단 [이메일: {}]", email);
                 // 블랙리스트 차단 시 프론트엔드의 에러 페이지나 처리 화면으로 리다이렉트 (선택 사항)
@@ -454,9 +456,9 @@ public class AuthService implements SocialLoginProcessor {
             String refreshToken = globalJwtProvider.createUserRefreshToken(email);
 
             // 기존 일반 로그인과 똑같이 7일간 Redis에 저장
-            redisTemplate.opsForValue().set("RT:" + email, refreshToken, 604800000, TimeUnit.MILLISECONDS);
+            redisTemplate.opsForValue().set(RedisKeys.REFRESH_TOKEN_PREFIX + email, refreshToken, refreshTokenExpiration, TimeUnit.MILLISECONDS);
             // 이중 로그인 방지: 일반 로그인과 동일하게 활성 세션 표시 (기존에 다른 기기 세션이 있었다면 즉시 무효화됨)
-            redisTemplate.opsForValue().set("ACTIVE_AT:" + email, accessToken, accessTokenExpiration, TimeUnit.MILLISECONDS);
+            redisTemplate.opsForValue().set(RedisKeys.ACTIVE_AT_PREFIX + email, accessToken, accessTokenExpiration, TimeUnit.MILLISECONDS);
             log.info("소셜 로그인 성공 (기존 유저) [이메일: {}]", email);
 
             // URL 파라미터 전부 제거! (토큰은 쿠키로 구울 거니까)

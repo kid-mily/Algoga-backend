@@ -4,9 +4,9 @@ import com.kidmily.algoga_server.global.annotation.swagger.ApiErrorCodeExample;
 import com.kidmily.algoga_server.global.common.api.response.ApiResponse;
 import com.kidmily.algoga_server.course.application.command.CompleteCourseCommand;
 import com.kidmily.algoga_server.course.application.usecase.CourseUseCase;
-import com.kidmily.algoga_server.learning.exception.LearningErrorCode;
+import com.kidmily.algoga_server.course.exception.CourseErrorCode;
 import com.kidmily.algoga_server.completion.presentation.response.CourseCompletionResponse;
-import com.kidmily.algoga_server.learning.presentation.support.CurrentUserIdResolver;
+import com.kidmily.algoga_server.completion.presentation.support.CurrentUserIdResolver;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -31,7 +31,7 @@ public class CourseCompletionController {
                     이미 이수 완료한 강의는 중복 이수 처리할 수 없습니다.
                     """
     )
-    @ApiErrorCodeExample(domain = LearningErrorCode.class, value = {
+    @ApiErrorCodeExample(domain = CourseErrorCode.class, value = {
             "COURSE_NOT_FOUND",
             "QUIZ_LOCKED",
             "QUIZ_NOT_SUBMITTED",

@@ -4,8 +4,8 @@ import com.kidmily.algoga_server.course.application.result.CourseResult;
 import com.kidmily.algoga_server.course.application.result.PublishedCourseListCacheResult;
 import com.kidmily.algoga_server.course.domain.repository.CourseRepository;
 import com.kidmily.algoga_server.country.domain.repository.MapRepository;
-import com.kidmily.algoga_server.learning.exception.LearningErrorCode;
-import com.kidmily.algoga_server.learning.exception.LearningException;
+import com.kidmily.algoga_server.course.exception.CourseErrorCode;
+import com.kidmily.algoga_server.course.exception.CourseException;
 import com.kidmily.algoga_server.course.settings.cache.CourseCacheType;
 import lombok.RequiredArgsConstructor;
 import org.springframework.cache.annotation.Cacheable;
@@ -25,7 +25,7 @@ public class PublishedCourseListCacheService {
     @Cacheable(cacheNames = CourseCacheType.Const.PUBLIC_COURSE_LIST, key = "#countryId")
     public PublishedCourseListCacheResult getPublishedCoursesByCountry(Long countryId) {
         mapRepository.findActiveCountryById(countryId)
-                .orElseThrow(() -> new LearningException(LearningErrorCode.COUNTRY_NOT_FOUND));
+                .orElseThrow(() -> new CourseException(CourseErrorCode.COUNTRY_NOT_FOUND));
 
         var courses = courseRepository.findPublishedByCountryId(countryId).stream()
                 .map(CourseResult::from)

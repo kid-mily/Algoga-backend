@@ -168,4 +168,54 @@ class RefundStatsServiceTest {
         assertEquals(30.0, jpRow.refundRate());  // 30만 / 100만
         assertEquals("위험", jpRow.grade());
     }
+
+    private Booking bookingWithCheckIn(Long id, int daysFromNow) {
+        return Booking.reconstitute(id, 1L, 1L, BookingStatus.REFUNDED, 1_000_000, 300_000, 700_000,
+                "BK-" + id, "{}", null, null,
+                LocalDate.now().plusDays(daysFromNow), LocalDate.now().plusDays(daysFromNow + 3), 3, false,
+                LocalDateTime.now(), LocalDateTime.now());
+    }
+
+    private RefundRequest refundWithReason(Long bookingId, String reason, int amount) {
+        return RefundRequest.reconstitute(1L, bookingId, 1L, 1L, "홍길동", RefundStatus.COMPLETED,
+                reason, null, amount, LocalDateTime.now(), LocalDateTime.now());
+    }
+
+    @Test
+    @DisplayName("환불 타이밍 비율(%)은 소수점 2자리로 반올림해 내려준다")
+    void 환불_타이밍_비율_반올림() {
+        // 14일 이상 2건 + 7일 미만 1건 = 총 3건 → 2/3 = 66.666... → 66.67 로 내려가야 함
+        when(refundRepository.findAllByStatus(RefundStatus.COMPLETED)).thenReturn(List.of(
+                refundFor(1L, 1_000_000), refundFor(2L, 1_000_000), refundFor(3L, 0)));
+        when(bookingRepository.findById(1L)).thenReturn(Optional.of(bookingWithCheckIn(1L, 20)));
+        when(bookingRepository.findById(2L)).thenReturn(Optional.of(bookingWithCheckIn(2L, 20)));
+        when(bookingRepository.findById(3L)).thenReturn(Optional.of(bookingWithCheckIn(3L, 3)));
+
+        var res = refundStatsService.getTiming(LocalDate.now().minusDays(30), LocalDate.now());
+
+        assertEquals(2, res.get(0).count());
+        assertEquals(66.67, res.get(0).ratio());   // 14일 이상
+        assertEquals(0, res.get(1).count());
+        assertEquals(0.0, res.get(1).ratio());     // 7~14일 (건수 0)
+        assertEquals(1, res.get(2).count());
+        assertEquals(33.33, res.get(2).ratio());   // 7일 미만
+    }
+
+    @Test
+    @DisplayName("환불 사유 비율(%)도 소수점 2자리로 반올림해 내려준다")
+    void 환불_사유_비율_반올림() {
+        // 단순변심 2건 + 일정변경 1건 = 총 3건
+        when(refundRepository.findAllByStatus(RefundStatus.COMPLETED)).thenReturn(List.of(
+                refundWithReason(1L, "단순변심", 100_000),
+                refundWithReason(2L, "단순변심", 100_000),
+                refundWithReason(3L, "일정변경", 100_000)));
+
+        var res = refundStatsService.getReasons(LocalDate.now().minusDays(30), LocalDate.now());
+
+        assertEquals(2, res.size());
+        assertEquals("단순변심", res.get(0).reason());
+        assertEquals(66.67, res.get(0).ratio());
+        assertEquals("일정변경", res.get(1).reason());
+        assertEquals(33.33, res.get(1).ratio());
+    }
 }

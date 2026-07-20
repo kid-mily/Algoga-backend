@@ -12,4 +12,8 @@ public interface CourseQnaCommentRepository {
     Optional<CourseQnaComment> findByIdAndQnaId(Long commentId, Long qnaId);
 
     List<CourseQnaComment> findByQnaId(Long qnaId);
+
+    void deleteByQnaId(Long qnaId);
+
+    void deleteAllByUserId(Long userId);
 }

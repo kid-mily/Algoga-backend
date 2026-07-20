@@ -10,4 +10,6 @@ public interface SpringDataCourseRewardRepository extends JpaRepository<CourseRe
     Optional<CourseRewardJpaEntity> findByUserIdAndCourseId(Long userId, Long courseId);
 
     boolean existsByUserIdAndCourseId(Long userId, Long courseId);
+
+    void deleteByUserId(Long userId);
 }

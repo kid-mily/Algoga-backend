@@ -3,8 +3,8 @@ package com.kidmily.algoga_server.qna.application.service;
 import com.kidmily.algoga_server.course.application.port.UserProfilePort;
 import com.kidmily.algoga_server.course.domain.repository.CourseRepository;
 import com.kidmily.algoga_server.enrollment.domain.repository.EnrollmentRepository;
-import com.kidmily.algoga_server.learning.exception.LearningErrorCode;
-import com.kidmily.algoga_server.learning.exception.LearningException;
+import com.kidmily.algoga_server.qna.exception.QnaErrorCode;
+import com.kidmily.algoga_server.qna.exception.QnaException;
 import com.kidmily.algoga_server.qna.application.command.AnswerCourseQnaCommand;
 import com.kidmily.algoga_server.qna.application.command.CreateCourseQnaCommand;
 import com.kidmily.algoga_server.qna.application.command.CreateCourseQnaCommentCommand;
@@ -19,6 +19,8 @@ import com.kidmily.algoga_server.qna.domain.repository.CourseQnaRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import com.kidmily.algoga_server.notification.domain.event.QnaAnsweredEvent;
+import org.springframework.context.ApplicationEventPublisher;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -34,6 +36,7 @@ public class CourseQnaService implements CourseQnaUseCase {
     private final CourseRepository courseRepository;
     private final EnrollmentRepository enrollmentRepository;
     private final UserProfilePort userProfilePort;
+    private final ApplicationEventPublisher eventPublisher;
 
     @Override
     public CourseQnaResult createQna(CreateCourseQnaCommand command) {
@@ -96,12 +99,19 @@ public class CourseQnaService implements CourseQnaUseCase {
         CourseQna qna = findQna(command.courseId(), command.qnaId());
 
         if ("ANSWERED".equals(qna.getStatus())) {
-            throw new LearningException(LearningErrorCode.QNA_ALREADY_ANSWERED);
+            throw new QnaException(QnaErrorCode.QNA_ALREADY_ANSWERED);
         }
 
         CourseQna answeredQna = qna.answer(command.managerId(), command.answer());
+        CourseQnaResult result = toCourseQnaResult(courseQnaRepository.save(answeredQna));
 
-        return toCourseQnaResult(courseQnaRepository.save(answeredQna));
+        eventPublisher.publishEvent(new QnaAnsweredEvent(
+                answeredQna.getUserId(),
+                "관리자",
+                command.qnaId(),
+                command.answer()
+        ));
+        return result;
     }
 
     @Override
@@ -137,16 +147,16 @@ public class CourseQnaService implements CourseQnaUseCase {
         }
 
         CourseQnaComment parentComment = courseQnaCommentRepository.findByIdAndQnaId(parentCommentId, qnaId)
-                .orElseThrow(() -> new LearningException(LearningErrorCode.QNA_COMMENT_NOT_FOUND));
+                .orElseThrow(() -> new QnaException(QnaErrorCode.QNA_COMMENT_NOT_FOUND));
 
         if (parentComment.getParentCommentId() != null) {
-            throw new LearningException(LearningErrorCode.QNA_COMMENT_NOT_FOUND);
+            throw new QnaException(QnaErrorCode.QNA_COMMENT_NOT_FOUND);
         }
     }
 
     private CourseQna findQna(Long courseId, Long qnaId) {
         return courseQnaRepository.findByIdAndCourseId(qnaId, courseId)
-                .orElseThrow(() -> new LearningException(LearningErrorCode.QNA_NOT_FOUND));
+                .orElseThrow(() -> new QnaException(QnaErrorCode.QNA_NOT_FOUND));
     }
 
     private CourseQnaResult toCourseQnaResult(CourseQna qna) {
@@ -180,12 +190,12 @@ public class CourseQnaService implements CourseQnaUseCase {
                 .orElse(false);
 
         if (!accessible) {
-            throw new LearningException(LearningErrorCode.NOT_ENROLLED);
+            throw new QnaException(QnaErrorCode.NOT_ENROLLED);
         }
     }
 
     private void findCourseIncludingDeleted(Long courseId) {
         courseRepository.findById(courseId)
-                .orElseThrow(() -> new LearningException(LearningErrorCode.COURSE_NOT_FOUND));
+                .orElseThrow(() -> new QnaException(QnaErrorCode.COURSE_NOT_FOUND));
     }
 }

@@ -120,7 +120,10 @@ public class RefundController {
     }
 
     @PutMapping("/api/v1/admin/refund-requests/{refundId}/review")
-    @Operation(summary = "[어드민] 환불 검토 요청", description = "CS매니저가 정산매니저에게 환불 검토를 요청합니다. REQUESTED → UNDER_REVIEW")
+    @Operation(summary = "[어드민] 환불 검토 요청 (CS 1차 통과)",
+            description = "CS매니저가 1차 스크리닝을 통과시켜 정산매니저에게 검토를 넘깁니다. REQUESTED → UNDER_REVIEW\n\n"
+                    + "CS 화면의 '승인'(통과) 버튼이 이 API입니다. 최종 승인(환불 확정)은 정산매니저의 /approve 입니다.\n"
+                    + "부적합 건이면 대신 /reject 로 반려합니다.")
     @ApiErrorCodeExample(domain = RefundErrorCode.class, value = {"REFUND_NOT_FOUND", "INVALID_REFUND_STATUS"})
     @PreAuthorize("hasAnyAuthority('CS_MANAGER', 'ROLE_CS_MANAGER', 'SUPER_ADMIN', 'ROLE_SUPER_ADMIN')")
     public ResponseEntity<ApiResponse<Void>> markUnderReview(
@@ -144,9 +147,12 @@ public class RefundController {
     }
 
     @PutMapping("/api/v1/admin/refund-requests/{refundId}/reject")
-    @Operation(summary = "[어드민] 환불 반려", description = "환불 요청을 반려합니다. REQUESTED → REJECTED")
+    @Operation(summary = "[어드민] 환불 반려",
+            description = "환불 요청을 반려합니다. REQUESTED 또는 UNDER_REVIEW → REJECTED\n\n"
+                    + "- CS매니저: 접수된 환불(REQUESTED)을 1차 스크리닝해서 부적합 건을 반려\n"
+                    + "- 정산매니저: 검토 중(UNDER_REVIEW)인 건을 최종 반려")
     @ApiErrorCodeExample(domain = RefundErrorCode.class, value = {"REFUND_NOT_FOUND", "INVALID_REFUND_STATUS"})
-    @PreAuthorize("hasAnyAuthority('SETTLEMENT_MANAGER', 'ROLE_SETTLEMENT_MANAGER', 'SUPER_ADMIN', 'ROLE_SUPER_ADMIN')")
+    @PreAuthorize("hasAnyAuthority('CS_MANAGER', 'ROLE_CS_MANAGER', 'SETTLEMENT_MANAGER', 'ROLE_SETTLEMENT_MANAGER', 'SUPER_ADMIN', 'ROLE_SUPER_ADMIN')")
     public ResponseEntity<ApiResponse<Void>> reject(
             @Parameter(description = "환불 요청 ID", example = "1")
             @PathVariable Long refundId,

@@ -82,6 +82,65 @@ Do not record all existing endpoints just because they exist.
 
 - CSV download at `GET /api/v1/admin/stats/interest/lectures/csv` now includes the average progress rate column.
 
+#### 2026-07-16
+
+#### Endpoint
+
+`POST /api/v1/admin/courses/{courseId}/quizzes`
+
+#### What Changed
+
+- Added a server-side limit so each course can have at most 5 active quizzes.
+- Existing request fields and response fields remain unchanged.
+
+#### Request
+
+```json
+{
+  "question": "string",
+  "option1": "string",
+  "option2": "string",
+  "option3": "string",
+  "option4": "string",
+  "correctOption": 1,
+  "explanation": "string"
+}
+```
+
+#### Response
+
+```json
+{
+  "quizId": 1,
+  "courseId": 3,
+  "question": "string",
+  "option1": "string",
+  "option2": "string",
+  "option3": "string",
+  "option4": "string",
+  "correctOption": 1,
+  "explanation": "string"
+}
+```
+
+#### Error Codes
+
+- `QUIZ_LIMIT_EXCEEDED` / `LMS_043`: a course already has 5 active quizzes.
+
+#### Frontend Impact
+
+- API changed: yes
+- Endpoint: `POST /api/v1/admin/courses/{courseId}/quizzes`
+- Request change: no
+- Response change: no
+- ErrorCode change: yes, `QUIZ_LIMIT_EXCEEDED`
+- Breaking change: no
+- Frontend action needed: prevent adding more than 5 quizzes per course when possible, and show the backend error message if the limit is exceeded.
+
+#### Notes
+
+- Deleted quizzes are not counted because the backend counts only `deleted = false` quizzes.
+
 ### Template
 
 #### Date

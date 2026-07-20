@@ -8,6 +8,7 @@ import com.kidmily.algoga_server.friend.domain.repository.FriendRepository;
 import com.kidmily.algoga_server.friend.exception.FriendErrorCode;
 import com.kidmily.algoga_server.friend.exception.FriendException;
 // import com.kidmily.algoga_server.friend.settings.cache.FriendCacheType;
+import com.kidmily.algoga_server.global.event.FriendBlockedEvent;
 import com.kidmily.algoga_server.notification.domain.event.FriendAcceptedEvent;
 import com.kidmily.algoga_server.notification.domain.event.FriendRequestedEvent;
 import com.kidmily.algoga_server.user.domain.User;
@@ -145,6 +146,9 @@ public class FriendCommandService implements FriendCommandUseCase {
                 .status(RelationStatus.BLOCKED)
                 .build();
         friendRepository.save(blockRelation);
+
+        // 차단 시 1:1 채팅방은 삭제하고 그룹 채팅방은 유지해야 함 -> chat 도메인이 구독해서 처리
+        eventPublisher.publishEvent(new FriendBlockedEvent(myId, targetUser.getId()));
     }
 
     @Override
@@ -175,6 +179,9 @@ public class FriendCommandService implements FriendCommandUseCase {
         if (relation.getStatus() != RelationStatus.BLOCKED) {
             throw new FriendException(FriendErrorCode.INVALID_STATUS);
         }
-        friendRepository.deleteById(relation.getId());
+
+        // 차단 해제 시 다시 친구 요청 없이 바로 친구 관계로 복원
+        relation.accept();
+        friendRepository.save(relation);
     }
 }

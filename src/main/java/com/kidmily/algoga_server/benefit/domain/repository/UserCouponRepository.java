@@ -23,4 +23,6 @@ public interface UserCouponRepository {
     Optional<UserCoupon> findById(Long id);
 
     void markUsed(Long userCouponId, LocalDateTime usedAt);
+
+    void deleteAllByUserId(Long userId);
 }

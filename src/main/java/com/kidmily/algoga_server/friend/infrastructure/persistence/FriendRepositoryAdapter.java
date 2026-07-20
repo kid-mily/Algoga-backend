@@ -70,4 +70,9 @@ public class FriendRepositoryAdapter implements FriendRepository {
     public void delete(FriendRelation relation) {
         jpaRepository.delete(mapper.toEntity(relation));
     }
+
+    @Override
+    public void deleteAllByUserId(Long userId) {
+        jpaRepository.deleteAllByUserId(userId);
+    }
 }

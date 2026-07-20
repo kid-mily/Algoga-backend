@@ -9,7 +9,6 @@ import com.kidmily.algoga_server.user.exception.UserErrorCode;
 import com.kidmily.algoga_server.user.presentation.request.UpdatePasswordRequest;
 import com.kidmily.algoga_server.user.presentation.request.UpdateProfileRequest;
 import com.kidmily.algoga_server.user.presentation.request.VerifyEmailCodeRequest;
-import com.kidmily.algoga_server.user.presentation.request.VerifyPasswordRequest;
 import com.kidmily.algoga_server.user.presentation.response.AuthTokenResponse;
 import com.kidmily.algoga_server.user.presentation.response.UserProfileResponse;
 import com.kidmily.algoga_server.user.settings.CustomUserDetails;
@@ -91,7 +90,8 @@ public class UserController {
     }
 
     // 회원 탈퇴
-    @Operation(summary = "회원 탈퇴", description = "계정을 Soft Delete 처리합니다.")
+    @Operation(summary = "회원 탈퇴", description = "계정을 Soft Delete 처리합니다. 마이페이지 이메일 인증이 선행되어야 합니다.")
+    @ApiErrorCodeExample(domain = AuthErrorCode.class, value = {"EMAIL_NOT_VERIFIED"})
     @DeleteMapping("/me")
     public ApiResponse<Void> withdraw(
             @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails, HttpServletResponse response) {

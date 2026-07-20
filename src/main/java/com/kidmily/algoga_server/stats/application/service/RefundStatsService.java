@@ -158,10 +158,13 @@ public class RefundStatsService implements RefundStatsUseCase {
             amount[idx] += r.getAmount();
         }
 
+        // 비율(%)은 백엔드에서 소수점 2자리로 반올림해 내려준다(FE가 나눗셈 원시값을 그대로 찍지 않도록).
+        // 분모는 체크인일을 알 수 있어 실제로 구간에 분류된 건수의 합.
+        long total = count[0] + count[1] + count[2];
         return List.of(
-                new RefundTimingResponse("14일 이상", 100, count[0], amount[0]),
-                new RefundTimingResponse("7~14일", 50, count[1], amount[1]),
-                new RefundTimingResponse("7일 미만", 0, count[2], amount[2]));
+                RefundTimingResponse.of("14일 이상", 100, count[0], amount[0], total),
+                RefundTimingResponse.of("7~14일", 50, count[1], amount[1], total),
+                RefundTimingResponse.of("7일 미만", 0, count[2], amount[2], total));
     }
 
     @Override
@@ -239,14 +242,18 @@ public class RefundStatsService implements RefundStatsUseCase {
     @Transactional(readOnly = true)
     public List<RefundReasonResponse> getReasons(LocalDate from, LocalDate to) {
         Map<String, long[]> byReason = new HashMap<>(); // reason → [count, amount]
+        long total = 0;
         for (RefundRequest r : completedRefunds(from, to)) {
             String reason = (r.getReason() == null || r.getReason().isBlank()) ? "미기재" : r.getReason();
             long[] agg = byReason.computeIfAbsent(reason, k -> new long[2]);
             agg[0]++;
             agg[1] += r.getAmount();
+            total++;
         }
+        // 비율(%)은 백엔드에서 소수점 2자리로 반올림해 내려준다.
+        final long denominator = total;
         return byReason.entrySet().stream()
-                .map(e -> new RefundReasonResponse(e.getKey(), e.getValue()[0], e.getValue()[1]))
+                .map(e -> RefundReasonResponse.of(e.getKey(), e.getValue()[0], e.getValue()[1], denominator))
                 .sorted(Comparator.comparingLong(RefundReasonResponse::count).reversed())
                 .toList();
     }

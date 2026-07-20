@@ -13,6 +13,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -30,10 +31,16 @@ class CouponConversionStatsServiceTest {
     @InjectMocks
     private CouponConversionStatsService service;
 
+    /** 기간(2026-01-01~12-31) 안에서 사용된 쿠폰 */
     private UserCoupon coupon(Long userId, String status) {
+        return coupon(userId, status, LocalDateTime.of(2026, 6, 1, 10, 0));
+    }
+
+    private UserCoupon coupon(Long userId, String status, LocalDateTime usedAt) {
         UserCoupon c = mock(UserCoupon.class);
         when(c.getStatus()).thenReturn(status);
-        lenient().when(c.getUserId()).thenReturn(userId); // ISSUED는 userId 조회 전에 걸러짐
+        lenient().when(c.getUsedAt()).thenReturn(usedAt);  // ISSUED는 usedAt 조회 전에 걸러짐
+        lenient().when(c.getUserId()).thenReturn(userId);  // ISSUED는 userId 조회 전에 걸러짐
         return c;
     }
 
@@ -62,5 +69,36 @@ class CouponConversionStatsServiceTest {
         assertEquals(3, res.couponUsedUsers());   // USED 3명
         assertEquals(2, res.convertedUsers());     // 예약한 1,2
         assertEquals(66.67, res.conversionRate()); // 2/3
+    }
+
+    @Test
+    @DisplayName("조회 기간 밖에서 사용된 쿠폰은 분모에서 제외한다")
+    void 기간밖_사용쿠폰_제외() {
+        UserCoupon inPeriod = coupon(1L, "USED", LocalDateTime.of(2026, 6, 1, 10, 0));
+        UserCoupon outOfPeriod = coupon(2L, "USED", LocalDateTime.of(2025, 12, 31, 10, 0)); // 작년 사용
+        Booking b1 = booking(1L); // mock 은 when() 밖에서 먼저 생성 (중첩 스터빙 방지)
+        when(userCouponRepository.findAll()).thenReturn(List.of(inPeriod, outOfPeriod));
+        when(bookingRepository.findByCreatedAtBetween(any(), any())).thenReturn(List.of(b1));
+
+        CouponConversionResponse res = service.getConversion(LocalDate.of(2026, 1, 1), LocalDate.of(2026, 12, 31));
+
+        assertEquals(1, res.couponUsedUsers());     // 기간 내 사용자만
+        assertEquals(1, res.convertedUsers());
+        assertEquals(100.0, res.conversionRate());
+    }
+
+    @Test
+    @DisplayName("사용 시각(usedAt)이 없는 USED 쿠폰은 기간 판정이 불가하므로 제외한다")
+    void usedAt_없으면_제외() {
+        UserCoupon noUsedAt = coupon(1L, "USED", null);
+        Booking b1 = booking(1L); // mock 은 when() 밖에서 먼저 생성 (중첩 스터빙 방지)
+        when(userCouponRepository.findAll()).thenReturn(List.of(noUsedAt));
+        when(bookingRepository.findByCreatedAtBetween(any(), any())).thenReturn(List.of(b1));
+
+        CouponConversionResponse res = service.getConversion(LocalDate.of(2026, 1, 1), LocalDate.of(2026, 12, 31));
+
+        assertEquals(0, res.couponUsedUsers());
+        assertEquals(0, res.convertedUsers());
+        assertEquals(0.0, res.conversionRate());
     }
 }

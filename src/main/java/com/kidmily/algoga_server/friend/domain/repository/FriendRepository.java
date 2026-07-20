@@ -23,4 +23,7 @@ public interface FriendRepository {
     // 삭제 시 필요 (이미 save/findById가 있다면 추가)
     void delete(FriendRelation relation);
 
+    // 유저 탈퇴 시 필요 (요청자/수신자 어느 쪽이든 전부 삭제)
+    void deleteAllByUserId(Long userId);
+
 }

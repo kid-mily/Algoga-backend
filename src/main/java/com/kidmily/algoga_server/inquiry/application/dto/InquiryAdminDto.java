@@ -6,6 +6,7 @@ import java.time.Instant;
 
 // 애플리케이션 계층 DTO
 public record InquiryAdminDto(
-        Long inquiryId, Long userId, InquiryCategory category, String title, String content, 
+        Long inquiryId, Long userId, String userName, String userNickname,
+        InquiryCategory category, String title, String content,
         String answer, InquiryStatus status, Instant createdAt, Instant answeredAt
 ) {}

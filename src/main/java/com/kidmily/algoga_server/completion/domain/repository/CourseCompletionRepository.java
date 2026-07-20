@@ -17,4 +17,6 @@ public interface CourseCompletionRepository {
     boolean existsByUserIdAndCourseId(Long userId, Long courseId);
 
     Map<Long, Long> countByCourseIds(List<Long> courseIds);
+
+    void deleteAllByUserId(Long userId);
 }

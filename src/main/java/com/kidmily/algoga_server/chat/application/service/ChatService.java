@@ -390,5 +390,18 @@ public class ChatService implements ChatUseCase {
         }
     }
 
+    @Override
+    @Transactional
+    public void softDeleteDirectRoom(Long userIdA, Long userIdB) {
+        // 두 사람의 1:1(DIRECT) 방 찾기 — 이미 type=DIRECT만 찾는 쿼리라 그룹방은 안 걸림
+        chatRoomMemberRepository.findDirectRoomIdByUserIds(userIdA, userIdB)
+                .ifPresent(roomId -> {
+                    chatRoomRepository.softDelete(roomId);      // 소프트 딜리트
+                    evictChatRoomsCache(userIdA);               // 양쪽 캐시 무효화
+                    evictChatRoomsCache(userIdB);
+                    log.info("[ChatService] 차단으로 1:1 채팅방 소프트 딜리트 - roomId: {}", roomId);
+                });
+    }
+
 
 }

@@ -5,15 +5,18 @@ import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
 
 @Schema(description = "어드민 챕터 수정 요청")
 public record UpdateChapterRequest(
 
         @Schema(description = "수정할 챕터 제목", example = "오사카 입국 준비 개정판")
         @NotBlank(message = "챕터 제목은 필수입니다.")
+        @Size(max = 100, message = "챕터 제목은 100자 이하로 입력해주세요.")
         String title,
 
         @Schema(description = "수정할 챕터 설명", example = "수정된 챕터 설명입니다.")
+        @Size(max = 1000, message = "챕터 설명은 1000자 이하로 입력해주세요.")
         String description,
 
         @Schema(description = "수정할 영상 재생 시간. 초 단위", example = "720")

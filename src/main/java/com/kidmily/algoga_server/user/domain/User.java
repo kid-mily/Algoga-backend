@@ -134,6 +134,13 @@ public class User {
 
     // 실패 횟수 증가 및 잠금 처리
     public void increaseLoginFailure() {
+        // 이전 잠금이 시간 지나서 이미 풀린 상태라면, 실패 횟수도 새로 센다.
+        // (안 그러면 잠금 해제 직후 첫 실패에서 loginFailCount가 그대로 남아있어 바로 재잠금됨)
+        if (this.lockedUntil != null && this.lockedUntil.isBefore(LocalDateTime.now())) {
+            this.loginFailCount = 0;
+            this.lockedUntil = null;
+        }
+
         this.loginFailCount++;
         if (this.loginFailCount >= MAX_LOGIN_FAIL_COUNT) {
             this.lockedUntil = LocalDateTime.now().plusMinutes(5); // 5분 잠금

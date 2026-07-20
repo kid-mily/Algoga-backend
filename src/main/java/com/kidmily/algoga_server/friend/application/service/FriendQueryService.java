@@ -18,6 +18,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -96,7 +97,9 @@ FriendQueryService implements FriendQueryUseCase {
                             friend.getPersonalCode(),
                             friend.getProfileImageUrl(),
                             relation.isFavorite(),
-                            onlineUserIds.contains(friend.getId())
+                            onlineUserIds.contains(friend.getId()),
+                            true, // 검색 결과 전용 필드라 이 컨텍스트에선 해당 없음
+                            null
                     );
                 })
                 .sorted((a, b) -> a.nickname().compareToIgnoreCase(b.nickname()))
@@ -134,7 +137,9 @@ FriendQueryService implements FriendQueryUseCase {
                             requester.getPersonalCode(),
                             requester.getProfileImageUrl(),
                             false, // 친구 요청 단계라 즐겨찾기 개념 없음
-                            onlineUserIds.contains(requester.getId())
+                            onlineUserIds.contains(requester.getId()),
+                            true, // 검색 결과 전용 필드라 이 컨텍스트에선 해당 없음
+                            null
                     );
                 }).collect(Collectors.toList());
     }
@@ -171,17 +176,32 @@ FriendQueryService implements FriendQueryUseCase {
                             blockedUser.getPersonalCode(),
                             blockedUser.getProfileImageUrl(),
                             false, // 차단 목록이라 즐겨찾기 개념 없음
-                            onlineUserIds.contains(blockedUser.getId())
+                            onlineUserIds.contains(blockedUser.getId()),
+                            true, // 검색 결과 전용 필드라 이 컨텍스트에선 해당 없음
+                            null
                     );
                 }).collect(Collectors.toList());
     }
 
     @Override
-    public FriendView searchUserByCode(String code) {
+    public FriendView searchUserByCode(Long myId, String code) {
         User user = userRepository.findByPersonalCode(code)
                 .orElseThrow(() -> new FriendException(FriendErrorCode.USER_NOT_FOUND));
 
+        Optional<FriendRelation> relation = friendRepository.findRelationBetween(myId, user.getId());
+
+        if (relation.isPresent() && relation.get().getStatus() == RelationStatus.BLOCKED) {
+            boolean blockedByMe = relation.get().getRequesterId().equals(myId);
+            if (blockedByMe) {
+                // 내가 차단한 상대: 검색 결과는 숨기되, 차단 사실을 잊었을 수 있으니 사유는 에러로 안내
+                throw new FriendException(FriendErrorCode.ALREADY_BLOCKED);
+            }
+            // 상대가 나를 차단: 차단당한 사실 자체를 알려주지 않기 위해 "존재하지 않는 유저"와 동일하게 처리
+            throw new FriendException(FriendErrorCode.USER_NOT_FOUND);
+        }
+
         boolean isOnline = Boolean.TRUE.equals(redisTemplate.hasKey(ONLINE_KEY_PREFIX + user.getId()));
+        String unavailableMessage = resolveUnavailableMessage(myId, user.getId(), relation);
 
         return new FriendView(
                 null,
@@ -190,8 +210,27 @@ FriendQueryService implements FriendQueryUseCase {
                 user.getPersonalCode(),
                 user.getProfileImageUrl(),
                 false, // 검색 결과라 즐겨찾기 개념 없음
-                isOnline
+                isOnline,
+                unavailableMessage == null,
+                unavailableMessage
         );
+    }
+
+    // 친구 요청 전 미리보기용 판별 로직. sendFriendRequest()의 검증 순서/메시지를 그대로 재사용해서
+    // 검색 화면에 뜨는 안내 문구가 실제 요청 시 나오는 에러 메시지와 항상 일치하도록 한다.
+    // 차단(BLOCKED) 관계는 searchUserByCode()에서 이미 예외로 걸러지고 이 메서드까지 오지 않는다.
+    private String resolveUnavailableMessage(Long myId, Long targetUserId, Optional<FriendRelation> relation) {
+        if (targetUserId.equals(myId)) {
+            return FriendErrorCode.CANNOT_ADD_SELF.getMessage();
+        }
+
+        return relation.map(r -> switch (r.getStatus()) {
+                    case ACCEPTED -> FriendErrorCode.ALREADY_FRIEND.getMessage();
+                    case REQUESTED -> FriendErrorCode.ALREADY_REQUESTED.getMessage();
+                    case BLOCKED -> null; // 방어적 처리: 이 시점엔 이미 위에서 걸러졌어야 함
+                    case REJECTED -> null;
+                })
+                .orElse(null);
     }
 
     @Override
@@ -210,6 +249,7 @@ FriendQueryService implements FriendQueryUseCase {
         List<Long> friendIds = relations.stream()
                 .map(rel -> rel.getRequesterId().equals(userId) ? rel.getReceiverId() : rel.getRequesterId())
                 .toList();
+
 
         // 3.최적화를 위해 UserRepository에서 닉네임만 맵으로 가져오는 로직
         java.util.Map<Long, String> friendNicknameMap = userRepository.findAllById(friendIds).stream()

@@ -53,10 +53,24 @@ public class CountryProfitStatsService implements CountryProfitStatsUseCase {
     private final AccommodationRepository accommodationRepository;
     private final CountryRepository countryRepository;
 
+    /**
+     * 국가명 검색 필터. 점유율(share)은 <b>필터 전 전체 순매출</b> 기준으로 이미 계산돼 있으므로,
+     * 검색해도 해당 국가의 실제 점유율이 유지된다(검색 결과 안에서 재계산하지 않음).
+     */
+    private List<CountryProfitResponse> filterByName(List<CountryProfitResponse> profiles, String search) {
+        if (search == null || search.isBlank()) {
+            return profiles;
+        }
+        String keyword = search.strip().toLowerCase();
+        return profiles.stream()
+                .filter(p -> p.countryName() != null && p.countryName().toLowerCase().contains(keyword))
+                .toList();
+    }
+
     @Override
     @Transactional(readOnly = true)
-    public List<CountryProfitResponse> getList(LocalDate from, LocalDate to) {
-        return buildProfiles(from, to);
+    public List<CountryProfitResponse> getList(LocalDate from, LocalDate to, String search) {
+        return filterByName(buildProfiles(from, to), search);
     }
 
     @Override
@@ -79,8 +93,8 @@ public class CountryProfitStatsService implements CountryProfitStatsUseCase {
 
     @Override
     @Transactional(readOnly = true)
-    public byte[] getCsv(LocalDate from, LocalDate to) {
-        List<CountryProfitResponse> profiles = buildProfiles(from, to);
+    public byte[] getCsv(LocalDate from, LocalDate to, String search) {
+        List<CountryProfitResponse> profiles = filterByName(buildProfiles(from, to), search);
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         baos.write(new byte[]{(byte) 0xEF, (byte) 0xBB, (byte) 0xBF}, 0, 3);
         try (PrintWriter writer = new PrintWriter(new OutputStreamWriter(baos, StandardCharsets.UTF_8))) {

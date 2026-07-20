@@ -11,4 +11,6 @@ public interface MileageHistoryRepository {
     List<MileageHistory> findAll();
 
     List<MileageHistory> findByUserId(Long userId);
+
+    void deleteAllByUserId(Long userId);
 }

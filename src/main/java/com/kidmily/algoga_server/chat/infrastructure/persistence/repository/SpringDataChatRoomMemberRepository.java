@@ -21,17 +21,21 @@ public interface SpringDataChatRoomMemberRepository extends JpaRepository<ChatRo
     long countByRoomId(Long roomId);
 
     @Query("""
-        SELECT m.roomId FROM ChatRoomMemberJpaEntity m
-        WHERE m.userId = :userIdA
-        AND m.roomId IN (
-            SELECT m2.roomId FROM ChatRoomMemberJpaEntity m2
-            WHERE m2.userId = :userIdB
-        )
-        AND m.roomId IN (
-            SELECT m3.roomId FROM ChatRoomMemberJpaEntity m3
-            GROUP BY m3.roomId HAVING COUNT(m3.roomId) = 2
-        )
-    """)
+    SELECT m.roomId FROM ChatRoomMemberJpaEntity m
+    WHERE m.userId = :userIdA
+    AND m.roomId IN (
+        SELECT m2.roomId FROM ChatRoomMemberJpaEntity m2
+        WHERE m2.userId = :userIdB
+    )
+    AND m.roomId IN (
+        SELECT m3.roomId FROM ChatRoomMemberJpaEntity m3
+        GROUP BY m3.roomId HAVING COUNT(m3.roomId) = 2
+    )
+    AND m.roomId IN (
+        SELECT r.id FROM ChatRoomJpaEntity r
+        WHERE r.type = com.kidmily.algoga_server.chat.domain.model.ChatRoomType.DIRECT
+    )
+""")
     Optional<Long> findDirectRoomIdByUserIds(@Param("userIdA") Long userIdA,
                                              @Param("userIdB") Long userIdB);
 }

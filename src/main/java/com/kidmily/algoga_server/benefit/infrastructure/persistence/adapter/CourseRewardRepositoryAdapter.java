@@ -47,6 +47,11 @@ public class CourseRewardRepositoryAdapter implements CourseRewardRepository {
         return springDataCourseRewardRepository.existsByUserIdAndCourseId(userId, courseId);
     }
 
+    @Override
+    public void deleteAllByUserId(Long userId) {
+        springDataCourseRewardRepository.deleteByUserId(userId);
+    }
+
     private CourseReward toDomain(CourseRewardJpaEntity entity) {
         return CourseReward.withId(
                 entity.getId(),

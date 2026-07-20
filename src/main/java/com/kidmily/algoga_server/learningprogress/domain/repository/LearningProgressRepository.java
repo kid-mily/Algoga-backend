@@ -23,5 +23,7 @@ public interface LearningProgressRepository {
     Map<Long, Integer> averageProgressRateByCourseIds(List<Long> courseIds);
 
     boolean existsCompletedByUserIdAndChapterId(Long userId, Long chapterId);
+
+    void deleteAllByUserId(Long userId);
 }
 

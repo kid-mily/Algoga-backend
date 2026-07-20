@@ -118,4 +118,34 @@ class InflowStatsServiceTest {
         assertEquals(1_300_000, summary.totalNetRevenue());
         assertEquals("광고", summary.topChannel());   // ARPU 최고
     }
+
+    @Test
+    @DisplayName("코드(friend)와 한글(지인 추천)이 섞여 저장돼도 한 채널로 합쳐 내려준다")
+    void 유입경로_코드_한글_정규화() {
+        // signup_path 에 코드/한글/공백표기가 뒤섞인 상황
+        when(userRepository.countUsersBySignupPath(any(LocalDateTime.class), any(LocalDateTime.class)))
+                .thenReturn(List.of(
+                        stat("friend", 10),      // 코드
+                        stat("지인 추천", 20),    // 한글
+                        stat("지인추천", 5),      // 한글(공백 없음)
+                        stat("SEARCH", 30)));    // 대문자 코드
+        when(userRepository.findActiveSignupPathInfos()).thenReturn(List.of(
+                info(1L, "friend"), info(2L, "지인 추천")));
+        when(paymentRepository.findByCreatedAtBetween(any(LocalDateTime.class), any(LocalDateTime.class)))
+                .thenReturn(List.of());
+        when(refundRepository.findAllByStatus(RefundStatus.COMPLETED)).thenReturn(List.of());
+        when(bookingRepository.findByCreatedAtBetween(any(LocalDateTime.class), any(LocalDateTime.class)))
+                .thenReturn(List.of());
+
+        List<InflowChannelResponse> channels = service.getChannels(
+                LocalDate.of(2026, 1, 1), LocalDate.of(2026, 12, 31));
+
+        // friend + 지인 추천 + 지인추천 → "지인 추천" 한 행(35명), SEARCH → "검색 엔진" 한 행(30명)
+        assertEquals(2, channels.size());
+        assertEquals(1, channels.stream().filter(c -> c.channel().equals("지인 추천")).count());
+        assertEquals(35, channels.stream()
+                .filter(c -> c.channel().equals("지인 추천")).findFirst().orElseThrow().signupCount());
+        assertEquals(30, channels.stream()
+                .filter(c -> c.channel().equals("검색 엔진")).findFirst().orElseThrow().signupCount());
+    }
 }

@@ -12,4 +12,8 @@ public interface DiagnosisResultRepository {
 
 
     List<DiagnosisResult> findForAdmin(Long userId, Long countryId);
+
+    List<Long> findIdsByUserId(Long userId);
+
+    void deleteAllByUserId(Long userId);
 }

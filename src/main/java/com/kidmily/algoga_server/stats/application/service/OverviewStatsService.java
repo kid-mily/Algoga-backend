@@ -14,6 +14,10 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.io.ByteArrayOutputStream;
+import java.io.OutputStreamWriter;
+import java.io.PrintWriter;
+import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
@@ -61,5 +65,24 @@ public class OverviewStatsService implements OverviewStatsUseCase {
     @Transactional(readOnly = true)
     public List<OverviewTrendPointResponse> getTrend(LocalDate from, LocalDate to, TrendUnit unit) {
         return refundStatsUseCase.getTrend(from, to, unit);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public byte[] getMonthlyCsv(LocalDate from, LocalDate to) {
+        List<OverviewMonthlyResponse> rows = getOverview(from, to).monthly();
+
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        baos.write(new byte[]{(byte) 0xEF, (byte) 0xBB, (byte) 0xBF}, 0, 3); // Excel UTF-8 BOM
+
+        try (PrintWriter writer = new PrintWriter(new OutputStreamWriter(baos, StandardCharsets.UTF_8))) {
+            writer.println("월,총매출,환불액,순매출,환불율(%),전월대비(%)");
+            for (OverviewMonthlyResponse r : rows) {
+                writer.printf("%s,%d,%d,%d,%.2f,%s%n",
+                        r.month(), r.revenue(), r.refund(), r.net(), r.refundRate(),
+                        r.growthRate() == null ? "-" : String.format("%.2f", r.growthRate()));
+            }
+        }
+        return baos.toByteArray();
     }
 }

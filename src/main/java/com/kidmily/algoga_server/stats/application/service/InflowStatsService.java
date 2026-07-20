@@ -124,7 +124,37 @@ public class InflowStatsService {
         return rows;
     }
 
+    /**
+     * 유입경로 표기를 <b>한글 라벨 하나</b>로 통일한다.
+     * <p>
+     * users.signup_path 에 코드("friend")와 한글("지인 추천")이 섞여 저장돼 있어,
+     * 정규화 없이 그룹핑하면 같은 경로가 두 행으로 쪼개져 내려간다(FE 라벨 중복·key 중복 원인).
+     * 대소문자/공백을 무시하고 별칭을 대표 라벨로 접는다.
+     * 매핑에 없는 값은 (새로 생긴 경로일 수 있으므로) 버리지 않고 공백만 정리해 그대로 노출한다.
+     */
+    private static final Map<String, String> CHANNEL_ALIASES = Map.ofEntries(
+            Map.entry("friend", "지인 추천"),
+            Map.entry("지인추천", "지인 추천"),
+            Map.entry("referral", "지인 추천"),
+            Map.entry("search", "검색 엔진"),
+            Map.entry("검색엔진", "검색 엔진"),
+            Map.entry("searchengine", "검색 엔진"),
+            Map.entry("social", "소셜 미디어"),
+            Map.entry("소셜미디어", "소셜 미디어"),
+            Map.entry("socialmedia", "소셜 미디어"),
+            Map.entry("ad", "광고"),
+            Map.entry("ads", "광고"),
+            Map.entry("광고", "광고"),
+            Map.entry("etc", ETC),
+            Map.entry("other", ETC),
+            Map.entry("기타", ETC)
+    );
+
     private String normalize(String path) {
-        return (path == null || path.isBlank()) ? ETC : path;
+        if (path == null || path.isBlank()) {
+            return ETC;
+        }
+        String key = path.strip().toLowerCase().replace(" ", "");
+        return CHANNEL_ALIASES.getOrDefault(key, path.strip());
     }
 }

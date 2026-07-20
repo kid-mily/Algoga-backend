@@ -4,8 +4,8 @@ import com.kidmily.algoga_server.course.domain.model.Chapter;
 import com.kidmily.algoga_server.course.domain.repository.ChapterRepository;
 import com.kidmily.algoga_server.course.domain.repository.CourseRepository;
 import com.kidmily.algoga_server.enrollment.domain.repository.EnrollmentRepository;
-import com.kidmily.algoga_server.learning.exception.LearningErrorCode;
-import com.kidmily.algoga_server.learning.exception.LearningException;
+import com.kidmily.algoga_server.quiz.exception.QuizErrorCode;
+import com.kidmily.algoga_server.quiz.exception.QuizException;
 import com.kidmily.algoga_server.learningprogress.application.port.LearningProgressCachePort;
 import com.kidmily.algoga_server.learningprogress.domain.model.LearningProgress;
 import com.kidmily.algoga_server.learningprogress.domain.repository.LearningProgressRepository;
@@ -28,13 +28,13 @@ public class QuizAccessPolicy {
 
     public void validateActiveCourse(Long courseId) {
         if (courseRepository.findByIdAndDeletedFalse(courseId).isEmpty()) {
-            throw new LearningException(LearningErrorCode.COURSE_NOT_FOUND);
+            throw new QuizException(QuizErrorCode.COURSE_NOT_FOUND);
         }
     }
 
     public void validateCourseExists(Long courseId) {
         if (courseRepository.findById(courseId).isEmpty()) {
-            throw new LearningException(LearningErrorCode.COURSE_NOT_FOUND);
+            throw new QuizException(QuizErrorCode.COURSE_NOT_FOUND);
         }
     }
 
@@ -44,7 +44,7 @@ public class QuizAccessPolicy {
                 .orElse(false);
 
         if (!accessible) {
-            throw new LearningException(LearningErrorCode.NOT_ENROLLED);
+            throw new QuizException(QuizErrorCode.NOT_ENROLLED);
         }
     }
 
@@ -52,7 +52,7 @@ public class QuizAccessPolicy {
         List<Chapter> chapters = chapterRepository.findByCourseId(courseId);
 
         if (chapters.isEmpty()) {
-            throw new LearningException(LearningErrorCode.QUIZ_LOCKED);
+            throw new QuizException(QuizErrorCode.QUIZ_LOCKED);
         }
 
         List<Long> incompleteChapterIds = chapters.stream()
@@ -65,7 +65,7 @@ public class QuizAccessPolicy {
                 .toList();
 
         if (!incompleteChapterIds.isEmpty()) {
-            throw new LearningException(LearningErrorCode.QUIZ_LOCKED);
+            throw new QuizException(QuizErrorCode.QUIZ_LOCKED);
         }
     }
 

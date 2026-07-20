@@ -15,4 +15,6 @@ public interface CourseRewardFailureRepository {
     List<CourseRewardFailure> findAllByStatus(CourseRewardFailureStatus status);
 
     List<CourseRewardFailure> findRetryableFailures(int maxRetryCount);
+
+    void deleteAllByUserId(Long userId);
 }

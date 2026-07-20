@@ -12,6 +12,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import com.kidmily.algoga_server.global.util.RedisKeys;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -22,6 +23,7 @@ import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.JwtException;
 
 import java.io.IOException;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 @Slf4j
@@ -35,6 +37,28 @@ public class GlobalJwtAuthenticationFilter extends OncePerRequestFilter {
 
     @Value("${jwt.access-token-expiration}")
     private long accessTokenExpiration;
+
+    // 로그인/가입/토큰재발급처럼 "기존 세션 상태와 무관하게 항상 동작해야 하는" 엔드포인트 목록.
+    // 브라우저에 예전 세션의 낡은(만료됐거나 다른 기기 로그인으로 무효화된) accessToken 쿠키가 남아있으면
+    // 이 필터가 실제 로직 실행 전에 그 쿠키부터 검증하다가 401로 막아버리는 문제가 있었다.
+    // (신규 로그인 시도 자체가 예전 쿠키 때문에 "다른 기기에서 로그인됨"으로 거부되는 버그의 원인)
+    private static final Set<String> PUBLIC_AUTH_PATHS = Set.of(
+            "/api/v1/auth/login",
+            "/api/v1/auth/signup",
+            "/api/v1/auth/social/signup",
+            "/api/v1/auth/refresh",
+            "/api/v1/auth/logout",
+            "/api/v1/auth/find-id",
+            "/api/v1/auth/find-password",
+            "/api/v1/auth/username/check",
+            "/api/v1/auth/email/send-code",
+            "/api/v1/auth/email/verify-code"
+    );
+
+    @Override
+    protected boolean shouldNotFilter(HttpServletRequest request) {
+        return PUBLIC_AUTH_PATHS.contains(request.getRequestURI());
+    }
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
@@ -62,7 +86,7 @@ public class GlobalJwtAuthenticationFilter extends OncePerRequestFilter {
                     String email = globalJwtProvider.getSubject(token);
 
                     // 블랙리스트 검증 로직
-                    String isBlacklisted = redisTemplate.opsForValue().get("BLACKLIST:" + email);
+                    String isBlacklisted = redisTemplate.opsForValue().get(RedisKeys.BLACKLIST_PREFIX + email);
                     if ("true".equals(isBlacklisted)) {
                         log.warn("블랙리스트 유저의 비정상적 API 접근 시도 차단: {}", email);
                         response.setStatus(HttpServletResponse.SC_FORBIDDEN); // 403
@@ -72,7 +96,7 @@ public class GlobalJwtAuthenticationFilter extends OncePerRequestFilter {
                     }
 
                     // 이중 로그인(중복 로그인) 검증: 다른 기기에서 새로 로그인해서 활성 세션이 바뀌었으면 이 토큰은 더 이상 유효한 세션이 아님
-                    String activeAccessToken = redisTemplate.opsForValue().get("ACTIVE_AT:" + email);
+                    String activeAccessToken = redisTemplate.opsForValue().get(RedisKeys.ACTIVE_AT_PREFIX + email);
                     if (activeAccessToken != null && !activeAccessToken.equals(token)) {
                         log.warn("다른 기기에서 로그인되어 종료된 세션의 접근 차단: {}", email);
                         response.setStatus(HttpServletResponse.SC_UNAUTHORIZED); // 401
@@ -83,7 +107,7 @@ public class GlobalJwtAuthenticationFilter extends OncePerRequestFilter {
 
                     // 🌟 요청이 들어왔다 = 활동 중이다 -> idle 타임아웃(30분) 타이머를 다시 밀어줌 (sliding expiration)
                     if (activeAccessToken != null) {
-                        redisTemplate.expire("ACTIVE_AT:" + email, accessTokenExpiration, TimeUnit.MILLISECONDS);
+                        redisTemplate.expire(RedisKeys.ACTIVE_AT_PREFIX + email, accessTokenExpiration, TimeUnit.MILLISECONDS);
                     }
 
                     CustomUserDetails userDetails = (CustomUserDetails) customUserDetailsService.loadUserByUsername(email);

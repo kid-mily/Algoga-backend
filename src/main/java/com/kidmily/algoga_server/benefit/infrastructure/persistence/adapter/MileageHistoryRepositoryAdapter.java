@@ -49,6 +49,11 @@ public class MileageHistoryRepositoryAdapter implements MileageHistoryRepository
                 .toList();
     }
 
+    @Override
+    public void deleteAllByUserId(Long userId) {
+        springDataMileageHistoryRepository.deleteByUserId(userId);
+    }
+
     private MileageHistory toDomain(MileageHistoryJpaEntity entity) {
         return MileageHistory.withId(
                 entity.getId(),

@@ -86,6 +86,11 @@ public class EnrollmentRepositoryAdapter implements EnrollmentRepository {
         return result;
     }
 
+    @Override
+    public void deleteAllByUserId(Long userId) {
+        springDataEnrollmentRepository.deleteByUserId(userId);
+    }
+
     private Enrollment toDomain(EnrollmentJpaEntity entity) {
         return Enrollment.withId(
                 entity.getId(),
