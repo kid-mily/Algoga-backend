@@ -22,7 +22,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
@@ -63,7 +62,7 @@ public class AuthController {
     @io.swagger.v3.oas.annotations.responses.ApiResponses({
             @io.swagger.v3.oas.annotations.responses.ApiResponse(
                     responseCode = "200",
-                    description = "정상 처리 (data가 tr  ue면 사용 가능, false면 이미 사용 중인 중복 아이디)"
+                    description = "정상 처리 (data가 true면 사용 가능, false면 이미 사용 중인 중복 아이디)"
             )
     })
     @GetMapping("/username/check")
@@ -92,14 +91,6 @@ public class AuthController {
     public ApiResponse<Void> login(@RequestBody @Valid AuthLoginRequest request, HttpServletResponse response) {
         AuthTokenResponse tokenResponse = authService.login(request);
 
-//        ResponseCookie accessCookie = ResponseCookie.from("accessToken", tokenResponse.accessToken())
-//                .httpOnly(true).secure(true).path("/").maxAge(30 * 60).sameSite("None").build();
-//
-//        ResponseCookie refreshCookie = ResponseCookie.from("refreshToken", tokenResponse.refreshToken())
-//                .httpOnly(true).secure(true).path("/").maxAge(7 * 24 * 60 * 60).sameSite("None").build();
-//
-//        response.addHeader(HttpHeaders.SET_COOKIE, accessCookie.toString());
-//        response.addHeader(HttpHeaders.SET_COOKIE, refreshCookie.toString());
         // 공통 메서드 호출 (깔끔!)
         response.addHeader(HttpHeaders.SET_COOKIE, globalJwtProvider.createCookie("accessToken", tokenResponse.accessToken()).toString());
         response.addHeader(HttpHeaders.SET_COOKIE, globalJwtProvider.createCookie("refreshToken", tokenResponse.refreshToken()).toString());

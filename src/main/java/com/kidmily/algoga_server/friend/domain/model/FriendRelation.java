@@ -19,10 +19,6 @@ public class FriendRelation {
         this.status = RelationStatus.ACCEPTED;
     }
 
-    public void updateStatus(RelationStatus status) {
-        this.status = status;
-    }
-
     public void toggleFavorite() {
         this.favorite = !this.favorite;
     }

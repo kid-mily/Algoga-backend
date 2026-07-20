@@ -26,8 +26,7 @@ import java.util.stream.Collectors;
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
-public class
-FriendQueryService implements FriendQueryUseCase {
+public class FriendQueryService implements FriendQueryUseCase {
 
     private static final String ONLINE_KEY_PREFIX = "ONLINE:";
 

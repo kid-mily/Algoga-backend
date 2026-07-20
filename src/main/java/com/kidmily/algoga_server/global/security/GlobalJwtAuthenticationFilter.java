@@ -1,7 +1,7 @@
 package com.kidmily.algoga_server.global.security;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.kidmily.algoga_server.admin.settings.CustomManagerDetails;
+import com.kidmily.algoga_server.user.exception.AuthErrorCode;
 import com.kidmily.algoga_server.user.settings.CustomUserDetails;
 import com.kidmily.algoga_server.user.settings.CustomUserDetailsService;
 import jakarta.servlet.FilterChain;
@@ -91,7 +91,10 @@ public class GlobalJwtAuthenticationFilter extends OncePerRequestFilter {
                         log.warn("블랙리스트 유저의 비정상적 API 접근 시도 차단: {}", email);
                         response.setStatus(HttpServletResponse.SC_FORBIDDEN); // 403
                         response.setContentType("application/json;charset=UTF-8");
-                        response.getWriter().write("{\"code\":\"AUTH_015\",\"message\":\"블랙리스트에 등록되어 접근이 영구히 제한된 계정입니다. 고객센터에 문의하세요.\"}");
+                        response.getWriter().write(String.format(
+                                "{\"code\":\"%s\",\"message\":\"%s\"}",
+                                AuthErrorCode.BLACKLISTED_USER.getCode(), AuthErrorCode.BLACKLISTED_USER.getMessage()
+                        ));
                         return;
                     }
 
@@ -101,7 +104,10 @@ public class GlobalJwtAuthenticationFilter extends OncePerRequestFilter {
                         log.warn("다른 기기에서 로그인되어 종료된 세션의 접근 차단: {}", email);
                         response.setStatus(HttpServletResponse.SC_UNAUTHORIZED); // 401
                         response.setContentType("application/json;charset=UTF-8");
-                        response.getWriter().write("{\"code\":\"AUTH_017\",\"message\":\"다른 기기에서 로그인되어 세션이 종료되었습니다.\"}");
+                        response.getWriter().write(String.format(
+                                "{\"code\":\"%s\",\"message\":\"%s\"}",
+                                AuthErrorCode.DUPLICATE_LOGIN.getCode(), AuthErrorCode.DUPLICATE_LOGIN.getMessage()
+                        ));
                         return;
                     }
 
@@ -164,7 +170,6 @@ public class GlobalJwtAuthenticationFilter extends OncePerRequestFilter {
         else {
             for (Cookie cookie : request.getCookies()) {
                 if ("accessToken".equals(cookie.getName())) {
-                    log.info("요청(Request)에서 AccessToken 쿠키 읽기 성공: {}...", cookie.getValue().substring(0, 15));
                     return cookie.getValue();
                 }
             }

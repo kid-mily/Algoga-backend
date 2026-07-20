@@ -21,10 +21,10 @@ public record AdminUserListResponse(
         @Schema(description = "회원이 맺은 친구 수", example = "5")
         long friendCount,
 
-        @Schema(description = "🤝 타 팀원 담당: 회원이 작성한 게시글 수", example = "12")
+        @Schema(description = "회원이 작성한 게시글 수", example = "12")
         long postCount,
 
-        @Schema(description = "🤝 타 팀원 담당: 회원이 작성한 댓글 수", example = "34")
+        @Schema(description = "회원이 작성한 댓글 수", example = "34")
         long commentCount
 ) {
     /**

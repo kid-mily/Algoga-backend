@@ -1,8 +1,6 @@
 package com.kidmily.algoga_server.user.application;
 
 import com.kidmily.algoga_server.booking.application.usecase.BookingQueryUseCase;
-import com.kidmily.algoga_server.friend.domain.model.RelationStatus;
-import com.kidmily.algoga_server.friend.domain.repository.FriendRepository;
 import com.kidmily.algoga_server.global.port.out.FileStoragePort;
 import com.kidmily.algoga_server.global.security.GlobalJwtProvider;
 import com.kidmily.algoga_server.global.util.RedisKeys;
