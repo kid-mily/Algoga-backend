@@ -26,6 +26,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.util.Comparator;
 import java.util.List;
 
 @Slf4j
@@ -60,6 +61,9 @@ public class RefundQueryService implements RefundQueryUseCase {
                 : refundRepository.findAllByStatus(status);
 
         return refunds.stream()
+                // 최신 요청이 먼저 오도록 정렬 — CS/정산 담당자가 처리해야 할 신규 건이 뒷페이지로 밀리는 문제 방지
+                .sorted(Comparator.comparing(RefundRequest::getCreatedAt,
+                        Comparator.nullsLast(Comparator.reverseOrder())))
                 .map(this::enrichRefund)
                 .filter(r -> matchesSearchParams(r, userName, bookingNumber, productName))
                 .toList();
