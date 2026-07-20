@@ -33,6 +33,12 @@ import java.util.Map;
 @EnableCaching
 public class CacheManagerConfig {
 
+    /**
+     * 캐시 키 버전. 값 직렬화 포맷을 바꾸면 이 값을 올려서 옛 포맷 엔트리를 읽지 않게 한다.
+     * v2: DefaultTyping 을 NON_FINAL → EVERYTHING 으로 수정(역직렬화 실패 버그 수정)
+     */
+    private static final String CACHE_KEY_VERSION = "v2:";
+
     @Bean
     public RedisCacheManager cacheManager(RedisConnectionFactory connectionFactory,
                                           List<CacheRegistry> cacheRegistries,
@@ -40,9 +46,14 @@ public class CacheManagerConfig {
         ObjectMapper objectMapper = new ObjectMapper();
         objectMapper.registerModule(new JavaTimeModule());
         objectMapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
+        // ⚠️ DefaultTyping 은 반드시 EVERYTHING 이어야 한다.
+        // NON_FINAL 로 두면 응답 DTO(record → final)와 Stream.toList() 결과(final 불변 List)에
+        // 타입 정보가 안 붙는데, 읽을 때는 Object 기준으로 타입 정보를 요구해서
+        // "캐시 쓰기는 되고 읽기만 항상 실패"하는 상태가 된다(= 두 번째 요청부터 500).
+        // 실측: NON_FINAL(PROPERTY/WRAPPER_ARRAY) 모두 실패, EVERYTHING 은 정상 왕복.
         objectMapper.activateDefaultTyping(
                 objectMapper.getPolymorphicTypeValidator(),
-                ObjectMapper.DefaultTyping.NON_FINAL,
+                ObjectMapper.DefaultTyping.EVERYTHING,
                 JsonTypeInfo.As.PROPERTY
         );
 
@@ -51,6 +62,9 @@ public class CacheManagerConfig {
         RedisCacheConfiguration defaultConfig = RedisCacheConfiguration.defaultCacheConfig()
                 .serializeKeysWith(RedisSerializationContext.SerializationPair.fromSerializer(new StringRedisSerializer()))
                 .serializeValuesWith(RedisSerializationContext.SerializationPair.fromSerializer(serializer))
+                // 직렬화 포맷이 바뀌었으므로 키에 버전을 붙여 옛 포맷 엔트리와 섞이지 않게 한다.
+                // (안 붙이면 배포 후에도 남아 있는 옛 캐시를 읽다가 계속 500이 난다. 옛 키는 TTL 로 자연 소멸)
+                .prefixCacheNameWith(CACHE_KEY_VERSION)
                 .disableCachingNullValues();
 
         // 각 도메인 CacheRegistry 가 등록한 캐시별 TTL 을 모아서 적용.
