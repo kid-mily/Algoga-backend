@@ -38,4 +38,8 @@ public interface SpringDataChatRoomMemberRepository extends JpaRepository<ChatRo
 """)
     Optional<Long> findDirectRoomIdByUserIds(@Param("userIdA") Long userIdA,
                                              @Param("userIdB") Long userIdB);
+
+    @Modifying(clearAutomatically = true)
+    @Query("DELETE FROM ChatRoomMemberJpaEntity m WHERE m.roomId IN :roomIds")
+    void deleteByRoomIdIn(@Param("roomIds") List<Long> roomIds);
 }

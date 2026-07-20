@@ -6,6 +6,8 @@ import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.util.List;
+
 public interface SpringDataChatMessageReadRepository extends JpaRepository<ChatMessageReadJpaEntity, Long> {
 
     @Modifying(clearAutomatically = true)
@@ -34,4 +36,14 @@ public interface SpringDataChatMessageReadRepository extends JpaRepository<ChatM
     @Modifying(clearAutomatically = true)
     @Query("DELETE FROM ChatMessageReadJpaEntity r WHERE r.userId = :userId AND r.messageId IN (SELECT m.id FROM ChatMessageJpaEntity m WHERE m.roomId = :roomId)")
     void deleteByRoomIdAndUserId(@Param("roomId") Long roomId, @Param("userId") Long userId);
+
+    @Modifying(clearAutomatically = true)
+    @Query("""
+    DELETE FROM ChatMessageReadJpaEntity r
+    WHERE r.messageId IN (
+        SELECT m.id FROM ChatMessageJpaEntity m WHERE m.roomId IN :roomIds
+    )
+""")
+    void deleteByRoomIdIn(@Param("roomIds") List<Long> roomIds);
+
 }

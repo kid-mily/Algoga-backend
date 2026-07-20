@@ -8,6 +8,7 @@ import com.kidmily.algoga_server.chat.infrastructure.persistence.entity.ChatRoom
 import com.kidmily.algoga_server.chat.infrastructure.persistence.repository.SpringDataChatRoomRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
+import java.time.LocalDateTime;
 
 import java.util.Optional;
 
@@ -32,7 +33,7 @@ public class ChatRoomRepositoryAdapter implements ChatRoomRepository {
 
     @Override
     public void softDelete(Long roomId) {
-        springDataRepository.softDeleteById(roomId);
+        springDataRepository.softDeleteById(roomId, LocalDateTime.now());
     }
 
     @Override

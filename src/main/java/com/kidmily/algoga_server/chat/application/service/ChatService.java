@@ -111,6 +111,7 @@ public class ChatService implements ChatUseCase {
     @Override
     @Transactional
     public ChatMessageResponse sendMessage(SendChatMessageCommand command) {
+        validateRoomAlive(command.roomId());
         chatRoomMemberRepository.findByRoomIdAndUserId(command.roomId(), command.senderId())
                 .orElseThrow(() -> new ChatException(ChatErrorCode.CHAT_NOT_MEMBER));
 
@@ -143,6 +144,7 @@ public class ChatService implements ChatUseCase {
     @Override
     @Transactional
     public void markAsRead(Long roomId, Long userId) {
+        validateRoomAlive(roomId);
         chatRoomMemberRepository.findByRoomIdAndUserId(roomId, userId)
                 .orElseThrow(() -> new ChatException(ChatErrorCode.CHAT_NOT_MEMBER));
 
@@ -153,6 +155,7 @@ public class ChatService implements ChatUseCase {
     @Override
     @Transactional
     public List<ChatMessageResponse> getMessages(Long roomId, Long userId) {
+        validateRoomAlive(roomId);
         chatRoomMemberRepository.findByRoomIdAndUserId(roomId, userId)
                 .orElseThrow(() -> new ChatException(ChatErrorCode.CHAT_NOT_MEMBER));
 
@@ -388,6 +391,11 @@ public class ChatService implements ChatUseCase {
         if (cache != null) {
             cache.evict(userId);
         }
+    }
+
+    private void validateRoomAlive(Long roomId) {
+        chatRoomRepository.findById(roomId)
+                .orElseThrow(() -> new ChatException(ChatErrorCode.CHAT_ROOM_NOT_FOUND));
     }
 
     @Override

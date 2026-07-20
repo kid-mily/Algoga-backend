@@ -10,4 +10,5 @@ public interface ChatRoomRepository {
     void softDelete(Long roomId);
     void updateRoomName(Long roomId, String roomName);
 
+
 }

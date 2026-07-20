@@ -9,7 +9,13 @@ import java.time.LocalDateTime;
 
 @SQLRestriction("is_deleted = false")
 @Entity
-@Table(name = "chat_rooms")
+@Table(
+        name = "chat_rooms",
+        indexes = {
+                @Index(name = "idx_chat_rooms_deleted",
+                        columnList = "is_deleted, deleted_at")
+        }
+)
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
@@ -39,7 +45,16 @@ public class ChatRoomJpaEntity {
     @Column(name = "is_deleted", nullable = false)
     private boolean isDeleted = false;
 
+    @Column(name = "deleted_at")                    // ▼ 추가
+    private LocalDateTime deletedAt;
+
     public void delete() {
+
         this.isDeleted = true;
+        this.deletedAt = LocalDateTime.now();
     }
+
+
+
+
 }
