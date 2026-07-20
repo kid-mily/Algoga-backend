@@ -11,4 +11,8 @@ public interface SpringDataCourseQnaCommentRepository extends JpaRepository<Cour
     Optional<CourseQnaCommentJpaEntity> findByIdAndQnaId(Long id, Long qnaId);
 
     List<CourseQnaCommentJpaEntity> findByQnaIdAndDeletedFalseOrderByCreatedAtAsc(Long qnaId);
+
+    void deleteByQnaId(Long qnaId);
+
+    void deleteByUserId(Long userId);
 }

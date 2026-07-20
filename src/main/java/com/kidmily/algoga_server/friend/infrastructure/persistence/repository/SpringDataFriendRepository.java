@@ -3,6 +3,7 @@ package com.kidmily.algoga_server.friend.infrastructure.persistence.repository;
 import com.kidmily.algoga_server.friend.domain.model.RelationStatus;
 import com.kidmily.algoga_server.friend.infrastructure.persistence.entity.FriendJpaEntity;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
@@ -28,4 +29,8 @@ public interface SpringDataFriendRepository extends JpaRepository<FriendJpaEntit
 
     @Query("SELECT f FROM FriendJpaEntity f WHERE f.requesterId = :requesterId AND f.receiverId = :receiverId")
     Optional<FriendJpaEntity> findByRequesterIdAndReceiverId(@Param("requesterId") Long requesterId, @Param("receiverId") Long receiverId);
+
+    @Modifying
+    @Query("DELETE FROM FriendJpaEntity f WHERE f.requesterId = :userId OR f.receiverId = :userId")
+    void deleteAllByUserId(@Param("userId") Long userId);
 }

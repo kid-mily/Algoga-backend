@@ -14,4 +14,8 @@ public interface CourseQnaRepository {
     Optional<CourseQna> findByIdAndCourseId(Long qnaId, Long courseId);
 
     List<CourseQna> findByCourseId(Long courseId);
+
+    List<Long> findIdsByUserId(Long userId);
+
+    void deleteAllByUserId(Long userId);
 }

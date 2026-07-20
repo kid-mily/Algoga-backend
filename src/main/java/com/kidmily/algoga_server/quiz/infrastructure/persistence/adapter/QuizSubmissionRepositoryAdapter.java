@@ -76,6 +76,16 @@ public class QuizSubmissionRepositoryAdapter implements QuizSubmissionRepository
         return springDataQuizSubmissionRepository.existsByUserIdAndCourseId(userId, courseId);
     }
 
+    @Override
+    public List<Long> findSubmissionIdsByUserId(Long userId) {
+        return springDataQuizSubmissionRepository.findIdsByUserId(userId);
+    }
+
+    @Override
+    public void deleteAllByUserId(Long userId) {
+        springDataQuizSubmissionRepository.deleteByUserId(userId);
+    }
+
     private QuizSubmission toDomain(QuizSubmissionJpaEntity entity) {
         return QuizSubmission.withId(
                 entity.getId(),

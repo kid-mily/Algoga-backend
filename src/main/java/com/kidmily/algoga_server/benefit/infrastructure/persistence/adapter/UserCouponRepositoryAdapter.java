@@ -103,4 +103,9 @@ public class UserCouponRepositoryAdapter implements UserCouponRepository {
     public void markUsed(Long userCouponId, LocalDateTime usedAt) {
         springDataUserCouponRepository.markUsed(userCouponId, usedAt);
     }
+
+    @Override
+    public void deleteAllByUserId(Long userId) {
+        springDataUserCouponRepository.deleteByUserId(userId);
+    }
 }

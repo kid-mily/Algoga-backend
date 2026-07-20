@@ -33,5 +33,7 @@ public interface SpringDataLearningProgressRepository extends JpaRepository<Lear
     List<Object[]> averageProgressRateByCourseIds(@Param("courseIds") List<Long> courseIds);
 
     boolean existsByUserIdAndChapterIdAndCompletedTrue(Long userId, Long chapterId);
+
+    void deleteByUserId(Long userId);
 }
 

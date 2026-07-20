@@ -611,8 +611,10 @@ public class PaymentTransactionService {
     }
 
     private void validateMileageBalance(Long userId, int usedMileage) {
+        LocalDateTime now = LocalDateTime.now();
         List<MileageHistory> histories = mileageHistoryRepository.findByUserId(userId);
         int balance = histories.stream()
+                .filter(h -> h.isAvailableAt(now))
                 .mapToInt(h -> "EARN".equals(h.getType()) ? h.getAmount() : -h.getAmount())
                 .sum();
         if (balance < usedMileage) {

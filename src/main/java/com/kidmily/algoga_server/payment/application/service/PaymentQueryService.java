@@ -301,8 +301,10 @@ public class PaymentQueryService implements PaymentQueryUseCase {
         }
 
         if (usedMileage > 0) {
+            LocalDateTime now = LocalDateTime.now();
             List<MileageHistory> histories = mileageHistoryRepository.findByUserId(userId);
             int balance = histories.stream()
+                    .filter(h -> h.isAvailableAt(now))
                     .mapToInt(h -> "EARN".equals(h.getType()) ? h.getAmount() : -h.getAmount())
                     .sum();
             if (balance < usedMileage) {

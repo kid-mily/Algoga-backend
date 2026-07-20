@@ -10,4 +10,6 @@ public interface SpringDataDiagnosisAnswerRepository extends JpaRepository<Diagn
     List<DiagnosisAnswerJpaEntity> findByResultIdOrderByIdAsc(Long resultId);
 
     void deleteByQuestionId(Long questionId);
+
+    void deleteByResultId(Long resultId);
 }

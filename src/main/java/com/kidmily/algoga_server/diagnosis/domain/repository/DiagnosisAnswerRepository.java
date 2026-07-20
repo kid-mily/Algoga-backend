@@ -7,4 +7,6 @@ public interface DiagnosisAnswerRepository {
     DiagnosisAnswer save(DiagnosisAnswer diagnosisAnswer);
 
     void deleteByQuestionId(Long questionId);
+
+    void deleteByResultId(Long resultId);
 }

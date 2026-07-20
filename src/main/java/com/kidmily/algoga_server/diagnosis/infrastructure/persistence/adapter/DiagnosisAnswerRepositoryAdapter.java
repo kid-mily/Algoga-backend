@@ -36,4 +36,9 @@ public class DiagnosisAnswerRepositoryAdapter implements DiagnosisAnswerReposito
     public void deleteByQuestionId(Long questionId) {
         springDataDiagnosisAnswerRepository.deleteByQuestionId(questionId);
     }
+
+    @Override
+    public void deleteByResultId(Long resultId) {
+        springDataDiagnosisAnswerRepository.deleteByResultId(resultId);
+    }
 }
