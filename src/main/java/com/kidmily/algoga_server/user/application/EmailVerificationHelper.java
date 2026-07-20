@@ -32,7 +32,9 @@ public class EmailVerificationHelper {
         emailSender.sendEmail(email, subject, body);
     }
 
-    public void verifyCode(String email, String inputCode, String codeKeyPrefix, String successKeyPrefix) {
+    // 검증 1회로 여러 액션의 성공 마커를 동시에 발급할 수 있도록 successKeyPrefix를 가변인자로 받는다.
+    // (마이페이지 인증처럼 "인증 1번 -> 프로필/비밀번호/탈퇴 마커를 각각 독립적으로 소비" 하는 흐름을 지원)
+    public void verifyCode(String email, String inputCode, String codeKeyPrefix, String... successKeyPrefixes) {
         String savedCode = redisTemplate.opsForValue().get(codeKeyPrefix + email);
 
         if (savedCode == null || !savedCode.equals(inputCode)) {
@@ -40,6 +42,16 @@ public class EmailVerificationHelper {
         }
 
         redisTemplate.delete(codeKeyPrefix + email);
-        redisTemplate.opsForValue().set(successKeyPrefix + email, "true", SUCCESS_TTL_MINUTES, TimeUnit.MINUTES);
+        for (String successKeyPrefix : successKeyPrefixes) {
+            redisTemplate.opsForValue().set(successKeyPrefix + email, "true", SUCCESS_TTL_MINUTES, TimeUnit.MINUTES);
+        }
+    }
+
+    // 특정 액션의 인증 마커가 살아있는지 확인만 한다 (소비/삭제는 호출부가 각자 담당).
+    public void assertVerified(String email, String successKeyPrefix) {
+        String isVerified = redisTemplate.opsForValue().get(successKeyPrefix + email);
+        if (!"true".equals(isVerified)) {
+            throw new AuthException(AuthErrorCode.EMAIL_NOT_VERIFIED);
+        }
     }
 }

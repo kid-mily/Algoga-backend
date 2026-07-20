@@ -10,8 +10,6 @@ import com.kidmily.algoga_server.refund.application.usecase.RefundQueryUseCase;
 import com.kidmily.algoga_server.user.domain.SocialType;
 import com.kidmily.algoga_server.user.domain.User;
 import com.kidmily.algoga_server.user.domain.UserRepository;
-import com.kidmily.algoga_server.user.exception.AuthErrorCode;
-import com.kidmily.algoga_server.user.exception.AuthException;
 import com.kidmily.algoga_server.user.exception.UserErrorCode;
 import com.kidmily.algoga_server.user.exception.UserException;
 import com.kidmily.algoga_server.user.presentation.request.UpdatePasswordRequest;
@@ -83,7 +81,13 @@ public class UserService {
 
     // 2. 마이페이지 본인확인 인증번호 검증
     public void verifyMyPageEmailCode(String email, String code) {
-        emailVerificationHelper.verifyCode(email, code, RedisKeys.MYPAGE_AUTH_CODE_PREFIX, RedisKeys.MYPAGE_AUTH_SUCCESS_PREFIX);
+        // 인증 1번으로 프로필 수정/비밀번호 변경/회원탈퇴 마커를 동시에 발급 -> 각 API가 독립적으로 소비 가능
+        emailVerificationHelper.verifyCode(
+                email, code, RedisKeys.MYPAGE_AUTH_CODE_PREFIX,
+                RedisKeys.MYPAGE_AUTH_SUCCESS_PROFILE_PREFIX,
+                RedisKeys.MYPAGE_AUTH_SUCCESS_PASSWORD_PREFIX,
+                RedisKeys.MYPAGE_AUTH_SUCCESS_WITHDRAW_PREFIX
+        );
 
         log.info("마이페이지 이메일 인증 성공 [이메일: {}]", email);
     }
@@ -94,11 +98,8 @@ public class UserService {
         User user = userRepository.findByEmailAndIsDeletedFalse(email)
                 .orElseThrow(() -> new UserException(UserErrorCode.NOT_FOUND_USER));
 
-        // 1. 이메일 인증 완료 여부 확인 (필수)
-        String isVerified = redisTemplate.opsForValue().get(RedisKeys.MYPAGE_AUTH_SUCCESS_PREFIX + email);
-        if (!"true".equals(isVerified)) {
-            throw new AuthException(AuthErrorCode.EMAIL_NOT_VERIFIED);
-        }
+        // 1. 이메일 인증 완료 여부 확인 (필수, 프로필 수정 전용 마커)
+        emailVerificationHelper.assertVerified(email, RedisKeys.MYPAGE_AUTH_SUCCESS_PROFILE_PREFIX);
 
         // 2. 전화번호 중복 체크 (기존 번호와 다를 때만 체크)
         if (request.phone() != null && !request.phone().equals(user.getPhone())) {
@@ -130,7 +131,7 @@ public class UserService {
         log.info("프로필 정보 수정 완료 [이메일: {}]", email);
 
         // 4. 정보 수정이 끝났으니 인증 성공 마커(Redis) 삭제
-        redisTemplate.delete(RedisKeys.MYPAGE_AUTH_SUCCESS_PREFIX + email);
+        redisTemplate.delete(RedisKeys.MYPAGE_AUTH_SUCCESS_PROFILE_PREFIX + email);
 
         return new AuthTokenResponse(
                 newToken,
@@ -147,11 +148,8 @@ public class UserService {
         User user = userRepository.findByEmailAndIsDeletedFalse(email)
                 .orElseThrow(() -> new UserException(UserErrorCode.NOT_FOUND_USER));
 
-        // 1. 이메일 인증 완료 여부 확인 (비밀번호 변경 시에도 필수)
-        String isVerified = redisTemplate.opsForValue().get(RedisKeys.MYPAGE_AUTH_SUCCESS_PREFIX + email);
-        if (!"true".equals(isVerified)) {
-            throw new AuthException(AuthErrorCode.EMAIL_NOT_VERIFIED);
-        }
+        // 1. 이메일 인증 완료 여부 확인 (비밀번호 변경 전용 마커)
+        emailVerificationHelper.assertVerified(email, RedisKeys.MYPAGE_AUTH_SUCCESS_PASSWORD_PREFIX);
 
         // 2. 소셜 로그인 유저 방어
         if (user.getSocialType() != SocialType.LOCAL) { // LOCAL이 아닌 유저는 변경 불가
@@ -175,7 +173,7 @@ public class UserService {
         log.info("회원 비밀번호 변경 완료 [이메일: {}]", email);
 
         // 6. 보안을 위해 비밀번호 변경 후 인증 상태 초기화
-        redisTemplate.delete(RedisKeys.MYPAGE_AUTH_SUCCESS_PREFIX + email);
+        redisTemplate.delete(RedisKeys.MYPAGE_AUTH_SUCCESS_PASSWORD_PREFIX + email);
     }
 
     // 회원 탈퇴 (Soft Delete)
@@ -188,6 +186,9 @@ public class UserService {
             log.warn("비정상적 접근: 이미 탈퇴한 계정에 탈퇴 요청 [이메일: {}]", email);
             throw new UserException(UserErrorCode.DELETED_USER);
         }
+
+        // 이메일 인증 완료 여부 확인 (회원탈퇴 전용 마커, 프로필/비밀번호 변경과 독립적으로 소비)
+        emailVerificationHelper.assertVerified(email, RedisKeys.MYPAGE_AUTH_SUCCESS_WITHDRAW_PREFIX);
 
         // 회원 탈퇴 할 때 예약/환불
          if (bookingQueryUseCase.hasActiveBooking(user.getId())) {
@@ -203,6 +204,9 @@ public class UserService {
         // 로그아웃 처리 (Redis 토큰 삭제 및 블랙리스트 등록으로 즉시 쫓아냄)
         // 이메일이 이미 _deleted_ 로 바뀌었으므로, 원래 email 변수를 사용해 지워줍니다.
         redisTemplate.delete(RedisKeys.REFRESH_TOKEN_PREFIX + email);
+
+        // 탈퇴가 끝났으니 인증 성공 마커(Redis) 삭제
+        redisTemplate.delete(RedisKeys.MYPAGE_AUTH_SUCCESS_WITHDRAW_PREFIX + email);
 
         // 탈퇴 이벤트 퍼블리싱
         // 이제 다른 도메인(쿠폰, 예약 등) 담당자들이 이 이벤트를 듣고 각자 데이터를 지웁니다.
