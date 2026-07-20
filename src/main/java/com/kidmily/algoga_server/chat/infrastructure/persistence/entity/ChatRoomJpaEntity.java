@@ -39,7 +39,14 @@ public class ChatRoomJpaEntity {
     @Column(name = "is_deleted", nullable = false)
     private boolean isDeleted = false;
 
+    @Column(name = "deleted_at")                    // ▼ 추가
+    private LocalDateTime deletedAt;
+
     public void delete() {
+
         this.isDeleted = true;
+        this.deletedAt = LocalDateTime.now();
     }
+
+
 }

@@ -14,5 +14,8 @@ public interface SpringDataChatMessageRepository extends JpaRepository<ChatMessa
     List<ChatMessageJpaEntity> findByRoomIdOrderByCreatedAtDesc(Long roomId);
     Optional<ChatMessageJpaEntity> findTopByRoomIdOrderByCreatedAtDesc(Long roomId);
 
+    @Modifying(clearAutomatically = true)
+    @Query("DELETE FROM ChatMessageJpaEntity m WHERE m.roomId IN :roomIds")
+    void deleteByRoomIdIn(@Param("roomIds") List<Long> roomIds);
 
 }
