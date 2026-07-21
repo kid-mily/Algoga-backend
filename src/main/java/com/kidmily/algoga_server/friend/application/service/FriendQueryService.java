@@ -16,10 +16,12 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -69,50 +71,63 @@ public class FriendQueryService implements FriendQueryUseCase {
                 .toList();
     }
 
-    @Override
-    public List<FriendView> getFriends(Long myId) {
-        // 1. 수락된 친구 관계 목록 가져오기 (쿼리 1번)
-        List<FriendRelation> relations = friendRepository.findAcceptedFriends(myId);
-
+    // getFriends/getReceivedRequests/getBlockedUsers가 공유하던 "관계 조회 -> 상대방 ID 추출 -> User 배치조회
+    // -> 온라인 상태 배치조회 -> FriendView 조립" 4단계를 한 곳으로 모은 헬퍼.
+    // counterpartIdExtractor로 관계마다 "나 아닌 상대방"의 ID를 어떻게 뽑을지만 다르게 넘기면 된다.
+    // relation.isFavorite()는 ACCEPTED 상태가 아니면 항상 false로 저장되므로, 요청/차단 목록에서도 그대로 써도 무방하다.
+    private List<FriendView> buildFriendViews(
+            List<FriendRelation> relations,
+            Function<FriendRelation, Long> counterpartIdExtractor
+    ) {
         if (relations.isEmpty()) {
-            return List.of(); // 친구가 없으면 바로 리턴하여 쿼리 방지
+            return List.of();
         }
 
-        // 2. 친구들의 ID만 리스트로 추출
-        List<Long> friendIds = relations.stream()
-                .map(rel -> rel.getRequesterId().equals(myId) ? rel.getReceiverId() : rel.getRequesterId())
-                .toList();
-
-        // 3. User 엔티티들을 IN 쿼리로 한 번에 싹 다 가져오기 (쿼리 1번) -> 총 쿼리 2번으로 끝!
-        // JPA의 findAllById는 내부적으로 WHERE user_id IN (1, 2, 3...) 쿼리를 날립니다.
-        List<User> friends = userRepository.findAllById(friendIds);
-
-        // 3-1. 온라인 상태도 배치로 한 번에 조회
-        Set<Long> onlineUserIds = findOnlineUserIds(friendIds);
-
-        // 3-2. relationId/즐겨찾기 조회용 맵 (friend별로 매번 relations를 선형 스캔하지 않도록)
-        Map<Long, FriendRelation> relationByFriendId = relations.stream()
+        // LinkedHashMap으로 원본 조회 순서를 유지 (HashMap을 쓰면 응답 순서가 뒤섞일 수 있음)
+        Map<Long, FriendRelation> relationByCounterpartId = relations.stream()
                 .collect(Collectors.toMap(
-                        rel -> rel.getRequesterId().equals(myId) ? rel.getReceiverId() : rel.getRequesterId(),
-                        rel -> rel
+                        counterpartIdExtractor,
+                        rel -> rel,
+                        (first, second) -> first,
+                        LinkedHashMap::new
                 ));
 
-        // 4. 조립 및 정렬
-        return friends.stream()
-                .map(friend -> {
-                    FriendRelation relation = relationByFriendId.get(friend.getId());
-                    return new FriendView(
-                            relation.getId(),
-                            friend.getId(),
-                            friend.getNickname(),
-                            friend.getPersonalCode(),
-                            friend.getProfileImageUrl(),
-                            relation.isFavorite(),
-                            onlineUserIds.contains(friend.getId()),
-                            true, // 검색 결과 전용 필드라 이 컨텍스트에선 해당 없음
-                            null
-                    );
+        List<Long> counterpartIds = List.copyOf(relationByCounterpartId.keySet());
+
+        // User 엔티티들을 IN 쿼리로 한 번에 가져오기
+        Map<Long, User> userById = userRepository.findAllById(counterpartIds).stream()
+                .collect(Collectors.toMap(User::getId, user -> user));
+
+        // 온라인 상태도 배치로 한 번에 조회
+        Set<Long> onlineUserIds = findOnlineUserIds(counterpartIds);
+
+        // 탈퇴 후 하드 삭제된 유저는 조용히 건너뜀 (없는 유저 조회로 500 나는 것 방지)
+        return counterpartIds.stream()
+                .filter(userById::containsKey)
+                .map(id -> {
+                    User user = userById.get(id);
+                    FriendRelation relation = relationByCounterpartId.get(id);
+                    return FriendView.builder()
+                            .relationId(relation.getId())
+                            .userId(user.getId())
+                            .nickname(user.getNickname())
+                            .personalCode(user.getPersonalCode())
+                            .profileImageUrl(user.getProfileImageUrl())
+                            .isFavorite(relation.isFavorite())
+                            .isOnline(onlineUserIds.contains(user.getId()))
+                            .requestAvailable(true) // 검색 결과 전용 필드라 이 컨텍스트에선 해당 없음
+                            .unavailableMessage(null)
+                            .build();
                 })
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public List<FriendView> getFriends(Long myId) {
+        List<FriendRelation> relations = friendRepository.findAcceptedFriends(myId);
+
+        return buildFriendViews(relations, rel -> rel.getRequesterId().equals(myId) ? rel.getReceiverId() : rel.getRequesterId())
+                .stream()
                 .sorted((a, b) -> a.nickname().compareToIgnoreCase(b.nickname()))
                 .collect(Collectors.toList());
     }
@@ -120,78 +135,14 @@ public class FriendQueryService implements FriendQueryUseCase {
     @Override
     public List<FriendView> getReceivedRequests(Long myId) {
         List<FriendRelation> requests = friendRepository.findByReceiverIdAndStatus(myId, RelationStatus.REQUESTED);
-
-        if (requests.isEmpty()) {
-            return List.of();
-        }
-
-        // 요청자들의 정보를 배치로 한 번에 조회 (N+1 방지)
-        List<Long> requesterIds = requests.stream()
-                .map(FriendRelation::getRequesterId)
-                .distinct()
-                .toList();
-
-        Map<Long, User> requesterById = userRepository.findAllById(requesterIds).stream()
-                .collect(Collectors.toMap(User::getId, requester -> requester));
-
-        Set<Long> onlineUserIds = findOnlineUserIds(requesterIds);
-
-        // 탈퇴 후 하드 삭제된 유저가 보낸 요청은 조회 목록에서 조용히 건너뜀 (없는 유저 조회로 500 나는 것 방지)
-        return requests.stream()
-                .filter(req -> requesterById.containsKey(req.getRequesterId()))
-                .map(req -> {
-                    User requester = requesterById.get(req.getRequesterId());
-                    return new FriendView(
-                            req.getId(),
-                            requester.getId(),
-                            requester.getNickname(),
-                            requester.getPersonalCode(),
-                            requester.getProfileImageUrl(),
-                            false, // 친구 요청 단계라 즐겨찾기 개념 없음
-                            onlineUserIds.contains(requester.getId()),
-                            true, // 검색 결과 전용 필드라 이 컨텍스트에선 해당 없음
-                            null
-                    );
-                }).collect(Collectors.toList());
+        return buildFriendViews(requests, FriendRelation::getRequesterId);
     }
 
     @Override
     public List<FriendView> getBlockedUsers(Long myId) {
         // 차단 관계는 requesterId=차단한 사람(나), receiverId=차단당한 사람으로 저장됨
         List<FriendRelation> blocks = friendRepository.findByRequesterIdAndStatus(myId, RelationStatus.BLOCKED);
-
-        if (blocks.isEmpty()) {
-            return List.of();
-        }
-
-        // 차단당한 유저들의 정보를 배치로 한 번에 조회 (N+1 방지)
-        List<Long> blockedUserIds = blocks.stream()
-                .map(FriendRelation::getReceiverId)
-                .distinct()
-                .toList();
-
-        Map<Long, User> blockedUserById = userRepository.findAllById(blockedUserIds).stream()
-                .collect(Collectors.toMap(User::getId, blockedUser -> blockedUser));
-
-        Set<Long> onlineUserIds = findOnlineUserIds(blockedUserIds);
-
-        // 탈퇴 후 하드 삭제된 유저에 대한 차단 기록은 조용히 건너뜀
-        return blocks.stream()
-                .filter(block -> blockedUserById.containsKey(block.getReceiverId()))
-                .map(block -> {
-                    User blockedUser = blockedUserById.get(block.getReceiverId());
-                    return new FriendView(
-                            block.getId(),
-                            blockedUser.getId(),
-                            blockedUser.getNickname(),
-                            blockedUser.getPersonalCode(),
-                            blockedUser.getProfileImageUrl(),
-                            false, // 차단 목록이라 즐겨찾기 개념 없음
-                            onlineUserIds.contains(blockedUser.getId()),
-                            true, // 검색 결과 전용 필드라 이 컨텍스트에선 해당 없음
-                            null
-                    );
-                }).collect(Collectors.toList());
+        return buildFriendViews(blocks, FriendRelation::getReceiverId);
     }
 
     @Override
@@ -211,20 +162,20 @@ public class FriendQueryService implements FriendQueryUseCase {
             throw new FriendException(FriendErrorCode.USER_NOT_FOUND);
         }
 
-        boolean isOnline = Boolean.TRUE.equals(redisTemplate.hasKey(ONLINE_KEY_PREFIX + user.getId()));
+        // 다른 조회 메서드들과 동일하게 findOnlineUserIds()로 통일 (Redis 장애 시 예외를 삼키는 방어 로직도 동일하게 적용됨)
+        boolean isOnline = findOnlineUserIds(List.of(user.getId())).contains(user.getId());
         String unavailableMessage = resolveUnavailableMessage(myId, user.getId(), relation);
 
-        return new FriendView(
-                null,
-                user.getId(),
-                user.getNickname(),
-                user.getPersonalCode(),
-                user.getProfileImageUrl(),
-                false, // 검색 결과라 즐겨찾기 개념 없음
-                isOnline,
-                unavailableMessage == null,
-                unavailableMessage
-        );
+        return FriendView.builder()
+                .userId(user.getId())
+                .nickname(user.getNickname())
+                .personalCode(user.getPersonalCode())
+                .profileImageUrl(user.getProfileImageUrl())
+                .isFavorite(false) // 검색 결과라 즐겨찾기 개념 없음
+                .isOnline(isOnline)
+                .requestAvailable(unavailableMessage == null)
+                .unavailableMessage(unavailableMessage)
+                .build();
     }
 
     // 친구 요청 전 미리보기용 판별 로직. sendFriendRequest()의 검증 순서/메시지를 그대로 재사용해서
