@@ -1,5 +1,7 @@
 package com.kidmily.algoga_server.friend.application.usecase;
 
+import lombok.Builder;
+
 import java.util.List;
 
 public interface FriendQueryUseCase {
@@ -18,6 +20,8 @@ public interface FriendQueryUseCase {
     List<com.kidmily.algoga_server.user.presentation.response.AdminFriendDetailResponse> getAdminFriendDetails(Long userId);
 
     // DTO 폴더를 만들지 않고 UseCase 내부에 View 객체 선언
+    // 연속된 boolean 필드가 여러 개라 위치 인자 생성자만 쓰면 순서 실수를 컴파일러가 못 잡아주므로 @Builder를 붙임
+    @Builder
     record FriendView(
             Long relationId,
             Long userId,

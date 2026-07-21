@@ -53,6 +53,10 @@ class BookingCommandServiceTest {
     private BookingCommandService bookingCommandService;
 
     private CreateBookingCommand command(BookingSource source) {
+        return command(source, null); // courseId 미전달 → 나라 단위 폴백
+    }
+
+    private CreateBookingCommand command(BookingSource source, Long courseId) {
         return new CreateBookingCommand(1L, 1L, "{}", null, null, 300_000,
                 LocalDate.of(2026, 8, 1), LocalDate.of(2026, 8, 3), source, null);
     }
@@ -207,6 +211,35 @@ class BookingCommandServiceTest {
 
         assertThrows(BusinessException.class, () ->
                 bookingCommandService.handle(command(BookingSource.LOUNGE)));
+        verify(bookingRepository, never()).save(any());
+    }
+
+    @Test
+    @DisplayName("courseId 전달 시, 산 적 없는 강의의 패키지는 같은 나라에 미완강 강의가 있어도 통과한다")
+    void courseId_전달_무관한강의_미완강이어도_통과() {
+        // 계정에 courseId=10(미완강) 이 있지만, 예약은 courseId=32(안 산 강의)로 온다.
+        // 나라 단위였다면 10 때문에 막혔겠지만, 강의 단위라 32는 통과해야 한다.
+        Accommodation acc = accommodationMock();
+        purchasedLecture(10L);                 // 산 건 10번(미완강), 32번은 안 삼
+
+        bookingCommandService.handle(command(BookingSource.LOUNGE, 32L));
+
+        verify(bookingRepository).save(any(Booking.class));
+        // 강의 단위 경로는 나라 강의 목록을 조회하지 않고, 안 산 강의는 완강 조회도 안 한다
+        verifyNoInteractions(courseRepository, courseCompletionRepository);
+    }
+
+    @Test
+    @DisplayName("courseId 전달 시, 그 강의를 샀는데 미완강이면 차단된다")
+    void courseId_전달_그강의_미완강이면_차단() {
+        Accommodation acc = mock(Accommodation.class);
+        when(accommodationRepository.findById(1L)).thenReturn(Optional.of(acc));
+        purchasedLecture(32L);                 // 32번 구매
+        when(courseCompletionRepository.findByUserIdAndCourseIdIn(eq(1L), anyList()))
+                .thenReturn(List.of());        // 32번 미완강
+
+        assertThrows(BusinessException.class, () ->
+                bookingCommandService.handle(command(BookingSource.LOUNGE, 32L)));
         verify(bookingRepository, never()).save(any());
     }
 }

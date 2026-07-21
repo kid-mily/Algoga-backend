@@ -73,7 +73,16 @@ public class BookingCommandService implements BookingCommandUseCase {
         // 예전에는 COMPLETION 일 때만 검사해서, 클라이언트가 LOUNGE(기본값)로 보내면
         // "단과만 결제하고 완강 안 한 유저"가 그대로 패키지를 예약할 수 있었다.
         // 정책 강제 주체를 클라이언트 → 서버로 옮긴다.
-        requireCourseCompletedIfPurchased(command.userId(), accommodation.getCountryId());
+        //
+        // courseId 가 있으면 "이 예약과 연관된 그 강의 하나"만 검사한다.
+        // (나라 단위로 검사하면, 산 적도 없는 다른 강의 하나가 미완강이어도
+        //  같은 나라 패키지 전체가 막히는 과잉 차단이 발생 → 진단평가 다중 추천 시 문제)
+        // courseId 가 없으면 기존처럼 나라 단위로 폴백(하위호환).
+        if (command.courseId() != null) {
+            requireCourseCompletedIfPurchased(command.userId(), command.courseId());
+        } else {
+            requireCountryCoursesCompletedIfPurchased(command.userId(), accommodation.getCountryId());
+        }
 
         // 경로별 결제 방식:
         // - COMPLETION(단과 완강 후 마이페이지 예약): 일시불만(분할 불가)
@@ -149,13 +158,37 @@ public class BookingCommandService implements BookingCommandUseCase {
     }
 
     /**
-     * 완강 게이트: <b>그 나라 강의를 이미 구매한 이력이 있는 유저</b>는 구매한 강의를 전부 완강해야
-     * 패키지를 예약할 수 있다. 예약 경로(bookingSource)와 무관하게 적용된다.
+     * 강의 단위 완강 게이트: <b>이 예약과 연관된 courseId 그 강의 하나</b>만 본다.
+     * 그 강의를 구매했는데 미완강이면 차단. 산 적 없거나 완강했으면 통과.
      * <p>
-     * 강의를 산 적 없는 신규 유저는 대상이 아니다 — 라운지에서 자유롭게 예약할 수 있어야 하고,
-     * 패키지+강의 통합 결제(번들)도 "지금 사는" 것이라 이 시점엔 구매 이력이 없어 통과한다.
+     * 나라 단위 검사와 달리, 산 적도 없는 다른 추천 강의 때문에 막히는 과잉 차단이 없다.
      */
-    private void requireCourseCompletedIfPurchased(Long userId, Long countryId) {
+    private void requireCourseCompletedIfPurchased(Long userId, Long courseId) {
+        boolean purchased = paymentRepository
+                .findByUserIdAndPaymentTypeAndStatusAndCourseIdIsNotNull(
+                        userId, PaymentType.LECTURE_ONLY, PaymentStatus.SUCCESS)
+                .stream()
+                .anyMatch(p -> courseId.equals(p.getCourseId()));
+        if (!purchased) {
+            return; // 이 강의를 산 적 없음 — 게이트 대상 아님
+        }
+
+        boolean completed = !courseCompletionRepository
+                .findByUserIdAndCourseIdIn(userId, List.of(courseId))
+                .isEmpty();
+        if (!completed) {
+            log.warn("[BookingCommandService] 완강 조건 미충족(강의 단위) - userId: {}, courseId: {}", userId, courseId);
+            throw new BusinessException(BookingErrorCode.LECTURE_NOT_COMPLETED);
+        }
+    }
+
+    /**
+     * 나라 단위 완강 게이트(courseId 미전달 시 폴백): <b>그 나라 강의를 구매한 이력이 있는 유저</b>는
+     * 구매한 강의를 전부 완강해야 예약할 수 있다. 예약 경로(bookingSource)와 무관.
+     * <p>
+     * 강의를 산 적 없는 신규 유저는 대상이 아니다 — 라운지 자유 예약, 번들(지금 사는 것)도 통과.
+     */
+    private void requireCountryCoursesCompletedIfPurchased(Long userId, Long countryId) {
         List<Long> countryCourseIds = courseRepository.findPublishedByCountryId(countryId)
                 .stream()
                 .map(Course::getId)
@@ -184,7 +217,7 @@ public class BookingCommandService implements BookingCommandUseCase {
                 .collect(Collectors.toSet());
 
         if (!completed.containsAll(purchasedInCountry)) {
-            log.warn("[BookingCommandService] 완강 조건 미충족 - userId: {}, countryId: {}, 구매: {}, 완강: {}",
+            log.warn("[BookingCommandService] 완강 조건 미충족(나라 단위) - userId: {}, countryId: {}, 구매: {}, 완강: {}",
                     userId, countryId, purchasedInCountry, completed);
             throw new BusinessException(BookingErrorCode.LECTURE_NOT_COMPLETED);
         }

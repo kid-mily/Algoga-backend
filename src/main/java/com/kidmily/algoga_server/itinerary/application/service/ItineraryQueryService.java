@@ -1,6 +1,7 @@
 package com.kidmily.algoga_server.itinerary.application.service;
 
 import com.kidmily.algoga_server.itinerary.application.result.PurchasedTrip;
+import com.kidmily.algoga_server.itinerary.application.result.SelectablePackage;
 import com.kidmily.algoga_server.itinerary.application.usecase.ItineraryQueryUseCase;
 import com.kidmily.algoga_server.itinerary.domain.model.Itinerary;
 import com.kidmily.algoga_server.itinerary.domain.repository.ItineraryRepository;
@@ -19,6 +20,7 @@ public class ItineraryQueryService implements ItineraryQueryUseCase {
 
     private final ItineraryRepository itineraryRepository;
     private final PurchasedTripReader purchasedTripReader;
+    private final SelectablePackageReader selectablePackageReader;
 
     @Override
     public List<Itinerary> getMyItineraries(Long userId) {
@@ -39,5 +41,11 @@ public class ItineraryQueryService implements ItineraryQueryUseCase {
     @Override
     public List<PurchasedTrip> getPurchasedTrips(Long userId) {
         return purchasedTripReader.listUsable(userId);
+    }
+
+    @Override
+    public List<SelectablePackage> getSelectablePackages() {
+        // 항공편 실시간 조회 없이 등록된 값만으로 구성(전체 패키지 조회 지연 회피). packages 도메인은 수정하지 않는다.
+        return selectablePackageReader.listAll();
     }
 }

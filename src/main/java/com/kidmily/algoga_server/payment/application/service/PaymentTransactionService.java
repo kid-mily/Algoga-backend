@@ -23,6 +23,7 @@ import com.kidmily.algoga_server.payment.domain.model.PaymentStatus;
 import com.kidmily.algoga_server.payment.domain.model.PaymentType;
 import com.kidmily.algoga_server.payment.domain.repository.PaymentRepository;
 import com.kidmily.algoga_server.payment.exception.PaymentErrorCode;
+import com.kidmily.algoga_server.booking.settings.cache.BookingCacheType;
 import com.kidmily.algoga_server.payment.settings.cache.PaymentCacheType;
 import com.kidmily.algoga_server.user.domain.User;
 import com.kidmily.algoga_server.user.domain.UserRepository;
@@ -71,7 +72,9 @@ public class PaymentTransactionService {
 
     @Caching(evict = {
             @CacheEvict(value = PaymentCacheType.Const.MY_PAYMENTS, key = "#command.userId()"),
-            @CacheEvict(value = PaymentCacheType.Const.ADMIN_PAYMENT_STATS, key = "'all'")
+            @CacheEvict(value = PaymentCacheType.Const.ADMIN_PAYMENT_STATS, key = "'all'"),
+            // 결제 성공 시 예약 상태(PENDING→DEPOSIT_PAID/FULL_PAID)가 바뀌므로 내 예약 목록 캐시도 무효화
+            @CacheEvict(value = BookingCacheType.Const.MY_BOOKINGS, key = "#command.userId()")
     })
     @Transactional
     public Long savePayment(CreatePaymentCommand command, String portoneStatus, int paidAmount, String paymentMethod) {
@@ -334,7 +337,9 @@ public class PaymentTransactionService {
      */
     @Caching(evict = {
             @CacheEvict(value = PaymentCacheType.Const.MY_PAYMENTS, key = "#command.userId()"),
-            @CacheEvict(value = PaymentCacheType.Const.ADMIN_PAYMENT_STATS, key = "'all'")
+            @CacheEvict(value = PaymentCacheType.Const.ADMIN_PAYMENT_STATS, key = "'all'"),
+            // 통합 결제 성공 시 예약 상태(PENDING→DEPOSIT_PAID/FULL_PAID)가 바뀌므로 내 예약 목록 캐시도 무효화
+            @CacheEvict(value = BookingCacheType.Const.MY_BOOKINGS, key = "#command.userId()")
     })
     @Transactional
     public BundlePaymentResponse saveBundlePayment(CreateBundlePaymentCommand command, String portoneStatus,
@@ -643,6 +648,14 @@ public class PaymentTransactionService {
                     BookingStatus newBookingStatus = resolveBookingStatus(payment.getPaymentType());
                     bookingRepository.updateStatus(payment.getBookingId(), newBookingStatus);
                     log.info("[PaymentTransactionService] 웹훅 - 결제 SUCCESS 처리 완료 - bookingId: {}", payment.getBookingId());
+
+                    // 예약 상태가 바뀌었으므로 내 예약 목록 캐시도 무효화 (웹훅엔 @CacheEvict key 를 못 써 수동 evict)
+                    if (cacheUserId != null) {
+                        Cache myBookingsCache = cacheManager.getCache(BookingCacheType.Const.MY_BOOKINGS);
+                        if (myBookingsCache != null) {
+                            myBookingsCache.evict(cacheUserId);
+                        }
+                    }
                 }
             } else {
                 log.warn("[PaymentTransactionService] 웹훅 - 결제 미완료 상태 - portoneStatus: {}", portoneStatus);

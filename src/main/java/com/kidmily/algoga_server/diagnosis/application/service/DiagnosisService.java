@@ -110,6 +110,10 @@ public class DiagnosisService implements DiagnosisUseCase {
     public DiagnosisResultView submitResult(SubmitDiagnosisCommand command) {
         validateCountry(command.countryId());
         DiagnosisInputValidator.validateDuplicateAnswers(command.answers());
+        DiagnosisInputValidator.validateAnswerCoverage(
+                command.answers(),
+                diagnosisQuestionRepository.findActiveByCountryId(command.countryId())
+        );
 
         List<Long> questionIds = command.answers()
                 .stream()
