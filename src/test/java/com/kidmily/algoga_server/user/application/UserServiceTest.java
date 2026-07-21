@@ -77,18 +77,34 @@ class UserServiceTest {
     }
 
     @Test
-    @DisplayName("탈퇴 전용 마커가 없으면 예외가 발생하고, 예약/환불 체크나 탈퇴 이벤트 발행까지 도달하지 않는다")
-    void withdraw_notVerified_throwsAndStopsEarly() {
+    @DisplayName("탈퇴 전용 마커가 없으면 예외가 발생한다 (예약/환불 체크는 이메일 인증보다 먼저 통과한 뒤라 이미 실행된 상태)")
+    void withdraw_notVerified_throwsAfterBookingRefundChecksPass() {
         User user = activeUser();
         when(userRepository.findByEmail(EMAIL)).thenReturn(Optional.of(user));
+        when(bookingQueryUseCase.hasActiveBooking(1L)).thenReturn(false);
+        when(refundQueryUseCase.hasActiveRefund(1L)).thenReturn(false);
         doThrow(new AuthException(AuthErrorCode.EMAIL_NOT_VERIFIED))
                 .when(emailVerificationHelper).assertVerified(EMAIL, RedisKeys.MYPAGE_AUTH_SUCCESS_WITHDRAW_PREFIX);
 
         assertThrows(AuthException.class, () -> userService.withdraw(EMAIL));
 
-        verify(bookingQueryUseCase, never()).hasActiveBooking(anyLong());
-        verify(refundQueryUseCase, never()).hasActiveRefund(anyLong());
+        // 예약/환불에 걸리지 않는 사용자라면, 인증 실패 여부와 무관하게 이 체크들은 이미 실행됨
+        verify(bookingQueryUseCase).hasActiveBooking(1L);
+        verify(refundQueryUseCase).hasActiveRefund(1L);
         verifyNoInteractions(eventPublisher);
+    }
+
+    @Test
+    @DisplayName("진행 중인 예약이 있으면 이메일 인증 여부와 무관하게 즉시 거부된다 (인증 절차를 먼저 거치게 하지 않기 위함)")
+    void withdraw_activeBooking_rejectsBeforeCheckingEmailVerification() {
+        User user = activeUser();
+        when(userRepository.findByEmail(EMAIL)).thenReturn(Optional.of(user));
+        when(bookingQueryUseCase.hasActiveBooking(1L)).thenReturn(true);
+
+        assertThrows(UserException.class, () -> userService.withdraw(EMAIL));
+
+        // 예약이 있다는 이유로 바로 막히므로, 이메일 인증 체크까지 갈 필요조차 없음
+        verifyNoInteractions(emailVerificationHelper);
     }
 
     @Test
@@ -111,15 +127,16 @@ class UserServiceTest {
     }
 
     @Test
-    @DisplayName("진행 중인 예약이 있으면 인증을 통과해도 탈퇴가 거부된다")
-    void withdraw_activeBooking_throws() {
+    @DisplayName("진행 중인 환불이 있으면 (예약은 없어도) 탈퇴가 거부된다")
+    void withdraw_activeRefund_throws() {
         User user = activeUser();
         when(userRepository.findByEmail(EMAIL)).thenReturn(Optional.of(user));
-        when(bookingQueryUseCase.hasActiveBooking(1L)).thenReturn(true);
+        when(bookingQueryUseCase.hasActiveBooking(1L)).thenReturn(false);
+        when(refundQueryUseCase.hasActiveRefund(1L)).thenReturn(true);
 
         assertThrows(UserException.class, () -> userService.withdraw(EMAIL));
 
-        verify(refundQueryUseCase, never()).hasActiveRefund(anyLong());
+        verifyNoInteractions(emailVerificationHelper);
     }
 
     @Test

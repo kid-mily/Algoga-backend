@@ -185,16 +185,18 @@ public class UserService {
             throw new UserException(UserErrorCode.DELETED_USER);
         }
 
+        // 진행 중인 예약/환불 여부를 이메일 인증보다 먼저 확인한다.
+        // (순서가 반대였을 때는 탈퇴가 애초에 불가능한 사용자도 인증 절차부터 다 거친 뒤에야
+        //  예약/환불 때문에 막힌다는 걸 알게 되는 불필요한 흐름이었음)
+        if (bookingQueryUseCase.hasActiveBooking(user.getId())) {
+            throw new UserException(UserErrorCode.ACTIVE_BOOKING_EXISTS);
+        }
+        if (refundQueryUseCase.hasActiveRefund(user.getId())) {
+            throw new UserException(UserErrorCode.ACTIVE_REFUND_EXISTS);
+        }
+
         // 이메일 인증 완료 여부 확인 (회원탈퇴 전용 마커, 프로필/비밀번호 변경과 독립적으로 소비)
         emailVerificationHelper.assertVerified(email, RedisKeys.MYPAGE_AUTH_SUCCESS_WITHDRAW_PREFIX);
-
-        // 회원 탈퇴 할 때 예약/환불
-         if (bookingQueryUseCase.hasActiveBooking(user.getId())) {
-         throw new UserException(UserErrorCode.ACTIVE_BOOKING_EXISTS);
-         }
-         if (refundQueryUseCase.hasActiveRefund(user.getId())) {
-         throw new UserException(UserErrorCode.ACTIVE_REFUND_EXISTS);
-         }
 
         // 유저 엔티티 Soft Delete 처리 (탈퇴 상태, 날짜 기록, 이메일 랜덤 변경)
         user.withdraw();
