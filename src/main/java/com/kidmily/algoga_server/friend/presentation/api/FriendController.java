@@ -4,10 +4,9 @@ import com.kidmily.algoga_server.friend.application.command.CreateFriendCommand;
 import com.kidmily.algoga_server.friend.application.usecase.FriendCommandUseCase;
 import com.kidmily.algoga_server.friend.application.usecase.FriendQueryUseCase;
 import com.kidmily.algoga_server.friend.application.usecase.FriendQueryUseCase.FriendView;
-import com.kidmily.algoga_server.friend.exception.FriendErrorCode;
-import com.kidmily.algoga_server.friend.exception.FriendException;
 import com.kidmily.algoga_server.friend.presentation.api.request.CreateFriendRequest;
 import com.kidmily.algoga_server.friend.presentation.api.response.FriendResponse;
+import com.kidmily.algoga_server.friend.presentation.support.CurrentUserIdResolver;
 import com.kidmily.algoga_server.global.common.api.response.ApiResponse;
 import com.kidmily.algoga_server.user.settings.CustomUserDetails;
 import io.swagger.v3.oas.annotations.Operation;
@@ -31,9 +30,9 @@ public class FriendController {
     @Operation(summary = "내 친구 목록 정렬 조회", description = "닉네임 순으로 정렬된 친구 목록을 조회합니다.")
     @GetMapping("/friends")
     public ApiResponse<List<FriendResponse>> getFriends(@AuthenticationPrincipal CustomUserDetails user) {
-        if (user == null) throw new FriendException(FriendErrorCode.USER_NOT_FOUND);
+        Long myId = CurrentUserIdResolver.resolveLoginRequired(user);
 
-        List<FriendView> views = queryUseCase.getFriends(user.getUser().getId());
+        List<FriendView> views = queryUseCase.getFriends(myId);
         List<FriendResponse> response = views.stream().map(FriendResponse::from).collect(Collectors.toList());
 
         return ApiResponse.success("FRIEND_LIST_SUCCESS", "친구 목록을 조회했습니다.", response);
@@ -42,9 +41,9 @@ public class FriendController {
     @Operation(summary = "받은 친구 요청 목록 조회", description = "나에게 들어온 친구 요청을 조회합니다.")
     @GetMapping("/friends/requests/received")
     public ApiResponse<List<FriendResponse>> getReceivedRequests(@AuthenticationPrincipal CustomUserDetails user) {
-        if (user == null) throw new FriendException(FriendErrorCode.USER_NOT_FOUND);
+        Long myId = CurrentUserIdResolver.resolveLoginRequired(user);
 
-        List<FriendView> views = queryUseCase.getReceivedRequests(user.getUser().getId());
+        List<FriendView> views = queryUseCase.getReceivedRequests(myId);
         List<FriendResponse> response = views.stream().map(FriendResponse::from).collect(Collectors.toList());
 
         return ApiResponse.success("FRIEND_REQUEST_LIST_SUCCESS", "받은 요청 목록을 조회했습니다.", response);
@@ -53,9 +52,9 @@ public class FriendController {
     @Operation(summary = "내가 차단한 유저 목록 조회", description = "내가 차단한 유저 목록을 조회합니다.")
     @GetMapping("/friends/blocks")
     public ApiResponse<List<FriendResponse>> getBlockedUsers(@AuthenticationPrincipal CustomUserDetails user) {
-        if (user == null) throw new FriendException(FriendErrorCode.USER_NOT_FOUND);
+        Long myId = CurrentUserIdResolver.resolveLoginRequired(user);
 
-        List<FriendView> views = queryUseCase.getBlockedUsers(user.getUser().getId());
+        List<FriendView> views = queryUseCase.getBlockedUsers(myId);
         List<FriendResponse> response = views.stream().map(FriendResponse::from).collect(Collectors.toList());
 
         return ApiResponse.success("FRIEND_BLOCK_LIST_SUCCESS", "차단한 유저 목록을 조회했습니다.", response);
@@ -67,9 +66,9 @@ public class FriendController {
             @AuthenticationPrincipal CustomUserDetails userDetails,
             @RequestParam String code) {
 
-        if (userDetails == null) throw new FriendException(FriendErrorCode.USER_NOT_FOUND);
+        Long myId = CurrentUserIdResolver.resolveLoginRequired(userDetails);
 
-        FriendView view = queryUseCase.searchUserByCode(userDetails.getUser().getId(), code);
+        FriendView view = queryUseCase.searchUserByCode(myId, code);
         return ApiResponse.success("USER_SEARCH_SUCCESS", "유저를 검색했습니다.", FriendResponse.from(view));
     }
 
@@ -79,12 +78,9 @@ public class FriendController {
             @AuthenticationPrincipal CustomUserDetails userDetails,
             @RequestBody CreateFriendRequest request) {
 
-        if (userDetails == null) throw new FriendException(FriendErrorCode.USER_NOT_FOUND);
+        Long myId = CurrentUserIdResolver.resolveLoginRequired(userDetails);
 
-        CreateFriendCommand command = new CreateFriendCommand(
-                userDetails.getUser().getId(),
-                request.targetUserCode()
-        );
+        CreateFriendCommand command = new CreateFriendCommand(myId, request.targetUserCode());
         commandUseCase.sendFriendRequest(command);
 
         return ApiResponse.success("FRIEND_REQUEST_SUCCESS", "친구 요청을 보냈습니다.");
@@ -96,9 +92,9 @@ public class FriendController {
             @AuthenticationPrincipal CustomUserDetails user,
             @PathVariable("request_id") Long requestId) {
 
-        if (user == null) throw new FriendException(FriendErrorCode.USER_NOT_FOUND);
+        Long myId = CurrentUserIdResolver.resolveLoginRequired(user);
 
-        commandUseCase.acceptFriendRequest(user.getUser().getId(), requestId);
+        commandUseCase.acceptFriendRequest(myId, requestId);
         return ApiResponse.success("FRIEND_ACCEPT_SUCCESS", "친구 요청을 수락했습니다.");
     }
 
@@ -108,9 +104,9 @@ public class FriendController {
             @AuthenticationPrincipal CustomUserDetails user,
             @PathVariable("request_id") Long requestId) {
 
-        if (user == null) throw new FriendException(FriendErrorCode.USER_NOT_FOUND);
+        Long myId = CurrentUserIdResolver.resolveLoginRequired(user);
 
-        commandUseCase.rejectFriendRequest(user.getUser().getId(), requestId);
+        commandUseCase.rejectFriendRequest(myId, requestId);
         return ApiResponse.success("FRIEND_REJECT_SUCCESS", "친구 요청을 거절했습니다.");
     }
 
@@ -120,9 +116,9 @@ public class FriendController {
             @AuthenticationPrincipal CustomUserDetails userDetails,
             @PathVariable Long relationId) {
 
-        if (userDetails == null) throw new FriendException(FriendErrorCode.USER_NOT_FOUND);
+        Long myId = CurrentUserIdResolver.resolveLoginRequired(userDetails);
 
-        commandUseCase.deleteFriend(userDetails.getUser().getId(), relationId);
+        commandUseCase.deleteFriend(myId, relationId);
         return ApiResponse.success("FRIEND_DELETE_SUCCESS", "친구를 삭제했습니다.");
     }
 
@@ -132,9 +128,9 @@ public class FriendController {
             @AuthenticationPrincipal CustomUserDetails userDetails,
             @PathVariable Long relationId) {
 
-        if (userDetails == null) throw new FriendException(FriendErrorCode.USER_NOT_FOUND);
+        Long myId = CurrentUserIdResolver.resolveLoginRequired(userDetails);
 
-        commandUseCase.toggleFavorite(userDetails.getUser().getId(), relationId);
+        commandUseCase.toggleFavorite(myId, relationId);
         return ApiResponse.success("FRIEND_FAVORITE_TOGGLE_SUCCESS", "즐겨찾기 상태를 변경했습니다.");
     }
 
@@ -144,12 +140,9 @@ public class FriendController {
             @AuthenticationPrincipal CustomUserDetails userDetails,
             @RequestBody CreateFriendRequest request) {
 
-        if (userDetails == null) throw new FriendException(FriendErrorCode.USER_NOT_FOUND);
+        Long myId = CurrentUserIdResolver.resolveLoginRequired(userDetails);
 
-        CreateFriendCommand command = new CreateFriendCommand(
-                userDetails.getUser().getId(),
-                request.targetUserCode()
-        );
+        CreateFriendCommand command = new CreateFriendCommand(myId, request.targetUserCode());
         commandUseCase.blockUser(command);
 
         return ApiResponse.success("USER_BLOCK_SUCCESS", "유저를 차단했습니다.");
@@ -161,9 +154,9 @@ public class FriendController {
             @AuthenticationPrincipal CustomUserDetails userDetails,
             @PathVariable String targetUserCode) {
 
-        if (userDetails == null) throw new FriendException(FriendErrorCode.USER_NOT_FOUND);
+        Long myId = CurrentUserIdResolver.resolveLoginRequired(userDetails);
 
-        commandUseCase.unblockUser(userDetails.getUser().getId(), targetUserCode);
+        commandUseCase.unblockUser(myId, targetUserCode);
         return ApiResponse.success("USER_UNBLOCK_SUCCESS", "차단을 해제했습니다.");
     }
 }

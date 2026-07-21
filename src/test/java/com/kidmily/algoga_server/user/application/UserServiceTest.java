@@ -71,9 +71,8 @@ class UserServiceTest {
                 .nickname("nick")
                 .socialType(SocialType.LOCAL)
                 .personalCode("ABC123")
-                // @Builder는 필드 초기화식(= false)을 안 타므로 명시적으로 세팅 안 하면 null이 되어
-                // AuthTokenResponse의 primitive boolean으로 언박싱될 때 NPE가 난다.
-                .requiresPasswordChange(false)
+                // requiresPasswordChange는 @Builder.Default로 false가 기본 적용된다.
+                // (혹시 그 어노테이션이 빠지면 null -> AuthTokenResponse의 primitive boolean 언박싱 시 NPE로 이 테스트가 잡아준다)
                 .build();
     }
 

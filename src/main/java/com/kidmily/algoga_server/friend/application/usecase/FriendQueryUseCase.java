@@ -8,6 +8,9 @@ public interface FriendQueryUseCase {
     List<FriendView> getBlockedUsers(Long myId);
     FriendView searchUserByCode(Long myId, String code);
 
+    // 친구 유저 ID 목록만 필요한 소비처용 (예: 온라인 상태 브로드캐스트) — 닉네임/프로필 등 부가 조회 없이 가볍게 반환
+    List<Long> getFriendUserIds(Long myId);
+
     // 관리자 페이지 리스트용 친구 수 카운트
     long countFriends(Long userId);
 

@@ -73,6 +73,7 @@ public class User {
 
     // 비밀번호 찾기해서 임시비번으로 로그인 하면 강제 비번 변경
     @Column(name = "requires_password_change")
+    @Builder.Default
     private Boolean requiresPasswordChange = false;
 
     // 개별 약관 동의 컬럼
