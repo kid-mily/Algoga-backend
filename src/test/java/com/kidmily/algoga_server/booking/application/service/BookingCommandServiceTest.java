@@ -58,7 +58,7 @@ class BookingCommandServiceTest {
 
     private CreateBookingCommand command(BookingSource source, Long courseId) {
         return new CreateBookingCommand(1L, 1L, "{}", null, null, 300_000,
-                LocalDate.of(2026, 8, 1), LocalDate.of(2026, 8, 3), source, null);
+                LocalDate.of(2026, 8, 1), LocalDate.of(2026, 8, 3), source, null, courseId);
     }
 
     private Accommodation accommodationMock() {
