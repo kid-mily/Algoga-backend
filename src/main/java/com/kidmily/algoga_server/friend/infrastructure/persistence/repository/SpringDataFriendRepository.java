@@ -27,6 +27,18 @@ public interface SpringDataFriendRepository extends JpaRepository<FriendJpaEntit
     @Query("SELECT f FROM FriendJpaEntity f WHERE f.requesterId = :requesterId AND f.status = :status")
     List<FriendJpaEntity> findByRequesterIdAndStatus(@Param("requesterId") Long requesterId, @Param("status") RelationStatus status);
 
+    @Query("SELECT f FROM FriendJpaEntity f WHERE f.status = 'ACCEPTED' AND (f.requesterId IN :userIds OR f.receiverId IN :userIds)")
+    List<FriendJpaEntity> findAcceptedFriendsAmong(@Param("userIds") List<Long> userIds);
+
+    @Query("SELECT COUNT(f) FROM FriendJpaEntity f WHERE f.receiverId = :receiverId AND f.status = 'REQUESTED'")
+    long countPendingRequests(@Param("receiverId") Long receiverId);
+
+    // favorite도 false로 같이 리셋: 기존 ACCEPTED(즐겨찾기 friend)를 차단하는 경우까지 고려해
+    // "ACCEPTED가 아니면 favorite는 항상 false"라는 불변식(FriendQueryService.buildFriendViews 참고)을 유지해야 함
+    @Modifying(clearAutomatically = true)
+    @Query("UPDATE FriendJpaEntity f SET f.requesterId = :blockerId, f.receiverId = :blockedId, f.status = 'BLOCKED', f.favorite = false WHERE f.id = :relationId")
+    void reassignAsBlocked(@Param("relationId") Long relationId, @Param("blockerId") Long blockerId, @Param("blockedId") Long blockedId);
+
     @Query("SELECT f FROM FriendJpaEntity f WHERE f.requesterId = :requesterId AND f.receiverId = :receiverId")
     Optional<FriendJpaEntity> findByRequesterIdAndReceiverId(@Param("requesterId") Long requesterId, @Param("receiverId") Long receiverId);
 

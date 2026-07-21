@@ -19,7 +19,8 @@ public enum FriendErrorCode implements BaseErrorCode {
     UNAUTHORIZED_ACTION(HttpStatus.FORBIDDEN, "FRIEND_009", "권한이 없습니다."),
     INVALID_STATUS(HttpStatus.BAD_REQUEST, "FRIEND_010", "유효하지 않은 상태입니다."),
     BLOCKED_BY_TARGET(HttpStatus.FORBIDDEN, "FRIEND_011", "상대방이 나를 차단하여 친구 요청을 보낼 수 없습니다."),
-    LOGIN_REQUIRED(HttpStatus.UNAUTHORIZED, "FRIEND_012", "로그인이 필요한 서비스입니다.");
+    LOGIN_REQUIRED(HttpStatus.UNAUTHORIZED, "FRIEND_012", "로그인이 필요한 서비스입니다."),
+    RECEIVED_REQUEST_LIMIT_EXCEEDED(HttpStatus.BAD_REQUEST, "FRIEND_013", "상대방이 받을 수 있는 친구 요청 개수를 초과하여 요청을 보낼 수 없습니다.");
 
     private final HttpStatus status;
     private final String code;

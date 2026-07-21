@@ -45,7 +45,9 @@ public class User {
     @Column(name = "social_type")
     private SocialType socialType;
 
-    @Column(name = "personal_code")
+    // 친구 검색/추가(findByPersonalCode)가 이 컬럼으로 유저를 찾으므로 인덱스가 반드시 필요함.
+    // 애플리케이션 레벨(generateUniquePersonalCode)에서 이미 유일성을 보장하고 있어 unique 제약도 함께 건다.
+    @Column(name = "personal_code", unique = true)
     private String personalCode;
 
     @Column(name = "login_fail_count")
