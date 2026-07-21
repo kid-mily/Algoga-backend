@@ -132,6 +132,11 @@ public class QuizService implements QuizUseCase {
         quizAccessPolicy.validateCourseExists(command.courseId());
         quizAccessPolicy.validateAllChaptersCompleted(command.userId(), command.courseId());
 
+        // 퀴즈는 1회만 응시 가능 - 재응시(재제출) 불가
+        if (quizSubmissionRepository.existsByUserIdAndCourseId(command.userId(), command.courseId())) {
+            throw new QuizException(QuizErrorCode.QUIZ_ALREADY_SUBMITTED);
+        }
+
         List<Quiz> quizzes = quizRepository.findByCourseId(command.courseId());
         if (quizzes.isEmpty()) {
             throw new QuizException(QuizErrorCode.QUIZ_NOT_FOUND);
