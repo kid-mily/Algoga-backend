@@ -56,7 +56,7 @@ class LectureToTripStatsServiceTest {
 
     private Booking bookingAt(Long userId, LocalDateTime createdAt) {
         return Booking.reconstitute(userId, 1L, userId, BookingStatus.FULL_PAID, 1_000_000, 300_000, 700_000,
-                "BK-" + userId, "{}", null, null, LocalDate.now().plusDays(30), LocalDate.now().plusDays(33), 3, false, createdAt, createdAt);
+                "BK-" + userId, "{}", null, null, LocalDate.now().plusDays(30), LocalDate.now().plusDays(33), 3, false, createdAt, createdAt, null);
     }
 
     @Test

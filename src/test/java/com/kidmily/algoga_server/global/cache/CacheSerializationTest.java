@@ -45,7 +45,7 @@ class CacheSerializationTest {
 
     private BookingResponse sample() {
         return new BookingResponse(
-                1L, 1L, 1L, BookingStatus.DEPOSIT_PAID,
+                1L, 1L, 3L, "케이프타운 5박 6일 패키지", 1L, BookingStatus.DEPOSIT_PAID,
                 770_000, 231_000, 539_000, "BK-20260719-12345",
                 "{\"airline\":\"대한항공\"}", null, null,
                 LocalDate.of(2026, 8, 15), LocalDate.of(2026, 8, 19), 4, true,

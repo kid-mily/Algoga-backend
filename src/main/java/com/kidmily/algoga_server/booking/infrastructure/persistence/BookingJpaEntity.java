@@ -23,6 +23,9 @@ public class BookingJpaEntity {
     @Column(name = "accommodation_id", nullable = false)
     private Long accommodationId;
 
+    @Column(name = "package_id")
+    private Long packageId;
+
     @Column(name = "user_id", nullable = false)
     private Long userId;
 
@@ -76,8 +79,9 @@ public class BookingJpaEntity {
                             String bookingNumber, String flightInfo, String returnFlightInfo,
                             String passengerInfo, LocalDate checkInDate, LocalDate checkOutDate,
                             int nights, boolean installmentAllowed,
-                            LocalDateTime createdAt, LocalDateTime updatedAt) {
+                            LocalDateTime createdAt, LocalDateTime updatedAt, Long packageId) {
         this.accommodationId = accommodationId;
+        this.packageId = packageId;
         this.userId = userId;
         this.status = status;
         this.totalPrice = totalPrice;

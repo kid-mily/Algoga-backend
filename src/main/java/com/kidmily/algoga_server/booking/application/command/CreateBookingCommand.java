@@ -14,6 +14,6 @@ public record CreateBookingCommand(
         LocalDate checkInDate,
         LocalDate checkOutDate,
         BookingSource bookingSource,
-        Long courseId
+        Long packageId
 ) {
 }

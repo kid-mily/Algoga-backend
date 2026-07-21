@@ -15,6 +15,13 @@ public record BookingResponse(
         @Schema(description = "숙소 ID", example = "1")
         Long accommodationId,
 
+        @Schema(description = "패키지 ID (패키지에서 예약한 경우). 직접 예약이면 null", example = "3")
+        Long packageId,
+
+        @Schema(description = "패키지명 (패키지에서 예약한 경우). 직접 예약이거나 패키지 삭제 시 null",
+                example = "케이프타운 5박 6일 패키지")
+        String packageName,
+
         @Schema(description = "유저 ID", example = "1")
         Long userId,
 

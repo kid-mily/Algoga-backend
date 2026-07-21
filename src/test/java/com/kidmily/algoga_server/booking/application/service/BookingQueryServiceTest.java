@@ -29,6 +29,7 @@ class BookingQueryServiceTest {
 
     @Mock private BookingRepository bookingRepository;
     @Mock private AccommodationRepository accommodationRepository;
+    @Mock private com.kidmily.algoga_server.packages.domain.repository.PackageRepository packageRepository;
 
     @InjectMocks
     private BookingQueryService bookingQueryService;
@@ -39,7 +40,7 @@ class BookingQueryServiceTest {
                 1_200_000, 360_000, 840_000,
                 "BK-20260706-0000" + id, "{}", null, null,
                 LocalDate.of(2026, 8, 1), LocalDate.of(2026, 8, 4), 3, false,
-                LocalDateTime.now(), LocalDateTime.now());
+                LocalDateTime.now(), LocalDateTime.now(), null);
     }
 
     private Accommodation accommodation(Long id, Long countryId) {

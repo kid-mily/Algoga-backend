@@ -63,7 +63,7 @@ class RefundStatsServiceTest {
     private Booking booking(Long id, BookingStatus status) {
         return Booking.reconstitute(id, 1L, 1L, status, 1_000_000, 300_000, 700_000,
                 "BK-" + id, "{}", null, null, LocalDate.now().plusDays(10), LocalDate.now().plusDays(13), 3, false,
-                LocalDateTime.now(), LocalDateTime.now());
+                LocalDateTime.now(), LocalDateTime.now(), null);
     }
 
     @Test
@@ -173,7 +173,7 @@ class RefundStatsServiceTest {
         return Booking.reconstitute(id, 1L, 1L, BookingStatus.REFUNDED, 1_000_000, 300_000, 700_000,
                 "BK-" + id, "{}", null, null,
                 LocalDate.now().plusDays(daysFromNow), LocalDate.now().plusDays(daysFromNow + 3), 3, false,
-                LocalDateTime.now(), LocalDateTime.now());
+                LocalDateTime.now(), LocalDateTime.now(), null);
     }
 
     private RefundRequest refundWithReason(Long bookingId, String reason, int amount) {

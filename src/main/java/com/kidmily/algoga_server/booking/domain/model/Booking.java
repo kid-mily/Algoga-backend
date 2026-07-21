@@ -13,6 +13,7 @@ public class Booking {
 
     private Long id;
     private Long accommodationId;
+    private Long packageId; // 이 예약이 생성된 패키지 ID (라운지 패키지에서 예약 시). 직접 예약이면 null
     private Long userId;
     private BookingStatus status;
     private int totalPrice;
@@ -33,9 +34,10 @@ public class Booking {
                                  int depositPrice, int balancePrice, String bookingNumber,
                                  String flightInfo, String returnFlightInfo, String passengerInfo,
                                  LocalDate checkInDate, LocalDate checkOutDate,
-                                 int nights, boolean installmentAllowed) {
+                                 int nights, boolean installmentAllowed, Long packageId) {
         Booking booking = new Booking();
         booking.accommodationId = accommodationId;
+        booking.packageId = packageId;
         booking.userId = userId;
         booking.status = BookingStatus.PENDING;
         booking.totalPrice = totalPrice;
@@ -61,10 +63,12 @@ public class Booking {
                                        String returnFlightInfo, String passengerInfo,
                                        LocalDate checkInDate, LocalDate checkOutDate,
                                        int nights, boolean installmentAllowed,
-                                       LocalDateTime createdAt, LocalDateTime updatedAt) {
+                                       LocalDateTime createdAt, LocalDateTime updatedAt,
+                                       Long packageId) {
         Booking booking = new Booking();
         booking.id = id;
         booking.accommodationId = accommodationId;
+        booking.packageId = packageId;
         booking.userId = userId;
         booking.status = status;
         booking.totalPrice = totalPrice;

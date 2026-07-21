@@ -109,7 +109,8 @@ public class BookingCommandService implements BookingCommandUseCase {
                 command.checkInDate(),
                 command.checkOutDate(),
                 nights,
-                installmentAllowed
+                installmentAllowed,
+                command.packageId()
         );
 
         Booking savedBooking = bookingRepository.save(booking);
