@@ -38,17 +38,20 @@ public class FriendCommandService implements FriendCommandUseCase {
             throw new FriendException(FriendErrorCode.CANNOT_ADD_SELF);
         }
 
-        Optional<FriendRelation> blockCheck = friendRepository.findByRequesterIdAndReceiverId(targetUser.getId(), myId);
-        if (blockCheck.isPresent() && blockCheck.get().getStatus() == RelationStatus.BLOCKED) {
-            throw new FriendException(FriendErrorCode.BLOCKED_BY_TARGET);
-        }
-
+        // findRelationBetween 하나로 양방향을 다 커버하므로, 차단 여부와 기존 관계 상태를 같은 조회 결과로 판별한다
+        // (예전엔 차단 체크용 조회를 따로 한 번 더 날려서 같은 쌍을 두 번 조회했음)
         Optional<FriendRelation> existingRelation = friendRepository.findRelationBetween(myId, targetUser.getId());
         if (existingRelation.isPresent()) {
-            RelationStatus status = existingRelation.get().getStatus();
+            FriendRelation relation = existingRelation.get();
+            RelationStatus status = relation.getStatus();
+            if (status == RelationStatus.BLOCKED) {
+                if (relation.getRequesterId().equals(targetUser.getId())) {
+                    throw new FriendException(FriendErrorCode.BLOCKED_BY_TARGET); // 상대가 나를 차단
+                }
+                throw new FriendException(FriendErrorCode.ALREADY_BLOCKED); // 내가 상대를 차단
+            }
             if (status == RelationStatus.ACCEPTED) throw new FriendException(FriendErrorCode.ALREADY_FRIEND);
             if (status == RelationStatus.REQUESTED) throw new FriendException(FriendErrorCode.ALREADY_REQUESTED);
-            if (status == RelationStatus.BLOCKED) throw new FriendException(FriendErrorCode.ALREADY_BLOCKED);
         }
 
         // 친구를 요청하기 직전에 내 친구가 100명인지 DB에 count를 날려 확인

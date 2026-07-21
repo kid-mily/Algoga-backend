@@ -1,7 +1,6 @@
 package com.kidmily.algoga_server.global.websocket;
 
-import com.kidmily.algoga_server.friend.domain.model.FriendRelation;
-import com.kidmily.algoga_server.friend.domain.repository.FriendRepository;
+import com.kidmily.algoga_server.friend.application.usecase.FriendQueryUseCase;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.event.EventListener;
@@ -12,7 +11,6 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.socket.messaging.SessionConnectEvent;
 import org.springframework.web.socket.messaging.SessionDisconnectEvent;
 
-import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 // 기존 /ws/chat(STOMP) 연결을 그대로 이용해서, 접속/해제 시점에 Redis에 온라인 상태를 기록/삭제하고
@@ -25,7 +23,7 @@ public class PresenceEventListener {
     private static final String ONLINE_KEY_PREFIX = "ONLINE:";
 
     private final RedisTemplate<String, String> redisTemplate;
-    private final FriendRepository friendRepository;
+    private final FriendQueryUseCase friendQueryUseCase;
     private final SimpMessagingTemplate messagingTemplate;
 
     @EventListener
@@ -51,19 +49,14 @@ public class PresenceEventListener {
         broadcastToFriends(userId, false);
     }
 
-    // 🌟 폴링 없이 실시간 반영: 이 사람의 친구들한테 개인 채널로 온라인/오프라인 변경을 바로 push
+    // 폴링 없이 실시간 반영: 이 사람의 친구들한테 개인 채널로 온라인/오프라인 변경을 바로 push
     private void broadcastToFriends(Long userId, boolean online) {
-        List<FriendRelation> relations = friendRepository.findAcceptedFriends(userId);
-
-        relations.stream()
-                .map(relation -> relation.getRequesterId().equals(userId) ? relation.getReceiverId() : relation.getRequesterId())
-                .distinct()
-                .forEach(friendId ->
-                        messagingTemplate.convertAndSend(
-                                "/topic/users/" + friendId + "/presence",
-                                new PresenceEvent(userId, online)
-                        )
-                );
+        friendQueryUseCase.getFriendUserIds(userId).forEach(friendId ->
+                messagingTemplate.convertAndSend(
+                        "/topic/users/" + friendId + "/presence",
+                        new PresenceEvent(userId, online)
+                )
+        );
     }
 
     private Long extractUserId(SimpMessageHeaderAccessor accessor) {

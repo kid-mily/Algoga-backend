@@ -62,6 +62,14 @@ public class FriendQueryService implements FriendQueryUseCase {
     }
 
     @Override
+    public List<Long> getFriendUserIds(Long myId) {
+        return friendRepository.findAcceptedFriends(myId).stream()
+                .map(rel -> rel.getRequesterId().equals(myId) ? rel.getReceiverId() : rel.getRequesterId())
+                .distinct()
+                .toList();
+    }
+
+    @Override
     public List<FriendView> getFriends(Long myId) {
         // 1. 수락된 친구 관계 목록 가져오기 (쿼리 1번)
         List<FriendRelation> relations = friendRepository.findAcceptedFriends(myId);
@@ -82,13 +90,17 @@ public class FriendQueryService implements FriendQueryUseCase {
         // 3-1. 온라인 상태도 배치로 한 번에 조회
         Set<Long> onlineUserIds = findOnlineUserIds(friendIds);
 
+        // 3-2. relationId/즐겨찾기 조회용 맵 (friend별로 매번 relations를 선형 스캔하지 않도록)
+        Map<Long, FriendRelation> relationByFriendId = relations.stream()
+                .collect(Collectors.toMap(
+                        rel -> rel.getRequesterId().equals(myId) ? rel.getReceiverId() : rel.getRequesterId(),
+                        rel -> rel
+                ));
+
         // 4. 조립 및 정렬
         return friends.stream()
                 .map(friend -> {
-                    // relationId/즐겨찾기 여부가 필요하므로 relations 리스트에서 매칭시킴
-                    FriendRelation relation = relations.stream()
-                            .filter(r -> r.getRequesterId().equals(friend.getId()) || r.getReceiverId().equals(friend.getId()))
-                            .findFirst().get();
+                    FriendRelation relation = relationByFriendId.get(friend.getId());
                     return new FriendView(
                             relation.getId(),
                             friend.getId(),
