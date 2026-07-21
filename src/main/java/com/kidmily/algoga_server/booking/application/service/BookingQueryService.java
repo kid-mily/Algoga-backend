@@ -10,6 +10,8 @@ import com.kidmily.algoga_server.booking.exception.BookingErrorCode;
 import com.kidmily.algoga_server.booking.presentation.api.response.BookingResponse;
 import com.kidmily.algoga_server.booking.settings.cache.BookingCacheType;
 import com.kidmily.algoga_server.global.exception.BusinessException;
+import com.kidmily.algoga_server.packages.domain.model.TravelPackage;
+import com.kidmily.algoga_server.packages.domain.repository.PackageRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.Cacheable;
@@ -28,6 +30,7 @@ public class BookingQueryService implements BookingQueryUseCase {
 
     private final BookingRepository bookingRepository;
     private final AccommodationRepository accommodationRepository;
+    private final PackageRepository packageRepository;
 
     @Override
     public BookingResponse getBooking(Long bookingId) {
@@ -78,9 +81,16 @@ public class BookingQueryService implements BookingQueryUseCase {
     }
 
     private BookingResponse toResponse(Booking booking) {
+        // 패키지에서 예약한 건이면 패키지명을 채운다. 삭제됐거나 직접 예약이면 null.
+        String packageName = booking.getPackageId() == null ? null
+                : packageRepository.findById(booking.getPackageId())
+                        .map(TravelPackage::getName)
+                        .orElse(null);
         return new BookingResponse(
                 booking.getId(),
                 booking.getAccommodationId(),
+                booking.getPackageId(),
+                packageName,
                 booking.getUserId(),
                 booking.getStatus(),
                 booking.getTotalPrice(),

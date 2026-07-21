@@ -26,7 +26,8 @@ public class BookingMapper {
                 booking.getNights(),
                 booking.isInstallmentAllowed(),
                 booking.getCreatedAt(),
-                booking.getUpdatedAt()
+                booking.getUpdatedAt(),
+                booking.getPackageId()
         );
     }
 
@@ -49,7 +50,8 @@ public class BookingMapper {
                 // installment_allowed=NULL(과거 예약)은 분할 허용(true)으로 간주. false만 명시적 일시불 전용.
                 !Boolean.FALSE.equals(entity.getInstallmentAllowed()),
                 entity.getCreatedAt(),
-                entity.getUpdatedAt()
+                entity.getUpdatedAt(),
+                entity.getPackageId()
         );
     }
 }

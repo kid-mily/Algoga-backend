@@ -54,7 +54,7 @@ class BookingCommandServiceTest {
 
     private CreateBookingCommand command(BookingSource source) {
         return new CreateBookingCommand(1L, 1L, "{}", null, null, 300_000,
-                LocalDate.of(2026, 8, 1), LocalDate.of(2026, 8, 3), source);
+                LocalDate.of(2026, 8, 1), LocalDate.of(2026, 8, 3), source, null);
     }
 
     private Accommodation accommodationMock() {
@@ -104,7 +104,7 @@ class BookingCommandServiceTest {
         Booking booking = Booking.reconstitute(
                 1L, 1L, 1L, BookingStatus.PENDING,
                 100000, 50000, 50000,
-                "BK-001", null, null, null, null, null, 3, false, null, null
+                "BK-001", null, null, null, null, null, 3, false, null, null, null
         );
         when(bookingRepository.findById(1L)).thenReturn(Optional.of(booking));
 
