@@ -51,6 +51,7 @@ public class GlobalJwtAuthenticationFilter extends OncePerRequestFilter {
             "/api/v1/auth/find-id",
             "/api/v1/auth/find-password",
             "/api/v1/auth/username/check",
+            "/api/v1/auth/phone/check",
             "/api/v1/auth/email/send-code",
             "/api/v1/auth/email/verify-code"
     );

@@ -165,6 +165,13 @@ public class AuthService implements SocialLoginProcessor {
         return !userRepository.existsByUsername(username);
     }
 
+    // 전화번호 중복 확인 로직 (회원가입 1단계에서 실시간 확인용)
+    // 정규화 없이 문자열 그대로 비교한다 -> 가입 시 저장되는 형식과 100% 동일한 기준으로 검사되도록 함
+    @Transactional(readOnly = true)
+    public boolean isPhoneAvailable(String phone) {
+        return !userRepository.existsByPhone(phone);
+    }
+
     // 4. 일반 로그인 (로그인 병목 최적화 적용 (트랜잭션 분리))
     public AuthTokenResponse login(AuthLoginRequest request) {
         // [1] DB 조회 (별도 트랜잭션 호출)
