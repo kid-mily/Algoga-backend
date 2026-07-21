@@ -84,6 +84,33 @@ public class AuthController {
         }
     }
 
+    // 전화번호 중복 확인 API
+    @Operation(summary = "전화번호 중복 확인", description = "회원가입 시 전화번호가 사용 가능한지 확인합니다. 가입 시 저장되는 형식과 동일하게(하이픈 포함 여부 그대로) 비교합니다.")
+    @io.swagger.v3.oas.annotations.responses.ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "200",
+                    description = "정상 처리 (data가 true면 사용 가능, false면 이미 사용 중인 중복 전화번호)"
+            )
+    })
+    @GetMapping("/phone/check")
+    public ApiResponse<Boolean> checkPhone(@RequestParam("phone") String phone) {
+        boolean isAvailable = authService.isPhoneAvailable(phone);
+
+        if (isAvailable) {
+            return ApiResponse.success(
+                    "SUCCESS",
+                    "사용 가능한 전화번호입니다.",
+                    true
+            );
+        } else {
+            return ApiResponse.success(
+                    "PHONE_DUPLICATED",
+                    "이미 사용 중인 전화번호입니다.",
+                    false
+            );
+        }
+    }
+
     // 일반 로그인 (토큰을 HttpOnly 쿠키로 세팅)
     @Operation(summary = "일반 로그인")
     @ApiErrorCodeExample(domain = UserErrorCode.class, value = {"NOT_FOUND_USER", "DELETED_USER", "ACCOUNT_LOCKED", "INVALID_PASSWORD"})
