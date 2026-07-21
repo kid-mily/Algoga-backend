@@ -45,8 +45,18 @@ public class BookingQueryService implements BookingQueryUseCase {
         log.info("[BookingQueryService] 내 예약 목록 조회 - userId: {}", userId);
         return bookingRepository.findByUserId(userId)
                 .stream()
+                .filter(this::isVisibleToUser)
                 .map(this::toResponse)
                 .toList();
+    }
+
+    /**
+     * 사용자 예약 목록에 노출할 예약인지.
+     * PENDING(예약만 생성되고 결제 안 한 채 이탈)은 결제 정보가 없어
+     * 환불 요청 시 "결제 정보를 찾을 수 없습니다" 로 이어지므로 목록에서 제외한다.
+     */
+    private boolean isVisibleToUser(Booking booking) {
+        return booking.getStatus() != BookingStatus.PENDING;
     }
 
     @Override
@@ -65,6 +75,7 @@ public class BookingQueryService implements BookingQueryUseCase {
 
         return bookingRepository.findByUserId(userId)
                 .stream()
+                .filter(this::isVisibleToUser)
                 .filter(booking -> accommodationIdsInCountry.contains(booking.getAccommodationId()))
                 .map(this::toResponse)
                 .toList();
