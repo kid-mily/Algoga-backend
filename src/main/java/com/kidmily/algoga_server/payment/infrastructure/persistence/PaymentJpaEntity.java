@@ -87,6 +87,22 @@ public class PaymentJpaEntity {
         this.createdAt = createdAt;
     }
 
+    /**
+     * id 를 포함해 복원하는 생성자.
+     * 기존(무 id) 생성자만 있으면 이미 저장된 결제를 save 할 때도 id 가 없어
+     * JPA 가 UPDATE 가 아니라 INSERT 를 시도 → idempotency_key UNIQUE 충돌로 실패한다.
+     * (예: 환불 완료 시 payment.markRefunded() 후 save 하면 500)
+     */
+    public PaymentJpaEntity(Long id, Long bookingId, Long courseId, Long userId, PaymentType paymentType,
+                            int amount, Integer usedMileage, Long usedCouponId,
+                            PaymentStatus status, String idempotencyKey,
+                            String portonePaymentId, String paymentMethod, String userName,
+                            LocalDateTime createdAt) {
+        this(bookingId, courseId, userId, paymentType, amount, usedMileage, usedCouponId,
+                status, idempotencyKey, portonePaymentId, paymentMethod, userName, createdAt);
+        this.id = id;
+    }
+
     public void updateStatus(PaymentStatus status, String portonePaymentId) {
         this.status = status;
         this.portonePaymentId = portonePaymentId;
