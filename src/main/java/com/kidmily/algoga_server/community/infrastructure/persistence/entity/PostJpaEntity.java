@@ -22,10 +22,6 @@ public class PostJpaEntity {
     @Column(name = "post_id")
     private Long postId;
 
-//    @ManyToOne(fetch = FetchType.LAZY)
-//    @JoinColumn(name = "user_id", nullable = false)
-//    private User user;
-
     @Column(name = "user_id")
     private Long authorId;
 

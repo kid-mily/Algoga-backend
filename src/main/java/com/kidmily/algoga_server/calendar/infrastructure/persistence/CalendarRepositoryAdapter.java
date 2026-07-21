@@ -43,13 +43,6 @@ public class CalendarRepositoryAdapter implements CalendarRepository {
     }
 
     @Override
-    public List<Calendar> findByType(CalendarType type) {
-        return springDataRepository.findByType(type)
-                .stream()
-                .map(calendarMapper::toDomain)
-                .toList();
-    }
-    @Override
     public Calendar update(Calendar calendar) {
         CalendarJpaEntity entity = springDataRepository.findById(calendar.getCalendarId())
                 .orElseThrow(() -> new RuntimeException("캘린더를 찾을 수 없습니다."));

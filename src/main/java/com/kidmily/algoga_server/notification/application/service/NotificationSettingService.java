@@ -5,8 +5,6 @@ import com.kidmily.algoga_server.notification.application.usecase.NotificationSe
 import com.kidmily.algoga_server.notification.application.usecase.NotificationSettingQueryUseCase;
 import com.kidmily.algoga_server.notification.domain.model.NotificationSetting;
 import com.kidmily.algoga_server.notification.domain.repository.NotificationSettingRepository;
-import com.kidmily.algoga_server.notification.presentation.api.request.UpdateNotificationSettingRequest;
-import com.kidmily.algoga_server.notification.presentation.api.response.NotificationSettingResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;

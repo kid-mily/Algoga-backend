@@ -54,7 +54,7 @@ public class FlightReminderMailService {
                 arrivalTime = node.path("arrivalTime").asText("알 수 없음");
             }
 
-            // 🌟 숙소 정보 조회
+            // 숙소 정보 조회
             Long accommodationId = calendarSchedulePolicy.resolveAccommodationId(bookingId);
             String accName = accommodationId != null
                     ? calendarSchedulePolicy.resolveAccommodationName(accommodationId) : null;

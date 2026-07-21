@@ -47,7 +47,7 @@ public class PostCommandService implements PostCommandUseCase {
                 command.freeTags() == null ? 0 : command.freeTags().size(),
                 command.images() == null ? 0 : command.images().size());
 
-// 🌟 1. 파일 리스트가 존재하면 S3(MinIO)에 차례대로 업로드하고 URL 리스트 생성
+//  1. 파일 리스트가 존재하면 S3(MinIO)에 차례대로 업로드하고 URL 리스트 생성
         List<String> imageUrls = new ArrayList<>();
         if (command.images() != null && !command.images().isEmpty()) {
             imageUrls = command.images().stream()
@@ -88,10 +88,10 @@ public class PostCommandService implements PostCommandUseCase {
         Post post = postRepository.findById(command.postId())
                 .orElseThrow(() -> new PostException(PostErrorCode.POST_NOT_FOUND));
 
-        // 🌟 1. 수정할 이미지 리스트의 기본값은 기존 게시글의 이미지 URL 리스트로 설정
+        //  1. 수정할 이미지 리스트의 기본값은 기존 게시글의 이미지 URL 리스트로 설정
         List<String> targetImageUrls = new ArrayList<>(post.getImageUrls());
 
-        // 🌟 2. 새 이미지 파일들이 업로드되어 들어왔다면 기존 S3 파일을 지우고 교체 작업 진행 (배너 방식 적용)
+        //  2. 새 이미지 파일들이 업로드되어 들어왔다면 기존 S3 파일을 지우고 교체 작업 진행 (배너 방식 적용)
         if (command.images() != null && !command.images().isEmpty()) {
             // 기존 S3 파일 전부 삭제
             post.getImageUrls().forEach(oldUrl ->

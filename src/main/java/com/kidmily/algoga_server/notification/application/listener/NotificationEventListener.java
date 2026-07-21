@@ -1,6 +1,5 @@
 package com.kidmily.algoga_server.notification.application.listener;
 
-import com.kidmily.algoga_server.calendar.application.port.AccommodationPort;
 import com.kidmily.algoga_server.global.event.UserWithdrawnEvent;
 import com.kidmily.algoga_server.notification.application.port.CoursePort;
 import com.kidmily.algoga_server.notification.domain.event.NotificationEvent;
@@ -15,7 +14,6 @@ import com.kidmily.algoga_server.refund.domain.event.RefundApprovedEvent;
 import com.kidmily.algoga_server.refund.domain.event.RefundRejectedEvent;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.context.event.EventListener;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Propagation;

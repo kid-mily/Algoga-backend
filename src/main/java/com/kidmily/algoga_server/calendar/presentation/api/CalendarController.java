@@ -2,7 +2,6 @@ package com.kidmily.algoga_server.calendar.presentation.api;
 
 import com.kidmily.algoga_server.calendar.application.usecase.CalendarQueryUseCase;
 import com.kidmily.algoga_server.calendar.exception.CalendarErrorCode;
-import com.kidmily.algoga_server.calendar.exception.CalendarException;
 import com.kidmily.algoga_server.calendar.presentation.api.response.CalendarResponse;
 import com.kidmily.algoga_server.global.annotation.swagger.ApiErrorCodeExample;
 import com.kidmily.algoga_server.global.common.api.response.ApiResponse;
