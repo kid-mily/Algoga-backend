@@ -13,6 +13,7 @@ public record CreateBookingCommand(
         int flightPrice,
         LocalDate checkInDate,
         LocalDate checkOutDate,
-        BookingSource bookingSource
+        BookingSource bookingSource,
+        Long courseId
 ) {
 }
