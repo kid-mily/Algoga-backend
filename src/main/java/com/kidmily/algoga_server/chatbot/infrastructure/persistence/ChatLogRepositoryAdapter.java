@@ -44,4 +44,11 @@ public class ChatLogRepositoryAdapter implements ChatLogRepository {
         return jpaChatLogRepository.searchForAdmin(isFiltered, from, toExclusive, keyword, pageable)
                 .map(chatLogMapper::toDomain);
     }
+
+    @Override
+    public List<ChatLog> searchAllForAdmin(Boolean isFiltered, Instant from, Instant toExclusive, String keyword) {
+        return jpaChatLogRepository.searchAllForAdmin(isFiltered, from, toExclusive, keyword).stream()
+                .map(chatLogMapper::toDomain)
+                .toList();
+    }
 }
