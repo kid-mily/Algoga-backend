@@ -171,6 +171,18 @@ export interface PurchasedTripResponse {
   bookingNumber: string;
 }
 
+/** 전체 패키지 선택지 — tripType=PACKAGE 용. 항공편 조회 없이 경량. */
+export interface SelectablePackageResponse {
+  packageId: number;        // ← recommend 의 packageId 로 그대로 사용
+  name: string;             // 패키지명
+  destination: string | null; // 국가명(조회 실패 시 null)
+  startDate: string;
+  endDate: string;
+  nights: number;
+  price: number;            // 등록된 패키지 기본가(원) — 표시용
+  imageUrl: string;
+}
+
 // ────────────────────────────────────────────────────────────
 // 3. HTTP 헬퍼
 // ────────────────────────────────────────────────────────────
@@ -239,6 +251,11 @@ export function recommendItinerary(req: RecommendItineraryRequest): Promise<Itin
 /** 내가 구매한(추천에 사용 가능한) 여행 목록. tripType=BOOKING 선택지. 취소/환불 예약 제외. */
 export function getPurchasedTrips(): Promise<PurchasedTripResponse[]> {
   return request<PurchasedTripResponse[]>("/itineraries/purchased-trips");
+}
+
+/** 전체 패키지 선택 목록. tripType=PACKAGE 선택지. 항공편 조회 없이 경량이라 빠름. */
+export function getSelectablePackages(): Promise<SelectablePackageResponse[]> {
+  return request<SelectablePackageResponse[]>("/itineraries/selectable-packages");
 }
 
 /** 내 일정 추천 이력(요약, 최신순). */

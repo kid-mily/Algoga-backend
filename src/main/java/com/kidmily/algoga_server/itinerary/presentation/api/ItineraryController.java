@@ -11,6 +11,7 @@ import com.kidmily.algoga_server.itinerary.presentation.api.request.RecommendIti
 import com.kidmily.algoga_server.itinerary.presentation.api.response.ItineraryResponse;
 import com.kidmily.algoga_server.itinerary.presentation.api.response.ItinerarySummaryResponse;
 import com.kidmily.algoga_server.itinerary.presentation.api.response.PurchasedTripResponse;
+import com.kidmily.algoga_server.itinerary.presentation.api.response.SelectablePackageResponse;
 import com.kidmily.algoga_server.user.settings.CustomUserDetails;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -71,6 +72,17 @@ public class ItineraryController {
                 .map(PurchasedTripResponse::from)
                 .toList();
         return ResponseEntity.ok(ApiResponse.success("PURCHASED_TRIPS_LOADED", "구매 여행 목록 조회 성공", list));
+    }
+
+    @GetMapping("/selectable-packages")
+    @Operation(summary = "전체 패키지 선택 목록",
+            description = "일정 추천(tripType=PACKAGE) 선택지용 전체 패키지 목록. "
+                    + "항공편 실시간 조회 없이 등록된 값만 내려주어 빠르며, 응답의 packageId 를 추천 요청에 그대로 전달합니다.")
+    public ResponseEntity<ApiResponse<List<SelectablePackageResponse>>> getSelectablePackages() {
+        List<SelectablePackageResponse> list = queryUseCase.getSelectablePackages().stream()
+                .map(SelectablePackageResponse::from)
+                .toList();
+        return ResponseEntity.ok(ApiResponse.success("SELECTABLE_PACKAGES_LOADED", "전체 패키지 선택 목록 조회 성공", list));
     }
 
     @GetMapping
