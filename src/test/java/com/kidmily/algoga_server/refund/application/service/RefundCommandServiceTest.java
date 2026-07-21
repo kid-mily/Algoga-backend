@@ -1,7 +1,9 @@
 package com.kidmily.algoga_server.refund.application.service;
 
 import com.kidmily.algoga_server.booking.domain.model.Booking;
+import com.kidmily.algoga_server.booking.domain.model.BookingStatus;
 import com.kidmily.algoga_server.booking.domain.repository.BookingRepository;
+import com.kidmily.algoga_server.refund.application.command.CreateRefundCommand;
 import com.kidmily.algoga_server.global.exception.BusinessException;
 import com.kidmily.algoga_server.payment.domain.model.Payment;
 import com.kidmily.algoga_server.payment.domain.repository.PaymentRepository;
@@ -19,6 +21,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.context.ApplicationEventPublisher;
 
+import java.time.LocalDate;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -101,47 +104,61 @@ class RefundCommandServiceTest {
     }
 
     @Test
-    @DisplayName("[회귀] 환불금액 0원이면 PortOne 취소를 호출하지 않는다")
-    void 환불금액_0원이면_PG_호출_생략() {
-        // 체크인 7일 미만은 환불 정책상 0원인데, 예전엔 그 0원을 그대로 PortOne에 넘겨
-        // 400 INVALID_REQUEST(cancelAmount > 0 위반)를 맞고 상태 전이까지 막혔다.
-        RefundRequest refund = mock(RefundRequest.class);
-        when(refund.getStatus()).thenReturn(RefundStatus.APPROVED);
-        when(refund.getPaymentId()).thenReturn(10L);
-        when(refund.getAmount()).thenReturn(0);
-        when(refund.getBookingId()).thenReturn(100L);
-        when(refundRepository.findById(1L)).thenReturn(Optional.of(refund));
+    @DisplayName("[회귀] FULL_PAID 예약에 환불 요청 시 CANCEL_REQUESTED로 전환하고 환불건을 생성한다")
+    void 결제완료_예약_환불요청_시_자동취소() {
+        // 고객 화면엔 '환불 요청' 버튼 하나뿐이라 별도 취소 없이 바로 요청한다.
+        // 예전엔 CANCEL_REQUESTED가 아니면 거부해서 CS 목록에 아무것도 안 떴다.
+        Booking booking = mock(Booking.class);
+        when(booking.getStatus()).thenReturn(BookingStatus.FULL_PAID);
+        when(bookingRepository.findById(1L)).thenReturn(Optional.of(booking));
+        when(booking.getCheckInDate()).thenReturn(LocalDate.now().plusDays(30)); // 14일 이상 → 100% 환불
 
+        when(refundRepository.existsByBookingId(1L)).thenReturn(false);
         Payment payment = mock(Payment.class);
+        when(payment.getAmount()).thenReturn(920_000);
         when(paymentRepository.findById(10L)).thenReturn(Optional.of(payment));
-        when(bookingRepository.findById(100L)).thenReturn(Optional.of(mock(Booking.class)));
+        when(refundRepository.save(any())).thenAnswer(inv -> {
+            RefundRequest r = inv.getArgument(0);
+            return r;
+        });
 
-        refundCommandService.complete(1L);
+        refundCommandService.handle(new CreateRefundCommand(1L, 10L, 5L, "고객 변심"));
 
-        verifyNoInteractions(portOneClient);
-        verify(refund).complete();
+        // 예약이 취소 상태로 전환되고, 환불건이 저장됐는지 검증
+        verify(bookingRepository).updateStatus(1L, BookingStatus.CANCEL_REQUESTED);
+        verify(refundRepository).save(any(RefundRequest.class));
     }
 
     @Test
-    @DisplayName("환불금액이 0보다 크면 PortOne 취소를 호출한다")
-    void 환불금액_있으면_PG_호출() {
-        RefundRequest refund = mock(RefundRequest.class);
-        when(refund.getStatus()).thenReturn(RefundStatus.APPROVED);
-        when(refund.getPaymentId()).thenReturn(10L);
-        when(refund.getAmount()).thenReturn(920_000);
-        when(refund.getReason()).thenReturn("고객 변심");
-        when(refund.getBookingId()).thenReturn(100L);
-        when(refundRepository.findById(1L)).thenReturn(Optional.of(refund));
+    @DisplayName("이미 CANCEL_REQUESTED 인 예약은 상태 전환 없이 환불건만 생성한다")
+    void 이미_취소요청_예약은_전환없이_환불생성() {
+        Booking booking = mock(Booking.class);
+        when(booking.getStatus()).thenReturn(BookingStatus.CANCEL_REQUESTED);
+        when(bookingRepository.findById(1L)).thenReturn(Optional.of(booking));
+        when(booking.getCheckInDate()).thenReturn(LocalDate.now().plusDays(30));
 
+        when(refundRepository.existsByBookingId(1L)).thenReturn(false);
         Payment payment = mock(Payment.class);
-        when(payment.getPortonePaymentId()).thenReturn("portone-real-1");
+        when(payment.getAmount()).thenReturn(920_000);
         when(paymentRepository.findById(10L)).thenReturn(Optional.of(payment));
-        when(bookingRepository.findById(100L)).thenReturn(Optional.of(mock(Booking.class)));
+        when(refundRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
-        refundCommandService.complete(1L);
+        refundCommandService.handle(new CreateRefundCommand(1L, 10L, 5L, "고객 변심"));
 
-        verify(portOneClient).cancelPayment("portone-real-1", 920_000, "고객 변심");
-        verify(refund).complete();
+        verify(bookingRepository, never()).updateStatus(anyLong(), any());
+        verify(refundRepository).save(any(RefundRequest.class));
+    }
+
+    @Test
+    @DisplayName("PENDING(미결제) 예약은 환불 요청이 거부된다")
+    void 미결제_예약_환불요청_거부() {
+        Booking booking = mock(Booking.class);
+        when(booking.getStatus()).thenReturn(BookingStatus.PENDING);
+        when(bookingRepository.findById(1L)).thenReturn(Optional.of(booking));
+
+        assertThrows(BusinessException.class, () ->
+                refundCommandService.handle(new CreateRefundCommand(1L, 10L, 5L, "고객 변심")));
+        verify(refundRepository, never()).save(any());
     }
 
     @Test

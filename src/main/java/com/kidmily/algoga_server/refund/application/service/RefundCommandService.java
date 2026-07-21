@@ -58,8 +58,18 @@ public class RefundCommandService implements RefundCommandUseCase {
                     return new BusinessException(RefundErrorCode.BOOKING_NOT_FOUND);
                 });
 
-        if (booking.getStatus() != BookingStatus.CANCEL_REQUESTED) {
-            log.warn("[RefundCommandService] 취소 상태가 아닌 예약 - status: {}", booking.getStatus());
+        // 고객 마이페이지에는 '환불 요청' 버튼 하나뿐이라, 별도 취소 절차 없이 바로 환불을 요청한다.
+        // 따라서 결제 완료 상태(DEPOSIT_PAID/FULL_PAID)면 여기서 취소 상태로 전환한 뒤 환불 요청을 만든다.
+        // (예전엔 CANCEL_REQUESTED가 아니면 무조건 거부해서, 결제 직후 환불 요청이 BOOKING_NOT_CANCELLED로
+        //  튕기고 CS 목록에 아무것도 안 뜨는 문제가 있었다.)
+        BookingStatus status = booking.getStatus();
+        if (status == BookingStatus.DEPOSIT_PAID || status == BookingStatus.FULL_PAID) {
+            bookingRepository.updateStatus(command.bookingId(), BookingStatus.CANCEL_REQUESTED);
+            log.info("[RefundCommandService] 환불 요청에 따라 예약 취소 상태로 전환 - bookingId: {}, {} -> CANCEL_REQUESTED",
+                    command.bookingId(), status);
+        } else if (status != BookingStatus.CANCEL_REQUESTED) {
+            // PENDING(미결제) / REFUNDED(이미 환불) 등은 환불 요청 대상이 아니다
+            log.warn("[RefundCommandService] 환불 요청 불가 상태 - status: {}", status);
             throw new BusinessException(RefundErrorCode.BOOKING_NOT_CANCELLED);
         }
 
