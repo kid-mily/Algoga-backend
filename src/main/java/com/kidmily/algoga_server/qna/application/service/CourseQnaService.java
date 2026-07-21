@@ -149,7 +149,7 @@ public class CourseQnaService implements CourseQnaUseCase {
         CourseQnaComment parentComment = courseQnaCommentRepository.findByIdAndQnaId(parentCommentId, qnaId)
                 .orElseThrow(() -> new QnaException(QnaErrorCode.QNA_COMMENT_NOT_FOUND));
 
-        if (parentComment.getParentCommentId() != null) {
+        if (parentComment.isDeleted() || parentComment.getParentCommentId() != null) {
             throw new QnaException(QnaErrorCode.QNA_COMMENT_NOT_FOUND);
         }
     }

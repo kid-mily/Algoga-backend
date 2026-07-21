@@ -18,7 +18,8 @@ public enum QuizErrorCode implements BaseErrorCode {
     QUIZ_NOT_SUBMITTED(HttpStatus.BAD_REQUEST, "LMS_018", "퀴즈 제출 내역을 찾을 수 없습니다."),
     NOT_ENROLLED(HttpStatus.FORBIDDEN, "LMS_035", "수강 등록된 강의가 아닙니다."),
     LOGIN_REQUIRED(HttpStatus.UNAUTHORIZED, "LMS_041", "로그인이 필요한 서비스입니다."),
-    QUIZ_LIMIT_EXCEEDED(HttpStatus.BAD_REQUEST, "LMS_043", "퀴즈는 최대 5개까지만 등록할 수 있습니다.");
+    QUIZ_LIMIT_EXCEEDED(HttpStatus.BAD_REQUEST, "LMS_043", "퀴즈는 최대 5개까지만 등록할 수 있습니다."),
+    QUIZ_ALREADY_SUBMITTED(HttpStatus.CONFLICT, "LMS_044", "이미 제출한 퀴즈입니다. 재응시는 불가능합니다.");
 
     private final HttpStatus status;
     private final String code;

@@ -27,7 +27,10 @@ public class CourseCompletionRepositoryAdapter implements CourseCompletionReposi
                 courseCompletion.getCompletedAt()
         );
 
-        CourseCompletionJpaEntity savedEntity = springDataCourseCompletionRepository.save(entity);
+        // GenerationType.IDENTITY라 save()만 해도 즉시 INSERT되지만, saveAndFlush()로 명시해서
+        // certificate_code/user+course unique 제약 위반이 호출자(CourseCompletionInsertTransactionExecutor의
+        // REQUIRES_NEW 트랜잭션) 안에서 확실히 터지도록 고정한다.
+        CourseCompletionJpaEntity savedEntity = springDataCourseCompletionRepository.saveAndFlush(entity);
 
         return toDomain(savedEntity);
     }

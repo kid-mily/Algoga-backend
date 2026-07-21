@@ -2,6 +2,7 @@ package com.kidmily.algoga_server.quiz.application.service;
 
 import com.kidmily.algoga_server.completion.application.service.CourseCompletionRegistrar;
 import com.kidmily.algoga_server.quiz.application.command.CreateQuizCommand;
+import com.kidmily.algoga_server.quiz.application.command.SubmitQuizCommand;
 import com.kidmily.algoga_server.quiz.application.policy.QuizAccessPolicy;
 import com.kidmily.algoga_server.quiz.domain.model.Quiz;
 import com.kidmily.algoga_server.quiz.domain.repository.QuizRepository;
@@ -15,6 +16,8 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+
+import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -103,5 +106,25 @@ class QuizServiceTest {
 
         // then
         verify(quizRepository).countByCourseId(courseId);
+    }
+
+    @Test
+    @DisplayName("이미 퀴즈를 제출한 유저가 재응시하면 QUIZ_ALREADY_SUBMITTED 예외가 발생하고 채점/저장되지 않는다")
+    void 퀴즈_재응시_시_거부() {
+        // given
+        Long userId = 1L;
+        Long courseId = 1L;
+        doNothing().when(quizAccessPolicy).validateEnrollment(userId, courseId);
+        doNothing().when(quizAccessPolicy).validateCourseExists(courseId);
+        doNothing().when(quizAccessPolicy).validateAllChaptersCompleted(userId, courseId);
+        when(quizSubmissionRepository.existsByUserIdAndCourseId(userId, courseId)).thenReturn(true);
+
+        SubmitQuizCommand command = new SubmitQuizCommand(userId, courseId, List.of());
+
+        // when & then
+        QuizException exception = assertThrows(QuizException.class, () -> quizService.submitQuiz(command));
+        assertEquals(QuizErrorCode.QUIZ_ALREADY_SUBMITTED, exception.getErrorCode());
+        verify(quizRepository, never()).findByCourseId(any());
+        verify(quizSubmissionRepository, never()).save(any());
     }
 }
