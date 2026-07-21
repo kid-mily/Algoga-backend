@@ -7,76 +7,45 @@
 
 ## Current Work
 
-- CourseService responsibility-split refactor completed on branch `refactor/lms-cleanup-architecture` and merged into `develop` (2026-07-13).
-- Goal: reduce CourseService size/coupling by extracting collaborators, and move Q&A ownership to the `qna` domain, while keeping API URLs, request fields, response fields, JSON structure, and error code values unchanged.
-- Relocated/dead code is currently kept as comments (history preservation); real deletion is planned as a final cleanup slice.
-- Second refactoring wave (post-merge, currently uncommitted): SRP decomposition of remaining large services + two convention fixes (#1 Certificate, #2 Chapter command). Same constraints (API/JSON/error codes unchanged; comment-do-not-delete).
+- Branch `fix/lms-domain-concurrency-and-validation-bugs` (off `develop`). Not committed yet.
+- Goal: fix a set of correctness bugs (validation gaps, concurrency races, a duplicate-submission policy gap) found via a code-review pass across the LMS-adjacent domains (`course`, `country`, `enrollment`, `learningprogress`, `quiz`, `completion`, `certificate`, `review`, `qna`, `diagnosis`), without changing any API URL/request/response/JSON contract.
+- The earlier `CourseService` responsibility-split refactor (2026-07-10 through 2026-07-14, tracked below under "Earlier completed work") is done and merged into `develop`; it is unrelated to the current branch.
+- A separate, already-merged branch (`fix/user-withdrawal-cascade`) added user-withdrawal cascade-delete listeners across these same domains plus `benefit`/`friend`/`chat` and fixed a mileage-expiration-at-checkout bug; not tracked in detail here since it's already merged.
 
-## Progress
+## Progress (current branch)
 
-- Done in previous slices:
-  - Course/Chapter core package split into `course`.
-  - Country/Map repository/model package split into `country`.
-  - Course application/presentation DTO package split into `course`.
-  - Course cache settings split into `course.settings.cache`.
-  - LearningProgress package split into `learningprogress`.
-  - Enrollment package split into `enrollment`.
-  - Quiz package split into `quiz`.
-  - Completion package split into `completion`.
-  - Certificate package split into `certificate`.
-  - Review package split into `review`.
-  - Q&A package split into `qna`.
-  - Diagnosis package split into `diagnosis`.
-  - Course statistics package split into `course.statistics`.
-  - My-course/classroom/student presentation/result package split into course.
-  - Map application/presentation package split into country.
-  - Course file/storage remnants split into course.
-  - Course usecase/command split into course.
-  - Course UserProfile port/adapter split into course.
-  - CourseService split into course.
-  - LMS residual Java package cleanup into `learning`, `course`, and `docs/http/learning`.
-  - Welcome coupon discount type changed from `RATE` to `PERCENT` for new signup coupons.
-- Done in CourseService responsibility-split slice (2026-07-13):
-  - File/thumbnail storage handling extracted to `CourseFileManager`.
-  - Pure progress calculations (completed count, progress rate, total duration) extracted to `CourseProgressCalculator`.
-  - Learning-progress DB/cache read and merge extracted to `CourseProgressReader`.
-  - Admin course-student result assembly extracted to `CourseStudentResultAssembler`.
-  - My-course result assembly extracted to `MyCourseResultAssembler`.
-  - Q&A use case moved to the `qna` domain: added `qna.application.usecase.CourseQnaUseCase` and `qna.application.service.CourseQnaService`; repointed `CourseQnaController` and `AdminCourseQnaController` from `CourseUseCase` to `CourseQnaUseCase`; removed Q&A methods from `CourseUseCase`/`CourseService`. Dependency direction is now `qna -> course` (course no longer depends on qna).
-  - Dead `LocalFileStorageManager` (superseded by S3) commented out.
-  - All moved/removed code is commented out (not deleted) with reason comments; API URLs/request/response/JSON/error codes unchanged.
-- Done in second wave (post-merge, uncommitted):
-  - `completeCourse` completion validators extracted to `course.application.policy.CourseCompletionPolicy`.
-  - `getCourseClassroom` assembly extracted to `course.application.service.CourseClassroomAssembler` (static; also reused by LearningProgressService).
-  - Quiz: access/existence validation to `quiz.application.policy.QuizAccessPolicy`; submission grading to `quiz.application.service.QuizGrader`; input validation to `quiz.application.service.QuizInputValidator`.
-  - Diagnosis: grading to `diagnosis.application.service.DiagnosisGrader`; input validation to `diagnosis.application.service.DiagnosisInputValidator`.
-  - Review: rating summary to `review.application.service.ReviewRatingSummaryCalculator`.
-  - LearningProgress: classroom assembly de-duplicated (reuses `CourseClassroomAssembler`); pure calc to `learningprogress.application.service.LearningProgressCalculator`.
-  - Shared completion registration unified into `completion.application.service.CourseCompletionRegistrar` (used by both `CourseService.completeCourse` and `QuizService.submitQuiz`).
-  - #1: `CertificateController` package corrected `completion.presentation.api` -> `certificate.presentation.api`; added `certificate.application.usecase.CertificateUseCase` (implemented by `CertificatePdfService`); controller injects the use case.
-  - #2: `CreateChapterCommand`/`UpdateChapterCommand` `MultipartFile` -> `UploadFile`; `AdminChapterController` converts at the boundary; `ChapterService` switched from `global` `FileStoragePort` to `course` `CourseFileStoragePort` (identical S3 key/bucket/exception, so response unchanged).
-  - CertificatePdfService (single-responsibility PDF generation) intentionally left as-is.
-- Deferred by decision (2026-07-14): #3/#4 cross-domain decoupling via ports/adapters (CourseCompletionPolicy / QuizAccessPolicy still reference sibling-domain repositories directly). Judged over-engineering for a single LMS module sharing one datastore; revisit only if these become separate bounded contexts.
+- Fixed and tested (see `.ai/WORKLOG.md` 2026-07-21 entry for full detail):
+  1. Diagnosis: reject submissions that don't cover every active question (previously any subset could be graded/scored).
+  2. Quiz: enforced one-attempt-only — reject duplicate/concurrent submission (`QUIZ_ALREADY_SUBMITTED`, 409) instead of silently overwriting the prior result; removed the old update-on-resubmit path in `QuizSubmissionRepositoryAdapter`.
+  3. Certificate: retry certificate-code generation on unique-constraint collision (up to 5x) via an isolated `REQUIRES_NEW` executor bean; avoid double-publishing the completion-reward event when losing a concurrent-completion race.
+  4. Learning progress: Redis write path now uses an atomic Lua compare-and-set so concurrent writes can't regress `watchedSeconds`.
+  5. QnA: reject replies to a soft-deleted parent comment.
+  6. Course review: a hidden (admin-moderated) review now counts as "already reviewed" — resubmission is rejected with `REVIEW_ALREADY_EXISTS` (409) instead of crashing with an unhandled DB unique-constraint violation (500).
+- Known, deliberately deferred issue (not a bug in this branch's scope, but found and discussed while fixing #3): `CourseCompletionRegistrar`'s `REQUIRES_NEW`-based certificate-retry can commit the `CourseCompletion` row independently of the caller's (`QuizService`/`CourseService`) transaction. If that caller transaction fails at final commit after `register()` returns (rare), the completion row survives while the quiz submission/answers roll back and the reward/notification event never fires (and a retry won't re-fire it either, since it finds the existing completion). See the WORKLOG entry's "Known deferred issue" note for candidate fixes (NESTED savepoint / near-collision-free code generation / single-transaction simplification) before touching this.
+
+## Earlier completed work (superseded, kept for context)
+
+- `CourseService` responsibility-split refactor completed on branch `refactor/lms-cleanup-architecture` and merged into `develop` (2026-07-13). Extracted collaborators (`CourseFileManager`, `CourseProgressCalculator`, `CourseProgressReader`, `CourseStudentResultAssembler`, `MyCourseResultAssembler`), moved Q&A ownership to `qna`.
+- Second SRP-decomposition wave (`CourseCompletionPolicy`, `CourseClassroomAssembler`, `QuizAccessPolicy`, `QuizGrader`, `QuizInputValidator`, `DiagnosisGrader`, `DiagnosisInputValidator`, `ReviewRatingSummaryCalculator`, `LearningProgressCalculator`, `CourseCompletionRegistrar`, Certificate/Chapter convention fixes) — status of that wave's own commit/merge was last recorded as "pending" on 2026-07-14; not verified as part of this entry's update. Check `git log` on `develop` if this matters for new work.
+- Full package split history (course/country/enrollment/learningprogress/quiz/completion/certificate/review/qna/diagnosis split out of the old `lms` package) — see `.ai/WORKLOG.md` entries from 2026-07-10 through 2026-07-14 for the full slice-by-slice history.
 
 ## Latest Verification
 
-- Each second-wave slice verified with `./gradlew compileJava` (passed with existing warnings).
-- `./gradlew test --tests "*CourseServiceClassroomTest"` and `./gradlew test --tests "*DiagnosisServiceTest"` passed. Other refactored services (Quiz/Review/LearningProgress/Certificate/Chapter) have no dedicated unit tests; verified by compile only.
-- Pending before final commit: run a full `./gradlew build` once as the safety gate before deleting the commented-out code.
+- `./gradlew compileJava` / `compileTestJava` pass.
+- `./gradlew test`: 159 tests, 9 pre-existing/unrelated failures (DB/Redis-dependent Spring context tests — no local DB/Redis in this environment — plus one already-broken `CourseRewardServiceTest`). Confirmed pre-existing via `git stash -u` + re-run before making these changes.
+- The Lua compare-and-set script (item 4) is only verified at the "adapter calls the script with the right args" level in this environment (no Redis available); its actual runtime CAS behavior should be checked against a real Redis before treating it as fully verified.
 
 ## Next Steps
 
-1. Run full `./gradlew build` (safety gate), then commit the second-wave refactoring.
-2. Final cleanup slice: delete the commented-out relocated/dead code once stabilized (was intentionally kept as comments through the whole effort).
-3. Optionally add unit tests for the extracted pure utils (Grader/Calculator/Assembler) — cheap, high value.
-4. (Deferred, optional) #3/#4 cross-domain port/adapter decoupling — only if bounded contexts diverge.
-5. Deferred functional improvements (unchanged): restrict course material file types, preserve original PDF/material file name on download, review admin course/chapter/quiz registration flow, add classroom text length limits.
+1. Decide on and implement a fix for the deferred `CourseCompletionRegistrar` atomicity gap (see above), or explicitly accept the risk.
+2. Commit and push this branch, open a PR.
+3. Manually/integration-verify the Redis Lua CAS script against a real Redis instance.
+4. A broader, not-yet-scheduled list of optimization/cleanup candidates (N+1 queries, missing caching on read-heavy endpoints, a duplicated `CurrentUserIdResolver` across ~10 packages, a few dead-code items) was identified during the review passes in this session but intentionally not implemented — ask before picking any of these up, since they're optimization/cleanup, not bug fixes.
 
 ## Cautions
 
 - Do not change API contracts unless explicitly requested.
 - Preserve `LMS_###` error code values for frontend/API compatibility.
 - Avoid broad formatting, import-order, or whitespace-only changes.
-- Watch CRLF warnings due local Git config.
-- Do not track unrelated local files.
-- Relocated/dead code is intentionally kept as comments for now; do not delete until the final cleanup slice.
+- Do not "fix" the deferred `CourseCompletionRegistrar` issue by simply removing `REQUIRES_NEW` (that reintroduces the certificate-code-collision crash it was added to fix) — it needs an actual design decision.
+- This environment has no local MySQL/Redis; only unit tests with mocks can be run here. Anything concurrency/DB-constraint-timing-sensitive (items 2-4 above) would benefit from a real-infra check before merging.
