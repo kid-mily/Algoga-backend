@@ -11,6 +11,9 @@ import com.kidmily.algoga_server.user.domain.User;
 import com.kidmily.algoga_server.user.domain.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.redis.connection.StringRedisConnection;
+import org.springframework.data.redis.connection.DefaultStringRedisConnection;
+import org.springframework.data.redis.core.RedisCallback;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -39,29 +42,38 @@ public class FriendQueryService implements FriendQueryUseCase {
 
     // 여러 유저의 온라인 여부를 조회한다.
     //
-    // 주의: ElastiCache Serverless(및 클러스터 모드)에서는 MGET처럼 여러 키를 한 번에 다루는 명령은
-    // 모든 키가 같은 해시 슬롯에 있어야 하고, 아니면 CROSSSLOT 에러가 난다.
-    // ONLINE:{id} 키들은 슬롯이 흩어지므로 multiGet(MGET)을 쓰면 실패한다.
-    // → 단일 키 GET(각각 단일 슬롯이라 클러스터 안전)을 반복해서 조회한다.
-    // 또한 온라인 여부는 부가 정보이므로, Redis 장애 시에도 친구 목록 자체는 반환되도록 예외를 삼킨다.
+    // 주의: ElastiCache Serverless(및 클러스터 모드)에서는 MGET처럼 여러 키를 한 번에 다루는 "멀티키 명령"은
+    // 모든 키가 같은 해시 슬롯에 있어야 하고, 아니면 CROSSSLOT 에러가 난다. ONLINE:{id} 키들은 슬롯이 흩어지므로
+    // multiGet(MGET)은 여전히 쓸 수 없다.
+    // 대신 단일 키 GET들을 executePipelined로 하나의 배치에 실어 보낸다. 파이프라이닝은 "명령들의 배치 전송"이지
+    // MGET 같은 단일 멀티키 명령이 아니라서 슬롯 제약을 어기지 않는다(Lettuce 클러스터 커넥션이 각 명령을 알맞은
+    // 노드로 라우팅). 그 결과 친구 수만큼 반복되던 Redis 왕복이 1회로 줄어든다.
+    // 온라인 여부는 부가 정보이므로, Redis 장애 시에는 전체를 오프라인으로 간주하고 친구 목록 자체는 그대로 반환한다.
     private Set<Long> findOnlineUserIds(List<Long> userIds) {
         if (userIds.isEmpty()) {
             return Set.of();
         }
 
-        Set<Long> onlineUserIds = new HashSet<>();
-        for (Long id : userIds) {
-            try {
-                String value = redisTemplate.opsForValue().get(ONLINE_KEY_PREFIX + id);
-                if ("true".equals(value)) {
-                    onlineUserIds.add(id);
+        try {
+            List<Object> results = redisTemplate.executePipelined((RedisCallback<Object>) connection -> {
+                StringRedisConnection stringConnection = new DefaultStringRedisConnection(connection);
+                for (Long id : userIds) {
+                    stringConnection.get(ONLINE_KEY_PREFIX + id);
                 }
-            } catch (Exception e) {
-                // 온라인 정보 조회 실패는 목록 조회를 막지 않는다(부가 정보). 해당 유저는 오프라인으로 간주.
-                log.warn("[FriendQueryService] 온라인 상태 조회 실패 - userId: {}, cause: {}", id, e.toString());
+                return null; // 파이프라인 모드에서는 콜백의 반환값이 쓰이지 않고, 결과는 executePipelined의 반환값으로 모아진다.
+            });
+
+            Set<Long> onlineUserIds = new HashSet<>();
+            for (int i = 0; i < userIds.size(); i++) {
+                if ("true".equals(results.get(i))) {
+                    onlineUserIds.add(userIds.get(i));
+                }
             }
+            return onlineUserIds;
+        } catch (Exception e) {
+            log.warn("[FriendQueryService] 온라인 상태 배치 조회 실패, cause: {}", e.toString());
+            return Set.of();
         }
-        return onlineUserIds;
     }
 
     @Override

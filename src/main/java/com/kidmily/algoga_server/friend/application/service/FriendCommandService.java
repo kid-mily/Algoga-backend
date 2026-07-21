@@ -16,6 +16,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import java.util.List;
 import java.util.Optional;
 
 @Service
@@ -59,6 +60,11 @@ public class FriendCommandService implements FriendCommandUseCase {
             throw new FriendException(FriendErrorCode.FRIEND_LIMIT_EXCEEDED);
         }
 
+        // 받는 사람의 대기 중인 요청함이 무제한으로 쌓이는 것을 방지 (누군가 무제한 요청을 보내는 어뷰징 방지)
+        if (friendRepository.countPendingRequests(targetUser.getId()) >= 100) {
+            throw new FriendException(FriendErrorCode.RECEIVED_REQUEST_LIMIT_EXCEEDED);
+        }
+
         FriendRelation newRelation = FriendRelation.builder()
                 .requesterId(myId)
                 .receiverId(targetUser.getId())
@@ -84,9 +90,17 @@ public class FriendCommandService implements FriendCommandUseCase {
             throw new FriendException(FriendErrorCode.REQUEST_NOT_FOUND);
         }
 
-        // 요청을 수락하기 직전에 나와 상대방 중 한 명이라도 친구가 100명이 넘는지
-        // 확인하기 위해 DB에 count 쿼리를 2번이나 날리고 있음
-        if (friendRepository.countAcceptedFriends(myId) >= 100 || friendRepository.countAcceptedFriends(relation.getRequesterId()) >= 100) {
+        // 요청을 수락하기 직전에 나와 상대방 중 한 명이라도 친구가 100명이 넘는지 확인.
+        // count 쿼리를 각자 따로 2번 날리는 대신, 두 사람이 걸린 ACCEPTED 관계를 한 번에 배치조회해서 각자 세어본다.
+        Long requesterId = relation.getRequesterId();
+        List<FriendRelation> acceptedRelations = friendRepository.findAcceptedFriendsAmong(List.of(myId, requesterId));
+        long myFriendCount = acceptedRelations.stream()
+                .filter(r -> r.getRequesterId().equals(myId) || r.getReceiverId().equals(myId))
+                .count();
+        long requesterFriendCount = acceptedRelations.stream()
+                .filter(r -> r.getRequesterId().equals(requesterId) || r.getReceiverId().equals(requesterId))
+                .count();
+        if (myFriendCount >= 100 || requesterFriendCount >= 100) {
             throw new FriendException(FriendErrorCode.FRIEND_LIMIT_EXCEEDED);
         }
 
@@ -138,15 +152,16 @@ public class FriendCommandService implements FriendCommandUseCase {
             if (relation.getStatus() == RelationStatus.BLOCKED && relation.getRequesterId().equals(myId)) {
                 throw new FriendException(FriendErrorCode.ALREADY_BLOCKED);
             }
-            friendRepository.deleteById(relation.getId());
+            // 기존 관계 row를 지웠다가 새로 만드는 대신(DELETE+INSERT), 같은 row를 차단 상태로 갱신(UPDATE 1번)
+            friendRepository.reassignAsBlocked(relation.getId(), myId, targetUser.getId());
+        } else {
+            FriendRelation blockRelation = FriendRelation.builder()
+                    .requesterId(myId)
+                    .receiverId(targetUser.getId())
+                    .status(RelationStatus.BLOCKED)
+                    .build();
+            friendRepository.save(blockRelation);
         }
-
-        FriendRelation blockRelation = FriendRelation.builder()
-                .requesterId(myId)
-                .receiverId(targetUser.getId())
-                .status(RelationStatus.BLOCKED)
-                .build();
-        friendRepository.save(blockRelation);
 
         // 차단 시 1:1 채팅방은 삭제하고 그룹 채팅방은 유지해야 함 -> chat 도메인이 구독해서 처리
         eventPublisher.publishEvent(new FriendBlockedEvent(myId, targetUser.getId()));

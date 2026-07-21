@@ -62,6 +62,22 @@ public class FriendRepositoryAdapter implements FriendRepository {
     }
 
     @Override
+    public List<FriendRelation> findAcceptedFriendsAmong(List<Long> userIds) {
+        return jpaRepository.findAcceptedFriendsAmong(userIds).stream()
+                .map(mapper::toDomain).collect(Collectors.toList());
+    }
+
+    @Override
+    public long countPendingRequests(Long receiverId) {
+        return jpaRepository.countPendingRequests(receiverId);
+    }
+
+    @Override
+    public void reassignAsBlocked(Long relationId, Long blockerId, Long blockedId) {
+        jpaRepository.reassignAsBlocked(relationId, blockerId, blockedId);
+    }
+
+    @Override
     public Optional<FriendRelation> findByRequesterIdAndReceiverId(Long requesterId, Long receiverId) {
         return jpaRepository.findByRequesterIdAndReceiverId(requesterId, receiverId).map(mapper::toDomain);
     }
