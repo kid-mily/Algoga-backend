@@ -39,7 +39,12 @@ public record CreateBookingRequest(
         @Schema(description = "예약 진입 경로. LOUNGE=패키지 라운지(분할/일시불 선택), "
                 + "COMPLETION=완강 후 마이페이지 모달(완강 필수·일시불 고정). 미전달 시 LOUNGE로 처리",
                 example = "LOUNGE")
-        BookingSource bookingSource
+        BookingSource bookingSource,
+
+        @Schema(description = "이 예약과 연관된 강의 ID(진단평가 추천/패키지 선택 맥락의 강의). "
+                + "전달 시 완강 게이트를 '그 나라 전체'가 아니라 '이 강의 하나'로만 판단한다. "
+                + "미전달 시 기존처럼 나라 단위로 판단(하위호환).", example = "32")
+        Long courseId
 ) {
     /**
      * 여권 유효성 교차검증: 여권 만료일이 귀국일(checkOutDate)보다 빠르면 안 된다.
