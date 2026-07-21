@@ -3,7 +3,6 @@ package com.kidmily.algoga_server.chat.infrastructure.persistence.adapter;
 import com.kidmily.algoga_server.chat.domain.model.ChatMessage;
 import com.kidmily.algoga_server.chat.domain.repository.ChatMessageRepository;
 import com.kidmily.algoga_server.chat.infrastructure.mapper.ChatMessageMapper;
-import com.kidmily.algoga_server.chat.infrastructure.persistence.entity.ChatMessageJpaEntity;
 import com.kidmily.algoga_server.chat.infrastructure.persistence.repository.SpringDataChatMessageRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;

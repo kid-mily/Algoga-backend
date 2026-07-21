@@ -2,9 +2,7 @@ package com.kidmily.algoga_server.community.infrastructure.persistence;
 
 import com.kidmily.algoga_server.community.domain.model.Comment;
 import com.kidmily.algoga_server.community.domain.repository.CommentRepository;
-import com.kidmily.algoga_server.community.exception.CommentException;
-import com.kidmily.algoga_server.community.exception.PostErrorCode;
-import com.kidmily.algoga_server.community.infrastructure.mapper.CommentMapper;  // ← 경로 변경
+import com.kidmily.algoga_server.community.infrastructure.mapper.CommentMapper;
 import com.kidmily.algoga_server.community.infrastructure.persistence.entity.CommentJpaEntity;
 import com.kidmily.algoga_server.community.infrastructure.persistence.repository.SpringDataCommentRepository;
 import lombok.RequiredArgsConstructor;

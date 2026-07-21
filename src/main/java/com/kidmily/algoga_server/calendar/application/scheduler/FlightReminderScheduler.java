@@ -3,7 +3,6 @@ package com.kidmily.algoga_server.calendar.application.scheduler;
 import com.kidmily.algoga_server.calendar.application.policy.CalendarSchedulePolicy;
 import com.kidmily.algoga_server.calendar.application.service.FlightReminderMailService;
 import com.kidmily.algoga_server.calendar.domain.model.Calendar;
-import com.kidmily.algoga_server.calendar.domain.model.CalendarType;
 import com.kidmily.algoga_server.calendar.domain.repository.CalendarRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

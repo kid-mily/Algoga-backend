@@ -5,7 +5,6 @@ import com.kidmily.algoga_server.global.common.api.response.ApiResponse;
 import com.kidmily.algoga_server.notification.application.usecase.NotificationCommandUseCase;
 import com.kidmily.algoga_server.notification.application.usecase.NotificationQueryUseCase;
 import com.kidmily.algoga_server.notification.exception.NotificationErrorCode;
-import com.kidmily.algoga_server.notification.exception.NotificationException;
 import com.kidmily.algoga_server.notification.presentation.api.response.NotificationListResponse;
 import com.kidmily.algoga_server.notification.presentation.api.response.UnreadCountResponse;
 import com.kidmily.algoga_server.user.settings.CustomUserDetails;

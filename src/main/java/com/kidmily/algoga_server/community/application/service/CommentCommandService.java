@@ -6,7 +6,6 @@ import com.kidmily.algoga_server.community.application.command.DeleteCommentComm
 import com.kidmily.algoga_server.community.application.command.UpdateCommentCommand;
 import com.kidmily.algoga_server.community.application.policy.CommunityQueryPolicy;
 import com.kidmily.algoga_server.community.application.policy.DeleteCommentPolicy;
-import com.kidmily.algoga_server.community.application.port.UserPort;
 import com.kidmily.algoga_server.community.application.usecase.CommentCommandUseCase;
 import com.kidmily.algoga_server.community.domain.model.Comment;
 import com.kidmily.algoga_server.community.domain.model.Post;
@@ -68,7 +67,7 @@ public class CommentCommandService implements CommentCommandUseCase {
 
         Comment savedComment = commentRepository.save(comment);
 
-        // 🌟 알림 이벤트 발행
+        // 알림 이벤트 발행
         String commenterNickname = communityQueryPolicy.resolveNickname(command.userId());
 
         if (command.parentId() == null) {
