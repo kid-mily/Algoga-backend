@@ -41,11 +41,14 @@ public class CourseReviewService implements CourseReviewUseCase {
         validateRating(command.rating());
         validateCourseCompleted(command.userId(), command.courseId());
 
-        if (courseReviewRepository.existsByUserIdAndCourseIdAndDeletedFalse(
+        // 숨김(관리자 삭제) 처리된 리뷰도 "이미 작성한 리뷰"로 취급 - 재작성 불가.
+        // deletedFalse만 확인하면 숨김 리뷰가 있는 상태에서 새로 insert하다 unique(user_id, lecture_id)
+        // 제약에 걸려 처리되지 않은 예외로 이어질 수 있어, 삭제 여부와 무관하게 존재 자체를 확인한다.
+        if (courseReviewRepository.findByUserIdAndCourseId(
                 command.userId(),
                 command.courseId()
-        )) {
-            log.warn("[Course Review Command] 리뷰 등록 실패. 이미 리뷰를 작성했습니다. courseId={}, userId={}",
+        ).isPresent()) {
+            log.warn("[Course Review Command] 리뷰 등록 실패. 이미 리뷰를 작성했습니다(숨김 상태 포함). courseId={}, userId={}",
                     command.courseId(), command.userId());
             throw new ReviewException(ReviewErrorCode.REVIEW_ALREADY_EXISTS);
         }

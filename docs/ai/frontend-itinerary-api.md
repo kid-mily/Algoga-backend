@@ -183,7 +183,7 @@ const COMPANION_LABEL = {
 - `bookingId` 누락 시 `ITN_006`, 내 예약이 아니거나 사용 불가 예약이면 `ITN_007`.
 
 ### `tripType: "PACKAGE"` — 전체 패키지 카탈로그
-- **[전체 패키지 목록](#3-2-전체-패키지-목록-조회)** 에서 하나를 골라 그 **`packageId`만** 넘긴다 (아직 구매하지 않은 상품도 추천 가능).
+- **[전체 패키지 선택 목록](#3-2-전체-패키지-선택-목록-조회)** 에서 하나를 골라 그 **`packageId`만** 넘긴다 (아직 구매하지 않은 상품도 추천 가능).
 - 서버가 그 패키지를 조회해 **목적지(국가명)·기간(checkIn~checkOut)·가격(totalPrice)** 을 자동으로 채운다.
 - `estimatedCost.packagePrice`에 패키지 조회가격이 들어옴.
 - `packageId` 누락 시 `ITN_005`.
@@ -229,10 +229,29 @@ recommend({ tripType: "FREE", destination, startDate, endDate, preferences, purp
 ```
 > 목록이 비어 있으면(구매 이력 없음) "패키지를 먼저 예약해 주세요" 같은 빈 상태 UI를 노출하고, 전체 패키지(②)나 자유여행(③)으로 유도한다.
 
-### 3-2. 전체 패키지 목록 조회
-`GET /api/v1/packages` *(패키지 도메인 기존 API — 이 도메인 소관 아님)*
+### 3-2. 전체 패키지 선택 목록 조회
+`GET /api/v1/itineraries/selectable-packages`
 - `tripType=PACKAGE` 선택지를 채우는 카탈로그. 각 항목의 `packageId`를 recommend에 사용.
-- 나라별로 좁히려면 `GET /api/v1/countries/{countryId}/packages`.
+- **항공편 실시간 조회 없이** 등록된 값만 내려주므로 빠르다(구매 목록과 동일하게 가벼움).
+- `data`: `SelectablePackageResponse[]`
+```jsonc
+[
+  {
+    "packageId": 12,                        // ← recommend 요청의 packageId 로 그대로 사용
+    "name": "오사카 3일 자유패키지",           // 패키지명
+    "destination": "일본",                   // 국가명(국가 조회 실패 시 null)
+    "startDate": "2026-08-01",              // 체크인
+    "endDate": "2026-08-03",                // 체크아웃
+    "nights": 2,
+    "price": 770000,                        // 등록된 패키지 기본가(원)
+    "imageUrl": "https://cdn.../pkg12.jpg"  // 대표 이미지
+  }
+  // ...
+]
+```
+> `price`는 목록 표시용 등록 기본가다. 추천 생성 시 서버가 조회하는 정밀 가격(`estimatedCost.packagePrice`: 항공+숙소 실시간가)과 다소 차이날 수 있다.
+>
+> 기존 `GET /api/v1/packages`(패키지 도메인)는 패키지마다 항공편을 실시간 조회해 **목록이 느리므로 선택 UI에는 쓰지 말 것.** 상세 가격이 필요하면 단건에서만 활용.
 
 ---
 
@@ -278,7 +297,7 @@ recommend({ tripType: "FREE", destination, startDate, endDate, preferences, purp
 
 - [ ] 요청은 enum `code`로 전송, 화면은 label로 표시 (`preferences`는 배열)
 - [ ] `tripType` 3-모드 분기: 구매여행(=`bookingId`) / 전체패키지(=`packageId`) / 자유여행(=`destination`+기간)
-- [ ] `BOOKING`·`PACKAGE`는 목록 조회 → 선택 UI로 식별자 확정 (구매목록: `GET /itineraries/purchased-trips`, 전체: `GET /packages`)
+- [ ] `BOOKING`·`PACKAGE`는 목록 조회 → 선택 UI로 식별자 확정 (구매목록: `GET /itineraries/purchased-trips`, 전체: `GET /itineraries/selectable-packages`)
 - [ ] 구매 목록이 비면 빈 상태 UI + 전체패키지/자유여행으로 유도
 - [ ] 생성 API는 수 초 소요 → 로딩 스피너 + 60초 타임아웃
 - [ ] 폼 선검증: `ITN_006`(bookingId)·`ITN_005`(packageId)·`ITN_002`(FREE 입력)·`ITN_003`(날짜 역전)

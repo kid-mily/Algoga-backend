@@ -37,4 +37,20 @@ public interface JpaChatLogRepository extends JpaRepository<ChatLogEntity, Long>
             @Param("keyword") String keyword,
             Pageable pageable
     );
+
+    // CSV 내보내기용: 페이징 없이 필터 조건에 맞는 전체 로그(최신순).
+    @Query("SELECT c FROM ChatLogEntity c "
+            + "WHERE (:isFiltered IS NULL OR c.isFiltered = :isFiltered) "
+            + "AND (:from IS NULL OR c.createdAt >= :from) "
+            + "AND (:toExclusive IS NULL OR c.createdAt < :toExclusive) "
+            + "AND (:keyword IS NULL "
+            + "     OR c.question LIKE CONCAT('%', :keyword, '%') "
+            + "     OR c.answer LIKE CONCAT('%', :keyword, '%')) "
+            + "ORDER BY c.createdAt DESC")
+    List<ChatLogEntity> searchAllForAdmin(
+            @Param("isFiltered") Boolean isFiltered,
+            @Param("from") Instant from,
+            @Param("toExclusive") Instant toExclusive,
+            @Param("keyword") String keyword
+    );
 }

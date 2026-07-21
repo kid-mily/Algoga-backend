@@ -16,6 +16,10 @@ public interface ChatbotAdminQueryUseCase {
     // 🌟 어드민 대화 로그 검색(페이징 + 필터링여부/기간/키워드 필터, 작성자 이름·닉네임 포함)
     PageResponse<AdminChatLogDto> getChatLogs(SearchChatLogCommand command);
 
-    // 🌟 규정 문서/페이지별 RAG 채택 빈도 집계(기간 필터, count 내림차순)
-    List<RagSourceStatDto> getRagSourceStats(Instant from, Instant toExclusive);
+    // 🌟 규정 문서/페이지별 RAG 채택 빈도 집계(페이징, 기간 필터, count 내림차순)
+    PageResponse<RagSourceStatDto> getRagSourceStats(Instant from, Instant toExclusive, int page);
+
+    // ── CSV 내보내기용: 페이징 없이 필터 조건에 맞는 전체 데이터 ──
+    List<AdminChatLogDto> getAllChatLogs(Boolean isFiltered, Instant from, Instant toExclusive, String keyword);
+    List<RagSourceStatDto> getAllRagSourceStats(Instant from, Instant toExclusive);
 }

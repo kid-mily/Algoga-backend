@@ -476,3 +476,55 @@ Record completed work here by date. Keep entries factual and useful for future d
 
 - Java source/test references to `com.kidmily.algoga_server.lms` were removed.
 - The remaining `LMS_###` strings are API error code values and were intentionally preserved for frontend/API compatibility.
+
+### 2026-07-21 LMS Domain Concurrency And Validation Bug Fixes
+
+#### Summary
+
+- Branch `fix/lms-domain-concurrency-and-validation-bugs` (off `develop`, after the separate `fix/user-withdrawal-cascade` deletion-policy work had already merged).
+- Fixed 6 correctness bugs found via a code-review pass across `course`, `country`, `enrollment`, `learningprogress`, `quiz`, `completion`, `certificate`, `review`, `qna`, `diagnosis`. No API URL/request/response/JSON changes in any of these.
+
+#### Changed Files
+
+1. **Diagnosis partial-answer scoring bug** — a submission covering only some of a country's active questions could still be graded and scored 100%.
+   - `diagnosis/application/service/DiagnosisInputValidator.java`: added `validateAnswerCoverage(answers, activeQuestions)`.
+   - `diagnosis/application/service/DiagnosisService.java`: calls it in `submitResult` before grading.
+   - Test: `diagnosis/application/service/DiagnosisServiceTest.java` (new case).
+
+2. **Quiz retake policy + submission race (500 error)** — quiz is now strictly one-attempt-only; duplicate/concurrent submission is rejected instead of silently overwriting the prior result.
+   - `quiz/exception/QuizErrorCode.java`: added `QUIZ_ALREADY_SUBMITTED` (409, `LMS_044`).
+   - `quiz/application/service/QuizService.java`: `submitQuiz` checks `existsByUserIdAndCourseId` up front and throws before grading.
+   - `quiz/infrastructure/persistence/adapter/QuizSubmissionRepositoryAdapter.java`: removed the old "update existing submission" path entirely; `save()` now always attempts a fresh `saveAndFlush()` insert in the *same* ambient transaction (no `REQUIRES_NEW` — deliberately, so a later failure in saving submission-answers rolls the submission back too) and translates `DataIntegrityViolationException` into `QUIZ_ALREADY_SUBMITTED`.
+   - `quiz/application/service/QuizServiceTest.java`, `quiz/infrastructure/persistence/adapter/QuizSubmissionRepositoryAdapterTest.java`: updated/new cases.
+   - Note: a `QuizSubmissionInsertTransactionExecutor` (REQUIRES_NEW) was added then removed again in the same session after a review caught that isolating the submission insert from the ambient transaction could let `quiz_submission` commit independently while a later `quiz_submission_answer` write fails, leaving a submitted-with-no-answers state that (given the no-retry policy) the user could never fix.
+
+3. **Certificate code collision crash** — a random 6-digit `certificate_code` collision caused an unhandled 500 for a legitimately-completing user.
+   - `completion/application/service/CourseCompletionRegistrar.java`: retries up to 5x with a fresh code on `DataIntegrityViolationException`; on a concurrent-completion race (loses to another request), returns the winner's row without re-publishing `CourseCompletionCompletedEvent` (`freshlyCreated` flag) to avoid double-granting rewards.
+   - `completion/application/service/CourseCompletionInsertTransactionExecutor.java` (new): `insertNew`/`findExisting` each `@Transactional(REQUIRES_NEW)`, so a failed attempt doesn't poison the persistence context for the next retry or the caller's transaction.
+   - `completion/infrastructure/persistence/adapter/CourseCompletionRepositoryAdapter.java`: `save()` uses `saveAndFlush()` so the unique-constraint violation surfaces synchronously inside the `REQUIRES_NEW` attempt.
+   - Test: `completion/application/service/CourseCompletionRegistrarTest.java` (new, 3 cases).
+   - **Known deferred issue**: `CourseCompletionInsertTransactionExecutor`'s `REQUIRES_NEW` commits the `CourseCompletion` row independently of the caller's (`QuizService`/`CourseService`) ambient transaction. If that ambient transaction fails at final commit (rare — connection loss, commit-time lock/deadlock, etc.) after `register()` returns, the `CourseCompletion` row stays committed while the quiz submission/answers roll back and the `AFTER_COMMIT` reward/notification events never fire (and never will, since a retry finds the already-existing completion and skips re-publishing). Narrow window, not fixed in this session — needs a design decision (candidates discussed: `Propagation.NESTED` savepoint instead of `REQUIRES_NEW`; a near-collision-free code generation scheme so retries are effectively never needed; or accepting a single ambient transaction and simplifying the collision handling). Do not "fix" by just removing `REQUIRES_NEW` here the way it was removed for quiz — the retry-up-to-5-times design genuinely needs isolated attempts, unlike quiz's single-shot reject.
+
+4. **Learning progress lost-update race** — concurrent writes to the same chapter's Redis-cached `watchedSeconds` could regress the value (violating "progress never decreases").
+   - `learningprogress/infrastructure/redis/LearningProgressRedisAdapter.java`: `write()` now goes through an atomic Lua compare-and-set script (skips the write if the currently-cached `watchedSeconds` is already higher) instead of a blind `opsForValue().set(...)`.
+   - Test: `learningprogress/infrastructure/redis/LearningProgressRedisAdapterTest.java` (new; verifies the adapter calls the atomic script with the right key/args — cannot verify the Lua script's own runtime behavior in this environment since no Redis is available; recommend a manual/integration check against real Redis before considering this fully verified).
+
+5. **QnA reply to a soft-deleted parent comment** — replying to a hidden parent comment produced an orphaned reply (parent absent from the thread, child still returned).
+   - `qna/application/service/CourseQnaService.java`: `validateParentComment` now also rejects `parentComment.isDeleted()`.
+   - Test: `qna/application/service/CourseQnaServiceTest.java` (new, 2 cases).
+
+6. **Course review resubmission blocked after admin hides it (500 error)** — `course_reviews` has a `(user_id, lecture_id)` unique constraint not scoped by `deleted`, but `createReview` only checked `existsByUserIdAndCourseIdAndDeletedFalse` (non-hidden only). After an admin hides a user's review, that user's next review attempt passed the app-level check, then hit the DB unique constraint and surfaced as a raw 500, permanently (until the 14-day `CourseReviewDeletionScheduler` purge).
+   - Decision (confirmed with product owner): a hidden review still counts as "already reviewed" — no rewrite allowed at all, not even to a fresh row. (The alternative — auto-restore/overwrite the hidden row with the new content — was considered and rejected.)
+   - `review/application/service/CourseReviewService.java`: `createReview`'s duplicate check changed from `existsByUserIdAndCourseIdAndDeletedFalse` to `findByUserIdAndCourseId(...).isPresent()` (deleted-status-agnostic), throwing the existing `REVIEW_ALREADY_EXISTS` (409) cleanly instead of reaching the DB insert.
+   - `course/application/service/CourseStudentResultAssembler.java`'s own use of `existsByUserIdAndCourseIdAndDeletedFalse` (admin "did this student write a review" display) was intentionally left unchanged — different purpose (visible-review display, not a write-path duplicate check).
+   - Test: `review/application/service/CourseReviewServiceTest.java` (new).
+
+#### Verification
+
+- `./gradlew compileJava` / `compileTestJava` passed after each change.
+- `./gradlew test` — 159 tests, 9 failing, all pre-existing and unrelated (DB/Redis-dependent Spring context-loading tests with no local DB/Redis in this environment, plus one already-broken `CourseRewardServiceTest`) — confirmed pre-existing by running the same suite with `git stash -u` before these changes.
+
+#### Notes for Next Time
+
+- Item 3's deferred atomicity gap (`CourseCompletionRegistrar` vs. the caller's ambient transaction) is the main open design question from this session — see the "Known deferred issue" note above before touching that file again.
+- Nothing in this branch has been committed yet as of this entry.

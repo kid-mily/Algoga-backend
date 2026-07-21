@@ -19,4 +19,7 @@ public interface ChatLogRepository {
      * @param keyword      질문/답변 본문에 포함된 키워드. null/blank 면 무시
      */
     Page<ChatLog> searchForAdmin(Boolean isFiltered, Instant from, Instant toExclusive, String keyword, Pageable pageable);
+
+    /** CSV 내보내기용: 페이징 없이 필터 조건에 맞는 전체 로그를 최신순으로 반환한다. */
+    List<ChatLog> searchAllForAdmin(Boolean isFiltered, Instant from, Instant toExclusive, String keyword);
 }
