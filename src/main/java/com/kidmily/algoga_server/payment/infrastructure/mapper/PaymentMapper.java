@@ -9,6 +9,7 @@ public class PaymentMapper {
 
     public PaymentJpaEntity toJpaEntity(Payment payment){
         return new PaymentJpaEntity(
+                payment.getId(),          // id 를 실어야 이미 저장된 결제가 UPDATE 로 처리됨 (누락 시 INSERT → UNIQUE 충돌)
                 payment.getBookingId(),
                 payment.getCourseId(),
                 payment.getUserId(),
