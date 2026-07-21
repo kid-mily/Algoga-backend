@@ -5,6 +5,9 @@ import io.swagger.v3.oas.annotations.media.Schema;
 @Schema(description = "타이핑 이벤트 응답")
 public record TypingResponse(
 
+        @Schema(description = "타이핑이 발생한 채팅방 ID", example = "10")
+        Long roomId,
+
         @Schema(description = "입력 중인 유저 ID", example = "1")
         Long userId,
 

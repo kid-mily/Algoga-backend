@@ -79,7 +79,7 @@ public class ChatMessageHandler {
                 .forEach(memberId ->
                         messagingTemplate.convertAndSend(
                                 "/topic/users/" + memberId + "/typing",
-                                new TypingResponse(userId, nickname, request.isTyping())
+                                new TypingResponse(roomId, userId, nickname, request.isTyping())
                         )
                 );
     }
