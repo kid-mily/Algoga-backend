@@ -15,6 +15,7 @@ import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Comparator;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -128,7 +129,8 @@ public class FriendQueryService implements FriendQueryUseCase {
 
         return buildFriendViews(relations, rel -> rel.getRequesterId().equals(myId) ? rel.getReceiverId() : rel.getRequesterId())
                 .stream()
-                .sorted((a, b) -> a.nickname().compareToIgnoreCase(b.nickname()))
+                // 닉네임이 null인 유저 데이터가 섞여 있어도 500이 나지 않도록 null을 맨 뒤로 보냄
+                .sorted(Comparator.comparing(FriendView::nickname, Comparator.nullsLast(String::compareToIgnoreCase)))
                 .collect(Collectors.toList());
     }
 
