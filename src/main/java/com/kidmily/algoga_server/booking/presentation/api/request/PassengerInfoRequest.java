@@ -13,8 +13,14 @@ public record PassengerInfoRequest(
         @Schema(description = "이름 (여권 표기)", example = "YEOHAENG")
         String firstName,
 
+        @Schema(description = "성별. \"M\"(남) | \"F\"(여)", example = "M")
+        String gender,
+
         @Schema(description = "생년월일", example = "1995-03-21")
         LocalDate birthDate,
+
+        @Schema(description = "국적 (현재 대한민국 고정)", example = "대한민국")
+        String nationality,
 
         @Schema(description = "여권 번호", example = "M12345678")
         String passportNumber,
