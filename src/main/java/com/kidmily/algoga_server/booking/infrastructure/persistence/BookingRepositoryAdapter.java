@@ -7,6 +7,7 @@ import com.kidmily.algoga_server.booking.infrastructure.mapper.BookingMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -34,6 +35,14 @@ public class BookingRepositoryAdapter implements BookingRepository {
     @Override
     public List<Booking> findByUserId(Long userId) {
         return springDataBookingRepository.findByUserId(userId)
+                .stream()
+                .map(bookingMapper::toDomain)
+                .toList();
+    }
+
+    @Override
+    public List<Booking> findByStatusAndCheckInDateBefore(BookingStatus status, LocalDate date) {
+        return springDataBookingRepository.findByStatusAndCheckInDateBefore(status, date)
                 .stream()
                 .map(bookingMapper::toDomain)
                 .toList();
