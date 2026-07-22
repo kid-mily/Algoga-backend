@@ -148,6 +148,18 @@ class BookingCommandServiceTest {
     }
 
     @Test
+    @DisplayName("출발일이 지난 상품은 예약 생성이 거절된다(DEPARTURE_DATE_PASSED)")
+    void 출발일_지난_예약_거절() {
+        // 숙소 조회 전에 날짜부터 막히므로 accommodation 스텁 불필요
+        CreateBookingCommand past = new CreateBookingCommand(
+                1L, 1L, "{}", null, null, 300_000,
+                LocalDate.now().minusDays(1), LocalDate.now().plusDays(2), BookingSource.LOUNGE);
+
+        assertThrows(BusinessException.class, () -> bookingCommandService.handle(past));
+        verify(bookingRepository, never()).save(any());
+    }
+
+    @Test
     @DisplayName("강의를 산 적 없는 유저는 라운지에서 자유롭게 예약되고 분할 결제가 허용된다(installmentAllowed=true)")
     void 신규유저_라운지_예약_분할허용() {
         Accommodation acc = accommodationMock();

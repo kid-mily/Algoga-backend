@@ -21,7 +21,8 @@ public record BundlePaymentPreviewResponse(
                 example = "DUPLICATE_PAYMENT",
                 allowableValues = {"DUPLICATE_PAYMENT", "LECTURE_NOT_COMPLETED", "INSTALLMENT_NOT_ALLOWED",
                         "INVALID_PAYMENT_TYPE", "BOOKING_NOT_FOUND", "COURSE_NOT_FOUND",
-                        "COUPON_INVALID", "INSUFFICIENT_MILEAGE", "INVALID_PAYMENT_AMOUNT"})
+                        "COUPON_INVALID", "INSUFFICIENT_MILEAGE", "INVALID_PAYMENT_AMOUNT",
+                        "DEPARTURE_DATE_PASSED"})
         String blockReason,
 
         @Schema(description = "사람이 읽는 불가 사유. payable=true면 null")

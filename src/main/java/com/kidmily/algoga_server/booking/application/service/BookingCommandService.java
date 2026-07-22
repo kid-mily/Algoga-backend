@@ -58,6 +58,13 @@ public class BookingCommandService implements BookingCommandUseCase {
         log.info("[BookingCommandService] 예약 생성 요청 - accommodationId: {}, userId: {}",
                 command.accommodationId(), command.userId());
 
+        // 출발일(checkInDate)이 이미 지난 상품은 예약 불가. (지난 패키지에 결제되는 것 원천 차단)
+        // 클라이언트 입력이라 DB 조회 전에 먼저 막는다.
+        if (command.checkInDate() != null && command.checkInDate().isBefore(LocalDate.now())) {
+            log.warn("[BookingCommandService] 출발일 지난 예약 시도 - checkInDate: {}", command.checkInDate());
+            throw new BusinessException(BookingErrorCode.DEPARTURE_DATE_PASSED);
+        }
+
         Accommodation accommodation = accommodationRepository.findById(command.accommodationId())
                 .orElseThrow(() -> {
                     log.warn("[BookingCommandService] 숙소를 찾을 수 없음 - accommodationId: {}", command.accommodationId());

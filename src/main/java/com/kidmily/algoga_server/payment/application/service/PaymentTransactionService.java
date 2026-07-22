@@ -6,6 +6,7 @@ import com.kidmily.algoga_server.benefit.domain.repository.MileageHistoryReposit
 import com.kidmily.algoga_server.benefit.domain.repository.UserCouponRepository;
 import com.kidmily.algoga_server.booking.domain.model.Booking;
 import com.kidmily.algoga_server.booking.domain.model.BookingStatus;
+import com.kidmily.algoga_server.booking.exception.BookingErrorCode;
 import com.kidmily.algoga_server.booking.domain.repository.BookingRepository;
 import com.kidmily.algoga_server.course.domain.model.Course;
 import com.kidmily.algoga_server.global.exception.BusinessException;
@@ -42,6 +43,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.kidmily.algoga_server.accommodation.domain.model.Accommodation;
 import com.kidmily.algoga_server.accommodation.domain.repository.AccommodationRepository;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -83,6 +85,8 @@ public class PaymentTransactionService {
                     log.warn("[PaymentTransactionService] 예약을 찾을 수 없음 - bookingId: {}", command.bookingId());
                     return new BusinessException(PaymentErrorCode.BOOKING_NOT_FOUND);
                 });
+
+        rejectIfDeparturePassed(booking);
 
         // 완강 후 예약(installmentAllowed=false)은 분할(DEPOSIT/BALANCE) 불가, 일시불(FULL)만 허용
         if (!booking.isInstallmentAllowed() && command.paymentType() != PaymentType.FULL) {
@@ -356,6 +360,8 @@ public class PaymentTransactionService {
                     return new BusinessException(PaymentErrorCode.BOOKING_NOT_FOUND);
                 });
 
+        rejectIfDeparturePassed(booking);
+
         // 완강 후 예약(installmentAllowed=false)은 분할 불가 — 단건 결제와 동일 규칙
         if (!booking.isInstallmentAllowed() && command.paymentType() != PaymentType.FULL) {
             log.warn("[PaymentTransactionService] 일시불 전용 예약에 분할 결제 시도 - bookingId: {}", command.bookingId());
@@ -483,6 +489,10 @@ public class PaymentTransactionService {
         Booking booking = bookingRepository.findById(bookingId).orElse(null);
         if (booking == null) {
             return BundlePaymentPreviewResponse.blocked("BOOKING_NOT_FOUND", "예약 정보를 찾을 수 없습니다.", null);
+        }
+        if (isDeparturePassed(booking)) {
+            return BundlePaymentPreviewResponse.blocked("DEPARTURE_DATE_PASSED",
+                    "출발일이 지난 상품은 결제할 수 없습니다.", null);
         }
         if (!booking.isInstallmentAllowed() && paymentType != PaymentType.FULL) {
             return BundlePaymentPreviewResponse.blocked("INSTALLMENT_NOT_ALLOWED",
@@ -732,6 +742,19 @@ public class PaymentTransactionService {
 
     private String generateIdempotencyKey(Long bookingId, PaymentType type) {
         return bookingId + "_" + type.name();
+    }
+
+    /** 출발일(checkInDate)이 이미 지난 예약인지. 지난 상품엔 예약금/잔금/통합결제 모두 막는다. */
+    private boolean isDeparturePassed(Booking booking) {
+        return booking.getCheckInDate() != null && booking.getCheckInDate().isBefore(LocalDate.now());
+    }
+
+    private void rejectIfDeparturePassed(Booking booking) {
+        if (isDeparturePassed(booking)) {
+            log.warn("[PaymentTransactionService] 출발일 지난 예약에 결제 시도 - bookingId: {}, checkInDate: {}",
+                    booking.getId(), booking.getCheckInDate());
+            throw new BusinessException(BookingErrorCode.DEPARTURE_DATE_PASSED);
+        }
     }
 
 
