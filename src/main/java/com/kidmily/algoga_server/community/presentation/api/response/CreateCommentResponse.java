@@ -4,6 +4,7 @@ import com.kidmily.algoga_server.global.infrastructure.s3.CdnMappable;
 import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Schema(description = "댓글 작성 응답")
 public record CreateCommentResponse(
@@ -26,5 +27,17 @@ public record CreateCommentResponse(
         Long parentId,
 
         @Schema(description = "작성일시")
-        LocalDateTime createdAt
+        LocalDateTime createdAt,
+
+        @Schema(description = "좋아요 수 (생성 직후 0)", example = "0")
+        Long likeCount,
+
+        @Schema(description = "싫어요 수 (생성 직후 0)", example = "0")
+        Long dislikeCount,
+
+        @Schema(description = "작성자 본인 여부 (생성자이므로 true)", example = "true")
+        Boolean isMine,
+
+        @Schema(description = "대댓글 목록 (생성 직후 빈 배열)")
+        List<CommentResponse> replies
 ) implements CdnMappable {}
