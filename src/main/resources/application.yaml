@@ -53,10 +53,13 @@ spring:
     open-in-view: false
     hibernate:
       ddl-auto: update
+
     properties:
       hibernate:
         format_sql: true
         show_sql: false
+        jdbc:
+          time_zone: Asia/Seoul
 
   servlet:
     multipart:
