@@ -153,7 +153,8 @@ class BookingCommandServiceTest {
         // 숙소 조회 전에 날짜부터 막히므로 accommodation 스텁 불필요
         CreateBookingCommand past = new CreateBookingCommand(
                 1L, 1L, "{}", null, null, 300_000,
-                LocalDate.now().minusDays(1), LocalDate.now().plusDays(2), BookingSource.LOUNGE);
+                LocalDate.now().minusDays(1), LocalDate.now().plusDays(2), BookingSource.LOUNGE,
+                null, null);
 
         assertThrows(BusinessException.class, () -> bookingCommandService.handle(past));
         verify(bookingRepository, never()).save(any());

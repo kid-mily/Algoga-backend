@@ -61,6 +61,9 @@ import java.util.List;
 @RequiredArgsConstructor
 public class PaymentTransactionService {
 
+    /** 분할 결제 잔금(BALANCE) 마감 기준: 출발(체크인) 이 일수 전까지만 잔금 결제 허용. */
+    private static final long BALANCE_DEADLINE_DAYS = 7;
+
     private final PaymentRepository paymentRepository;
     private final BookingRepository bookingRepository;
     private final UserRepository userRepository;
@@ -87,6 +90,7 @@ public class PaymentTransactionService {
                 });
 
         rejectIfDeparturePassed(booking);
+        rejectIfBalanceDeadlinePassed(booking, command.paymentType());
 
         // 완강 후 예약(installmentAllowed=false)은 분할(DEPOSIT/BALANCE) 불가, 일시불(FULL)만 허용
         if (!booking.isInstallmentAllowed() && command.paymentType() != PaymentType.FULL) {
@@ -754,6 +758,25 @@ public class PaymentTransactionService {
             log.warn("[PaymentTransactionService] 출발일 지난 예약에 결제 시도 - bookingId: {}, checkInDate: {}",
                     booking.getId(), booking.getCheckInDate());
             throw new BusinessException(BookingErrorCode.DEPARTURE_DATE_PASSED);
+        }
+    }
+
+    /**
+     * 분할 잔금(BALANCE) 마감 검증: 출발 {@value #BALANCE_DEADLINE_DAYS}일 전이 지나면 잔금 결제 불가.
+     * <p>
+     * 환불 정책(체크인 7일 전 50% / 미만 0%)과 결을 맞춘다 — 출발 임박 시점의 잔금 수납은
+     * 사실상 환불 불가 구간이라 원천 차단한다. BALANCE 유형에만 적용(DEPOSIT/FULL은 대상 아님).
+     * 출발일이 완전히 지난 건은 {@link #rejectIfDeparturePassed}가 먼저 막는다.
+     */
+    private void rejectIfBalanceDeadlinePassed(Booking booking, PaymentType type) {
+        if (type != PaymentType.BALANCE || booking.getCheckInDate() == null) {
+            return;
+        }
+        LocalDate deadline = booking.getCheckInDate().minusDays(BALANCE_DEADLINE_DAYS);
+        if (LocalDate.now().isAfter(deadline)) {
+            log.warn("[PaymentTransactionService] 잔금 마감 지난 결제 시도 - bookingId: {}, checkInDate: {}, 마감: {}",
+                    booking.getId(), booking.getCheckInDate(), deadline);
+            throw new BusinessException(BookingErrorCode.BALANCE_DEADLINE_PASSED);
         }
     }
 

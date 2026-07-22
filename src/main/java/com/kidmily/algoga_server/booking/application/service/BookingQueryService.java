@@ -57,9 +57,11 @@ public class BookingQueryService implements BookingQueryUseCase {
      * 사용자 예약 목록에 노출할 예약인지.
      * PENDING(예약만 생성되고 결제 안 한 채 이탈)은 결제 정보가 없어
      * 환불 요청 시 "결제 정보를 찾을 수 없습니다" 로 이어지므로 목록에서 제외한다.
+     * EXPIRED(출발일 지나 배치가 만료 처리한 미결제 예약)도 같은 이유로 숨긴다.
      */
     private boolean isVisibleToUser(Booking booking) {
-        return booking.getStatus() != BookingStatus.PENDING;
+        return booking.getStatus() != BookingStatus.PENDING
+                && booking.getStatus() != BookingStatus.EXPIRED;
     }
 
     @Override
