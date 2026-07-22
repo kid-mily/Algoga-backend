@@ -25,7 +25,8 @@ public enum CourseErrorCode implements BaseErrorCode {
     NOT_ENROLLED(HttpStatus.FORBIDDEN, "LMS_035", "수강 등록된 강의가 아닙니다."),
     INVALID_COURSE_REWARD_MILEAGE(HttpStatus.BAD_REQUEST, "LMS_040", "강의 최대 지급 마일리지는 0 이상이어야 합니다."),
     LOGIN_REQUIRED(HttpStatus.UNAUTHORIZED, "LMS_041", "로그인이 필요한 서비스입니다."),
-    INVALID_COURSE_FILE_TYPE(HttpStatus.BAD_REQUEST, "LMS_042", "허용되지 않는 강의자료 형식입니다. 문서 파일(PDF, Word, PPT, Excel, HWP, TXT)만 업로드할 수 있습니다.");
+    INVALID_COURSE_FILE_TYPE(HttpStatus.BAD_REQUEST, "LMS_042", "허용되지 않는 강의자료 형식입니다. 문서 파일(PDF, Word, PPT, Excel, HWP, TXT)만 업로드할 수 있습니다."),
+    COURSE_INCOMPLETE(HttpStatus.BAD_REQUEST, "COURSE_INCOMPLETE", "챕터와 퀴즈가 각각 1개 이상 등록되어야 합니다.");
 
     private final HttpStatus status;
     private final String code;

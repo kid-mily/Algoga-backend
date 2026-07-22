@@ -41,7 +41,7 @@ public record UpdateCourseRequest(
         @Schema(
                 description = "강의 공개 상태. PUBLISHED=공개, DRAFT=비공개",
                 example = "PUBLISHED",
-                allowableValues = {"PUBLISHED", "DRAFT"}
+                allowableValues = {"INCOMPLETE", "DRAFT", "PUBLISHED"}
         )
         String status
 ) {

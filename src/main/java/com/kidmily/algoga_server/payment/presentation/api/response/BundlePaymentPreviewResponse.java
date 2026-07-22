@@ -20,7 +20,7 @@ public record BundlePaymentPreviewResponse(
         @Schema(description = "결제 불가 사유 코드. payable=true면 null",
                 example = "DUPLICATE_PAYMENT",
                 allowableValues = {"DUPLICATE_PAYMENT", "LECTURE_NOT_COMPLETED", "INSTALLMENT_NOT_ALLOWED",
-                        "INVALID_PAYMENT_TYPE", "BOOKING_NOT_FOUND", "COURSE_NOT_FOUND",
+                        "INVALID_PAYMENT_TYPE", "BOOKING_NOT_FOUND", "COURSE_NOT_FOUND", "COURSE_NOT_PUBLISHED",
                         "COUPON_INVALID", "INSUFFICIENT_MILEAGE", "INVALID_PAYMENT_AMOUNT",
                         "DEPARTURE_DATE_PASSED"})
         String blockReason,

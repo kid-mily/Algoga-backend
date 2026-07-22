@@ -3,6 +3,7 @@ package com.kidmily.algoga_server.payment.application.service;
 import com.kidmily.algoga_server.benefit.domain.repository.MileageHistoryRepository;
 import com.kidmily.algoga_server.benefit.domain.repository.UserCouponRepository;
 import com.kidmily.algoga_server.booking.domain.repository.BookingRepository;
+import com.kidmily.algoga_server.global.exception.BusinessException;
 import com.kidmily.algoga_server.global.event.LecturePaymentCompletedEvent;
 import com.kidmily.algoga_server.course.domain.model.Course;
 import com.kidmily.algoga_server.course.domain.repository.CourseRepository;
@@ -11,6 +12,7 @@ import com.kidmily.algoga_server.payment.domain.model.Payment;
 import com.kidmily.algoga_server.payment.domain.model.PaymentStatus;
 import com.kidmily.algoga_server.payment.domain.model.PaymentType;
 import com.kidmily.algoga_server.payment.domain.repository.PaymentRepository;
+import com.kidmily.algoga_server.payment.exception.PaymentErrorCode;
 import com.kidmily.algoga_server.user.domain.User;
 import com.kidmily.algoga_server.user.domain.UserRepository;
 import org.junit.jupiter.api.DisplayName;
@@ -25,7 +27,7 @@ import org.springframework.context.ApplicationEventPublisher;
 import java.time.LocalDateTime;
 import java.util.Optional;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 /**
@@ -53,7 +55,7 @@ class PaymentTransactionServiceTest {
         CreateLecturePaymentCommand command =
                 new CreateLecturePaymentCommand(5L, 2L, 50000, 0, null, "pid-1");
 
-        when(courseRepository.findByIdAndDeletedFalse(5L)).thenReturn(Optional.of(mock(Course.class)));
+        when(courseRepository.findByIdAndDeletedFalse(5L)).thenReturn(Optional.of(publishedCourse()));
         when(paymentRepository.findByIdempotencyKey("LECTURE_5_2")).thenReturn(Optional.empty());
 
         User user = mock(User.class);
@@ -85,7 +87,7 @@ class PaymentTransactionServiceTest {
         CreateLecturePaymentCommand command =
                 new CreateLecturePaymentCommand(5L, 2L, 50000, 0, null, "pid-2");
 
-        when(courseRepository.findByIdAndDeletedFalse(5L)).thenReturn(Optional.of(mock(Course.class)));
+        when(courseRepository.findByIdAndDeletedFalse(5L)).thenReturn(Optional.of(publishedCourse()));
 
         Payment failed = Payment.reconstitute(
                 9L, null, 5L, 2L, PaymentType.LECTURE_ONLY, 50000, 0, null,
@@ -107,5 +109,55 @@ class PaymentTransactionServiceTest {
         ArgumentCaptor<Payment> captor = ArgumentCaptor.forClass(Payment.class);
         verify(paymentRepository).save(captor.capture());
         assertEquals(PaymentStatus.SUCCESS, captor.getValue().getStatus());
+    }
+
+    @Test
+    void rejectsLecturePaymentWhenCourseIsNotPublished() {
+        CreateLecturePaymentCommand command =
+                new CreateLecturePaymentCommand(5L, 2L, 50000, 0, null, "pid-3");
+
+        when(courseRepository.findByIdAndDeletedFalse(5L)).thenReturn(Optional.of(draftCourse()));
+
+        BusinessException exception = assertThrows(
+                BusinessException.class,
+                () -> paymentTransactionService.saveLecturePayment(command, "PAID", 50000, "TOSSPAY")
+        );
+
+        assertSame(PaymentErrorCode.COURSE_NOT_PUBLISHED, exception.getErrorCode());
+        verifyNoInteractions(paymentRepository);
+    }
+
+    private Course publishedCourse() {
+        return Course.withId(
+                5L,
+                1L,
+                1L,
+                "Travel course",
+                "Course description",
+                50000,
+                0,
+                "https://cdn.test/thumb.png",
+                null,
+                "BEGINNER",
+                "PUBLISHED",
+                java.util.List.of()
+        );
+    }
+
+    private Course draftCourse() {
+        return Course.withId(
+                5L,
+                1L,
+                1L,
+                "Travel course",
+                "Course description",
+                50000,
+                0,
+                "https://cdn.test/thumb.png",
+                null,
+                "BEGINNER",
+                "DRAFT",
+                java.util.List.of()
+        );
     }
 }

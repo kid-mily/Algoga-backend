@@ -126,6 +126,15 @@ public class CourseRepositoryAdapter implements CourseRepository {
     }
 
     @Override
+    public Optional<Course> updateStatus(Long courseId, String status) {
+        return springDataCourseRepository.findByIdAndDeletedFalse(courseId)
+                .map(entity -> {
+                    entity.updateStatus(status);
+                    return courseMapper.toDomain(entity);
+                });
+    }
+
+    @Override
     public List<Course> findPublishedByCountryId(Long countryId) {
         return springDataCourseRepository
                 .findByCountryIdAndStatusAndDeletedFalseOrderByIdDesc(countryId, PUBLISHED)

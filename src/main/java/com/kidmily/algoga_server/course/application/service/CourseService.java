@@ -4,9 +4,9 @@ import com.kidmily.algoga_server.course.application.command.CreateCourseCommand;
 import com.kidmily.algoga_server.course.application.command.UpdateCourseCommand;
 import com.kidmily.algoga_server.course.application.result.CourseResult;
 import com.kidmily.algoga_server.course.application.result.CourseClassroomResult;
+import com.kidmily.algoga_server.course.application.result.CoursePublishRequirementResult;
 import com.kidmily.algoga_server.course.application.result.CourseStudentResult;
 import com.kidmily.algoga_server.course.application.result.MyCourseResult;
-import com.kidmily.algoga_server.course.application.service.PublishedCourseListCacheService;
 import com.kidmily.algoga_server.course.domain.model.Chapter;
 import com.kidmily.algoga_server.course.domain.model.Course;
 import com.kidmily.algoga_server.course.domain.model.CourseFile;
@@ -25,8 +25,10 @@ import com.kidmily.algoga_server.course.application.usecase.CourseUseCase;
 import com.kidmily.algoga_server.course.application.policy.CourseCompletionPolicy;
 import com.kidmily.algoga_server.course.exception.CourseErrorCode;
 import com.kidmily.algoga_server.course.exception.CourseException;
+import com.kidmily.algoga_server.course.exception.CourseIncompleteException;
 import com.kidmily.algoga_server.course.settings.cache.CourseCacheType;
 import com.kidmily.algoga_server.learningprogress.domain.model.LearningProgress;
+import com.kidmily.algoga_server.quiz.domain.repository.QuizRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.Cache;
@@ -60,6 +62,7 @@ public class CourseService implements CourseUseCase {
     private final CourseFileManager courseFileManager;
     private final PublishedCourseListCacheService publishedCourseListCacheService;
     private final CacheManager cacheManager;
+    private final QuizRepository quizRepository;
 
     @Override
     public Long createCourse(CreateCourseCommand command) {
@@ -80,7 +83,7 @@ public class CourseService implements CourseUseCase {
                 thumbnailUrl,
                 courseFiles,
                 command.level(),
-                normalizeCourseStatus(command.status(), "DRAFT")
+                normalizeInitialCourseStatus(command.status())
         );
 
         Long savedCourseId = courseRepository.save(newCourse).getId();
@@ -162,6 +165,20 @@ public class CourseService implements CourseUseCase {
             targetFileUrl = targetCourseFiles.isEmpty() ? null : targetCourseFiles.get(0).getFileUrl();
         }
 
+        String targetStatus = normalizeCourseStatus(command.status(), course.getStatus());
+        if (CourseStatus.PUBLISHED.name().equals(targetStatus)) {
+            validateCourseBasicInfo(
+                    course.getCountryId(),
+                    command.title(),
+                    command.description(),
+                    command.price(),
+                    command.maxRewardMileage(),
+                    targetThumbnailUrl,
+                    command.level()
+            );
+            validatePublishableContent(course.getId());
+        }
+
         Course updatedCourse = courseRepository.updateBasicInfo(
                 courseId,
                 command.title(),
@@ -172,11 +189,23 @@ public class CourseService implements CourseUseCase {
                 targetFileUrl,
                 targetCourseFiles,
                 command.level(),
-                normalizeCourseStatus(command.status(), course.getStatus())
+                targetStatus
         ).orElseThrow(() -> new CourseException(CourseErrorCode.COURSE_NOT_FOUND));
 
         evictPublicCourseListCache(course.getCountryId());
         return CourseResult.from(updatedCourse);
+    }
+
+    @Override
+    public CourseResult publishCourse(Long courseId) {
+        Course course = findCourse(courseId);
+        validatePublishable(course);
+
+        Course publishedCourse = courseRepository.updateStatus(courseId, CourseStatus.PUBLISHED.name())
+                .orElseThrow(() -> new CourseException(CourseErrorCode.COURSE_NOT_FOUND));
+
+        evictPublicCourseListCache(course.getCountryId());
+        return CourseResult.from(publishedCourse);
     }
 
     @Override
@@ -371,6 +400,13 @@ public class CourseService implements CourseUseCase {
         }
     }
 
+    private String normalizeInitialCourseStatus(String status) {
+        return CourseStatus.find(status)
+                .filter(courseStatus -> courseStatus == CourseStatus.DRAFT || courseStatus == CourseStatus.INCOMPLETE)
+                .map(CourseStatus::name)
+                .orElse(CourseStatus.DRAFT.name());
+    }
+
     private String normalizeCourseStatus(String status, String defaultStatus) {
         if (status == null || status.isBlank()) {
             return defaultStatus;
@@ -379,6 +415,53 @@ public class CourseService implements CourseUseCase {
         return CourseStatus.find(status)
                 .map(CourseStatus::name)
                 .orElse(defaultStatus);
+    }
+
+    private void validatePublishable(Course course) {
+        validateCourseBasicInfo(course);
+        validatePublishableContent(course.getId());
+    }
+
+    private void validatePublishableContent(Long courseId) {
+        boolean hasChapter = chapterRepository.countByCourseId(courseId) > 0;
+        boolean hasQuiz = quizRepository.countByCourseId(courseId) > 0;
+
+        if (!hasChapter || !hasQuiz) {
+            throw new CourseIncompleteException(new CoursePublishRequirementResult(hasChapter, hasQuiz));
+        }
+    }
+
+    private void validateCourseBasicInfo(Course course) {
+        validateCourseBasicInfo(
+                course.getCountryId(),
+                course.getTitle(),
+                course.getDescription(),
+                course.getPrice(),
+                course.getMaxRewardMileage(),
+                course.getThumbnailUrl(),
+                course.getLevel()
+        );
+    }
+
+    private void validateCourseBasicInfo(
+            Long countryId,
+            String title,
+            String description,
+            Integer price,
+            Integer maxRewardMileage,
+            String thumbnailUrl,
+            String level
+    ) {
+        validateCountry(countryId);
+        validateCourseLevel(level);
+        validateMaxRewardMileage(maxRewardMileage);
+
+        if (title == null || title.isBlank()
+                || description == null || description.isBlank()
+                || price == null || price <= 0
+                || thumbnailUrl == null || thumbnailUrl.isBlank()) {
+            throw new CourseException(CourseErrorCode.COURSE_INCOMPLETE);
+        }
     }
 
     private void evictPublicCourseListCache(Long countryId) {

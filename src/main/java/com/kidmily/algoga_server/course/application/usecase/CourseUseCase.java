@@ -29,6 +29,8 @@ public interface CourseUseCase {
 
     CourseResult updateCourse(Long courseId, UpdateCourseCommand command);
 
+    CourseResult publishCourse(Long courseId);
+
     void deleteCourse(Long courseId);
 
     CourseCompletionResult completeCourse(CompleteCourseCommand command);

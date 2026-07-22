@@ -1,9 +1,13 @@
 package com.kidmily.algoga_server.course.application.service;
 
+import com.kidmily.algoga_server.country.domain.model.Country;
+import com.kidmily.algoga_server.course.application.command.CreateCourseCommand;
+import com.kidmily.algoga_server.course.application.command.UpdateCourseCommand;
 import com.kidmily.algoga_server.course.application.port.UserProfilePort;
 import com.kidmily.algoga_server.course.application.result.CourseClassroomResult;
 import com.kidmily.algoga_server.course.domain.model.Chapter;
 import com.kidmily.algoga_server.course.domain.model.Course;
+import com.kidmily.algoga_server.course.exception.CourseIncompleteException;
 import com.kidmily.algoga_server.enrollment.domain.model.Enrollment;
 import com.kidmily.algoga_server.enrollment.domain.model.EnrollmentStatus;
 import com.kidmily.algoga_server.learningprogress.domain.model.LearningProgress;
@@ -17,13 +21,16 @@ import com.kidmily.algoga_server.enrollment.domain.repository.EnrollmentReposito
 import com.kidmily.algoga_server.learningprogress.domain.repository.LearningProgressRepository;
 import com.kidmily.algoga_server.country.domain.repository.MapRepository;
 import com.kidmily.algoga_server.quiz.domain.repository.QuizSubmissionRepository;
+import com.kidmily.algoga_server.quiz.domain.repository.QuizRepository;
 import com.kidmily.algoga_server.course.exception.CourseErrorCode;
 import com.kidmily.algoga_server.course.exception.CourseException;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.cache.CacheManager;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -64,6 +71,9 @@ class CourseServiceClassroomTest {
     @Mock private UserProfilePort userProfilePort;
     @Mock private CourseFileManager courseFileManager;
     @Mock private CourseProgressReader courseProgressReader;
+    @Mock private PublishedCourseListCacheService publishedCourseListCacheService;
+    @Mock private CacheManager cacheManager;
+    @Mock private QuizRepository quizRepository;
 
     @InjectMocks
     private CourseService courseService;
@@ -135,6 +145,91 @@ class CourseServiceClassroomTest {
         verifyNoInteractions(courseFileManager);
     }
 
+    @Test
+    void createCourseStoresDraftWhenPublishedStatusRequested() {
+        when(mapRepository.findActiveCountryById(1L)).thenReturn(Optional.of(country(1L)));
+        when(courseFileManager.uploadThumbnail(null)).thenReturn("https://cdn.test/thumb.png");
+        when(courseFileManager.uploadCourseFiles(List.of())).thenReturn(List.of());
+        when(courseRepository.save(org.mockito.ArgumentMatchers.any(Course.class)))
+                .thenAnswer(invocation -> {
+                    Course course = invocation.getArgument(0);
+                    return Course.withId(
+                            10L,
+                            course.getCountryId(),
+                            course.getManagerId(),
+                            course.getTitle(),
+                            course.getDescription(),
+                            course.getPrice(),
+                            course.getMaxRewardMileage(),
+                            course.getThumbnailUrl(),
+                            course.getFileUrl(),
+                            course.getLevel(),
+                            course.getStatus(),
+                            List.of()
+                    );
+                });
+
+        courseService.createCourse(new CreateCourseCommand(
+                1L,
+                2L,
+                "Travel course",
+                "Course description",
+                1000,
+                0,
+                "BEGINNER",
+                "PUBLISHED",
+                null,
+                List.of()
+        ));
+
+        ArgumentCaptor<Course> captor = ArgumentCaptor.forClass(Course.class);
+        verify(courseRepository).save(captor.capture());
+        assertEquals("DRAFT", captor.getValue().getStatus());
+    }
+
+    @Test
+    void publishCourseRejectsMissingChapterOrQuizWithRequirementData() {
+        when(courseRepository.findByIdAndDeletedFalse(COURSE_ID)).thenReturn(Optional.of(publishableDraft()));
+        when(mapRepository.findActiveCountryById(1L)).thenReturn(Optional.of(country(1L)));
+        when(chapterRepository.countByCourseId(COURSE_ID)).thenReturn(0L);
+        when(quizRepository.countByCourseId(COURSE_ID)).thenReturn(1L);
+
+        CourseIncompleteException exception = assertThrows(
+                CourseIncompleteException.class,
+                () -> courseService.publishCourse(COURSE_ID)
+        );
+
+        assertFalse(exception.getData().hasChapter());
+        assertTrue(exception.getData().hasQuiz());
+    }
+
+    @Test
+    void updateCourseRejectsPublishedStatusWhenContentIsIncomplete() {
+        when(courseRepository.findByIdAndDeletedFalse(COURSE_ID)).thenReturn(Optional.of(publishableDraft()));
+        when(mapRepository.findActiveCountryById(1L)).thenReturn(Optional.of(country(1L)));
+        when(chapterRepository.countByCourseId(COURSE_ID)).thenReturn(1L);
+        when(quizRepository.countByCourseId(COURSE_ID)).thenReturn(0L);
+        when(courseFileManager.replaceThumbnail("https://cdn.test/thumb.png", null))
+                .thenReturn("https://cdn.test/thumb.png");
+
+        CourseIncompleteException exception = assertThrows(
+                CourseIncompleteException.class,
+                () -> courseService.updateCourse(COURSE_ID, new UpdateCourseCommand(
+                        "Travel course",
+                        "Course description",
+                        1000,
+                        0,
+                        "BEGINNER",
+                        "PUBLISHED",
+                        null,
+                        List.of()
+                ))
+        );
+
+        assertTrue(exception.getData().hasChapter());
+        assertFalse(exception.getData().hasQuiz());
+    }
+
     private void mockClassroom(List<Chapter> chapters, List<LearningProgress> progresses) {
         Course course = mock(Course.class);
         when(course.getId()).thenReturn(COURSE_ID);
@@ -172,5 +267,26 @@ class CourseServiceClassroomTest {
                 chapterOrder,
                 false
         );
+    }
+
+    private Course publishableDraft() {
+        return Course.withId(
+                COURSE_ID,
+                1L,
+                2L,
+                "Travel course",
+                "Course description",
+                1000,
+                0,
+                "https://cdn.test/thumb.png",
+                null,
+                "BEGINNER",
+                "DRAFT",
+                List.of()
+        );
+    }
+
+    private Country country(Long countryId) {
+        return Country.withId(countryId, "JP", "AS", "Asia", "Japan", true);
     }
 }

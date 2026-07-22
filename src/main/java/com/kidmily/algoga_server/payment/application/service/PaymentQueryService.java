@@ -287,6 +287,10 @@ public class PaymentQueryService implements PaymentQueryUseCase {
     public int calculateLectureAmount(Long courseId, int usedMileage, Long usedCouponId, Long userId) {
         Course course = courseRepository.findByIdAndDeletedFalse(courseId)
                 .orElseThrow(() -> new BusinessException(PaymentErrorCode.COURSE_NOT_FOUND));
+        if (!"PUBLISHED".equals(course.getStatus())) {
+            throw new BusinessException(PaymentErrorCode.COURSE_NOT_PUBLISHED);
+        }
+
         int basePrice = course.getPrice();
 
         int couponDiscount = 0;
