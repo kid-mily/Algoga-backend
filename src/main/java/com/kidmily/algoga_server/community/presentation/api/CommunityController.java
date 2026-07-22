@@ -252,7 +252,11 @@ public class CommunityController {
                 userPort.getProfileImageUrl(savedComment.getUserId()),
                 savedComment.getContent(),
                 savedComment.getParentId(),
-                savedComment.getCreatedAt()
+                savedComment.getCreatedAt(),
+                0L,
+                0L,
+                true,
+                List.of()
         );
 
         return ResponseEntity.status(HttpStatus.CREATED)
