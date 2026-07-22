@@ -21,6 +21,12 @@ public record PackageResponse(
         @Schema(description = "숙소 이름 (예: 신주쿠 프린스 호텔). 숙소를 못 찾으면 null")
         String accommodationName,
 
+        @Schema(description = "숙소 주소/위치 (예: 도쿄). 숙소를 못 찾으면 null")
+        String accommodationAddress,
+
+        @Schema(description = "숙소 대표 이미지 URL (조회 시점 CDN 절대경로로 변환). 숙소를 못 찾거나 이미지 없으면 null")
+        String accommodationImageUrl,
+
         String name,
         String description,
         String imageUrl,
@@ -78,6 +84,8 @@ public record PackageResponse(
         int chargeableNights = Math.max(1, (int) nights);
         int pricePerNight = accommodation != null ? accommodation.getPricePerNight() : 0;
         String accommodationName = accommodation != null ? accommodation.getName() : null;
+        String accommodationAddress = accommodation != null ? accommodation.getAddress() : null;
+        String accommodationImageUrl = accommodation != null ? accommodation.getImageUrl() : null;
         int accommodationPrice = pricePerNight * chargeableNights;
 
         int totalPrice = roundTripPrice + accommodationPrice;
@@ -90,6 +98,8 @@ public record PackageResponse(
                 countryName,
                 travelPackage.getAccommodationId(),
                 accommodationName,
+                accommodationAddress,
+                accommodationImageUrl,
                 travelPackage.getName(),
                 travelPackage.getDescription(),
                 travelPackage.getImageUrl(),

@@ -91,10 +91,16 @@ public class BookingCommandService implements BookingCommandUseCase {
             requireCountryCoursesCompletedIfPurchased(command.userId(), accommodation.getCountryId());
         }
 
-        // 경로별 결제 방식:
-        // - COMPLETION(단과 완강 후 마이페이지 예약): 일시불만(분할 불가)
-        // - LOUNGE(라운지에서 바로 예약, 기본값): 분할/일시불 선택 가능
-        boolean installmentAllowed = command.bookingSource() != BookingSource.COMPLETION;
+        // 분할(예약금) 허용 규칙 — 서버가 정책을 강제한다(클라이언트 bookingSource에만 의존하지 않음):
+        // - COMPLETION(단과 완강 후 마이페이지 모달 예약): 항상 일시불.
+        // - LOUNGE 라도, 연관 강의(courseId)를 이미 단과로 구매한 유저는 일시불 강제.
+        //   그 강의는 위 완강 게이트를 통과해야 여기 도달하므로 "이미 사서 완강한 강의의 패키지"다.
+        //   → 정책: 강의를 먼저 사둔 뒤의 패키지 결제는 예약금 없이 일시불.
+        // - 연관 강의를 아직 안 산 경우엔 그 강의를 패키지와 함께 번들 결제하며 분할(예약금)이 가능하다.
+        boolean linkedCourseAlreadyOwned =
+                command.courseId() != null && isCoursePurchased(command.userId(), command.courseId());
+        boolean installmentAllowed =
+                command.bookingSource() != BookingSource.COMPLETION && !linkedCourseAlreadyOwned;
 
         int accommodationPrice = accommodation.getPricePerNight() * nights;
         int totalPrice = command.flightPrice() + accommodationPrice;
@@ -170,13 +176,17 @@ public class BookingCommandService implements BookingCommandUseCase {
      * <p>
      * 나라 단위 검사와 달리, 산 적도 없는 다른 추천 강의 때문에 막히는 과잉 차단이 없다.
      */
-    private void requireCourseCompletedIfPurchased(Long userId, Long courseId) {
-        boolean purchased = paymentRepository
+    /** 이 유저가 해당 강의를 단과(LECTURE_ONLY)로 결제 완료한 적이 있는지. */
+    private boolean isCoursePurchased(Long userId, Long courseId) {
+        return paymentRepository
                 .findByUserIdAndPaymentTypeAndStatusAndCourseIdIsNotNull(
                         userId, PaymentType.LECTURE_ONLY, PaymentStatus.SUCCESS)
                 .stream()
                 .anyMatch(p -> courseId.equals(p.getCourseId()));
-        if (!purchased) {
+    }
+
+    private void requireCourseCompletedIfPurchased(Long userId, Long courseId) {
+        if (!isCoursePurchased(userId, courseId)) {
             return; // 이 강의를 산 적 없음 — 게이트 대상 아님
         }
 
