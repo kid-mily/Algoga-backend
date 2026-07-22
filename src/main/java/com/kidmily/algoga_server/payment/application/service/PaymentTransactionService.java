@@ -228,11 +228,12 @@ public class PaymentTransactionService {
     })
     @Transactional
     public Long saveLecturePayment(CreateLecturePaymentCommand command, String portoneStatus, int paidAmount, String paymentMethod) {
-        courseRepository.findByIdAndDeletedFalse(command.courseId())
+        Course course = courseRepository.findByIdAndDeletedFalse(command.courseId())
                 .orElseThrow(() -> {
                     log.warn("[PaymentTransactionService] 강의를 찾을 수 없음 - courseId: {}", command.courseId());
                     return new BusinessException(PaymentErrorCode.COURSE_NOT_FOUND);
                 });
+        validateCoursePublished(course);
 
         String idempotencyKey = "LECTURE_" + command.courseId() + "_" + command.userId();
         paymentRepository.findByIdempotencyKey(idempotencyKey).ifPresent(p -> {
@@ -385,6 +386,7 @@ public class PaymentTransactionService {
                         log.warn("[PaymentTransactionService] 강의를 찾을 수 없음 - courseId: {}", courseId);
                         return new BusinessException(PaymentErrorCode.COURSE_NOT_FOUND);
                     });
+            validateCoursePublished(course);
             consumeExistingPayment(lectureIdempotencyKey(courseId, command.userId()), "강의");
             lectureAmount += course.getPrice();
         }
@@ -517,6 +519,10 @@ public class PaymentTransactionService {
                 return BundlePaymentPreviewResponse.blocked("COURSE_NOT_FOUND",
                         "강의 정보를 찾을 수 없습니다. (courseId: " + courseId + ")", null);
             }
+            if (!isCoursePublished(course)) {
+                return BundlePaymentPreviewResponse.blocked("COURSE_NOT_PUBLISHED",
+                        "공개되지 않은 강의는 결제할 수 없습니다. (courseId: " + courseId + ")", null);
+            }
             if (isAlreadyPaid(lectureIdempotencyKey(courseId, userId))) {
                 alreadyPaid.add(courseId);
                 continue;
@@ -562,6 +568,18 @@ public class PaymentTransactionService {
         return paymentRepository.findByIdempotencyKey(idempotencyKey)
                 .filter(p -> p.getStatus() == PaymentStatus.SUCCESS)
                 .isPresent();
+    }
+
+    private void validateCoursePublished(Course course) {
+        if (!isCoursePublished(course)) {
+            log.warn("[PaymentTransactionService] 공개되지 않은 강의 결제 시도 - courseId: {}, status: {}",
+                    course.getId(), course.getStatus());
+            throw new BusinessException(PaymentErrorCode.COURSE_NOT_PUBLISHED);
+        }
+    }
+
+    private boolean isCoursePublished(Course course) {
+        return course != null && "PUBLISHED".equals(course.getStatus());
     }
 
     /**

@@ -265,6 +265,28 @@ public class AdminCourseController {
         );
     }
 
+    @Operation(
+            summary = "관리자 강의 공개",
+            description = "강의 기본정보, 챕터 1개 이상, 퀴즈 1개 이상을 검증한 뒤 강의를 공개 상태로 변경합니다."
+    )
+    @ApiErrorCodeExample(domain = CourseErrorCode.class, value = {"COURSE_NOT_FOUND", "COURSE_INCOMPLETE"})
+    @PreAuthorize("hasAnyAuthority('CONTENT_MANAGER', 'ROLE_CONTENT_MANAGER', 'SUPER_ADMIN', 'ROLE_SUPER_ADMIN')")
+    @PostMapping("/{courseId}/publish")
+    public ResponseEntity<ApiResponse<AdminCourseResponse>> publishCourse(
+            @Parameter(description = "강의 ID", example = "1")
+            @PathVariable Long courseId
+    ) {
+        var publishedCourse = courseUseCase.publishCourse(courseId);
+
+        return ResponseEntity.ok(
+                ApiResponse.success(
+                        "COURSE_PUBLISHED",
+                        "강의 공개가 완료되었습니다.",
+                        AdminCourseResponse.from(publishedCourse)
+                )
+        );
+    }
+
     private UploadFile toUploadFile(MultipartFile file) {
         if (file == null || file.isEmpty()) {
             return null;

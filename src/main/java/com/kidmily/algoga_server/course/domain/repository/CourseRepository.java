@@ -40,6 +40,8 @@ public interface CourseRepository {
             String status
     );
 
+    Optional<Course> updateStatus(Long courseId, String status);
+
     boolean softDelete(Long courseId);
 
     List<Course> findPublishedByCountryId(Long countryId);

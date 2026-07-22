@@ -9,6 +9,7 @@ import com.kidmily.algoga_server.global.exception.BusinessException;
 import com.kidmily.algoga_server.course.domain.model.Course;
 import com.kidmily.algoga_server.course.domain.repository.CourseRepository;
 import com.kidmily.algoga_server.payment.domain.repository.PaymentRepository;
+import com.kidmily.algoga_server.payment.exception.PaymentErrorCode;
 import com.kidmily.algoga_server.payment.infrastructure.pdf.ConfirmationPdfGenerator;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -53,6 +54,7 @@ class PaymentQueryServiceTest {
     void 쿠폰_마일리지_없으면_원가_반환() {
         // given
         Course course = mock(Course.class);
+        when(course.getStatus()).thenReturn("PUBLISHED");
         when(course.getPrice()).thenReturn(10000);
         when(courseRepository.findByIdAndDeletedFalse(1L)).thenReturn(Optional.of(course));
 
@@ -68,6 +70,7 @@ class PaymentQueryServiceTest {
     void 퍼센트_쿠폰_적용_시_할인된_금액_반환() {
         // given
         Course course = mock(Course.class);
+        when(course.getStatus()).thenReturn("PUBLISHED");
         when(course.getPrice()).thenReturn(10000);
         when(courseRepository.findByIdAndDeletedFalse(1L)).thenReturn(Optional.of(course));
 
@@ -88,6 +91,7 @@ class PaymentQueryServiceTest {
     void 마일리지_잔액_부족_시_예외_발생() {
         // given : 잔액 500 인데 1000 사용 시도
         Course course = mock(Course.class);
+        when(course.getStatus()).thenReturn("PUBLISHED");
         when(course.getPrice()).thenReturn(10000);
         when(courseRepository.findByIdAndDeletedFalse(1L)).thenReturn(Optional.of(course));
 
@@ -100,5 +104,19 @@ class PaymentQueryServiceTest {
         // when & then
         assertThrows(BusinessException.class, () ->
                 paymentQueryService.calculateLectureAmount(1L, 1000, null, 1L));
+    }
+
+    @Test
+    void rejectsLectureAmountCalculationWhenCourseIsNotPublished() {
+        Course course = mock(Course.class);
+        when(course.getStatus()).thenReturn("DRAFT");
+        when(courseRepository.findByIdAndDeletedFalse(1L)).thenReturn(Optional.of(course));
+
+        BusinessException exception = assertThrows(
+                BusinessException.class,
+                () -> paymentQueryService.calculateLectureAmount(1L, 0, null, 1L)
+        );
+
+        assertSame(PaymentErrorCode.COURSE_NOT_PUBLISHED, exception.getErrorCode());
     }
 }

@@ -176,4 +176,8 @@ public class CourseJpaEntity {
     public void softDelete() {
         this.deleted = true;
     }
+
+    public void updateStatus(String status) {
+        this.status = status;
+    }
 }
