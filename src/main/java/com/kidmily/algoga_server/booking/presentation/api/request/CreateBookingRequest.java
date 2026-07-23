@@ -3,6 +3,7 @@ package com.kidmily.algoga_server.booking.presentation.api.request;
 import com.kidmily.algoga_server.booking.domain.model.BookingSource;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.media.Schema.AccessMode;
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.AssertTrue;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
@@ -21,7 +22,9 @@ public record CreateBookingRequest(
         @Schema(description = "오는편 항공편 정보 (패키지 예약 시 패키지의 returnFlightInfo를 그대로 전달. 없으면 생략 가능)")
         FlightInfoRequest returnFlightInfo,
 
-        @Schema(description = "탑승객(여권) 정보 — 성/이름/생년월일/여권번호/만료일")
+        @Schema(description = "탑승객(여권) 정보 — 성/이름/성별/생년월일/여권번호/만료일 필수")
+        @NotNull(message = "탑승객 정보는 필수입니다.")
+        @Valid
         PassengerInfoRequest passengerInfo,
 
         @Schema(description = "항공편 가격 (왕복 합산가)", example = "600000")

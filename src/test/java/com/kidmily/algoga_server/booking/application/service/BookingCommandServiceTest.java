@@ -243,6 +243,40 @@ class BookingCommandServiceTest {
     }
 
     @Test
+    @DisplayName("[Case C] 라운지라도 그 강의를 이미 사고 완강했으면 일시불 강제(installmentAllowed=false)")
+    void courseId_이미산강의_라운지예약도_일시불강제() {
+        // 초급(32)을 이미 사고 완강한 유저가, 진단추천 초급 패키지를 라운지에서 예약.
+        // → 강의값 제외 + 일시불 강제 정책. bookingSource=LOUNGE 라도 서버가 일시불로 고정한다.
+        accommodationMock();
+        purchasedLecture(32L);   // 32번 이미 구매
+        // 강의-단위 게이트는 완강 목록이 비었는지만 보므로 비어있지 않게만 스텁 (getCourseId 불필요)
+        when(courseCompletionRepository.findByUserIdAndCourseIdIn(eq(1L), anyList()))
+                .thenReturn(List.of(mock(CourseCompletion.class)));
+
+        bookingCommandService.handle(command(BookingSource.LOUNGE, 32L));
+
+        ArgumentCaptor<Booking> captor = ArgumentCaptor.forClass(Booking.class);
+        verify(bookingRepository).save(captor.capture());
+        assertFalse(captor.getValue().isInstallmentAllowed(), "이미 산 강의의 패키지는 일시불만 허용");
+    }
+
+    @Test
+    @DisplayName("[Case B] 진단추천이 안 산 레벨이면(courseId 미구매) 강의 번들+분할 허용(installmentAllowed=true)")
+    void courseId_안산레벨_분할허용() {
+        // 초급(10)만 보유한 유저에게 중급(32)이 추천됨. 중급은 미구매 → 번들로 같이 결제 + 예약금(분할) 가능.
+        accommodationMock();
+        purchasedLecture(10L);   // 산 건 초급(10), 추천 중급(32)은 미구매
+
+        bookingCommandService.handle(command(BookingSource.LOUNGE, 32L));
+
+        ArgumentCaptor<Booking> captor = ArgumentCaptor.forClass(Booking.class);
+        verify(bookingRepository).save(captor.capture());
+        assertTrue(captor.getValue().isInstallmentAllowed(), "안 산 강의의 패키지는 분할 가능");
+        // 미구매 강의는 완강 조회를 하지 않는다
+        verifyNoInteractions(courseCompletionRepository);
+    }
+
+    @Test
     @DisplayName("courseId 전달 시, 그 강의를 샀는데 미완강이면 차단된다")
     void courseId_전달_그강의_미완강이면_차단() {
         Accommodation acc = mock(Accommodation.class);
