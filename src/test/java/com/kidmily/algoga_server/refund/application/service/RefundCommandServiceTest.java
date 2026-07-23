@@ -6,6 +6,8 @@ import com.kidmily.algoga_server.booking.domain.repository.BookingRepository;
 import com.kidmily.algoga_server.refund.application.command.CreateRefundCommand;
 import com.kidmily.algoga_server.global.exception.BusinessException;
 import com.kidmily.algoga_server.payment.domain.model.Payment;
+import com.kidmily.algoga_server.payment.domain.model.PaymentStatus;
+import com.kidmily.algoga_server.payment.domain.model.PaymentType;
 import com.kidmily.algoga_server.payment.domain.repository.PaymentRepository;
 import com.kidmily.algoga_server.payment.infrastructure.portone.PortOneClient;
 import com.kidmily.algoga_server.refund.domain.model.RefundRequest;
@@ -22,6 +24,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.context.ApplicationEventPublisher;
 
 import java.time.LocalDate;
+import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -113,7 +116,6 @@ class RefundCommandServiceTest {
         when(bookingRepository.findById(1L)).thenReturn(Optional.of(booking));
         when(booking.getCheckInDate()).thenReturn(LocalDate.now().plusDays(30)); // 14일 이상 → 100% 환불
 
-        when(refundRepository.existsByBookingId(1L)).thenReturn(false);
         Payment payment = mock(Payment.class);
         when(payment.getAmount()).thenReturn(920_000);
         when(paymentRepository.findById(10L)).thenReturn(Optional.of(payment));
@@ -137,7 +139,6 @@ class RefundCommandServiceTest {
         when(bookingRepository.findById(1L)).thenReturn(Optional.of(booking));
         when(booking.getCheckInDate()).thenReturn(LocalDate.now().plusDays(30));
 
-        when(refundRepository.existsByBookingId(1L)).thenReturn(false);
         Payment payment = mock(Payment.class);
         when(payment.getAmount()).thenReturn(920_000);
         when(paymentRepository.findById(10L)).thenReturn(Optional.of(payment));
@@ -158,6 +159,83 @@ class RefundCommandServiceTest {
 
         assertThrows(BusinessException.class, () ->
                 refundCommandService.handle(new CreateRefundCommand(1L, 10L, 5L, "고객 변심")));
+        verify(refundRepository, never()).save(any());
+    }
+
+    @Test
+    @DisplayName("[반려복원] 패키지 환불 반려 시 예약을 완납(FULL_PAID)으로 복원한다")
+    void 반려_예약_완납복원() {
+        RefundRequest refund = mock(RefundRequest.class);
+        when(refund.getStatus()).thenReturn(RefundStatus.REQUESTED);
+        when(refund.getPaymentId()).thenReturn(10L);
+        when(refund.getUserId()).thenReturn(1L);
+        when(refund.getBookingId()).thenReturn(1L);
+        when(refundRepository.findById(1L)).thenReturn(Optional.of(refund));
+
+        // 패키지(예약) 결제 — courseId 없음 → 예약 복원 분기
+        Payment tripPayment = mock(Payment.class);
+        when(tripPayment.getCourseId()).thenReturn(null);
+        when(paymentRepository.findById(10L)).thenReturn(Optional.of(tripPayment));
+
+        Booking booking = mock(Booking.class);
+        when(booking.getStatus()).thenReturn(BookingStatus.CANCEL_REQUESTED);
+        when(booking.getId()).thenReturn(1L);
+        when(bookingRepository.findById(1L)).thenReturn(Optional.of(booking));
+
+        // 완납 이력(FULL 성공) → FULL_PAID로 복원
+        Payment full = mock(Payment.class);
+        when(full.getStatus()).thenReturn(PaymentStatus.SUCCESS);
+        when(full.getPaymentType()).thenReturn(PaymentType.FULL);
+        when(paymentRepository.findByBookingId(1L)).thenReturn(List.of(full));
+
+        refundCommandService.reject(1L, "규정 외 요청");
+
+        verify(refund).reject("규정 외 요청");
+        verify(bookingRepository).updateStatus(1L, BookingStatus.FULL_PAID);
+    }
+
+    @Test
+    @DisplayName("[반려복원] 예약금만 낸 예약은 반려 시 DEPOSIT_PAID로 복원한다")
+    void 반려_예약금만_복원() {
+        RefundRequest refund = mock(RefundRequest.class);
+        when(refund.getStatus()).thenReturn(RefundStatus.UNDER_REVIEW);
+        when(refund.getPaymentId()).thenReturn(10L);
+        when(refund.getUserId()).thenReturn(1L);
+        when(refund.getBookingId()).thenReturn(1L);
+        when(refundRepository.findById(1L)).thenReturn(Optional.of(refund));
+
+        Payment tripPayment = mock(Payment.class);
+        when(tripPayment.getCourseId()).thenReturn(null);
+        when(paymentRepository.findById(10L)).thenReturn(Optional.of(tripPayment));
+
+        Booking booking = mock(Booking.class);
+        when(booking.getStatus()).thenReturn(BookingStatus.CANCEL_REQUESTED);
+        when(booking.getId()).thenReturn(1L);
+        when(bookingRepository.findById(1L)).thenReturn(Optional.of(booking));
+
+        // 예약금(DEPOSIT)만 성공 → DEPOSIT_PAID로 복원
+        Payment deposit = mock(Payment.class);
+        when(deposit.getStatus()).thenReturn(PaymentStatus.SUCCESS);
+        when(deposit.getPaymentType()).thenReturn(PaymentType.DEPOSIT);
+        when(paymentRepository.findByBookingId(1L)).thenReturn(List.of(deposit));
+
+        refundCommandService.reject(1L, "규정 외 요청");
+
+        verify(bookingRepository).updateStatus(1L, BookingStatus.DEPOSIT_PAID);
+    }
+
+    @Test
+    @DisplayName("[가드] 진행 중(요청/검토중/승인)인 환불이 있으면 재요청이 거부된다")
+    void 진행중_환불있으면_재요청_거부() {
+        Booking booking = mock(Booking.class);
+        when(booking.getStatus()).thenReturn(BookingStatus.CANCEL_REQUESTED);
+        when(bookingRepository.findById(1L)).thenReturn(Optional.of(booking));
+        when(refundRepository.existsByBookingIdAndStatusIn(1L,
+                List.of(RefundStatus.REQUESTED, RefundStatus.UNDER_REVIEW, RefundStatus.APPROVED)))
+                .thenReturn(true);
+
+        assertThrows(BusinessException.class, () ->
+                refundCommandService.handle(new CreateRefundCommand(1L, 10L, 5L, "중복 요청")));
         verify(refundRepository, never()).save(any());
     }
 

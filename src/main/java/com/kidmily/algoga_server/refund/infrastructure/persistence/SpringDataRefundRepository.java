@@ -10,5 +10,6 @@ public interface SpringDataRefundRepository extends JpaRepository<RefundJpaEntit
     List<RefundJpaEntity> findAllByStatus(RefundStatus status);
     List<RefundJpaEntity> findAllByStatusIn(List<RefundStatus> statuses);
     boolean existsByBookingId(Long bookingId);
+    boolean existsByBookingIdAndStatusIn(Long bookingId, List<RefundStatus> statuses);
     boolean existsByUserIdAndStatusIn(Long userId, List<RefundStatus> statuses);
 }
