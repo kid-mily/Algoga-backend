@@ -6,6 +6,7 @@ import com.kidmily.algoga_server.booking.domain.repository.BookingRepository;
 import com.kidmily.algoga_server.global.exception.BusinessException;
 import com.kidmily.algoga_server.payment.domain.model.Payment;
 import com.kidmily.algoga_server.payment.domain.model.PaymentStatus;
+import com.kidmily.algoga_server.payment.domain.model.PaymentType;
 import com.kidmily.algoga_server.payment.domain.repository.PaymentRepository;
 import com.kidmily.algoga_server.payment.infrastructure.portone.PortOneClient; // 추가
 import com.kidmily.algoga_server.refund.application.command.CreateRefundCommand;
@@ -73,8 +74,12 @@ public class RefundCommandService implements RefundCommandUseCase {
             throw new BusinessException(RefundErrorCode.BOOKING_NOT_CANCELLED);
         }
 
-        if (refundRepository.existsByBookingId(command.bookingId())) {
-            log.warn("[RefundCommandService] 이미 환불 요청됨 - bookingId: {}", command.bookingId());
+        // 진행 중인 환불(요청/검토중/승인)만 중복으로 막는다.
+        // 반려(REJECTED) 이력은 재신청을 막지 않는다 — 반려되면 예약이 이용전으로 복원되고 다시 신청할 수 있어야 하기 때문.
+        // (완료(COMPLETED)는 예약이 REFUNDED가 되어 위 상태 가드에서 이미 걸러진다.)
+        if (refundRepository.existsByBookingIdAndStatusIn(command.bookingId(),
+                List.of(RefundStatus.REQUESTED, RefundStatus.UNDER_REVIEW, RefundStatus.APPROVED))) {
+            log.warn("[RefundCommandService] 이미 진행 중인 환불이 있음 - bookingId: {}", command.bookingId());
             throw new BusinessException(RefundErrorCode.ALREADY_REFUND_REQUESTED);
         }
 
@@ -218,6 +223,16 @@ public class RefundCommandService implements RefundCommandUseCase {
         } else {
             Booking booking = bookingRepository.findById(refundRequest.getBookingId())
                     .orElseThrow(() -> new BusinessException(RefundErrorCode.BOOKING_NOT_FOUND));
+
+            // 반려 = 환불 거부 → 예약은 유효하게 유지되어야 한다.
+            // 환불 요청 시 CANCEL_REQUESTED로 바꿨던 것을 결제 이력 기준 원래 상태로 복원해
+            // "이용 전" 목록에 다시 노출되고 환불 재신청도 가능하게 한다.
+            if (booking.getStatus() == BookingStatus.CANCEL_REQUESTED) {
+                BookingStatus restored = resolvePaidStatus(booking.getId());
+                bookingRepository.updateStatus(booking.getId(), restored);
+                log.info("[RefundCommandService] 반려로 예약 상태 복원 - bookingId: {}, CANCEL_REQUESTED -> {}",
+                        booking.getId(), restored);
+            }
             event = RefundRejectedEvent.ofTrip(refundRequest.getUserId(), booking.getAccommodationId());
         }
         eventPublisher.publishEvent(event);
@@ -319,5 +334,17 @@ public class RefundCommandService implements RefundCommandUseCase {
         } else {
             return 0;
         }
+    }
+
+    /**
+     * 예약의 결제 이력으로 복원 상태를 판별한다.
+     * BALANCE/FULL 성공 결제가 있으면 완납(FULL_PAID), 없으면 예약금만 낸 것(DEPOSIT_PAID).
+     * (Booking이 직전 상태를 따로 저장하지 않으므로 결제 이력으로 역추적한다.)
+     */
+    private BookingStatus resolvePaidStatus(Long bookingId) {
+        boolean fullyPaid = paymentRepository.findByBookingId(bookingId).stream()
+                .anyMatch(p -> p.getStatus() == PaymentStatus.SUCCESS
+                        && (p.getPaymentType() == PaymentType.FULL || p.getPaymentType() == PaymentType.BALANCE));
+        return fullyPaid ? BookingStatus.FULL_PAID : BookingStatus.DEPOSIT_PAID;
     }
 }
