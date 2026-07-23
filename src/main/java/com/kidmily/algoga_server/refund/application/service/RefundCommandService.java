@@ -89,7 +89,12 @@ public class RefundCommandService implements RefundCommandUseCase {
                     return new BusinessException(RefundErrorCode.PAYMENT_NOT_FOUND);
                 });
 
-        int refundAmount = calculateRefundAmount(booking, payment.getAmount());
+        // 환불 금액은 "예약의 전체 성공 결제 합계"를 기준으로 정책%를 적용한다.
+        // 분할결제(예약금 + 잔금)면 결제가 여러 건이라, 단일 결제 금액만 쓰면 환불액이 총액과 어긋난다.
+        // (어드민 convertToRefund 와 동일 기준으로 통일)
+        int totalPaid = successPaymentsOf(command.bookingId()).stream()
+                .mapToInt(Payment::getAmount).sum();
+        int refundAmount = calculateRefundAmount(booking, totalPaid);
 
         RefundRequest refundRequest = RefundRequest.create(
                 command.bookingId(),
@@ -251,35 +256,61 @@ public class RefundCommandService implements RefundCommandUseCase {
             throw new BusinessException(RefundErrorCode.INVALID_REFUND_STATUS);
         }
 
-        // 1. Payment 조회 → portonePaymentId 획득
-        Payment payment = paymentRepository.findById(refundRequest.getPaymentId())
-                .orElseThrow(() -> new BusinessException(RefundErrorCode.PAYMENT_NOT_FOUND));
-
-        // 2. PortOne 실제 환불 API 호출 — 트랜잭션 밖에서 수행 (DB 커넥션 점유 방지)
-        //    단, 환불금액 0원(체크인 7일 미만 = 환불 불가 정책)이면 PG를 부르지 않는다.
-        //    PortOne은 cancelAmount > 0 을 요구해서, 0원으로 호출하면
-        //    400 INVALID_REQUEST("cancelAmount violated the rule GREATER_THAN")로 거부되고
-        //    그 예외 때문에 DB 상태 전이까지 통째로 막혀 환불건이 APPROVED에 영구히 머문다.
-        if (refundRequest.getAmount() > 0) {
-            portOneClient.cancelPayment(
-                    payment.getPortonePaymentId(),
-                    refundRequest.getAmount(),
-                    refundRequest.getReason()
-            );
-            log.info("[RefundCommandService] PortOne 환불 API 호출 완료 - portonePaymentId: {}", payment.getPortonePaymentId());
-        } else {
-            log.info("[RefundCommandService] 환불금액 0원 - PortOne 취소 생략하고 상태만 완료 처리 - refundId: {}", refundId);
+        // 1. 예약의 결제 건들(성공/이미환불) 조회 — 건별로 환불을 배분한다.
+        List<Payment> payments = refundablePaymentsSorted(refundRequest.getBookingId());
+        if (payments.isEmpty()) {
+            log.warn("[RefundCommandService] 환불 대상 결제 없음 - bookingId: {}", refundRequest.getBookingId());
+            throw new BusinessException(RefundErrorCode.PAYMENT_NOT_FOUND);
         }
 
-        // 3. PortOne 환불 성공 후 DB 상태 업데이트
-        completeRefundInTransaction(refundRequest, payment);
+        // 2. PortOne 실제 환불 — 트랜잭션 밖에서 수행 (DB 커넥션 점유 방지).
+        //    분할결제(예약금 txn + 잔금 txn)는 PortOne 취소가 txn별이라, 한 txn에 총액을 몰면
+        //    그 txn 금액을 초과해 PortOne이 거부한다(cancelAmount > txn amount). 그래서 환불액을
+        //    각 결제 금액에 비례 배분해 건별로 취소하고, 각 취소 성공 직후 그 결제를 REFUNDED로 기록한다.
+        //    → 중간 실패 후 재시도해도 이미 REFUNDED인 건은 건너뛰어 이중취소가 나지 않는다.
+        //    환불금액 0원(체크인 7일 미만)은 PG를 부르지 않는다(PortOne은 cancelAmount > 0 요구).
+        int totalPaid = payments.stream().mapToInt(Payment::getAmount).sum();
+        int refundAmount = refundRequest.getAmount();
+
+        if (refundAmount > 0 && totalPaid > 0) {
+            long distributed = 0;
+            for (int i = 0; i < payments.size(); i++) {
+                Payment p = payments.get(i);
+                boolean last = (i == payments.size() - 1);
+                // 비례 배분(내림), 마지막 건이 나머지를 흡수해 합계가 정확히 refundAmount가 되게 한다.
+                // 각 몫은 refundAmount ≤ totalPaid 이므로 항상 해당 txn 금액 이하 → PortOne 한도 위반 없음.
+                int share = last
+                        ? (int) (refundAmount - distributed)
+                        : (int) ((long) refundAmount * p.getAmount() / totalPaid);
+                distributed += share;
+
+                if (p.getStatus() == PaymentStatus.REFUNDED) {
+                    continue; // 이미 취소된 txn(재시도) — PortOne 재호출/이중취소 방지
+                }
+                if (share > 0) {
+                    portOneClient.cancelPayment(p.getPortonePaymentId(), share, refundRequest.getReason());
+                    log.info("[RefundCommandService] PortOne 건별 환불 - portonePaymentId: {}, amount: {}",
+                            p.getPortonePaymentId(), share);
+                }
+                p.markRefunded();
+                paymentRepository.save(p); // 취소 성공 즉시 REFUNDED 기록
+            }
+        } else {
+            log.info("[RefundCommandService] 환불금액 0원 - PortOne 취소 생략, 결제 상태만 정리 - refundId: {}", refundId);
+            payments.stream()
+                    .filter(p -> p.getStatus() != PaymentStatus.REFUNDED)
+                    .forEach(p -> { p.markRefunded(); paymentRepository.save(p); });
+        }
+
+        // 3. 예약·환불 상태 전이 + 알림 (대표 결제로 여행/강의 구분)
+        Payment primary = paymentRepository.findById(refundRequest.getPaymentId())
+                .orElse(payments.get(payments.size() - 1));
+        completeRefundInTransaction(refundRequest, primary);
     }
 
     @Transactional
     public void completeRefundInTransaction(RefundRequest refundRequest, Payment payment) {
-        // Payment 상태 → REFUNDED
-        payment.markRefunded();
-        paymentRepository.save(payment);
+        // 결제 건별 REFUNDED 처리는 complete()에서 이미 수행함 (분할결제 = 여러 txn 대응).
 
         // Booking 상태 → REFUNDED
         bookingRepository.updateStatus(refundRequest.getBookingId(), BookingStatus.REFUNDED);
@@ -322,6 +353,21 @@ public class RefundCommandService implements RefundCommandUseCase {
                     log.warn("[RefundCommandService] 환불 요청을 찾을 수 없음 - refundId: {}", refundId);
                     return new BusinessException(RefundErrorCode.REFUND_NOT_FOUND);
                 });
+    }
+
+    /** 예약의 성공 결제 목록 (환불 금액 산정 기준). */
+    private List<Payment> successPaymentsOf(Long bookingId) {
+        return paymentRepository.findByBookingId(bookingId).stream()
+                .filter(p -> p.getStatus() == PaymentStatus.SUCCESS)
+                .toList();
+    }
+
+    /** 예약의 환불 대상 결제 (성공 + 이미환불), id 오름차순 — 건별 취소 배분·재시도 스킵용. */
+    private List<Payment> refundablePaymentsSorted(Long bookingId) {
+        return paymentRepository.findByBookingId(bookingId).stream()
+                .filter(p -> p.getStatus() == PaymentStatus.SUCCESS || p.getStatus() == PaymentStatus.REFUNDED)
+                .sorted(java.util.Comparator.comparing(Payment::getId))
+                .toList();
     }
 
     private int calculateRefundAmount(Booking booking, int paidAmount) {
