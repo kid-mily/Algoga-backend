@@ -8,6 +8,7 @@ import com.kidmily.algoga_server.global.exception.BusinessException;
 import com.kidmily.algoga_server.course.domain.model.Course;
 import com.kidmily.algoga_server.course.domain.repository.CourseRepository;
 import com.kidmily.algoga_server.payment.domain.model.Payment;
+import com.kidmily.algoga_server.payment.domain.model.PaymentStatus;
 import com.kidmily.algoga_server.payment.domain.repository.PaymentRepository;
 import com.kidmily.algoga_server.refund.application.usecase.RefundQueryUseCase;
 import com.kidmily.algoga_server.refund.domain.model.RefundRequest;
@@ -144,7 +145,12 @@ public class RefundQueryService implements RefundQueryUseCase {
                         .orElse(null);
 
         Payment payment = paymentRepository.findById(refund.getPaymentId()).orElse(null);
-        int paidAmount = payment != null ? payment.getAmount() : 0;
+        // 결제 금액 = 예약의 실제 결제 총액(예약금+잔금 등 성공/환불 결제 합계). 단건이 아니라 총액을 보여줘야
+        // "얼마 내고 얼마 환불(예약금 몰수)"이 정산 담당에게 정확히 보인다.
+        int paidAmount = paymentRepository.findByBookingId(refund.getBookingId()).stream()
+                .filter(p -> p.getStatus() == PaymentStatus.SUCCESS || p.getStatus() == PaymentStatus.REFUNDED)
+                .mapToInt(Payment::getAmount)
+                .sum();
         String paymentMethod = payment != null ? payment.getPaymentMethod() : null;
 
         Booking booking = bookingRepository.findById(refund.getBookingId()).orElse(null);
