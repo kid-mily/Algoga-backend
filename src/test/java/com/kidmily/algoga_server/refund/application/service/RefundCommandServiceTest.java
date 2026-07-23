@@ -18,6 +18,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -107,41 +108,40 @@ class RefundCommandServiceTest {
     }
 
     @Test
-    @DisplayName("[회귀] FULL_PAID 예약에 환불 요청 시 CANCEL_REQUESTED로 전환하고 환불건을 생성한다")
-    void 결제완료_예약_환불요청_시_자동취소() {
-        // 고객 화면엔 '환불 요청' 버튼 하나뿐이라 별도 취소 없이 바로 요청한다.
-        // 예전엔 CANCEL_REQUESTED가 아니면 거부해서 CS 목록에 아무것도 안 떴다.
+    @DisplayName("[완납] FULL_PAID 예약 환불 요청 시 CANCEL_REQUESTED로 전환하고 환불건을 생성한다")
+    void 완납_예약_환불요청_시_자동취소() {
         Booking booking = mock(Booking.class);
         when(booking.getStatus()).thenReturn(BookingStatus.FULL_PAID);
+        when(booking.getCheckInDate()).thenReturn(LocalDate.now().plusDays(30)); // 14일 이상 → 100%
+        when(booking.getBalancePrice()).thenReturn(630_000);                     // 잔금(70%) 기준
         when(bookingRepository.findById(1L)).thenReturn(Optional.of(booking));
-        when(booking.getCheckInDate()).thenReturn(LocalDate.now().plusDays(30)); // 14일 이상 → 100% 환불
 
-        // 환불액은 "예약의 전체 성공결제 합계" 기준으로 계산한다
+        // 완납(FULL 성공) → isFullyPaid true
         Payment paid = mock(Payment.class);
         when(paid.getStatus()).thenReturn(PaymentStatus.SUCCESS);
-        when(paid.getAmount()).thenReturn(920_000);
+        when(paid.getPaymentType()).thenReturn(PaymentType.FULL);
         when(paymentRepository.findById(10L)).thenReturn(Optional.of(paid));
         when(paymentRepository.findByBookingId(1L)).thenReturn(List.of(paid));
         when(refundRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
         refundCommandService.handle(new CreateRefundCommand(1L, 10L, 5L, "고객 변심"));
 
-        // 예약이 취소 상태로 전환되고, 환불건이 저장됐는지 검증
         verify(bookingRepository).updateStatus(1L, BookingStatus.CANCEL_REQUESTED);
         verify(refundRepository).save(any(RefundRequest.class));
     }
 
     @Test
-    @DisplayName("이미 CANCEL_REQUESTED 인 예약은 상태 전환 없이 환불건만 생성한다")
+    @DisplayName("이미 CANCEL_REQUESTED 인 완납 예약은 상태 전환 없이 환불건만 생성한다")
     void 이미_취소요청_예약은_전환없이_환불생성() {
         Booking booking = mock(Booking.class);
         when(booking.getStatus()).thenReturn(BookingStatus.CANCEL_REQUESTED);
-        when(bookingRepository.findById(1L)).thenReturn(Optional.of(booking));
         when(booking.getCheckInDate()).thenReturn(LocalDate.now().plusDays(30));
+        when(booking.getBalancePrice()).thenReturn(630_000);
+        when(bookingRepository.findById(1L)).thenReturn(Optional.of(booking));
 
         Payment paid = mock(Payment.class);
         when(paid.getStatus()).thenReturn(PaymentStatus.SUCCESS);
-        when(paid.getAmount()).thenReturn(920_000);
+        when(paid.getPaymentType()).thenReturn(PaymentType.BALANCE);
         when(paymentRepository.findById(10L)).thenReturn(Optional.of(paid));
         when(paymentRepository.findByBookingId(1L)).thenReturn(List.of(paid));
         when(refundRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
@@ -153,15 +153,55 @@ class RefundCommandServiceTest {
     }
 
     @Test
-    @DisplayName("PENDING(미결제) 예약은 환불 요청이 거부된다")
+    @DisplayName("[정책] 예약금만 낸 예약(잔금 미결제)은 환불이 거부된다(예약금·강의 몰수)")
+    void 예약금만_낸_예약_환불거부() {
+        Booking booking = mock(Booking.class);
+        when(bookingRepository.findById(1L)).thenReturn(Optional.of(booking));
+        // 예약금(DEPOSIT)만 성공 → isFullyPaid false → 환불 거부
+        Payment deposit = mock(Payment.class);
+        when(deposit.getStatus()).thenReturn(PaymentStatus.SUCCESS);
+        when(deposit.getPaymentType()).thenReturn(PaymentType.DEPOSIT);
+        when(paymentRepository.findByBookingId(1L)).thenReturn(List.of(deposit));
+
+        assertThrows(BusinessException.class, () ->
+                refundCommandService.handle(new CreateRefundCommand(1L, 10L, 5L, "고객 변심")));
+        verify(bookingRepository, never()).updateStatus(anyLong(), any());
+        verify(refundRepository, never()).save(any());
+    }
+
+    @Test
+    @DisplayName("미결제 예약은 환불 요청이 거부된다(완납 아님)")
     void 미결제_예약_환불요청_거부() {
         Booking booking = mock(Booking.class);
-        when(booking.getStatus()).thenReturn(BookingStatus.PENDING);
         when(bookingRepository.findById(1L)).thenReturn(Optional.of(booking));
+        // findByBookingId 미스텁 → 빈 목록 → isFullyPaid false
 
         assertThrows(BusinessException.class, () ->
                 refundCommandService.handle(new CreateRefundCommand(1L, 10L, 5L, "고객 변심")));
         verify(refundRepository, never()).save(any());
+    }
+
+    @Test
+    @DisplayName("[정책] 완납 예약 환불액은 잔금(70%) 기준으로 계산된다(예약금 몰수)")
+    void 환불액_잔금기준_계산() {
+        Booking booking = mock(Booking.class);
+        when(booking.getStatus()).thenReturn(BookingStatus.FULL_PAID);
+        when(booking.getCheckInDate()).thenReturn(LocalDate.now().plusDays(30)); // 14일↑ → 100%
+        when(booking.getBalancePrice()).thenReturn(630_000);                     // 총 900k의 70%
+        when(bookingRepository.findById(1L)).thenReturn(Optional.of(booking));
+        Payment paid = mock(Payment.class);
+        when(paid.getStatus()).thenReturn(PaymentStatus.SUCCESS);
+        when(paid.getPaymentType()).thenReturn(PaymentType.FULL);
+        when(paymentRepository.findById(10L)).thenReturn(Optional.of(paid));
+        when(paymentRepository.findByBookingId(1L)).thenReturn(List.of(paid));
+
+        ArgumentCaptor<RefundRequest> captor = ArgumentCaptor.forClass(RefundRequest.class);
+        when(refundRepository.save(captor.capture())).thenAnswer(inv -> inv.getArgument(0));
+
+        refundCommandService.handle(new CreateRefundCommand(1L, 10L, 5L, "고객 변심"));
+
+        // 환불액 = 100% × 잔금 630,000 (예약금 270k·강의는 몰수)
+        assertEquals(630_000, captor.getValue().getAmount());
     }
 
     @Test
@@ -232,6 +272,11 @@ class RefundCommandServiceTest {
         Booking booking = mock(Booking.class);
         when(booking.getStatus()).thenReturn(BookingStatus.CANCEL_REQUESTED);
         when(bookingRepository.findById(1L)).thenReturn(Optional.of(booking));
+        // 완납(isFullyPaid) 통과시킨 뒤 중복 가드에서 막히는지 검증
+        Payment paid = mock(Payment.class);
+        when(paid.getStatus()).thenReturn(PaymentStatus.SUCCESS);
+        when(paid.getPaymentType()).thenReturn(PaymentType.FULL);
+        when(paymentRepository.findByBookingId(1L)).thenReturn(List.of(paid));
         when(refundRepository.existsByBookingIdAndStatusIn(1L,
                 List.of(RefundStatus.REQUESTED, RefundStatus.UNDER_REVIEW, RefundStatus.APPROVED)))
                 .thenReturn(true);
@@ -241,14 +286,16 @@ class RefundCommandServiceTest {
         verify(refundRepository, never()).save(any());
     }
 
-    /** 예약금(id=10, 270k) + 잔금(id=20, 630k) 분할결제된 예약의 결제 목록을 스텁한다. */
+    /**
+     * 예약금(DEPOSIT) + 잔금(BALANCE, id=20, 630k) 분할결제된 예약의 결제 목록을 스텁한다.
+     * 새 정책상 환불 대상은 잔금(BALANCE)뿐이라 예약금은 paymentType만 필요(필터에서 제외됨).
+     */
     private void stubInstallmentPayments(Payment deposit, Payment balance) {
-        when(deposit.getId()).thenReturn(10L);
-        when(deposit.getStatus()).thenReturn(PaymentStatus.SUCCESS);
-        when(deposit.getAmount()).thenReturn(270_000);
-        when(deposit.getPortonePaymentId()).thenReturn("imp_deposit");
-        when(balance.getId()).thenReturn(20L);
+        // deposit(예약금)은 환불 대상 필터(BALANCE/FULL)에서 제외됨 — 별도 스텁 불필요(기본 null → 제외)
+        lenient().when(deposit.getPaymentType()).thenReturn(PaymentType.DEPOSIT);
+        lenient().when(balance.getId()).thenReturn(20L); // 잔금 단건이라 sorted() 비교 없음
         when(balance.getStatus()).thenReturn(PaymentStatus.SUCCESS);
+        when(balance.getPaymentType()).thenReturn(PaymentType.BALANCE);
         when(balance.getAmount()).thenReturn(630_000);
         when(balance.getPortonePaymentId()).thenReturn("imp_balance");
         when(paymentRepository.findByBookingId(1L)).thenReturn(List.of(deposit, balance));
@@ -260,7 +307,6 @@ class RefundCommandServiceTest {
         when(refund.getBookingId()).thenReturn(1L);
         when(refund.getPaymentId()).thenReturn(20L);
         when(refund.getAmount()).thenReturn(amount);
-        when(refund.getReason()).thenReturn("고객 변심");
         when(refundRepository.findById(1L)).thenReturn(Optional.of(refund));
         // completeRefundInTransaction 용
         Booking booking = mock(Booking.class);
@@ -269,9 +315,10 @@ class RefundCommandServiceTest {
     }
 
     @Test
-    @DisplayName("[분할환불] 완납(예약금+잔금) 예약의 100% 환불 시 각 결제 건별로 전액 취소한다")
-    void 분할결제_전액환불_건별취소() {
-        approvedRefund(900_000); // 100%
+    @DisplayName("[분할환불] 완납 예약 환불 시 잔금 결제에서만 취소하고 예약금은 몰수(취소 안 함)")
+    void 분할환불_잔금만_취소_예약금_몰수() {
+        RefundRequest refund = approvedRefund(630_000); // 잔금 100% (예약금 270k 몰수)
+        when(refund.getReason()).thenReturn("고객 변심");
         Payment deposit = mock(Payment.class);
         Payment balance = mock(Payment.class);
         stubInstallmentPayments(deposit, balance);
@@ -279,15 +326,16 @@ class RefundCommandServiceTest {
 
         refundCommandService.complete(1L);
 
-        verify(portOneClient).cancelPayment("imp_deposit", 270_000, "고객 변심");
         verify(portOneClient).cancelPayment("imp_balance", 630_000, "고객 변심");
+        verify(portOneClient, never()).cancelPayment(eq("imp_deposit"), anyInt(), any());
         verify(bookingRepository).updateStatus(1L, BookingStatus.REFUNDED);
     }
 
     @Test
-    @DisplayName("[분할환불] 50% 환불 시 각 결제에 비례 배분하며 합계가 정확히 일치한다")
-    void 분할결제_50퍼_비례배분() {
-        approvedRefund(450_000); // 총 900k의 50%
+    @DisplayName("[분할환불] 50% 환불 시 잔금의 50%만 취소한다")
+    void 분할환불_잔금_50퍼() {
+        RefundRequest refund = approvedRefund(315_000); // 잔금 630k의 50%
+        when(refund.getReason()).thenReturn("고객 변심");
         Payment deposit = mock(Payment.class);
         Payment balance = mock(Payment.class);
         stubInstallmentPayments(deposit, balance);
@@ -295,33 +343,28 @@ class RefundCommandServiceTest {
 
         refundCommandService.complete(1L);
 
-        // 270k*50%=135k, 630k*50%=315k, 합계 450k
-        verify(portOneClient).cancelPayment("imp_deposit", 135_000, "고객 변심");
         verify(portOneClient).cancelPayment("imp_balance", 315_000, "고객 변심");
+        verify(portOneClient, never()).cancelPayment(eq("imp_deposit"), anyInt(), any());
     }
 
     @Test
-    @DisplayName("[분할환불] 재시도 시 이미 REFUNDED된 결제는 PortOne 재취소하지 않는다(이중취소 방지)")
-    void 분할환불_재시도_이미환불건_스킵() {
-        approvedRefund(900_000);
+    @DisplayName("[분할환불] 재시도 시 이미 REFUNDED된 잔금은 PortOne 재취소하지 않는다(이중취소 방지)")
+    void 분할환불_재시도_이미환불_스킵() {
+        approvedRefund(630_000);
         Payment deposit = mock(Payment.class);
+        lenient().when(deposit.getPaymentType()).thenReturn(PaymentType.DEPOSIT);
         Payment balance = mock(Payment.class);
-        // 예약금은 직전 시도에서 이미 취소됨(REFUNDED), 잔금만 남음
-        when(deposit.getId()).thenReturn(10L);
-        when(deposit.getStatus()).thenReturn(PaymentStatus.REFUNDED);
-        when(deposit.getAmount()).thenReturn(270_000);
-        when(balance.getId()).thenReturn(20L);
-        when(balance.getStatus()).thenReturn(PaymentStatus.SUCCESS);
+        lenient().when(balance.getId()).thenReturn(20L); // 잔금 단건이라 sorted() 비교 없음
+        when(balance.getStatus()).thenReturn(PaymentStatus.REFUNDED); // 직전 시도에서 이미 취소됨
+        when(balance.getPaymentType()).thenReturn(PaymentType.BALANCE);
         when(balance.getAmount()).thenReturn(630_000);
-        when(balance.getPortonePaymentId()).thenReturn("imp_balance");
         when(paymentRepository.findByBookingId(1L)).thenReturn(List.of(deposit, balance));
         when(paymentRepository.findById(20L)).thenReturn(Optional.of(balance));
 
         refundCommandService.complete(1L);
 
-        // 이미 환불된 예약금 txn은 PortOne 재호출 안 함, 잔금만 취소
-        verify(portOneClient, never()).cancelPayment(eq("imp_deposit"), anyInt(), any());
-        verify(portOneClient).cancelPayment("imp_balance", 630_000, "고객 변심");
+        verify(portOneClient, never()).cancelPayment(anyString(), anyInt(), any());
+        verify(bookingRepository).updateStatus(1L, BookingStatus.REFUNDED);
     }
 
     @Test

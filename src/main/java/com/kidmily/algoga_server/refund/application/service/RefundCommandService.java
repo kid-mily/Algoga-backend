@@ -59,17 +59,22 @@ public class RefundCommandService implements RefundCommandUseCase {
                     return new BusinessException(RefundErrorCode.BOOKING_NOT_FOUND);
                 });
 
-        // 고객 마이페이지에는 '환불 요청' 버튼 하나뿐이라, 별도 취소 절차 없이 바로 환불을 요청한다.
-        // 따라서 결제 완료 상태(DEPOSIT_PAID/FULL_PAID)면 여기서 취소 상태로 전환한 뒤 환불 요청을 만든다.
-        // (예전엔 CANCEL_REQUESTED가 아니면 무조건 거부해서, 결제 직후 환불 요청이 BOOKING_NOT_CANCELLED로
-        //  튕기고 CS 목록에 아무것도 안 뜨는 문제가 있었다.)
+        // [환불 정책] 예약금(계약금 30%)과 강의는 몰수(환불 불가). "완납(잔금까지 결제)"한 예약의 잔금(70%)만 환불 대상이다.
+        // → 잔금(BALANCE) 또는 일시불(FULL) 성공 결제가 있어야(=완납) 환불받을 수 있다.
+        //   예약금만 낸 예약(DEPOSIT_PAID)이나 미결제는 환불 요청 자체를 막는다.
+        if (!isFullyPaid(command.bookingId())) {
+            log.warn("[RefundCommandService] 완납 아님 - 환불 불가(예약금만/미결제) - bookingId: {}", command.bookingId());
+            throw new BusinessException(RefundErrorCode.DEPOSIT_ONLY_NOT_REFUNDABLE);
+        }
+
+        // 고객 마이페이지엔 '환불 요청' 버튼 하나뿐이라, 완납(FULL_PAID) 예약을 여기서 취소 상태로 전환한 뒤 환불 요청을 만든다.
         BookingStatus status = booking.getStatus();
-        if (status == BookingStatus.DEPOSIT_PAID || status == BookingStatus.FULL_PAID) {
+        if (status == BookingStatus.FULL_PAID) {
             bookingRepository.updateStatus(command.bookingId(), BookingStatus.CANCEL_REQUESTED);
             log.info("[RefundCommandService] 환불 요청에 따라 예약 취소 상태로 전환 - bookingId: {}, {} -> CANCEL_REQUESTED",
                     command.bookingId(), status);
         } else if (status != BookingStatus.CANCEL_REQUESTED) {
-            // PENDING(미결제) / REFUNDED(이미 환불) 등은 환불 요청 대상이 아니다
+            // DEPOSIT_PAID는 위 완납 검사에서 이미 걸러짐. PENDING/REFUNDED 등도 대상 아님.
             log.warn("[RefundCommandService] 환불 요청 불가 상태 - status: {}", status);
             throw new BusinessException(RefundErrorCode.BOOKING_NOT_CANCELLED);
         }
@@ -89,12 +94,9 @@ public class RefundCommandService implements RefundCommandUseCase {
                     return new BusinessException(RefundErrorCode.PAYMENT_NOT_FOUND);
                 });
 
-        // 환불 금액은 "예약의 전체 성공 결제 합계"를 기준으로 정책%를 적용한다.
-        // 분할결제(예약금 + 잔금)면 결제가 여러 건이라, 단일 결제 금액만 쓰면 환불액이 총액과 어긋난다.
-        // (어드민 convertToRefund 와 동일 기준으로 통일)
-        int totalPaid = successPaymentsOf(command.bookingId()).stream()
-                .mapToInt(Payment::getAmount).sum();
-        int refundAmount = calculateRefundAmount(booking, totalPaid);
+        // 환불 금액 = 정책%(14일↑100% / 7~13일 50% / 7일미만 0%) × 잔금(balancePrice = 총액의 70%).
+        // 예약금(30%)·강의는 몰수라 환불 대상이 아니다.
+        int refundAmount = calculateRefundAmount(booking, booking.getBalancePrice());
 
         RefundRequest refundRequest = RefundRequest.create(
                 command.bookingId(),
@@ -134,18 +136,15 @@ public class RefundCommandService implements RefundCommandUseCase {
             throw new BusinessException(RefundErrorCode.ALREADY_REFUND_REQUESTED);
         }
 
-        List<Payment> payments = paymentRepository.findByBookingId(bookingId)
-                .stream()
-                .filter(p -> p.getStatus() == PaymentStatus.SUCCESS)
-                .toList();
-
-        if (payments.isEmpty()) {
-            log.warn("[RefundCommandService] 성공한 결제 내역 없음 - bookingId: {}", bookingId);
-            throw new BusinessException(RefundErrorCode.PAYMENT_NOT_FOUND);
+        // 환불 대상은 완납 예약만 — 잔금/일시불 성공 결제가 있어야 한다. (예약금만/미결제는 몰수 → 환불 불가)
+        if (!isFullyPaid(bookingId)) {
+            log.warn("[RefundCommandService] 완납 아님 - CS 환불 전환 불가(예약금만/미결제) - bookingId: {}", bookingId);
+            throw new BusinessException(RefundErrorCode.DEPOSIT_ONLY_NOT_REFUNDABLE);
         }
 
-        int totalPaid = payments.stream().mapToInt(Payment::getAmount).sum();
-        int refundAmount = calculateRefundAmount(booking, totalPaid);
+        List<Payment> payments = successPaymentsOf(bookingId);
+        // 환불 금액 = 정책% × 잔금(70%). 예약금·강의 몰수.
+        int refundAmount = calculateRefundAmount(booking, booking.getBalancePrice());
         Payment selectedPayment = payments.get(payments.size() - 1);
         Long paymentId = selectedPayment.getId();
 
@@ -256,7 +255,7 @@ public class RefundCommandService implements RefundCommandUseCase {
             throw new BusinessException(RefundErrorCode.INVALID_REFUND_STATUS);
         }
 
-        // 1. 예약의 결제 건들(성공/이미환불) 조회 — 건별로 환불을 배분한다.
+        // 1. 환불 대상 결제(잔금 BALANCE / 일시불 FULL) 조회. 예약금(DEPOSIT)은 몰수라 여기 안 들어온다.
         List<Payment> payments = refundablePaymentsSorted(refundRequest.getBookingId());
         if (payments.isEmpty()) {
             log.warn("[RefundCommandService] 환불 대상 결제 없음 - bookingId: {}", refundRequest.getBookingId());
@@ -264,10 +263,9 @@ public class RefundCommandService implements RefundCommandUseCase {
         }
 
         // 2. PortOne 실제 환불 — 트랜잭션 밖에서 수행 (DB 커넥션 점유 방지).
-        //    분할결제(예약금 txn + 잔금 txn)는 PortOne 취소가 txn별이라, 한 txn에 총액을 몰면
-        //    그 txn 금액을 초과해 PortOne이 거부한다(cancelAmount > txn amount). 그래서 환불액을
-        //    각 결제 금액에 비례 배분해 건별로 취소하고, 각 취소 성공 직후 그 결제를 REFUNDED로 기록한다.
-        //    → 중간 실패 후 재시도해도 이미 REFUNDED인 건은 건너뛰어 이중취소가 나지 않는다.
+        //    환불액(정책% × 잔금)을 잔금/일시불 결제에 배분해 건별로 취소한다. (예약금 txn은 대상 아님 → 몰수)
+        //    각 몫은 refundAmount ≤ 대상 결제 합계라 txn 한도를 넘지 않는다. 각 취소 성공 직후 REFUNDED로 기록해
+        //    중간 실패 후 재시도해도 이미 REFUNDED인 건은 건너뛰어 이중취소가 나지 않는다.
         //    환불금액 0원(체크인 7일 미만)은 PG를 부르지 않는다(PortOne은 cancelAmount > 0 요구).
         int totalPaid = payments.stream().mapToInt(Payment::getAmount).sum();
         int refundAmount = refundRequest.getAmount();
@@ -355,16 +353,28 @@ public class RefundCommandService implements RefundCommandUseCase {
                 });
     }
 
-    /** 예약의 성공 결제 목록 (환불 금액 산정 기준). */
+    /** 예약의 성공 결제 목록. */
     private List<Payment> successPaymentsOf(Long bookingId) {
         return paymentRepository.findByBookingId(bookingId).stream()
                 .filter(p -> p.getStatus() == PaymentStatus.SUCCESS)
                 .toList();
     }
 
-    /** 예약의 환불 대상 결제 (성공 + 이미환불), id 오름차순 — 건별 취소 배분·재시도 스킵용. */
+    /** 완납 여부 — 잔금(BALANCE) 또는 일시불(FULL) 성공 결제가 있으면 완납. (예약금만/미결제면 false → 환불 불가) */
+    private boolean isFullyPaid(Long bookingId) {
+        return paymentRepository.findByBookingId(bookingId).stream()
+                .anyMatch(p -> p.getStatus() == PaymentStatus.SUCCESS
+                        && (p.getPaymentType() == PaymentType.BALANCE || p.getPaymentType() == PaymentType.FULL));
+    }
+
+    /**
+     * 환불 대상 결제 = 잔금(BALANCE) 또는 일시불(FULL) 결제(성공 + 이미환불), id 오름차순.
+     * <p>예약금(DEPOSIT)은 몰수(환불 불가)라 환불 대상에서 제외한다 → PortOne 취소 시에도 예약금 txn은 건드리지 않는다.
+     * 환불액(정책% × 잔금)은 항상 이 결제들의 합계 이하라 각 txn 한도를 넘지 않는다.
+     */
     private List<Payment> refundablePaymentsSorted(Long bookingId) {
         return paymentRepository.findByBookingId(bookingId).stream()
+                .filter(p -> p.getPaymentType() == PaymentType.BALANCE || p.getPaymentType() == PaymentType.FULL)
                 .filter(p -> p.getStatus() == PaymentStatus.SUCCESS || p.getStatus() == PaymentStatus.REFUNDED)
                 .sorted(java.util.Comparator.comparing(Payment::getId))
                 .toList();
