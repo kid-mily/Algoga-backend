@@ -1,5 +1,5 @@
 {
-    "title":  "Algoga LMS Learning Progress",
+    "title":  "Algoga LMS Performance Dashboard",
     "uid":  "algoga-lms-learning-progress",
     "schemaVersion":  38,
     "version":  2,
@@ -13,7 +13,7 @@
                    {
                        "id":  100,
                        "type":  "row",
-                       "title":  "Learning Progress API Baseline",
+                       "title":  "영상 진도율 저장 성능",
                        "gridPos":  {
                                        "x":  0,
                                        "y":  0,
@@ -27,7 +27,7 @@
                    },
                    {
                        "id":  1,
-                       "title":  "Progress Update TPS",
+                       "title":  "진도율 저장 요청 수",
                        "type":  "timeseries",
                        "description":  "Requests per second for POST /api/v1/courses/{courseId}/chapters/{chapterId}/progress during k6 load test.",
                        "gridPos":  {
@@ -62,7 +62,7 @@
                    },
                    {
                        "id":  2,
-                       "title":  "Progress Update Latency p50 / p95 / p99",
+                       "title":  "진도율 저장 응답 시간 p50 / p95 / p99",
                        "type":  "timeseries",
                        "description":  "Main before/after comparison panel. Redis write-behind should reduce DB write pressure and improve or stabilize p95 latency.",
                        "gridPos":  {
@@ -105,7 +105,7 @@
                    },
                    {
                        "id":  3,
-                       "title":  "Progress Update Error Rate",
+                       "title":  "진도율 저장 에러율",
                        "type":  "timeseries",
                        "description":  "4xx and 5xx ratio for the progress update API. A valid baseline should stay near 0% after enrollment and chapter order are set correctly.",
                        "gridPos":  {
@@ -148,211 +148,13 @@
                                        }
                    },
                    {
-                       "id":  101,
-                       "type":  "row",
-                       "title":  "DB Pressure",
-                       "gridPos":  {
-                                       "x":  0,
-                                       "y":  9,
-                                       "w":  24,
-                                       "h":  1
-                                   },
-                       "collapsed":  false,
-                       "panels":  [
-
-                                  ]
-                   },
-                   {
-                       "id":  4,
-                       "title":  "HikariCP Connections",
-                       "type":  "timeseries",
-                       "description":  "Use this for before/after evidence. Before write-behind, frequent progress saves can increase active/pending DB connections.",
-                       "gridPos":  {
-                                       "x":  0,
-                                       "y":  10,
-                                       "w":  12,
-                                       "h":  8
-                                   },
-                       "targets":  [
-                                       {
-                                           "datasource":  {
-                                                              "type":  "prometheus",
-                                                              "uid":  "prometheus_ds"
-                                                          },
-                                           "expr":  "hikaricp_connections_active",
-                                           "legendFormat":  "Active"
-                                       },
-                                       {
-                                           "datasource":  {
-                                                              "type":  "prometheus",
-                                                              "uid":  "prometheus_ds"
-                                                          },
-                                           "expr":  "hikaricp_connections_idle",
-                                           "legendFormat":  "Idle"
-                                       },
-                                       {
-                                           "datasource":  {
-                                                              "type":  "prometheus",
-                                                              "uid":  "prometheus_ds"
-                                                          },
-                                           "expr":  "hikaricp_connections_pending",
-                                           "legendFormat":  "Pending"
-                                       }
-                                   ]
-                   },
-                   {
-                       "id":  5,
-                       "title":  "HikariCP Acquire Avg",
-                       "type":  "timeseries",
-                       "description":  "Average connection acquire latency. The project exposes Hikari acquire time as a summary, not histogram buckets.",
-                       "gridPos":  {
-                                       "x":  12,
-                                       "y":  10,
-                                       "w":  12,
-                                       "h":  8
-                                   },
-                       "targets":  [
-                                       {
-                                           "datasource":  {
-                                                              "type":  "prometheus",
-                                                              "uid":  "prometheus_ds"
-                                                          },
-                                           "expr":  "sum(rate(hikaricp_connections_acquire_seconds_sum[$__rate_interval])) / clamp_min(sum(rate(hikaricp_connections_acquire_seconds_count[$__rate_interval])), 0.001)",
-                                           "legendFormat":  "acquire avg"
-                                       }
-                                   ],
-                       "fieldConfig":  {
-                                           "defaults":  {
-                                                            "unit":  "s"
-                                                        }
-                                       }
-                   },
-                   {
-                       "id":  102,
-                       "type":  "row",
-                       "title":  "Application Resources",
-                       "gridPos":  {
-                                       "x":  0,
-                                       "y":  18,
-                                       "w":  24,
-                                       "h":  1
-                                   },
-                       "collapsed":  false,
-                       "panels":  [
-
-                                  ]
-                   },
-                   {
-                       "id":  6,
-                       "title":  "CPU Usage",
-                       "type":  "timeseries",
-                       "gridPos":  {
-                                       "x":  0,
-                                       "y":  19,
-                                       "w":  12,
-                                       "h":  8
-                                   },
-                       "targets":  [
-                                       {
-                                           "datasource":  {
-                                                              "type":  "prometheus",
-                                                              "uid":  "prometheus_ds"
-                                                          },
-                                           "expr":  "system_cpu_usage * 100",
-                                           "legendFormat":  "System CPU"
-                                       },
-                                       {
-                                           "datasource":  {
-                                                              "type":  "prometheus",
-                                                              "uid":  "prometheus_ds"
-                                                          },
-                                           "expr":  "process_cpu_usage * 100",
-                                           "legendFormat":  "Process CPU"
-                                       }
-                                   ],
-                       "fieldConfig":  {
-                                           "defaults":  {
-                                                            "unit":  "percent",
-                                                            "min":  0,
-                                                            "max":  100
-                                                        }
-                                       }
-                   },
-                   {
-                       "id":  7,
-                       "title":  "JVM Heap Usage",
-                       "type":  "timeseries",
-                       "gridPos":  {
-                                       "x":  12,
-                                       "y":  19,
-                                       "w":  12,
-                                       "h":  8
-                                   },
-                       "targets":  [
-                                       {
-                                           "datasource":  {
-                                                              "type":  "prometheus",
-                                                              "uid":  "prometheus_ds"
-                                                          },
-                                           "expr":  "jvm_memory_used_bytes{area=\"heap\"}",
-                                           "legendFormat":  "{{id}}"
-                                       }
-                                   ],
-                       "fieldConfig":  {
-                                           "defaults":  {
-                                                            "unit":  "bytes"
-                                                        }
-                                       }
-                   },
-                   {
-                       "id":  103,
-                       "type":  "row",
-                       "title":  "LMS Logs",
-                       "gridPos":  {
-                                       "x":  0,
-                                       "y":  27,
-                                       "w":  24,
-                                       "h":  1
-                                   },
-                       "collapsed":  false,
-                       "panels":  [
-
-                                  ]
-                   },
-                   {
-                       "id":  8,
-                       "title":  "Learning Progress Logs",
-                       "type":  "logs",
-                       "gridPos":  {
-                                       "x":  0,
-                                       "y":  28,
-                                       "w":  24,
-                                       "h":  10
-                                   },
-                       "targets":  [
-                                       {
-                                           "datasource":  {
-                                                              "type":  "loki",
-                                                              "uid":  "loki_ds"
-                                                          },
-                                           "expr":  "{job=\"algoga-server\"} |= \"Learning Progress\"",
-                                           "legendFormat":  ""
-                                       }
-                                   ],
-                       "options":  {
-                                       "showTime":  true,
-                                       "showLabels":  false,
-                                       "sortOrder":  "Descending"
-                                   }
-                   },
-                   {
                        "id":  9,
-                       "title":  "LMS Progress Update vs Redis Write vs DB Flush",
+                       "title":  "진도율 저장 흐름: API 요청 → Redis 저장 → DB 반영",
                        "type":  "timeseries",
                        "description":  "Compare incoming progress update requests, Redis dirty writes, and scheduled DB flush volume.",
                        "gridPos":  {
                                        "x":  0,
-                                       "y":  38,
+                                       "y":  9,
                                        "w":  12,
                                        "h":  8
                                    },
@@ -398,12 +200,12 @@
                    },
                    {
                        "id":  10,
-                       "title":  "LMS Progress Redis Cache Hit / Miss",
+                       "title":  "진도율 Redis 캐시 Hit / Miss",
                        "type":  "timeseries",
                        "description":  "Cache hit/miss counts from cache-first progress reads.",
                        "gridPos":  {
                                        "x":  12,
-                                       "y":  38,
+                                       "y":  9,
                                        "w":  12,
                                        "h":  8
                                    },
@@ -441,11 +243,11 @@
                    },
                    {
                        "id":  20,
-                       "title":  "Public Course List API Baseline",
+                       "title":  "공개 강의 목록 N+1 개선",
                        "type":  "row",
                        "gridPos":  {
                                        "x":  0,
-                                       "y":  46,
+                                       "y":  17,
                                        "w":  24,
                                        "h":  1
                                    },
@@ -455,13 +257,28 @@
                                   ]
                    },
                    {
+                       "id":  30,
+                       "type":  "text",
+                       "title":  "공개 강의 목록 N+1 개선 Before / After 설명",
+                       "gridPos":  {
+                                       "x":  0,
+                                       "y":  18,
+                                       "w":  24,
+                                       "h":  4
+                                   },
+                       "options":  {
+                                       "mode":  "markdown",
+                                       "content":  "공개 강의 목록은 강의별 enrollment 개별 조회를 courseIds 기반 batch 조회로 바꾸기 전후를 비교한다. Grafana에서는 API 요청 수, 응답 시간, 에러율, HikariCP 커넥션 지표를 함께 확인한다."
+                                   }
+                   },
+                   {
                        "id":  21,
-                       "title":  "Public Course List TPS",
+                       "title":  "공개 강의 목록 요청 수",
                        "type":  "timeseries",
                        "description":  "Requests per second for GET /api/v1/courses/countries/{countryId} during k6 load test.",
                        "gridPos":  {
                                        "x":  0,
-                                       "y":  47,
+                                       "y":  22,
                                        "w":  8,
                                        "h":  8
                                    },
@@ -491,12 +308,12 @@
                    },
                    {
                        "id":  22,
-                       "title":  "Public Course List Latency p50 / p95 / p99",
+                       "title":  "공개 강의 목록 응답 시간 p50 / p95 / p99",
                        "type":  "timeseries",
-                       "description":  "Before/after comparison panel for public course list Redis caching.",
+                       "description":  "Before/after comparison panel for public course list enrollment N+1 removal.",
                        "gridPos":  {
                                        "x":  8,
-                                       "y":  47,
+                                       "y":  22,
                                        "w":  8,
                                        "h":  8
                                    },
@@ -534,12 +351,12 @@
                    },
                    {
                        "id":  23,
-                       "title":  "Public Course List Error Rate",
+                       "title":  "공개 강의 목록 에러율",
                        "type":  "timeseries",
                        "description":  "4xx and 5xx ratio for the public course list API. A valid baseline should stay near 0%.",
                        "gridPos":  {
                                        "x":  16,
-                                       "y":  47,
+                                       "y":  22,
                                        "w":  8,
                                        "h":  8
                                    },
@@ -575,6 +392,341 @@
                                                                            }
                                                         }
                                        }
+                   },
+                   {
+                       "id":  40,
+                       "type":  "row",
+                       "title":  "강의실 진도 조회 성능",
+                       "gridPos":  {
+                                       "x":  0,
+                                       "y":  30,
+                                       "w":  24,
+                                       "h":  1
+                                   },
+                       "collapsed":  false,
+                       "panels":  [
+
+                                  ]
+                   },
+                   {
+                       "id":  31,
+                       "title":  "강의실 조회 요청 수",
+                       "type":  "timeseries",
+                       "description":  "Requests per second for GET /api/v1/my/courses/{courseId}. Use this with Redis cache panels to compare per-chapter cache reads versus batch reads.",
+                       "gridPos":  {
+                                       "x":  0,
+                                       "y":  31,
+                                       "w":  8,
+                                       "h":  8
+                                   },
+                       "targets":  [
+                                       {
+                                           "datasource":  {
+                                                              "type":  "prometheus",
+                                                              "uid":  "prometheus_ds"
+                                                          },
+                                           "expr":  "sum(rate(http_server_requests_seconds_count{uri=\"/api/v1/my/courses/{courseId}\", status=\"200\"}[1m]))",
+                                           "legendFormat":  "success TPS"
+                                       },
+                                       {
+                                           "datasource":  {
+                                                              "type":  "prometheus",
+                                                              "uid":  "prometheus_ds"
+                                                          },
+                                           "expr":  "sum(rate(http_server_requests_seconds_count{uri=\"/api/v1/my/courses/{courseId}\", status=~\"4..|5..\"}[1m]))",
+                                           "legendFormat":  "error TPS"
+                                       }
+                                   ],
+                       "fieldConfig":  {
+                                           "defaults":  {
+                                                            "unit":  "reqps"
+                                                        }
+                                       }
+                   },
+                   {
+                       "id":  32,
+                       "title":  "강의실 조회 응답 시간 p50 / p95 / p99",
+                       "type":  "timeseries",
+                       "description":  "Before/after comparison panel for classroom progress Redis batch-read optimization.",
+                       "gridPos":  {
+                                       "x":  8,
+                                       "y":  31,
+                                       "w":  8,
+                                       "h":  8
+                                   },
+                       "targets":  [
+                                       {
+                                           "datasource":  {
+                                                              "type":  "prometheus",
+                                                              "uid":  "prometheus_ds"
+                                                          },
+                                           "expr":  "histogram_quantile(0.99, rate(http_server_requests_seconds_bucket{uri=\"/api/v1/my/courses/{courseId}\"}[$__rate_interval]))",
+                                           "legendFormat":  "p99"
+                                       },
+                                       {
+                                           "datasource":  {
+                                                              "type":  "prometheus",
+                                                              "uid":  "prometheus_ds"
+                                                          },
+                                           "expr":  "histogram_quantile(0.95, rate(http_server_requests_seconds_bucket{uri=\"/api/v1/my/courses/{courseId}\"}[$__rate_interval]))",
+                                           "legendFormat":  "p95"
+                                       },
+                                       {
+                                           "datasource":  {
+                                                              "type":  "prometheus",
+                                                              "uid":  "prometheus_ds"
+                                                          },
+                                           "expr":  "histogram_quantile(0.50, rate(http_server_requests_seconds_bucket{uri=\"/api/v1/my/courses/{courseId}\"}[$__rate_interval]))",
+                                           "legendFormat":  "p50"
+                                       }
+                                   ],
+                       "fieldConfig":  {
+                                           "defaults":  {
+                                                            "unit":  "s"
+                                                        }
+                                       }
+                   },
+                   {
+                       "id":  33,
+                       "title":  "강의실 조회 에러율",
+                       "type":  "timeseries",
+                       "description":  "4xx and 5xx ratio for the classroom API. A valid before/after run should keep this near 0%.",
+                       "gridPos":  {
+                                       "x":  16,
+                                       "y":  31,
+                                       "w":  8,
+                                       "h":  8
+                                   },
+                       "targets":  [
+                                       {
+                                           "datasource":  {
+                                                              "type":  "prometheus",
+                                                              "uid":  "prometheus_ds"
+                                                          },
+                                           "expr":  "sum(rate(http_server_requests_seconds_count{uri=\"/api/v1/my/courses/{courseId}\", status=~\"4..|5..\"}[1m])) / clamp_min(sum(rate(http_server_requests_seconds_count{uri=\"/api/v1/my/courses/{courseId}\"}[1m])), 0.001) * 100",
+                                           "legendFormat":  "error rate"
+                                       }
+                                   ],
+                       "fieldConfig":  {
+                                           "defaults":  {
+                                                            "unit":  "percent",
+                                                            "min":  0,
+                                                            "thresholds":  {
+                                                                               "steps":  [
+                                                                                             {
+                                                                                                 "color":  "green",
+                                                                                                 "value":  null
+                                                                                             },
+                                                                                             {
+                                                                                                 "color":  "yellow",
+                                                                                                 "value":  1
+                                                                                             },
+                                                                                             {
+                                                                                                 "color":  "red",
+                                                                                                 "value":  5
+                                                                                             }
+                                                                                         ]
+                                                                           }
+                                                        }
+                                       }
+                   },
+                   {
+                       "id":  101,
+                       "type":  "row",
+                       "title":  "DB / Connection Pool",
+                       "gridPos":  {
+                                       "x":  0,
+                                       "y":  39,
+                                       "w":  24,
+                                       "h":  1
+                                   },
+                       "collapsed":  false,
+                       "panels":  [
+
+                                  ]
+                   },
+                   {
+                       "id":  4,
+                       "title":  "HikariCP 커넥션 상태",
+                       "type":  "timeseries",
+                       "description":  "Use this for before/after evidence. Before write-behind, frequent progress saves can increase active/pending DB connections.",
+                       "gridPos":  {
+                                       "x":  0,
+                                       "y":  40,
+                                       "w":  12,
+                                       "h":  8
+                                   },
+                       "targets":  [
+                                       {
+                                           "datasource":  {
+                                                              "type":  "prometheus",
+                                                              "uid":  "prometheus_ds"
+                                                          },
+                                           "expr":  "hikaricp_connections_active",
+                                           "legendFormat":  "Active"
+                                       },
+                                       {
+                                           "datasource":  {
+                                                              "type":  "prometheus",
+                                                              "uid":  "prometheus_ds"
+                                                          },
+                                           "expr":  "hikaricp_connections_idle",
+                                           "legendFormat":  "Idle"
+                                       },
+                                       {
+                                           "datasource":  {
+                                                              "type":  "prometheus",
+                                                              "uid":  "prometheus_ds"
+                                                          },
+                                           "expr":  "hikaricp_connections_pending",
+                                           "legendFormat":  "Pending"
+                                       }
+                                   ]
+                   },
+                   {
+                       "id":  5,
+                       "title":  "HikariCP 커넥션 획득 평균 시간",
+                       "type":  "timeseries",
+                       "description":  "Average connection acquire latency. The project exposes Hikari acquire time as a summary, not histogram buckets.",
+                       "gridPos":  {
+                                       "x":  12,
+                                       "y":  40,
+                                       "w":  12,
+                                       "h":  8
+                                   },
+                       "targets":  [
+                                       {
+                                           "datasource":  {
+                                                              "type":  "prometheus",
+                                                              "uid":  "prometheus_ds"
+                                                          },
+                                           "expr":  "sum(rate(hikaricp_connections_acquire_seconds_sum[$__rate_interval])) / clamp_min(sum(rate(hikaricp_connections_acquire_seconds_count[$__rate_interval])), 0.001)",
+                                           "legendFormat":  "acquire avg"
+                                       }
+                                   ],
+                       "fieldConfig":  {
+                                           "defaults":  {
+                                                            "unit":  "s"
+                                                        }
+                                       }
+                   },
+                   {
+                       "id":  102,
+                       "type":  "row",
+                       "title":  "Application Resources",
+                       "gridPos":  {
+                                       "x":  0,
+                                       "y":  48,
+                                       "w":  24,
+                                       "h":  1
+                                   },
+                       "collapsed":  false,
+                       "panels":  [
+
+                                  ]
+                   },
+                   {
+                       "id":  6,
+                       "title":  "CPU 사용률",
+                       "type":  "timeseries",
+                       "gridPos":  {
+                                       "x":  0,
+                                       "y":  49,
+                                       "w":  12,
+                                       "h":  8
+                                   },
+                       "targets":  [
+                                       {
+                                           "datasource":  {
+                                                              "type":  "prometheus",
+                                                              "uid":  "prometheus_ds"
+                                                          },
+                                           "expr":  "system_cpu_usage * 100",
+                                           "legendFormat":  "System CPU"
+                                       },
+                                       {
+                                           "datasource":  {
+                                                              "type":  "prometheus",
+                                                              "uid":  "prometheus_ds"
+                                                          },
+                                           "expr":  "process_cpu_usage * 100",
+                                           "legendFormat":  "Process CPU"
+                                       }
+                                   ],
+                       "fieldConfig":  {
+                                           "defaults":  {
+                                                            "unit":  "percent",
+                                                            "min":  0,
+                                                            "max":  100
+                                                        }
+                                       }
+                   },
+                   {
+                       "id":  7,
+                       "title":  "JVM Heap 사용량",
+                       "type":  "timeseries",
+                       "gridPos":  {
+                                       "x":  12,
+                                       "y":  49,
+                                       "w":  12,
+                                       "h":  8
+                                   },
+                       "targets":  [
+                                       {
+                                           "datasource":  {
+                                                              "type":  "prometheus",
+                                                              "uid":  "prometheus_ds"
+                                                          },
+                                           "expr":  "jvm_memory_used_bytes{area=\"heap\"}",
+                                           "legendFormat":  "{{id}}"
+                                       }
+                                   ],
+                       "fieldConfig":  {
+                                           "defaults":  {
+                                                            "unit":  "bytes"
+                                                        }
+                                       }
+                   },
+                   {
+                       "id":  103,
+                       "type":  "row",
+                       "title":  "LMS Logs",
+                       "gridPos":  {
+                                       "x":  0,
+                                       "y":  57,
+                                       "w":  24,
+                                       "h":  1
+                                   },
+                       "collapsed":  false,
+                       "panels":  [
+
+                                  ]
+                   },
+                   {
+                       "id":  8,
+                       "title":  "진도율 저장 로그",
+                       "type":  "logs",
+                       "gridPos":  {
+                                       "x":  0,
+                                       "y":  58,
+                                       "w":  24,
+                                       "h":  10
+                                   },
+                       "targets":  [
+                                       {
+                                           "datasource":  {
+                                                              "type":  "loki",
+                                                              "uid":  "loki_ds"
+                                                          },
+                                           "expr":  "{job=\"algoga-server\"} |= \"Learning Progress\"",
+                                           "legendFormat":  ""
+                                       }
+                                   ],
+                       "options":  {
+                                       "showTime":  true,
+                                       "showLabels":  false,
+                                       "sortOrder":  "Descending"
+                                   }
                    }
                ]
 }

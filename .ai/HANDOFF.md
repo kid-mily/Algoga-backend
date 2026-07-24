@@ -1,5 +1,17 @@
 # HANDOFF
 
+## Current Update 2026-07-24
+
+- Active branch: `refactor/lms-dead-code-and-performance-dashboard` (created from latest `develop` after fast-forward pull).
+- Current scope: LMS Grafana performance dashboard preparation plus confirmed dead-code cleanup. No API URL/request/response/JSON contract changes.
+- Pre-existing local edits were saved in `stash@{0}` before switching branches. The dashboard file was restored into this branch; the prior `quiz/application/service/QuizService.java` local edit remains preserved in the stash and is intentionally not in this branch's working tree.
+- Completed:
+  1. Updated/restored `monitoring/grafana/dashboards/algoga-lms.json` for presentation-ready before/after panels: public course list N+1, classroom progress lookup, progress Redis flow, HikariCP, CPU/JVM, logs.
+  2. Removed unused `CourseQnaComment.delete()` from `qna/domain/model/CourseQnaComment.java`.
+  3. Verified dashboard JSON parsing and duplicate panel IDs.
+  4. Ran `./gradlew compileJava` successfully.
+- Next recommended step: commit this small dashboard/dead-code cleanup slice, then measure Grafana/K6 baseline before applying optimization code changes.
+
 ## Current Goal
 
 - Fix a set of correctness bugs (validation gaps, concurrency races, a duplicate-submission policy gap) found via a code-review pass across the LMS-adjacent domains, without changing any API URL/request/response/JSON contract.
