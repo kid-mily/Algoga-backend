@@ -30,6 +30,46 @@ Record completed work here by date. Keep entries factual and useful for future d
 
 -
 
+### 2026-07-24 LMS Dashboard Branch And Dead Code Cleanup
+
+#### Summary
+
+- Pulled latest `develop` with `git pull --ff-only` and created branch `refactor/lms-dead-code-and-performance-dashboard`.
+- Preserved pre-existing local dashboard/QuizService edits in `stash@{0}` before switching branches.
+- Restored only the Grafana dashboard change into the new branch; kept the prior `QuizService.java` local edit out of the current working tree.
+- Removed confirmed dead code in Q&A: unused `CourseQnaComment.delete()`.
+- No API URL/request/response/JSON contract changes.
+
+#### Changed Files
+
+- `monitoring/grafana/dashboards/algoga-lms.json`
+- `src/main/java/com/kidmily/algoga_server/qna/domain/model/CourseQnaComment.java`
+- `.ai/STATE.md`
+- `.ai/HANDOFF.md`
+- `.ai/WORKLOG.md`
+
+#### Verification
+
+- Dashboard JSON parsed with PowerShell `ConvertFrom-Json`.
+- Confirmed dashboard panel IDs have no duplicates.
+- `rg` found no remaining Q&A `CourseQnaComment.delete()` call sites.
+- `./gradlew compileJava` passed.
+
+#### Problems
+
+- `C:\Algoga_V3_backend` required escalated git commands in this session because it was outside the current writable roots.
+- PowerShell needed quoting for `stash@{0}` when restoring the dashboard file.
+
+#### Resolution
+
+- Used `stash@{0}` to preserve prior local edits and restored only the dashboard file into the new branch.
+- Removed only the confirmed unused Q&A comment domain method; repository delete methods used by withdrawal listeners were left intact.
+
+#### Notes for Next Time
+
+- Recommended next step is to commit this small dashboard/dead-code slice before performance-code changes.
+- Run Grafana/K6 baseline measurements before implementing public course list enrollment batch lookup and classroom Redis batch read.
+
 ### 2026-07-10 Course/LMS Refactor And Statistics Support
 
 #### Summary

@@ -98,20 +98,6 @@ public class CourseQnaComment {
         );
     }
 
-    public CourseQnaComment delete() {
-        return new CourseQnaComment(
-                this.id,
-                this.qnaId,
-                this.parentCommentId,
-                this.userId,
-                this.managerId,
-                this.writerType,
-                this.content,
-                true,
-                this.createdAt
-        );
-    }
-
     public boolean isReply() {
         return parentCommentId != null;
     }

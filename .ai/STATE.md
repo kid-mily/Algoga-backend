@@ -5,6 +5,14 @@
 - This file tracks the current AI-assisted backend work in this repository.
 - Do not record every teammate task here.
 
+## Current Update 2026-07-24
+
+- Branch `refactor/lms-dead-code-and-performance-dashboard` was created from latest `develop` after `git pull --ff-only` (local `develop` was 22 commits behind).
+- Current goal: prepare the LMS Grafana performance dashboard for before/after measurement and remove confirmed dead code in the LMS-adjacent domains without changing API URL/request/response/JSON contracts.
+- Local changes that existed before branching were saved in `stash@{0}`. Only `monitoring/grafana/dashboards/algoga-lms.json` was restored into this branch; the prior `quiz/application/service/QuizService.java` local change remains preserved in the stash and is not in the current working tree.
+- Completed so far: restored the dashboard change, removed unused `CourseQnaComment.delete()`, verified dashboard JSON/panel IDs, and ran `./gradlew compileJava` successfully.
+- Next: commit the dashboard/dead-code cleanup if desired, then run Grafana/K6 baseline measurements before implementing public-course-list enrollment batch lookup and classroom Redis batch read.
+
 ## Current Work
 
 - Branch `fix/lms-domain-concurrency-and-validation-bugs` (off `develop`). Not committed yet.
