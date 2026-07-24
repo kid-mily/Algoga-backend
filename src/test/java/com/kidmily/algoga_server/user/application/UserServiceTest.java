@@ -15,6 +15,7 @@ import com.kidmily.algoga_server.user.exception.UserException;
 import com.kidmily.algoga_server.user.presentation.request.UpdatePasswordRequest;
 import com.kidmily.algoga_server.user.presentation.request.UpdateProfileRequest;
 import com.kidmily.algoga_server.user.settings.UserStorageSettings;
+import io.micrometer.core.instrument.Counter;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -56,6 +57,7 @@ class UserServiceTest {
     @Mock private BookingQueryUseCase bookingQueryUseCase;
     @Mock private RefundQueryUseCase refundQueryUseCase;
     @Mock private EmailVerificationHelper emailVerificationHelper;
+    @Mock private Counter userWithdrawTotal;
 
     @InjectMocks
     private UserService userService;
@@ -124,6 +126,7 @@ class UserServiceTest {
         verify(redisTemplate).delete(RedisKeys.MYPAGE_AUTH_SUCCESS_WITHDRAW_PREFIX + EMAIL);
         verify(valueOperations).set(RedisKeys.WITHDRAWN_EMAIL_PREFIX + EMAIL, "true", 30L, TimeUnit.DAYS);
         verify(eventPublisher).publishEvent(any(UserWithdrawnEvent.class));
+        verify(userWithdrawTotal).increment();
     }
 
     @Test

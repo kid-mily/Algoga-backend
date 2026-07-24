@@ -81,10 +81,102 @@
       "fieldConfig": { "defaults": { "unit": "short" } }
     },
     {
+      "id": 300,
+      "type": "row",
+      "title": "📊 Friend 비즈니스 지표",
+      "gridPos": { "x": 0, "y": 16, "w": 24, "h": 1 },
+      "collapsed": false,
+      "panels": []
+    },
+    {
+      "id": 5,
+      "title": "실시간 온라인 유저 수",
+      "type": "stat",
+      "description": "WebSocket(STOMP) 접속 중인 유저 수. PresenceEventListener의 접속/해제 이벤트로 증감.",
+      "gridPos": { "x": 0, "y": 17, "w": 6, "h": 4 },
+      "targets": [
+        {
+          "datasource": { "type": "prometheus", "uid": "prometheus_ds" },
+          "expr": "algoga_friend_online_users",
+          "legendFormat": "온라인 유저"
+        }
+      ],
+      "fieldConfig": { "defaults": { "unit": "short" } }
+    },
+    {
+      "id": 6,
+      "title": "누적 차단 처리 수",
+      "type": "stat",
+      "gridPos": { "x": 6, "y": 17, "w": 6, "h": 4 },
+      "targets": [
+        {
+          "datasource": { "type": "prometheus", "uid": "prometheus_ds" },
+          "expr": "sum(algoga_friend_blocked_total)",
+          "legendFormat": "차단 처리 수"
+        }
+      ],
+      "fieldConfig": { "defaults": { "unit": "short" } }
+    },
+    {
+      "id": 7,
+      "title": "친구 요청 성사율 (%)",
+      "type": "stat",
+      "description": "보낸 요청 대비 수락된 요청의 비율",
+      "gridPos": { "x": 12, "y": 17, "w": 6, "h": 4 },
+      "targets": [
+        {
+          "datasource": { "type": "prometheus", "uid": "prometheus_ds" },
+          "expr": "100 * sum(rate(algoga_friend_request_total{result=\"accepted\"}[$__rate_interval])) / sum(rate(algoga_friend_request_total{result=\"sent\"}[$__rate_interval]))",
+          "legendFormat": "성사율"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "red", "value": null },
+              { "color": "orange", "value": 40 },
+              { "color": "green", "value": 70 }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "id": 8,
+      "title": "누적 친구 요청 수 (전송)",
+      "type": "stat",
+      "gridPos": { "x": 18, "y": 17, "w": 6, "h": 4 },
+      "targets": [
+        {
+          "datasource": { "type": "prometheus", "uid": "prometheus_ds" },
+          "expr": "sum(algoga_friend_request_total{result=\"sent\"})",
+          "legendFormat": "전송 수"
+        }
+      ],
+      "fieldConfig": { "defaults": { "unit": "short" } }
+    },
+    {
+      "id": 9,
+      "title": "친구 요청 처리 추이 (전송 / 수락 / 거절)",
+      "type": "timeseries",
+      "gridPos": { "x": 0, "y": 21, "w": 24, "h": 8 },
+      "targets": [
+        {
+          "datasource": { "type": "prometheus", "uid": "prometheus_ds" },
+          "expr": "sum by (result) (rate(algoga_friend_request_total[$__rate_interval]))",
+          "legendFormat": "{{result}}"
+        }
+      ],
+      "fieldConfig": { "defaults": { "unit": "reqps" } }
+    },
+    {
       "id": 200,
       "type": "row",
       "title": "📋 Friend Domain Logs",
-      "gridPos": { "x": 0, "y": 16, "w": 24, "h": 1 },
+      "gridPos": { "x": 0, "y": 29, "w": 24, "h": 1 },
       "collapsed": false,
       "panels": []
     },
@@ -93,7 +185,7 @@
       "title": "Friend 관련 실시간 로그 필터링",
       "type": "logs",
       "description": "친구 추가, 수락, 삭제 등 Friend 도메인에서 발생하는 로그를 추적합니다.",
-      "gridPos": { "x": 0, "y": 17, "w": 24, "h": 10 },
+      "gridPos": { "x": 0, "y": 30, "w": 24, "h": 10 },
       "targets": [
         {
           "datasource": { "type": "loki", "uid": "loki_ds" },

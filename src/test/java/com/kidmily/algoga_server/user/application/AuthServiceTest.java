@@ -18,6 +18,7 @@ import com.kidmily.algoga_server.user.exception.UserException;
 import com.kidmily.algoga_server.user.presentation.request.*;
 import com.kidmily.algoga_server.user.presentation.response.AuthTokenResponse;
 import com.kidmily.algoga_server.user.presentation.response.FindIdResponse;
+import io.micrometer.core.instrument.Counter;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -63,6 +64,11 @@ class AuthServiceTest {
     @Mock private ValueOperations<String, String> valueOperations;
     @Mock private ApplicationEventPublisher eventPublisher;
     @Mock private EmailVerificationHelper emailVerificationHelper;
+    @Mock private Counter userSignupLocalTotal;
+    @Mock private Counter userSignupGoogleTotal;
+    @Mock private Counter userSignupKakaoTotal;
+    @Mock private Counter userLoginSuccessTotal;
+    @Mock private Counter userLoginFailedTotal;
 
     @InjectMocks
     private AuthService authService;
@@ -72,6 +78,13 @@ class AuthServiceTest {
         ReflectionTestUtils.setField(authService, "frontendBaseUrl", FRONTEND_BASE_URL);
         ReflectionTestUtils.setField(authService, "accessTokenExpiration", ACCESS_TOKEN_EXPIRATION);
         ReflectionTestUtils.setField(authService, "refreshTokenExpiration", REFRESH_TOKEN_EXPIRATION);
+        // Counter 타입 목(mock)이 여러 개라 @InjectMocks의 생성자 주입이 필드명으로 정확히 매칭을 못 해줘서,
+        // 각각을 명시적으로 다시 꽂아준다 (안 그러면 엉뚱한 Counter가 꽂혀 verify()가 실패함).
+        ReflectionTestUtils.setField(authService, "userSignupLocalTotal", userSignupLocalTotal);
+        ReflectionTestUtils.setField(authService, "userSignupGoogleTotal", userSignupGoogleTotal);
+        ReflectionTestUtils.setField(authService, "userSignupKakaoTotal", userSignupKakaoTotal);
+        ReflectionTestUtils.setField(authService, "userLoginSuccessTotal", userLoginSuccessTotal);
+        ReflectionTestUtils.setField(authService, "userLoginFailedTotal", userLoginFailedTotal);
     }
 
     private User.UserBuilder baseUserBuilder() {
@@ -257,6 +270,7 @@ class AuthServiceTest {
         assertThat(eventCaptor.getValue().referrerUserId()).isNull();
 
         verify(redisTemplate).delete(RedisKeys.AUTH_SUCCESS_PREFIX + EMAIL);
+        verify(userSignupLocalTotal).increment();
     }
 
     @Test
@@ -311,6 +325,8 @@ class AuthServiceTest {
         assertThrows(UserException.class, () -> authService.login(new AuthLoginRequest("user01", "pw")));
 
         verifyNoInteractions(passwordEncoder);
+        verify(userLoginFailedTotal).increment();
+        verifyNoInteractions(userLoginSuccessTotal);
     }
 
     @Test
@@ -322,6 +338,7 @@ class AuthServiceTest {
         assertThrows(AccountLockedException.class, () -> authService.login(new AuthLoginRequest("user01", "pw")));
 
         verifyNoInteractions(passwordEncoder);
+        verify(userLoginFailedTotal).increment();
     }
 
     @Test
@@ -335,6 +352,7 @@ class AuthServiceTest {
         assertThrows(AuthException.class, () -> authService.login(new AuthLoginRequest("user01", "pw")));
 
         verifyNoInteractions(passwordEncoder);
+        verify(userLoginFailedTotal).increment();
     }
 
     @Test
@@ -353,6 +371,7 @@ class AuthServiceTest {
         assertThat(ex.getMaxAttempts()).isEqualTo(User.MAX_LOGIN_FAIL_COUNT);
         assertThat(user.getLoginFailCount()).isEqualTo(1);
         verify(userRepository).save(user);
+        verify(userLoginFailedTotal).increment();
     }
 
     @Test
@@ -367,6 +386,7 @@ class AuthServiceTest {
         assertThrows(AccountLockedException.class, () -> authService.login(new AuthLoginRequest("user01", "wrongPw")));
 
         assertThat(user.isAccountLocked()).isTrue();
+        verify(userLoginFailedTotal).increment();
     }
 
     @Test
@@ -388,6 +408,8 @@ class AuthServiceTest {
         assertThat(user.getLoginFailCount()).isZero();
         verify(valueOperations).set(RedisKeys.REFRESH_TOKEN_PREFIX + EMAIL, "refresh-token-1234567890", REFRESH_TOKEN_EXPIRATION, TimeUnit.MILLISECONDS);
         verify(valueOperations).set(RedisKeys.ACTIVE_AT_PREFIX + EMAIL, "access-token-1234567890", ACCESS_TOKEN_EXPIRATION, TimeUnit.MILLISECONDS);
+        verify(userLoginSuccessTotal).increment();
+        verifyNoInteractions(userLoginFailedTotal);
     }
 
     // ===================== refreshAccessToken =====================
@@ -555,6 +577,9 @@ class AuthServiceTest {
         ArgumentCaptor<UserSignedUpEvent> eventCaptor = ArgumentCaptor.forClass(UserSignedUpEvent.class);
         verify(eventPublisher).publishEvent(eventCaptor.capture());
         assertThat(eventCaptor.getValue().userId()).isEqualTo(20L);
+
+        verify(userSignupGoogleTotal).increment();
+        verifyNoInteractions(userSignupKakaoTotal, userSignupLocalTotal);
     }
 
     private AuthSocialSignupRequest socialSignupRequest(String referralCode) {
