@@ -12,6 +12,7 @@ import org.springframework.web.socket.messaging.SessionConnectEvent;
 import org.springframework.web.socket.messaging.SessionDisconnectEvent;
 
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 
 // 기존 /ws/chat(STOMP) 연결을 그대로 이용해서, 접속/해제 시점에 Redis에 온라인 상태를 기록/삭제하고
 // 그 사람의 친구들한테 실시간으로 push까지 해준다 (폴링 없이 실시간 반영되도록)
@@ -26,6 +27,9 @@ public class PresenceEventListener {
     private final FriendQueryUseCase friendQueryUseCase;
     private final SimpMessagingTemplate messagingTemplate;
 
+    // 통계 대시보드용 실시간 접속자 수 Gauge가 읽는 값 (global/config/MetricsConfig.java에서 Gauge로 등록)
+    private final AtomicInteger onlineUserCountValue;
+
     @EventListener
     public void handleSessionConnect(SessionConnectEvent event) {
         Long userId = extractUserId(SimpMessageHeaderAccessor.wrap(event.getMessage()));
@@ -33,6 +37,7 @@ public class PresenceEventListener {
 
         // 🌟 disconnect 이벤트를 못 받는 극단적인 상황(서버 강제종료 등) 대비용 안전장치로 TTL을 넉넉히 걸어둠
         redisTemplate.opsForValue().set(ONLINE_KEY_PREFIX + userId, "true", 24, TimeUnit.HOURS);
+        onlineUserCountValue.incrementAndGet();
         log.info("[Presence] 온라인 처리: userId={}", userId);
 
         broadcastToFriends(userId, true);
@@ -44,6 +49,7 @@ public class PresenceEventListener {
         if (userId == null) return;
 
         redisTemplate.delete(ONLINE_KEY_PREFIX + userId);
+        onlineUserCountValue.updateAndGet(v -> Math.max(0, v - 1));
         log.info("[Presence] 오프라인 처리: userId={}", userId);
 
         broadcastToFriends(userId, false);

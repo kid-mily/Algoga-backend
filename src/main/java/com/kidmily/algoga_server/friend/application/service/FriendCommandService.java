@@ -12,6 +12,7 @@ import com.kidmily.algoga_server.notification.domain.event.FriendAcceptedEvent;
 import com.kidmily.algoga_server.notification.domain.event.FriendRequestedEvent;
 import com.kidmily.algoga_server.user.domain.User;
 import com.kidmily.algoga_server.user.domain.UserRepository;
+import io.micrometer.core.instrument.Counter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
@@ -27,6 +28,12 @@ public class FriendCommandService implements FriendCommandUseCase {
     private final FriendRepository friendRepository;
     private final UserRepository userRepository;
     private final ApplicationEventPublisher eventPublisher;
+
+    // 통계 대시보드용 커스텀 지표
+    private final Counter friendRequestSentTotal;
+    private final Counter friendRequestAcceptedTotal;
+    private final Counter friendRequestRejectedTotal;
+    private final Counter friendBlockedTotal;
 
     @Override
     public void sendFriendRequest(CreateFriendCommand command) {
@@ -79,6 +86,7 @@ public class FriendCommandService implements FriendCommandUseCase {
                 myId,
                 requester.getNickname()
         ));
+        friendRequestSentTotal.increment();
     }
 
     @Override
@@ -114,6 +122,7 @@ public class FriendCommandService implements FriendCommandUseCase {
                 myId,
                 acceptor.getNickname()
         ));
+        friendRequestAcceptedTotal.increment();
     }
 
     @Override
@@ -125,6 +134,7 @@ public class FriendCommandService implements FriendCommandUseCase {
             throw new FriendException(FriendErrorCode.UNAUTHORIZED_ACTION);
         }
         friendRepository.deleteById(relationId);
+        friendRequestRejectedTotal.increment();
     }
 
     @Override
@@ -165,6 +175,7 @@ public class FriendCommandService implements FriendCommandUseCase {
 
         // 차단 시 1:1 채팅방은 삭제하고 그룹 채팅방은 유지해야 함 -> chat 도메인이 구독해서 처리
         eventPublisher.publishEvent(new FriendBlockedEvent(myId, targetUser.getId()));
+        friendBlockedTotal.increment();
     }
 
     @Override

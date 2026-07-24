@@ -1,13 +1,125 @@
 package com.kidmily.algoga_server.global.config;
 
 import io.micrometer.core.instrument.Counter;
+import io.micrometer.core.instrument.Gauge;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Timer;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
+import java.util.concurrent.atomic.AtomicInteger;
+
 @Configuration
 public class MetricsConfig {
+
+    // ── User ─────────────────────────────────────────────────────────────────
+
+    /** 일반(LOCAL) 회원가입 완료 횟수 */
+    @Bean
+    public Counter userSignupLocalTotal(MeterRegistry registry) {
+        return Counter.builder("algoga_user_signup_total")
+                .description("회원가입 완료 횟수")
+                .tag("socialType", "LOCAL")
+                .register(registry);
+    }
+
+    /** 구글 소셜 회원가입 완료 횟수 */
+    @Bean
+    public Counter userSignupGoogleTotal(MeterRegistry registry) {
+        return Counter.builder("algoga_user_signup_total")
+                .description("회원가입 완료 횟수")
+                .tag("socialType", "GOOGLE")
+                .register(registry);
+    }
+
+    /** 카카오 소셜 회원가입 완료 횟수 */
+    @Bean
+    public Counter userSignupKakaoTotal(MeterRegistry registry) {
+        return Counter.builder("algoga_user_signup_total")
+                .description("회원가입 완료 횟수")
+                .tag("socialType", "KAKAO")
+                .register(registry);
+    }
+
+    /** 로그인 성공 횟수 */
+    @Bean
+    public Counter userLoginSuccessTotal(MeterRegistry registry) {
+        return Counter.builder("algoga_user_login_total")
+                .description("로그인 시도 횟수")
+                .tag("result", "success")
+                .register(registry);
+    }
+
+    /** 로그인 실패 횟수 (탈퇴/잠금/블랙리스트/비밀번호 오류 등 전부 포함) */
+    @Bean
+    public Counter userLoginFailedTotal(MeterRegistry registry) {
+        return Counter.builder("algoga_user_login_total")
+                .description("로그인 시도 횟수")
+                .tag("result", "failed")
+                .register(registry);
+    }
+
+    /** 회원 탈퇴 처리 횟수 */
+    @Bean
+    public Counter userWithdrawTotal(MeterRegistry registry) {
+        return Counter.builder("algoga_user_withdraw_total")
+                .description("총 회원 탈퇴 처리 횟수")
+                .register(registry);
+    }
+
+    // ── Friend ───────────────────────────────────────────────────────────────
+
+    /** 친구 요청 발송 횟수 */
+    @Bean
+    public Counter friendRequestSentTotal(MeterRegistry registry) {
+        return Counter.builder("algoga_friend_request_total")
+                .description("친구 요청 처리 횟수")
+                .tag("result", "sent")
+                .register(registry);
+    }
+
+    /** 친구 요청 수락 횟수 */
+    @Bean
+    public Counter friendRequestAcceptedTotal(MeterRegistry registry) {
+        return Counter.builder("algoga_friend_request_total")
+                .description("친구 요청 처리 횟수")
+                .tag("result", "accepted")
+                .register(registry);
+    }
+
+    /** 친구 요청 거절 횟수 */
+    @Bean
+    public Counter friendRequestRejectedTotal(MeterRegistry registry) {
+        return Counter.builder("algoga_friend_request_total")
+                .description("친구 요청 처리 횟수")
+                .tag("result", "rejected")
+                .register(registry);
+    }
+
+    /** 유저 차단 처리 횟수 */
+    @Bean
+    public Counter friendBlockedTotal(MeterRegistry registry) {
+        return Counter.builder("algoga_friend_blocked_total")
+                .description("총 유저 차단 처리 횟수")
+                .register(registry);
+    }
+
+    /**
+     * 실시간 온라인 유저 수. Gauge는 증감 메서드가 따로 없어서, 실제 값을 들고 있는
+     * AtomicInteger를 별도 빈으로 노출해 PresenceEventListener가 접속/해제 시 직접 증감시키고,
+     * Gauge는 그 값을 읽기만 한다.
+     */
+    @Bean
+    public AtomicInteger onlineUserCountValue() {
+        return new AtomicInteger(0);
+    }
+
+    @Bean
+    public Gauge onlineUserCount(MeterRegistry registry, AtomicInteger onlineUserCountValue) {
+        return Gauge.builder("algoga_friend_online_users", onlineUserCountValue, AtomicInteger::get)
+                .description("현재 온라인(WebSocket 연결 중)인 유저 수")
+                .register(registry);
+    }
 
     // ── Booking ──────────────────────────────────────────────────────────────
 

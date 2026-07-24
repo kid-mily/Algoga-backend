@@ -19,6 +19,7 @@ import com.kidmily.algoga_server.user.exception.UserException;
 import com.kidmily.algoga_server.user.presentation.request.*;
 import com.kidmily.algoga_server.user.presentation.response.AuthTokenResponse;
 import com.kidmily.algoga_server.user.presentation.response.FindIdResponse;
+import io.micrometer.core.instrument.Counter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -48,6 +49,13 @@ public class AuthService implements SocialLoginProcessor {
     private final RedisTemplate<String, String> redisTemplate; // Redis 도구 주입!
     private final ApplicationEventPublisher eventPublisher;
     private final EmailVerificationHelper emailVerificationHelper;
+
+    // 통계 대시보드용 커스텀 지표 (global/config/MetricsConfig.java에서 빈 등록)
+    private final Counter userSignupLocalTotal;
+    private final Counter userSignupGoogleTotal;
+    private final Counter userSignupKakaoTotal;
+    private final Counter userLoginSuccessTotal;
+    private final Counter userLoginFailedTotal;
 
     // 프론트엔드 주소 주입 (HTTP cookie할 때 추가함)
     @Value("${user.app.frontend.base-url}")
@@ -156,6 +164,7 @@ public class AuthService implements SocialLoginProcessor {
         // 가입이 성공적으로 끝났으니, "인증 완료" 포스트잇도 떼서 버립니다! (청소)
         redisTemplate.delete(RedisKeys.AUTH_SUCCESS_PREFIX + email);
 
+        userSignupLocalTotal.increment();
         log.info("신규 회원가입 완료 [아이디: {}, 이메일: {}]", user.getUsername(), user.getEmail());
     }
 
@@ -174,6 +183,16 @@ public class AuthService implements SocialLoginProcessor {
 
     // 4. 일반 로그인 (로그인 병목 최적화 적용 (트랜잭션 분리))
     public AuthTokenResponse login(AuthLoginRequest request) {
+        try {
+            return doLogin(request);
+        } catch (RuntimeException e) {
+            // 실패 사유(탈퇴/잠금/블랙리스트/비밀번호 오류 등)와 무관하게 "실패"로 한 곳에서 집계
+            userLoginFailedTotal.increment();
+            throw e;
+        }
+    }
+
+    private AuthTokenResponse doLogin(AuthLoginRequest request) {
         // [1] DB 조회 (별도 트랜잭션 호출)
         User user = findUserByUsername(request.username());
 
@@ -232,6 +251,7 @@ public class AuthService implements SocialLoginProcessor {
         log.info("로그인 로직 통과 및 토큰 생성 완료 [아이디: {}, AccessToken: {}...]",
                 user.getUsername(), accessToken.substring(0, 15));
 
+        userLoginSuccessTotal.increment();
         return new AuthTokenResponse(
                 accessToken,
                 refreshToken,
@@ -439,6 +459,12 @@ public class AuthService implements SocialLoginProcessor {
                 normalizeReferralCode(request.referralCode())
         ));
         log.info("[Signup] UserSignedUpEvent published. userId={}, referrerUserId={}", savedUser.getId(), referrerUserId);
+
+        if (user.getSocialType() == SocialType.KAKAO) {
+            userSignupKakaoTotal.increment();
+        } else {
+            userSignupGoogleTotal.increment();
+        }
 
         log.info("소셜 신규 회원가입 완료 [아이디(이메일): {}, 소셜: {}]",
                 user.getUsername(), user.getSocialType());

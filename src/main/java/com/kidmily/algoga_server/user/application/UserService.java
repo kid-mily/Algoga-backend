@@ -25,6 +25,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 import com.kidmily.algoga_server.global.event.UserWithdrawnEvent;
+import io.micrometer.core.instrument.Counter;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.redis.core.RedisTemplate;
 import java.util.concurrent.TimeUnit;
@@ -53,6 +54,9 @@ public class UserService {
 
     // 마이페이지 이메일 인증
     private final EmailVerificationHelper emailVerificationHelper;
+
+    // 통계 대시보드용 커스텀 지표
+    private final Counter userWithdrawTotal;
 
     // 내 프로필 조회
     @Transactional(readOnly = true)
@@ -215,6 +219,7 @@ public class UserService {
         // 이제 다른 도메인(쿠폰, 예약 등) 담당자들이 이 이벤트를 듣고 각자 데이터를 지웁니다.
         eventPublisher.publishEvent(new UserWithdrawnEvent(user.getId(), email));
 
+        userWithdrawTotal.increment();
         log.info("회원 탈퇴 처리 완료 및 이벤트 발행 [기존 이메일: {}, 식별자: {}]", email, user.getId());
     }
 
