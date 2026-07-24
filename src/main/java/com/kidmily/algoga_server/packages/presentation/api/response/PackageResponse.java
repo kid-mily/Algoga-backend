@@ -27,6 +27,9 @@ public record PackageResponse(
         @Schema(description = "숙소 대표 이미지 URL (조회 시점 CDN 절대경로로 변환). 숙소를 못 찾거나 이미지 없으면 null")
         String accommodationImageUrl,
 
+        @Schema(description = "숙소 설명 (관리자 입력). 숙소를 못 찾으면 null")
+        String accommodationDescription,
+
         String name,
         String description,
         String imageUrl,
@@ -86,6 +89,7 @@ public record PackageResponse(
         String accommodationName = accommodation != null ? accommodation.getName() : null;
         String accommodationAddress = accommodation != null ? accommodation.getAddress() : null;
         String accommodationImageUrl = accommodation != null ? accommodation.getImageUrl() : null;
+        String accommodationDescription = accommodation != null ? accommodation.getDescription() : null;
         int accommodationPrice = pricePerNight * chargeableNights;
 
         int totalPrice = roundTripPrice + accommodationPrice;
@@ -100,6 +104,7 @@ public record PackageResponse(
                 accommodationName,
                 accommodationAddress,
                 accommodationImageUrl,
+                accommodationDescription,
                 travelPackage.getName(),
                 travelPackage.getDescription(),
                 travelPackage.getImageUrl(),
