@@ -24,6 +24,9 @@ import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -32,6 +35,9 @@ import java.util.stream.Collectors;
 @Transactional(readOnly = true)
 @RequiredArgsConstructor
 public class PackageQueryService implements PackageQueryUseCase {
+
+    // 목록 항공편 병렬 조회 최대 동시 스레드 수 (패키지 수가 이보다 적으면 그 수만큼만 생성)
+    private static final int MAX_FLIGHT_THREADS = 16;
 
     private final PackageRepository packageRepository;
     private final FlightSearchUseCase flightSearchUseCase;
@@ -84,12 +90,27 @@ public class PackageQueryService implements PackageQueryUseCase {
                 .stream()
                 .collect(Collectors.toMap(Country::getId, Country::getName));
 
-        return packages.stream()
-                .map(p -> toResponseWithFlight(
-                        p,
-                        accommodationById.get(p.getAccommodationId()),
-                        countryNameById.get(p.getCountryId())))
-                .toList();
+        if (packages.isEmpty()) {
+            return List.of();
+        }
+
+        // 항공편은 패키지마다 실시간 외부 API 호출이라, 순차로 하면 N건×응답시간으로 목록이 느려진다.
+        // IO-bound라 CPU 코어 수에 좌우되는 공용 풀(parallelStream) 대신 전용 스레드풀로 동시에 조회한다.
+        // 이 구간은 DB 접근이 없고(숙소/국가는 위에서 이미 배치 조회 완료), 항공 조회 서비스도
+        // 무상태(외부 HTTP + 서킷브레이커, thread-safe)라 병렬 안전하다. 개별 조회 실패는 그 패키지만
+        // flightInfo=null 처리(toResponseWithFlight 내부 try/catch). futures를 순서대로 join → 원래 순서 보존.
+        ExecutorService flightPool = Executors.newFixedThreadPool(Math.min(packages.size(), MAX_FLIGHT_THREADS));
+        try {
+            List<CompletableFuture<PackageResponse>> futures = packages.stream()
+                    .map(p -> CompletableFuture.supplyAsync(() -> toResponseWithFlight(
+                            p,
+                            accommodationById.get(p.getAccommodationId()),
+                            countryNameById.get(p.getCountryId())), flightPool))
+                    .toList();
+            return futures.stream().map(CompletableFuture::join).toList();
+        } finally {
+            flightPool.shutdown();
+        }
     }
 
     private PackageResponse toResponseWithFlight(TravelPackage travelPackage,
