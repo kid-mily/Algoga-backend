@@ -62,3 +62,31 @@ This was found and discussed but **intentionally left unfixed** this session —
 2. Commit (nothing committed yet on this branch) and open a PR.
 3. Manually verify the Redis Lua CAS script against a real Redis instance if possible before merging.
 4. A larger backlog of optimization/cleanup items (N+1 queries in several places, missing caching on a few read-heavy endpoints, a `CurrentUserIdResolver` reflection helper duplicated across ~10 packages instead of living in `global`, a couple of small dead-code items) was identified during this session's review passes but is out of scope here — surfaced to the user, not yet scheduled. Ask before picking any of it up.
+
+## Current Update 2026-07-26 Admin LMS Performance Optimization
+
+- Completed admin LMS performance optimization and measurement for two presentation-heavy APIs: admin course list and coupon statistics.
+- API contracts were preserved: no API URL/request/response/json changes.
+- Main result:
+  - GET /api/v1/admin/courses: p95 1.64s -> 9.47ms, p99 1.89s -> 18.25ms, throughput 266.29 -> 389.27 req/s, error 0%.
+  - GET /api/v1/admin/coupon-statistics: p95 3.34s -> 12.09ms, p99 3.63s -> 18.21ms, throughput 190.09 -> 390.12 req/s, error 0%.
+- k6 script/result files:
+  - K6/lms/scripts/04-admin-performance-load-test.js
+  - K6/lms/results/04-admin-performance-course-summary.md
+  - K6/lms/results/04-admin-performance-coupon-summary.md
+- Screenshot evidence is outside repo: C:\Users\user\Desktop\모듈5_최적화.
+- Important: monitoring/grafana/dashboards/algoga-lms.json was restored after measurement confusion; include it in a PR only if git status explicitly shows an intended dashboard change.
+- Last observed git status showed only friend-domain files modified. Re-check status before any new work.
+
+## Current Update 2026-07-26 Content Manager N+1 Fixes (Course Students / Reviews / Q&A)
+
+- User asked to optimize slow admin-page queries ahead of a presentation: statistics manager (per-course interest, course->booking conversion, coupon->booking conversion) and content manager screens. User restricted edits to `course, country, enrollment, learningprogress, quiz, completion, certificate, review, qna, diagnosis, learning` packages only, and asked to be told (not have it silently fixed) if anything outside that list needed changing.
+- A background Explore agent mapped every one of these features' full call chains. Result: all 3 statistics-manager features' real bottlenecks live in `stats`/`booking`/`benefit`/`accommodation` packages (outside the allowed list); content-manager screens (course students, reviews, Q&A) were fully fixable inside the allowed packages. Reported this to the user; they chose "fix content manager only for now."
+- Implemented (see `.ai/WORKLOG.md` 2026-07-26 "Content Manager N+1 Query Optimization" entry for full file list):
+  1. Admin course students list: was 6 DB queries per student; now 5 bulk queries per course page load (profile/progress/completion/quiz/review), enrollment reused instead of re-queried.
+  2. Course review list/detail (admin + regular user list): was 1 profile query per review; now 1 bulk query per list call.
+  3. Course Q&A list/detail: was 1 profile query per Q&A row, 1 per comment, plus 4x redundant repeated lookups of the same author in the detail view; now bulk-fetched.
+- `compileJava` passes; `test` shows the same pre-existing/environment-only failures as before this change (verified via `git stash -u` comparison) — nothing in the touched packages regressed.
+- **Not done, flagged to user instead of silently modified**: the 3 statistics-manager features. Their actual fix needs `stats` (all 3), plus `booking`/`accommodation` (course->booking conversion) and `benefit` (coupon->booking conversion). Full defect writeup (file:line, exact query problem) is in the WORKLOG entry above — reuse it directly if/when the user grants permission to touch those packages, rather than re-investigating from scratch.
+- No load-test (k6/Grafana) evidence for this slice — user was short on time. Gave a lightweight, no-shared-file-edit alternative instead: SQL logging is already on globally (`logging.level.org.hibernate.SQL: debug` in `application.yaml`), so count `Hibernate:` log lines per request before/after; for exact counts, set `SPRING_JPA_PROPERTIES_HIBERNATE_GENERATE_STATISTICS=true` as a shell environment variable (not a file edit) before `bootRun`; use `curl -s -o /dev/null -w "%{time_total}s"` for wall-clock comparison.
+- Branch note: `fix/admin-completion-rate-stats` was already checked out with unrelated prior work when this task started. These changes sit on top of it uncommitted — confirm with the user whether to commit into this branch or split into a new one before any PR.

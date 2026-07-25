@@ -74,6 +74,13 @@ public class QuizSubmissionRepositoryAdapter implements QuizSubmissionRepository
     }
 
     @Override
+    public Set<Long> findSubmittedUserIdsByCourseId(Long courseId) {
+        return new LinkedHashSet<>(
+                springDataQuizSubmissionRepository.findSubmittedUserIdsByCourseId(courseId)
+        );
+    }
+
+    @Override
     public boolean existsByUserIdAndCourseId(
             Long userId,
             Long courseId

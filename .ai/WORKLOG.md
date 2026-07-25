@@ -589,3 +589,119 @@ Record completed work here by date. Keep entries factual and useful for future d
 - Reviewed entity/table/enum values in code before writing SQL.
 - Checked for leftover obvious camelCase native SQL columns and `demo` text in seed contents.
 - No local MySQL instance was available, so the SQL has not been executed against a real database yet.
+
+### 2026-07-26 Admin LMS Course/Coupon Performance Optimization Handoff
+
+#### Summary
+
+- 관리자 LMS 성능 병목 중 발표 효과가 큰 2개 API를 우선 최적화하고 k6/Grafana로 최적화 전/후를 측정했다.
+- API URL/request/response/json contract는 변경하지 않았고 내부 조회 로직만 변경했다.
+- 측정 조건은 k6 최대 1000 VUs, 약 3분 30초 부하이며 Grafana Algoga LMS Admin Performance Dashboard에서 TPS, latency p50/p95/p99, error rate, HikariCP, CPU/Heap을 확인했다.
+
+#### Optimized APIs
+
+1. GET /api/v1/admin/courses
+   - 관리자 강의 목록 조회에서 목록 응답에 필요 없는 chapter collection 로딩을 피하도록 mapper/repository 경로를 분리했다.
+   - course file collection은 batch loading이 가능하도록 정리했다.
+
+2. GET /api/v1/admin/coupon-statistics
+   - 전체 user coupon scan 및 coupon policy별 반복 course lookup 구조를 제거했다.
+   - DB aggregate query로 issued/used/expired/available count를 계산하고, course summary는 batch lookup으로 조회하도록 변경했다.
+
+#### Main Changed Files
+
+- src/main/java/com/kidmily/algoga_server/benefit/application/port/LmsCoursePort.java
+- src/main/java/com/kidmily/algoga_server/benefit/application/service/CouponService.java
+- src/main/java/com/kidmily/algoga_server/benefit/domain/repository/UserCouponRepository.java
+- src/main/java/com/kidmily/algoga_server/benefit/infrastructure/lms/LmsCourseAdapter.java
+- src/main/java/com/kidmily/algoga_server/benefit/infrastructure/persistence/adapter/UserCouponRepositoryAdapter.java
+- src/main/java/com/kidmily/algoga_server/benefit/infrastructure/persistence/repository/SpringDataUserCouponRepository.java
+- src/main/java/com/kidmily/algoga_server/course/infrastructure/mapper/CourseMapper.java
+- src/main/java/com/kidmily/algoga_server/course/infrastructure/persistence/adapter/CourseRepositoryAdapter.java
+- src/main/java/com/kidmily/algoga_server/course/infrastructure/persistence/entity/CourseJpaEntity.java
+- K6/lms/scripts/04-admin-performance-load-test.js
+- K6/lms/results/04-admin-performance-course-summary.md
+- K6/lms/results/04-admin-performance-coupon-summary.md
+
+#### Measurement Results
+
+Admin Course List:
+
+- Before: p95 1.64s, p99 1.89s, throughput 266.29 req/s, error 0%
+- After: p95 9.47ms, p99 18.25ms, throughput 389.27 req/s, error 0%
+- Improvement: p95 about 99.4% faster, p99 about 99.0% faster, throughput about 46% higher
+
+Coupon Statistics:
+
+- Before: p95 3.34s, p99 3.63s, throughput 190.09 req/s, error 0%
+- After: p95 12.09ms, p99 18.21ms, throughput 390.12 req/s, error 0%
+- Improvement: p95 about 99.6% faster, p99 about 99.5% faster, throughput about 105% higher
+
+#### Grafana / k6 Notes
+
+- Dashboard used for screenshots: Algoga LMS Admin Performance Dashboard.
+- Repository dashboard file monitoring/grafana/dashboards/algoga-lms.json was restored later and should not be assumed dirty unless git status says so.
+- Screenshots were saved outside the repo under C:\Users\user\Desktop\모듈5_최적화.
+- k6 summary md files currently contain the optimized-after results. Before-result evidence is in screenshots.
+
+#### Current Git Caution
+
+- Before starting any next task, run git status in C:\Algoga_V3_backend.
+- Last observed status only showed friend-domain files modified:
+  - src/main/java/com/kidmily/algoga_server/friend/domain/model/FriendRelation.java
+  - src/main/java/com/kidmily/algoga_server/friend/infrastructure/mapper/FriendMapper.java
+- Do not assume LMS optimization files are still unstaged; they may already be committed or otherwise cleaned up.
+- If opening PR, verify whether src, K6, and db changes are already committed and whether friend changes should be included.
+
+#### Suggested PR Summary
+
+- Title: perf: 관리자 LMS 강의 목록 및 쿠폰 통계 조회 최적화
+- Key point: request/response/API contract unchanged; internal query strategy optimized only.
+- Mention 1000 VU k6 + Grafana before/after measurement results above.
+
+### 2026-07-26 Content Manager N+1 Query Optimization (Course Students / Reviews / Q&A)
+
+#### Summary
+
+- 사용자 요청: 관리자 페이지 발표 준비 중 통계 매니저(강의별 관심도 / 강의->예약 전환 / 쿠폰->예약 전환)와 콘텐츠 매니저 조회가 느려서 전체 최적화 요청. 단, 수정 허용 범위는 `course, country, enrollment, learningprogress, quiz, completion, certificate, review, qna, diagnosis, learning` 패키지로 한정.
+- 사전 조사(Explore 서브에이전트) 결과, 통계 매니저 3개 기능의 실제 병목은 전부(또는 대부분) `stats`, `booking`, `benefit`, `accommodation` 패키지에 있어 허용된 패키지만으로는 고칠 수 없음을 확인. 사용자에게 보고 후, "콘텐츠 매니저만 지금 수정" 선택을 받아 콘텐츠 매니저 쪽 N+1만 이번에 수정함.
+- API URL/request/response/JSON 계약은 변경하지 않았고, 내부 조회 로직만 벌크(batch) 쿼리로 교체했다.
+
+#### Changed Files
+
+1. **관리자 강의 수강생 목록** (`GET /api/v1/admin/courses/{courseId}/students`) — 학생 1명당 쿼리 6개(프로필/진도/수료/퀴즈응시/리뷰작성/수강신청) 발생하던 것을 강의당 벌크 쿼리 5개로 축소.
+   - `course/application/service/CourseStudentResultAssembler.java`: `assemble(Long, Course, List<Chapter>)` 단건 메서드를 `assembleAll(List<Enrollment>, Course, List<Chapter>)` 벌크 메서드로 교체. 프로필/진도/수료/퀴즈응시/리뷰작성을 각각 1회 벌크 조회 후 메모리에서 매핑.
+   - `course/application/service/CourseService.java`: `getCourseStudents`가 이미 조회한 `Enrollment` 목록을 재사용(accessExpiresAt을 위한 별도 조회 제거)하고 `assembleAll`을 호출하도록 변경.
+   - `completion/domain/repository/CourseCompletionRepository.java`, `completion/infrastructure/persistence/adapter/CourseCompletionRepositoryAdapter.java`, `completion/infrastructure/persistence/repository/SpringDataCourseCompletionRepository.java`: `findByCourseId(Long)` 벌크 조회 메서드 추가.
+   - `quiz/domain/repository/QuizSubmissionRepository.java`, `quiz/infrastructure/persistence/adapter/QuizSubmissionRepositoryAdapter.java`, `quiz/infrastructure/persistence/repository/SpringDataQuizSubmissionRepository.java`: `findSubmittedUserIdsByCourseId(Long)` 벌크 조회 메서드 추가.
+   - `course/application/port/UserProfilePort.java`, `course/infrastructure/user/UserProfileAdapter.java`: `findProfiles(Collection<Long>)` 벌크 프로필 조회 추가(리플렉션으로 `UserRepository.findAllById` 호출). `course` 패키지 전용 포트라 다른 도메인(chatbot/inquiry/benefit)의 동명 `UserProfilePort`는 영향 없음(각자 별도 인터페이스).
+
+2. **관리자 강의 리뷰 목록/상세** (`GET /api/v1/admin/courses/{courseId}/reviews`, 일반 사용자용 `GET /api/v1/courses/{courseId}/reviews`도 동일 구조라 함께 수정) — 리뷰 1건당 작성자 프로필 조회 1회(N+1)를 벌크 조회 1회로 축소.
+   - `review/application/service/CourseReviewService.java`: `getReviews`/`getAdminReviews`가 목록의 `userId`를 모아 `userProfilePort.findProfiles(...)`로 한 번에 조회하도록 변경. 단건 조회(`createReview`, `getAdminReview`, `updateReviewVisibility`)는 기존 단건 `findProfile` 그대로 유지.
+
+3. **관리자 강의 Q&A 목록/상세** (`GET /api/v1/admin/courses/{courseId}/qnas`, `/{qnaId}`) — 목록에서 Q&A 1건당, 상세에서 댓글 1건당 프로필 조회 1회(N+1) + 상세 화면에서 같은 작성자 프로필을 4번 중복 조회하던 것을 제거.
+   - `qna/application/service/CourseQnaService.java`: `getQnas`가 벌크 프로필 조회로 변경. `getQnaDetail`은 Q&A 작성자 프로필을 1회만 조회해 재사용하고(기존 `profileValue` 헬퍼로 4회 중복 조회하던 것 제거), 댓글 작성자 프로필은 댓글 전체의 `userId`를 모아 한 번에 벌크 조회.
+
+#### Verification
+
+- `./gradlew compileJava` passed.
+- `./gradlew test`: 221 tests, 12 failed. All 12 failures confirmed pre-existing/environment-only by re-running the same failing test classes with `git stash -u` (unmodified code) before these changes — same classes fail identically without any of this session's changes (Spring `ApplicationContext` load failures with no local MySQL/Redis: `AlgogaServerApplicationTests`, `BannerControllerTest`, `CalendarControllerTest`, `ChapterRepositoryTest`, `PaymentConcurrencyTest`; one already-broken `CourseRewardServiceTest`, `PaymentTransactionServiceTest`; one flaky assertion in `InflowStatsServiceTest` in the unrelated `stats` package).
+- Confirmed zero failures in every test class covering the touched code: `CourseServiceClassroomTest` (8), `CourseReviewServiceTest` (1), `CourseQnaServiceTest` (2), `QuizSubmissionRepositoryAdapterTest` (1), `QuizServiceTest` (5), `CourseCompletionRegistrarTest` (3).
+- No k6/Grafana before/after measurement was run for this slice (out of time budget per user). Recommended quick, zero-shared-config-file alternative given to the user: count `Hibernate:`/`select` log lines per request (SQL logging is already on via `logging.level.org.hibernate.SQL: debug` in `application.yaml`, so no shared-file edit is needed), or temporarily set `SPRING_JPA_PROPERTIES_HIBERNATE_GENERATE_STATISTICS=true` as an environment variable (not a file edit) for an exact query-count/timing summary, plus `curl -s -o /dev/null -w "%{time_total}s"` for wall-clock comparison.
+
+#### Problems
+
+- None. All changes stayed within the allowed packages (`course`, `completion`, `quiz`, `review`, `qna`); no file outside that list was modified.
+
+#### Resolution
+
+- N/A (see Notes for Next Time for the deliberately-deferred stats manager work).
+
+#### Notes for Next Time
+
+- **Stats Manager 3 features are NOT fixed** — investigated but intentionally left alone per user's package-scope constraint. Full investigation detail (file:line, call chain, exact defect) was reported to the user in-chat; summary:
+  - **강의별 관심도** (`stats/presentation/InterestStatsController.java`, `stats/application/service/InterestStatsService.java`): not N+1, but `InterestStatsService.load()` reloads the *entire* non-deleted course table with `Pageable.unpaged()` on every request across 3 separate endpoints (`/summary`, `/countries`, `/lectures`), with no caching, doing search/sort/rank in Java afterward. The `course`/`enrollment`/`completion`/`learningprogress` repositories it calls are already fine (bulk aggregate queries). Fix requires editing `stats` package files (out of scope for this task).
+  - **강의 -> 예약 전환** (`stats/presentation/LectureToTripStatsController.java`, `stats/application/service/LectureToTripStatsService.java`): classic N+1 — `bookingRepository.findByUserId(userId)` called once per distinct purchasing user, and `accommodationRepository.findById(id)` called once per distinct accommodation, inside `buildPurchases()`/`accToCountry()`. Dominant fix needs `booking` and `accommodation` package changes (both out of scope) plus the `stats` orchestration itself. A minor in-scope win exists (`courseCompletionRepository.existsByUserIdAndCourseId` could become a bulk `findByUserIdAndCourseIdIn`-style check) but it is not the main cost.
+  - **쿠폰 -> 예약 전환** (`stats/presentation/CouponConversionStatsController.java`, `stats/application/service/CouponConversionStatsService.java`): worst of the three — `userCouponRepository.findAll()` loads the *entire* `user_coupon` table on every request with zero DB-side date/status filtering, then filters in Java. Both the orchestration (`stats`) and the slow repository (`benefit.UserCouponRepository`) are out of scope; `bookingRepository.findByCreatedAtBetween` (`booking` package) is also out of scope. None of this feature's fix touches an allowed package.
+  - If the user wants these three fixed later, it requires either (a) explicit permission to touch `stats`/`booking`/`benefit`/`accommodation`, or (b) a separate task handed to whoever owns those packages, using the same "batch by ID list, single aggregate `@Query`/GROUP BY, return a `Map`/projection" pattern already established in `course/infrastructure/persistence/adapter/CourseRepositoryAdapter.java` (`countPublishedByCountryIds`) and `benefit/infrastructure/persistence/adapter/UserCouponRepositoryAdapter.java` (`countByCouponPolicyIds`).
+- Current branch (`fix/admin-completion-rate-stats`) was already checked out with unrelated prior work when this task started; these content-manager changes were made on top of it but are a distinct concern. Confirm with the user whether to commit these into the current branch or split into a new branch before opening a PR.

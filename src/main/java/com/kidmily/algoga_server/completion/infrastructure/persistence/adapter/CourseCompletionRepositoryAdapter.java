@@ -57,6 +57,14 @@ public class CourseCompletionRepositoryAdapter implements CourseCompletionReposi
     }
 
     @Override
+    public List<CourseCompletion> findByCourseId(Long courseId) {
+        return springDataCourseCompletionRepository.findByCourseId(courseId)
+                .stream()
+                .map(this::toDomain)
+                .toList();
+    }
+
+    @Override
     public boolean existsByUserIdAndCourseId(
             Long userId,
             Long courseId

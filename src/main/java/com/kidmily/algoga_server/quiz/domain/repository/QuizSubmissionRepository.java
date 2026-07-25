@@ -14,6 +14,8 @@ public interface QuizSubmissionRepository {
 
     Set<Long> findSubmittedCourseIdsByUserIdAndCourseIds(Long userId, List<Long> courseIds);
 
+    Set<Long> findSubmittedUserIdsByCourseId(Long courseId);
+
     boolean existsByUserIdAndCourseId(Long userId, Long courseId);
 
     List<Long> findSubmissionIdsByUserId(Long userId);
