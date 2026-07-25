@@ -228,8 +228,13 @@ public class FriendQueryService implements FriendQueryUseCase {
 
 
         // 3.최적화를 위해 UserRepository에서 닉네임만 맵으로 가져오는 로직
+        // Collectors.toMap은 값이 null이면 NullPointerException을 던지므로, 닉네임이 없는 유저(더미 데이터 등)가
+        // 섞여 있어도 500이 나지 않도록 null을 대체 문구로 치환한다.
         java.util.Map<Long, String> friendNicknameMap = userRepository.findAllById(friendIds).stream()
-                .collect(java.util.stream.Collectors.toMap(User::getId, User::getNickname));
+                .collect(java.util.stream.Collectors.toMap(
+                        User::getId,
+                        u -> u.getNickname() != null ? u.getNickname() : "닉네임 없음"
+                ));
 
         // 4. 스키마 규격으로 매핑
         return relations.stream().map(rel -> {
