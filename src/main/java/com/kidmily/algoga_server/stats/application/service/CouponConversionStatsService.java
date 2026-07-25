@@ -33,9 +33,9 @@ public class CouponConversionStatsService {
         LocalDateTime start = from.atStartOfDay();
         LocalDateTime end = to.plusDays(1).atStartOfDay();
 
-        Set<Long> couponUsedUserIds = userCouponRepository.findAll().stream()
-                .filter(uc -> "USED".equalsIgnoreCase(uc.getStatus()))
-                .filter(uc -> isWithin(uc.getUsedAt(), start, end))
+        // 기존엔 findAll()로 user_coupons 전체를 로드 후 메모리에서 필터했으나,
+        // 이제 DB에서 USED + usedAt [start, end) 로 좁혀 조회한다(전체 테이블 스캔·적재 제거).
+        Set<Long> couponUsedUserIds = userCouponRepository.findUsedInPeriod(start, end).stream()
                 .map(UserCoupon::getUserId)
                 .filter(java.util.Objects::nonNull)
                 .collect(Collectors.toSet());
@@ -53,13 +53,5 @@ public class CouponConversionStatsService {
                 : Math.round((double) convertedUsers / couponUsedUsers * 10000.0) / 100.0;
 
         return new CouponConversionResponse(couponUsedUsers, convertedUsers, conversionRate);
-    }
-
-    /**
-     * 사용 시각이 조회 기간 안인지 판단한다.
-     * usedAt 이 없는 USED 쿠폰(사용 시각을 남기지 않던 과거 데이터)은 어느 기간에 넣을지 알 수 없으므로 제외한다.
-     */
-    private boolean isWithin(LocalDateTime usedAt, LocalDateTime start, LocalDateTime end) {
-        return usedAt != null && !usedAt.isBefore(start) && usedAt.isBefore(end);
     }
 }

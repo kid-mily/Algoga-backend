@@ -15,6 +15,17 @@ public interface SpringDataUserCouponRepository extends JpaRepository<UserCoupon
 
     List<UserCouponJpaEntity> findByUserIdAndCourseId(Long userId, Long courseId);
 
+    // 사용(USED, 대소문자 무시)이면서 usedAt 이 [from, endExclusive) 구간인 쿠폰.
+    // usedAt IS NULL 인 과거 데이터는 범위 비교에서 자동 제외된다.
+    @Query("""
+            SELECT u FROM UserCouponJpaEntity u
+            WHERE UPPER(u.status) = 'USED'
+              AND u.usedAt >= :from
+              AND u.usedAt < :endExclusive
+            """)
+    List<UserCouponJpaEntity> findUsedInPeriod(@Param("from") LocalDateTime from,
+                                               @Param("endExclusive") LocalDateTime endExclusive);
+
     @Query("""
             SELECT
                 u.couponPolicyId AS couponPolicyId,

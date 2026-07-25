@@ -48,6 +48,14 @@ public class UserCouponRepositoryAdapter implements UserCouponRepository {
     }
 
     @Override
+    public List<UserCoupon> findUsedInPeriod(LocalDateTime from, LocalDateTime endExclusive) {
+        return springDataUserCouponRepository.findUsedInPeriod(from, endExclusive)
+                .stream()
+                .map(this::toDomain)
+                .toList();
+    }
+
+    @Override
     public List<UserCoupon> findByUserId(Long userId) {
         return springDataUserCouponRepository.findByUserId(userId)
                 .stream()

@@ -65,6 +65,18 @@ public class CourseCompletionRepositoryAdapter implements CourseCompletionReposi
     }
 
     @Override
+    public List<CourseCompletion> findByUserIdInAndCourseIdIn(List<Long> userIds, List<Long> courseIds) {
+        if (userIds == null || userIds.isEmpty() || courseIds == null || courseIds.isEmpty()) {
+            return List.of();
+        }
+
+        return springDataCourseCompletionRepository.findByUserIdInAndCourseIdIn(userIds, courseIds)
+                .stream()
+                .map(this::toDomain)
+                .toList();
+    }
+
+    @Override
     public boolean existsByUserIdAndCourseId(
             Long userId,
             Long courseId

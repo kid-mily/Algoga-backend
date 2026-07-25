@@ -131,19 +131,30 @@ public class LectureToTripStatsService implements LectureToTripStatsUseCase {
                 .toList();
         if (lecturePayments.isEmpty()) return List.of();
 
-        Map<Long, Course> courses = coursesByIds(
-                lecturePayments.stream().map(Payment::getCourseId).collect(Collectors.toSet()));
+        List<Long> userIds = lecturePayments.stream().map(Payment::getUserId).distinct().toList();
+        List<Long> courseIds = lecturePayments.stream().map(Payment::getCourseId).distinct().toList();
 
-        // 유저별 예약 (나라, 예약일) — 번들/전환 판정용
-        Map<Long, List<Booking>> bookingsByUser = new HashMap<>();
-        Set<Long> accommodationIds = new HashSet<>();
-        for (Long userId : lecturePayments.stream().map(Payment::getUserId).collect(Collectors.toSet())) {
-            List<Booking> bs = bookingRepository.findByUserId(userId);
-            bookingsByUser.put(userId, bs);
-            bs.forEach(b -> accommodationIds.add(b.getAccommodationId()));
-        }
+        Map<Long, Course> courses = coursesByIds(courseIds);
+
+        // 유저별 예약 (나라, 예약일) — 번들/전환 판정용.
+        // 기존: 유저마다 findByUserId 반복(N+1) → 한 번에 findByUserIdIn 후 그룹핑.
+        Map<Long, List<Booking>> bookingsByUser = bookingRepository.findByUserIdIn(userIds).stream()
+                .collect(Collectors.groupingBy(Booking::getUserId));
+
+        // 숙소 → 나라 매핑. 기존: 숙소마다 findById 반복(N+1) → findByIdIn 배치 조회.
+        Set<Long> accommodationIds = bookingsByUser.values().stream()
+                .flatMap(List::stream)
+                .map(Booking::getAccommodationId)
+                .filter(Objects::nonNull)
+                .collect(Collectors.toSet());
         Map<Long, Long> accToCountry = accToCountry(accommodationIds);
-        Map<String, Boolean> completionCache = new HashMap<>();
+
+        // 완강 여부. 기존: (유저,강의)마다 existsByUserIdAndCourseId 반복(N+1)
+        // → 한 번에 findByUserIdInAndCourseIdIn 후 "userId:courseId" 존재 집합으로 판정.
+        Set<String> completedPairs = courseCompletionRepository
+                .findByUserIdInAndCourseIdIn(userIds, courseIds).stream()
+                .map(cc -> cc.getUserId() + ":" + cc.getCourseId())
+                .collect(Collectors.toSet());
 
         List<Purchase> purchases = new ArrayList<>();
         for (Payment pay : lecturePayments) {
@@ -161,9 +172,7 @@ public class LectureToTripStatsService implements LectureToTripStatsUseCase {
             }
             if (bundle) continue; // 번들 구매는 전환 모집단에서 제외
 
-            boolean completed = completionCache.computeIfAbsent(
-                    pay.getUserId() + ":" + pay.getCourseId(),
-                    k -> courseCompletionRepository.existsByUserIdAndCourseId(pay.getUserId(), pay.getCourseId()));
+            boolean completed = completedPairs.contains(pay.getUserId() + ":" + pay.getCourseId());
 
             purchases.add(new Purchase(pay.getUserId(), pay.getCourseId(), country, completed, converted));
         }
@@ -188,9 +197,11 @@ public class LectureToTripStatsService implements LectureToTripStatsUseCase {
     }
 
     private Map<Long, Long> accToCountry(Collection<Long> accommodationIds) {
-        return accommodationIds.stream().filter(Objects::nonNull).distinct()
-                .map(id -> accommodationRepository.findById(id).orElse(null))
-                .filter(Objects::nonNull)
-                .collect(Collectors.toMap(Accommodation::getId, Accommodation::getCountryId));
+        if (accommodationIds.isEmpty()) {
+            return Map.of();
+        }
+        return accommodationRepository.findByIdIn(new ArrayList<>(accommodationIds)).stream()
+                .filter(a -> a.getCountryId() != null)
+                .collect(Collectors.toMap(Accommodation::getId, Accommodation::getCountryId, (a, b) -> a));
     }
 }
