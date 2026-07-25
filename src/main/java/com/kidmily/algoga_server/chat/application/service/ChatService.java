@@ -161,15 +161,20 @@ public class ChatService implements ChatUseCase {
         chatMessageReadRepository.markAllAsRead(roomId, userId);
         evictChatRoomsCache(userId);
 
+        List<ChatMessage> messages = chatMessageRepository.findByRoomIdOrderByCreatedAtDesc(roomId);
+
+        // 방 전체 메시지의 unread 수를 단 1쿼리로 집계 (roomId 기준)
+        java.util.Map<Long, Long> unreadMap = chatMessageReadRepository.findUnreadCountsByRoomId(roomId);
+
         java.util.Map<Long, String> nameCache = new java.util.HashMap<>();
         java.util.Map<Long, String> profileCache = new java.util.HashMap<>();
 
-        return chatMessageRepository.findByRoomIdOrderByCreatedAtDesc(roomId).stream()
+        return messages.stream()
                 .map(message -> {
                     Long sid = message.getSenderId();
                     String nickname = nameCache.computeIfAbsent(sid, userPort::getNickname);
                     String profile = profileCache.computeIfAbsent(sid, userPort::getProfileImageUrl);
-                    int unreadCount = (int) chatMessageReadRepository.countUnreadByMessageId(message.getId());
+                    int unreadCount = unreadMap.getOrDefault(message.getId(), 0L).intValue();
                     return ChatMessageResponse.of(message, nickname, profile, unreadCount);
                 })
                 .toList();
