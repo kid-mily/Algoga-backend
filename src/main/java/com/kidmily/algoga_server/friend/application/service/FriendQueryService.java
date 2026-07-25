@@ -18,6 +18,7 @@ import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
@@ -241,10 +242,13 @@ public class FriendQueryService implements FriendQueryUseCase {
             Long friendId = rel.getRequesterId().equals(userId) ? rel.getReceiverId() : rel.getRequesterId();
             String nickname = friendNicknameMap.getOrDefault(friendId, "알 수 없음(탈퇴유저)");
 
+            // updatedAt이 없는(예: auditing 적용 전에 만들어진) 오래된 관계는 createdAt으로 대체해서 보여준다.
+            LocalDateTime addedAt = rel.getUpdatedAt() != null ? rel.getUpdatedAt() : rel.getCreatedAt();
+
             return com.kidmily.algoga_server.user.presentation.response.AdminFriendDetailResponse.of(
                     friendId,
                     nickname,
-                    rel.getUpdatedAt()
+                    addedAt
             );
         }).toList();
     }
