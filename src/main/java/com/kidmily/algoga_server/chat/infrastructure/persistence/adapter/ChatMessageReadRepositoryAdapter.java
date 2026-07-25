@@ -7,6 +7,7 @@ import com.kidmily.algoga_server.chat.infrastructure.persistence.repository.Spri
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 import java.util.List;
+import java.util.Map;
 
 @Repository
 @RequiredArgsConstructor
@@ -45,5 +46,13 @@ public class ChatMessageReadRepositoryAdapter implements ChatMessageReadReposito
     @Override
     public void deleteByRoomIdAndUserId(Long roomId, Long userId) {
         springDataRepository.deleteByRoomIdAndUserId(roomId, userId);
+    }
+
+    @Override
+    public Map<Long, Long> findUnreadCountsByRoomId(Long roomId) {
+        return springDataRepository.countUnreadGroupedByRoomId(roomId).stream()
+                .collect(java.util.stream.Collectors.toMap(
+                        SpringDataChatMessageReadRepository.UnreadCountRow::getMessageId,
+                        SpringDataChatMessageReadRepository.UnreadCountRow::getCnt));
     }
 }
