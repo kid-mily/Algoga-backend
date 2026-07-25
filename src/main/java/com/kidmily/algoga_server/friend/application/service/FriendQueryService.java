@@ -20,6 +20,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -214,6 +215,32 @@ public class FriendQueryService implements FriendQueryUseCase {
     public long countFriends(Long userId) {
         // 친구 레포지토리에서 바로 카운트
         return friendRepository.countAcceptedFriends(userId);
+    }
+
+    @Override
+    public Map<Long, Long> countFriendsForUsers(List<Long> userIds) {
+        if (userIds.isEmpty()) {
+            return Map.of();
+        }
+
+        // countFriends()를 유저마다 반복 호출(N+1)하는 대신, 이 유저들과 관련된 ACCEPTED 관계를
+        // 배치로 한 번에 가져와서 각자 몇 명인지 자바에서 센다.
+        List<FriendRelation> relations = friendRepository.findAcceptedFriendsAmong(userIds);
+
+        Set<Long> idSet = new HashSet<>(userIds);
+        Map<Long, Long> counts = new HashMap<>();
+        for (Long id : userIds) {
+            counts.put(id, 0L);
+        }
+        for (FriendRelation rel : relations) {
+            if (idSet.contains(rel.getRequesterId())) {
+                counts.merge(rel.getRequesterId(), 1L, Long::sum);
+            }
+            if (idSet.contains(rel.getReceiverId())) {
+                counts.merge(rel.getReceiverId(), 1L, Long::sum);
+            }
+        }
+        return counts;
     }
 
     @Override
