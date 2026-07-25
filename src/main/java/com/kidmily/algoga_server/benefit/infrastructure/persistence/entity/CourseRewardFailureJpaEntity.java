@@ -33,7 +33,7 @@ public class CourseRewardFailureJpaEntity {
     private CourseRewardFailureStatus status;
 
     @Lob
-    @Column(name = "failure_reason")
+    @Column(name = "failure_reason", columnDefinition = "TEXT")
     private String failureReason;
 
     @Column(name = "retry_count", nullable = false)

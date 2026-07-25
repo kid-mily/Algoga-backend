@@ -5,6 +5,7 @@ import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.BatchSize;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
@@ -67,10 +68,12 @@ public class CourseJpaEntity {
 
     @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true)
     @JoinColumn(name = "lecture_id")
+    @BatchSize(size = 100)
     private List<ChapterJpaEntity> chapters = new ArrayList<>();
 
     @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true)
     @JoinColumn(name = "lecture_id")
+    @BatchSize(size = 100)
     private List<CourseFileJpaEntity> courseFiles = new ArrayList<>();
 
     public CourseJpaEntity(

@@ -24,6 +24,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 @Slf4j
 @Service
@@ -152,15 +153,28 @@ public class CouponService implements CouponUseCase {
 
         validateFilters(courseId, countryId);
 
-        List<CouponPolicy> couponPolicies = couponPolicyRepository.findAll();
-        List<UserCoupon> userCoupons = userCouponRepository.findAll();
+        List<CouponPolicy> couponPolicies = courseId == null
+                ? couponPolicyRepository.findAll()
+                : couponPolicyRepository.findByCourseId(courseId);
 
         LocalDateTime now = LocalDateTime.now();
+        Map<Long, LmsCoursePort.CourseSummary> courseSummaries = lmsCoursePort.findCourseSummaries(
+                couponPolicies.stream()
+                        .map(CouponPolicy::getCourseId)
+                        .distinct()
+                        .toList()
+        );
+        Map<Long, UserCouponRepository.CouponUsageCount> usageCounts = userCouponRepository.countByCouponPolicyIds(
+                couponPolicies.stream()
+                        .map(CouponPolicy::getId)
+                        .distinct()
+                        .toList(),
+                now
+        );
         List<CouponPolicyStatisticsResult> policyStatistics = new ArrayList<>();
 
         for (CouponPolicy couponPolicy : couponPolicies) {
-            LmsCoursePort.CourseSummary courseSummary = lmsCoursePort.findCourseSummary(couponPolicy.getCourseId())
-                    .orElse(null);
+            LmsCoursePort.CourseSummary courseSummary = courseSummaries.get(couponPolicy.getCourseId());
 
             if (courseSummary == null) {
                 continue;
@@ -174,23 +188,10 @@ public class CouponService implements CouponUseCase {
                 continue;
             }
 
-            List<UserCoupon> couponsForPolicy = userCoupons.stream()
-                    .filter(userCoupon -> couponPolicy.getId().equals(userCoupon.getCouponPolicyId()))
-                    .toList();
-
-            int issuedCount = couponsForPolicy.size();
-
-            int usedCount = (int) couponsForPolicy.stream()
-                    .filter(this::isUsed)
-                    .count();
-
-            int expiredCount = (int) couponsForPolicy.stream()
-                    .filter(userCoupon -> isExpired(userCoupon, now))
-                    .count();
-
-            int availableCount = (int) couponsForPolicy.stream()
-                    .filter(userCoupon -> isAvailable(userCoupon, now))
-                    .count();
+            UserCouponRepository.CouponUsageCount usageCount = usageCounts.getOrDefault(
+                    couponPolicy.getId(),
+                    new UserCouponRepository.CouponUsageCount(couponPolicy.getId(), 0, 0, 0, 0)
+            );
 
             policyStatistics.add(new CouponPolicyStatisticsResult(
                     couponPolicy.getId(),
@@ -201,10 +202,10 @@ public class CouponService implements CouponUseCase {
                     courseSummary.courseTitle(),
                     courseSummary.countryId(),
                     courseSummary.countryName(),
-                    issuedCount,
-                    usedCount,
-                    expiredCount,
-                    availableCount
+                    Math.toIntExact(usageCount.issuedCount()),
+                    Math.toIntExact(usageCount.usedCount()),
+                    Math.toIntExact(usageCount.expiredCount()),
+                    Math.toIntExact(usageCount.availableCount())
             ));
         }
 
@@ -346,30 +347,4 @@ public class CouponService implements CouponUseCase {
         }
     }
 
-    private boolean isUsed(UserCoupon userCoupon) {
-        return "USED".equalsIgnoreCase(userCoupon.getStatus());
-    }
-
-    private boolean isExpired(
-            UserCoupon userCoupon,
-            LocalDateTime now
-    ) {
-        if (isUsed(userCoupon)) {
-            return false;
-        }
-
-        if ("EXPIRED".equalsIgnoreCase(userCoupon.getStatus())) {
-            return true;
-        }
-
-        return userCoupon.getExpiredAt() != null && userCoupon.getExpiredAt().isBefore(now);
-    }
-
-    private boolean isAvailable(
-            UserCoupon userCoupon,
-            LocalDateTime now
-    ) {
-        return "ISSUED".equalsIgnoreCase(userCoupon.getStatus())
-                && !isExpired(userCoupon, now);
-    }
 }

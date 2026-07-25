@@ -55,8 +55,13 @@ public class InterestStatsService {
         return new Snapshot(courses, enroll, complete, progress, countryName);
     }
 
+    private long boundedComplete(long enroll, long complete) {
+        return Math.min(complete, enroll);
+    }
+
     private double completionRate(long enroll, long complete) {
-        return enroll == 0 ? 0.0 : Math.round((double) complete / enroll * 10000.0) / 100.0;
+        long boundedComplete = boundedComplete(enroll, complete);
+        return enroll == 0 ? 0.0 : Math.round((double) boundedComplete / enroll * 10000.0) / 100.0;
     }
 
     // 수료율 기준 상태: 60% 이상 NORMAL(정상), 30% 이상 WARNING(주의), 30% 미만 RISK(위험)
@@ -74,7 +79,12 @@ public class InterestStatsService {
     public InterestSummaryResponse getSummary() {
         Snapshot s = load();
         long totalEnroll = s.enroll().values().stream().mapToLong(Long::longValue).sum();
-        long totalComplete = s.complete().values().stream().mapToLong(Long::longValue).sum();
+        long totalComplete = s.courses().stream()
+                .mapToLong(c -> boundedComplete(
+                        s.enroll().getOrDefault(c.getId(), 0L),
+                        s.complete().getOrDefault(c.getId(), 0L)
+                ))
+                .sum();
         double avg = completionRate(totalEnroll, totalComplete);
         long risky = s.courses().stream().filter(c -> {
             long e = s.enroll().getOrDefault(c.getId(), 0L);
@@ -128,7 +138,7 @@ public class InterestStatsService {
         int rank = 1;
         for (Course c : sorted) {
             long e = s.enroll().getOrDefault(c.getId(), 0L);
-            long comp = s.complete().getOrDefault(c.getId(), 0L);
+            long comp = boundedComplete(e, s.complete().getOrDefault(c.getId(), 0L));
             int progress = s.progress().getOrDefault(c.getId(), 0);
             String country = s.countryName().getOrDefault(c.getCountryId(), ETC);
             double rate = completionRate(e, comp);

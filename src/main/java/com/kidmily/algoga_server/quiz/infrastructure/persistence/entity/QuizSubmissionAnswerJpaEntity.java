@@ -29,23 +29,23 @@ public class QuizSubmissionAnswerJpaEntity {
     private Long quizId;
 
     @Lob
-    @Column(name = "question", nullable = false)
+    @Column(name = "question", nullable = false, columnDefinition = "TEXT")
     private String question;
 
     @Lob
-    @Column(name = "option1", nullable = false)
+    @Column(name = "option1", nullable = false, columnDefinition = "TEXT")
     private String option1;
 
     @Lob
-    @Column(name = "option2", nullable = false)
+    @Column(name = "option2", nullable = false, columnDefinition = "TEXT")
     private String option2;
 
     @Lob
-    @Column(name = "option3", nullable = false)
+    @Column(name = "option3", nullable = false, columnDefinition = "TEXT")
     private String option3;
 
     @Lob
-    @Column(name = "option4", nullable = false)
+    @Column(name = "option4", nullable = false, columnDefinition = "TEXT")
     private String option4;
 
     @Column(name = "selected_option", nullable = false)
@@ -58,7 +58,7 @@ public class QuizSubmissionAnswerJpaEntity {
     private boolean correct;
 
     @Lob
-    @Column(name = "explanation")
+    @Column(name = "explanation", columnDefinition = "TEXT")
     private String explanation;
 
     public QuizSubmissionAnswerJpaEntity(

@@ -17,13 +17,15 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.TreeSet;
 
-/*
- * 유입 경로별 전환
- * - 경로별 가입자 수(user.signupPath) + 순매출(성공결제 - 환불) + ARPU(순매출/가입자)
- * - 순매출은 결제 기간(from~to) 기준, 환불은 COMPLETED 전체(경로 보정용)
- */
 @Service
 @RequiredArgsConstructor
 public class InflowStatsService {
@@ -58,10 +60,10 @@ public class InflowStatsService {
     public byte[] getChannelsCsv(LocalDate from, LocalDate to) {
         List<InflowChannelResponse> rows = buildChannels(from, to);
         java.io.ByteArrayOutputStream baos = new java.io.ByteArrayOutputStream();
-        baos.write(new byte[]{(byte) 0xEF, (byte) 0xBB, (byte) 0xBF}, 0, 3); // Excel UTF-8 BOM
+        baos.write(new byte[]{(byte) 0xEF, (byte) 0xBB, (byte) 0xBF}, 0, 3);
         try (java.io.PrintWriter w = new java.io.PrintWriter(
                 new java.io.OutputStreamWriter(baos, java.nio.charset.StandardCharsets.UTF_8))) {
-            w.println("유입경로,가입자수,순매출,1인당매출(ARPU),예약수,예약전환율(%)");
+            w.println("유입경로,가입자수,순매출,1인당매출(ARPU),예약자수,예약전환율(%)");
             for (InflowChannelResponse r : rows) {
                 w.printf("%s,%d,%d,%d,%d,%.2f%n", r.channel(), r.signupCount(), r.netRevenue(),
                         r.arpu(), r.bookingCount(), r.bookingConversionRate());
@@ -74,77 +76,108 @@ public class InflowStatsService {
         LocalDateTime fromDt = from.atStartOfDay();
         LocalDateTime toDt = to.plusDays(1).atStartOfDay();
 
-        // 1) 경로별 가입자 수
         Map<String, Long> signupsByChannel = new HashMap<>();
         userRepository.countUsersBySignupPath(fromDt, toDt)
                 .forEach(s -> signupsByChannel.merge(normalize(s.getPath()), s.getCount(), Long::sum));
 
-        // 2) userId -> 경로
         Map<Long, String> channelByUser = new HashMap<>();
         userRepository.findActiveSignupPathInfos()
                 .forEach(i -> channelByUser.put(i.getUserId(), normalize(i.getSignupPath())));
 
-        // 3) 경로별 성공결제(기간)
+        Set<Long> periodSignupUserIds = new HashSet<>();
+        userRepository.findActiveSignupInfos().stream()
+                .filter(i -> i.getCreatedAt() != null)
+                .filter(i -> !i.getCreatedAt().isBefore(fromDt) && i.getCreatedAt().isBefore(toDt))
+                .forEach(i -> periodSignupUserIds.add(i.getUserId()));
+
         Map<String, Long> revenueByChannel = new HashMap<>();
-        for (Payment p : paymentRepository.findByCreatedAtBetween(fromDt, toDt)) {
-            if (p.getStatus() != PaymentStatus.SUCCESS || p.getUserId() == null) continue;
-            revenueByChannel.merge(channelByUser.getOrDefault(p.getUserId(), ETC), (long) p.getAmount(), Long::sum);
+        for (Payment payment : paymentRepository.findByCreatedAtBetween(fromDt, toDt)) {
+            if (payment.getStatus() != PaymentStatus.SUCCESS || payment.getUserId() == null) {
+                continue;
+            }
+            revenueByChannel.merge(
+                    channelByUser.getOrDefault(payment.getUserId(), ETC),
+                    (long) payment.getAmount(),
+                    Long::sum
+            );
         }
 
-        // 4) 경로별 환불(COMPLETED)
         Map<String, Long> refundByChannel = new HashMap<>();
-        for (RefundRequest r : refundRepository.findAllByStatus(RefundStatus.COMPLETED)) {
-            if (r.getUserId() == null) continue;
-            refundByChannel.merge(channelByUser.getOrDefault(r.getUserId(), ETC), (long) r.getAmount(), Long::sum);
+        for (RefundRequest refund : refundRepository.findAllByStatus(RefundStatus.COMPLETED)) {
+            if (refund.getUserId() == null || refund.getCreatedAt() == null) {
+                continue;
+            }
+            if (refund.getCreatedAt().isBefore(fromDt) || !refund.getCreatedAt().isBefore(toDt)) {
+                continue;
+            }
+            refundByChannel.merge(
+                    channelByUser.getOrDefault(refund.getUserId(), ETC),
+                    (long) refund.getAmount(),
+                    Long::sum
+            );
         }
 
-        // 5) 경로별 예약 수(기간 내 생성) — 예약 전환율 계산용
-        Map<String, Long> bookingByChannel = new HashMap<>();
-        for (Booking b : bookingRepository.findByCreatedAtBetween(fromDt, toDt)) {
-            if (b.getUserId() == null) continue;
-            bookingByChannel.merge(channelByUser.getOrDefault(b.getUserId(), ETC), 1L, Long::sum);
+        Map<String, Set<Long>> bookingUsersByChannel = new HashMap<>();
+        for (Booking booking : bookingRepository.findByCreatedAtBetween(fromDt, toDt)) {
+            if (booking.getUserId() == null || !periodSignupUserIds.contains(booking.getUserId())) {
+                continue;
+            }
+            bookingUsersByChannel
+                    .computeIfAbsent(channelByUser.getOrDefault(booking.getUserId(), ETC), ignored -> new HashSet<>())
+                    .add(booking.getUserId());
         }
 
         Set<String> channels = new TreeSet<>();
         channels.addAll(signupsByChannel.keySet());
         channels.addAll(revenueByChannel.keySet());
-        channels.addAll(bookingByChannel.keySet());
+        channels.addAll(bookingUsersByChannel.keySet());
 
         List<InflowChannelResponse> rows = new ArrayList<>();
-        for (String ch : channels) {
-            long signups = signupsByChannel.getOrDefault(ch, 0L);
-            long net = revenueByChannel.getOrDefault(ch, 0L) - refundByChannel.getOrDefault(ch, 0L);
-            long arpu = signups == 0 ? 0 : net / signups;
-            long bookingCount = bookingByChannel.getOrDefault(ch, 0L);
+        for (String channel : channels) {
+            long signups = signupsByChannel.getOrDefault(channel, 0L);
+            long netRevenue = revenueByChannel.getOrDefault(channel, 0L) - refundByChannel.getOrDefault(channel, 0L);
+            long arpu = signups == 0 ? 0 : netRevenue / signups;
+            long bookingCount = bookingUsersByChannel.getOrDefault(channel, Set.of()).size();
             double conversionRate = signups == 0 ? 0.0
                     : Math.round((double) bookingCount / signups * 10000.0) / 100.0;
-            rows.add(new InflowChannelResponse(ch, signups, net, arpu, bookingCount, conversionRate));
+
+            rows.add(new InflowChannelResponse(channel, signups, netRevenue, arpu, bookingCount, conversionRate));
         }
+
         rows.sort(Comparator.comparingLong(InflowChannelResponse::netRevenue).reversed());
         return rows;
     }
 
-    /**
-     * 유입경로 표기를 <b>한글 라벨 하나</b>로 통일한다.
-     * <p>
-     * users.signup_path 에 코드("friend")와 한글("지인 추천")이 섞여 저장돼 있어,
-     * 정규화 없이 그룹핑하면 같은 경로가 두 행으로 쪼개져 내려간다(FE 라벨 중복·key 중복 원인).
-     * 대소문자/공백을 무시하고 별칭을 대표 라벨로 접는다.
-     * 매핑에 없는 값은 (새로 생긴 경로일 수 있으므로) 버리지 않고 공백만 정리해 그대로 노출한다.
-     */
     private static final Map<String, String> CHANNEL_ALIASES = Map.ofEntries(
             Map.entry("friend", "지인 추천"),
-            Map.entry("지인추천", "지인 추천"),
             Map.entry("referral", "지인 추천"),
+            Map.entry("referrercode", "지인 추천"),
+            Map.entry("추천인코드", "지인 추천"),
+            Map.entry("친구초대", "지인 추천"),
+            Map.entry("지인추천", "지인 추천"),
             Map.entry("search", "검색 엔진"),
-            Map.entry("검색엔진", "검색 엔진"),
             Map.entry("searchengine", "검색 엔진"),
+            Map.entry("naver", "검색 엔진"),
+            Map.entry("google", "검색 엔진"),
+            Map.entry("blog", "검색 엔진"),
+            Map.entry("네이버검색", "검색 엔진"),
+            Map.entry("검색엔진", "검색 엔진"),
+            Map.entry("블로그후기", "검색 엔진"),
             Map.entry("social", "소셜 미디어"),
-            Map.entry("소셜미디어", "소셜 미디어"),
             Map.entry("socialmedia", "소셜 미디어"),
+            Map.entry("sns", "소셜 미디어"),
+            Map.entry("instagram", "소셜 미디어"),
+            Map.entry("youtube", "소셜 미디어"),
+            Map.entry("인스타그램", "소셜 미디어"),
+            Map.entry("유튜브", "소셜 미디어"),
+            Map.entry("소셜미디어", "소셜 미디어"),
             Map.entry("ad", "광고"),
             Map.entry("ads", "광고"),
+            Map.entry("advertisement", "광고"),
+            Map.entry("kakaoad", "광고"),
+            Map.entry("campaign", "광고"),
             Map.entry("광고", "광고"),
+            Map.entry("카카오광고", "광고"),
             Map.entry("etc", ETC),
             Map.entry("other", ETC),
             Map.entry("기타", ETC)

@@ -9,7 +9,13 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.stereotype.Component;
 
 import java.lang.reflect.Method;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @Component
 @RequiredArgsConstructor
@@ -92,6 +98,62 @@ public class LmsCourseAdapter implements LmsCoursePort {
                             countryName
                     );
                 });
+    }
+
+    @Override
+    public Map<Long, CourseSummary> findCourseSummaries(List<Long> courseIds) {
+        if (courseIds == null || courseIds.isEmpty()) {
+            return Map.of();
+        }
+
+        List<Long> distinctCourseIds = courseIds.stream()
+                .filter(id -> id != null)
+                .distinct()
+                .toList();
+
+        if (distinctCourseIds.isEmpty()) {
+            return Map.of();
+        }
+
+        List<Object> courses = invoke(
+                bean(COURSE_REPOSITORY),
+                "findBasicByIdIn",
+                new Class<?>[]{List.class},
+                distinctCourseIds
+        );
+
+        Set<Long> countryIds = courses.stream()
+                .map(course -> (Long) invokeNoArg(course, "getCountryId"))
+                .collect(Collectors.toCollection(LinkedHashSet::new));
+
+        Map<Long, String> countryNamesById = countryIds.isEmpty()
+                ? Map.of()
+                : mapRepository.findActiveCountriesByIds(List.copyOf(countryIds))
+                .stream()
+                .collect(Collectors.toMap(
+                        country -> country.getId(),
+                        country -> country.getName(),
+                        (left, right) -> left,
+                        LinkedHashMap::new
+                ));
+
+        Map<Long, CourseSummary> result = new LinkedHashMap<>();
+        for (Object course : courses) {
+            Long courseId = invokeNoArg(course, "getId");
+            Long countryId = invokeNoArg(course, "getCountryId");
+
+            result.put(
+                    courseId,
+                    new CourseSummary(
+                            courseId,
+                            invokeNoArg(course, "getTitle"),
+                            countryId,
+                            countryNamesById.get(countryId)
+                    )
+            );
+        }
+
+        return result;
     }
 
     @Override
