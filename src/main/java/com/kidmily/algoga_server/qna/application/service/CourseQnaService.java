@@ -24,7 +24,7 @@ import org.springframework.context.ApplicationEventPublisher;
 
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.function.Function;
+import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
@@ -58,8 +58,13 @@ public class CourseQnaService implements CourseQnaUseCase {
     public List<CourseQnaResult> getQnas(Long courseId) {
         findCourseIncludingDeleted(courseId);
 
-        return courseQnaRepository.findByCourseId(courseId).stream()
-                .map(this::toCourseQnaResult)
+        List<CourseQna> qnas = courseQnaRepository.findByCourseId(courseId);
+        Map<Long, UserProfilePort.UserProfile> profilesByUserId = userProfilePort.findProfiles(
+                qnas.stream().map(CourseQna::getUserId).distinct().toList()
+        );
+
+        return qnas.stream()
+                .map(qna -> CourseQnaResult.from(qna, profilesByUserId.get(qna.getUserId())))
                 .toList();
     }
 
@@ -71,14 +76,23 @@ public class CourseQnaService implements CourseQnaUseCase {
         CourseQna qna = findQna(courseId, qnaId);
         List<CourseQnaComment> comments = courseQnaCommentRepository.findByQnaId(qnaId);
 
+        UserProfilePort.UserProfile qnaAuthorProfile = findProfile(qna.getUserId());
+
+        List<Long> commentUserIds = comments.stream()
+                .filter(comment -> "USER".equals(comment.getWriterType()))
+                .map(CourseQnaComment::getUserId)
+                .distinct()
+                .toList();
+        Map<Long, UserProfilePort.UserProfile> commentProfilesByUserId = userProfilePort.findProfiles(commentUserIds);
+
         return new CourseQnaDetailResult(
                 qna.getId(),
                 qna.getCourseId(),
                 qna.getUserId(),
-                profileValue(qna.getUserId(), UserProfilePort.UserProfile::username),
-                profileValue(qna.getUserId(), UserProfilePort.UserProfile::name),
-                profileValue(qna.getUserId(), UserProfilePort.UserProfile::email),
-                profileValue(qna.getUserId(), UserProfilePort.UserProfile::nickname),
+                qnaAuthorProfile == null ? null : qnaAuthorProfile.username(),
+                qnaAuthorProfile == null ? null : qnaAuthorProfile.name(),
+                qnaAuthorProfile == null ? null : qnaAuthorProfile.email(),
+                qnaAuthorProfile == null ? null : qnaAuthorProfile.nickname(),
                 qna.getManagerId(),
                 qna.getTitle(),
                 qna.getQuestion(),
@@ -87,7 +101,7 @@ public class CourseQnaService implements CourseQnaUseCase {
                 qna.getCreatedAt(),
                 qna.getAnsweredAt(),
                 comments.stream()
-                        .map(this::toCourseQnaCommentResult)
+                        .map(comment -> toCourseQnaCommentResult(comment, commentProfilesByUserId))
                         .toList()
         );
     }
@@ -171,17 +185,20 @@ public class CourseQnaService implements CourseQnaUseCase {
         return CourseQnaCommentResult.from(comment, profile);
     }
 
+    private CourseQnaCommentResult toCourseQnaCommentResult(
+            CourseQnaComment comment,
+            Map<Long, UserProfilePort.UserProfile> profilesByUserId
+    ) {
+        UserProfilePort.UserProfile profile = "USER".equals(comment.getWriterType())
+                ? profilesByUserId.get(comment.getUserId())
+                : null;
+
+        return CourseQnaCommentResult.from(comment, profile);
+    }
+
     private UserProfilePort.UserProfile findProfile(Long userId) {
         return userProfilePort.findProfile(userId)
                 .orElse(null);
-    }
-
-    private String profileValue(
-            Long userId,
-            Function<UserProfilePort.UserProfile, String> mapper
-    ) {
-        UserProfilePort.UserProfile profile = findProfile(userId);
-        return profile == null ? null : mapper.apply(profile);
     }
 
     private void validateAccessibleEnrollment(Long userId, Long courseId) {

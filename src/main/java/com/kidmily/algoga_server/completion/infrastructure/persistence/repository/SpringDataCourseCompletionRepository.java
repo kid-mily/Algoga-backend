@@ -14,6 +14,8 @@ public interface SpringDataCourseCompletionRepository extends JpaRepository<Cour
 
     List<CourseCompletionJpaEntity> findByUserIdAndCourseIdIn(Long userId, List<Long> courseIds);
 
+    List<CourseCompletionJpaEntity> findByCourseId(Long courseId);
+
     boolean existsByUserIdAndCourseId(Long userId, Long courseId);
 
     @Query("""

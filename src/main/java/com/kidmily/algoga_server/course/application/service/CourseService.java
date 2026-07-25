@@ -231,13 +231,17 @@ public class CourseService implements CourseUseCase {
     public List<CourseStudentResult> getCourseStudents(Long courseId) {
         Course course = findCourse(courseId);
         List<Chapter> chapters = chapterRepository.findByCourseId(courseId);
-        Set<Long> userIds = enrollmentRepository.findByCourseId(courseId).stream()
-                .map(enrollment -> enrollment.getUserId())
-                .collect(java.util.stream.Collectors.toCollection(LinkedHashSet::new));
 
-        return userIds.stream()
-                .map(userId -> courseStudentResultAssembler.assemble(userId, course, chapters))
-                .flatMap(Optional::stream)
+        Map<Long, Enrollment> enrollmentByUserId = new LinkedHashMap<>();
+        for (Enrollment enrollment : enrollmentRepository.findByCourseId(courseId)) {
+            enrollmentByUserId.putIfAbsent(enrollment.getUserId(), enrollment);
+        }
+
+        return courseStudentResultAssembler.assembleAll(
+                        new ArrayList<>(enrollmentByUserId.values()),
+                        course,
+                        chapters
+                ).stream()
                 .sorted(Comparator.comparing(CourseStudentResult::userId))
                 .toList();
     }

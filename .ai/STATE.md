@@ -65,3 +65,18 @@
 - Avoid broad formatting, import-order, or whitespace-only changes.
 - Do not "fix" the deferred `CourseCompletionRegistrar` issue by simply removing `REQUIRES_NEW` (that reintroduces the certificate-code-collision crash it was added to fix) — it needs an actual design decision.
 - This environment has no local MySQL/Redis; only unit tests with mocks can be run here. Anything concurrency/DB-constraint-timing-sensitive (items 2-4 above) would benefit from a real-infra check before merging.
+
+## Current State 2026-07-26
+
+- Admin LMS course/coupon optimization and k6/Grafana measurement work has been summarized in .ai/WORKLOG.md and .ai/HANDOFF.md.
+- Before continuing, check actual branch and dirty files with git status in C:\Algoga_V3_backend because the working tree changed several times during PR preparation.
+- Last observed dirty files were friend-domain files only, not LMS optimization files.
+
+## Current State 2026-07-26 (Content Manager N+1 Fixes)
+
+- On branch `fix/admin-completion-rate-stats` (pre-existing, unrelated prior work on that branch). Not committed yet.
+- Scope constraint from user: only `course, country, enrollment, learningprogress, quiz, completion, certificate, review, qna, diagnosis, learning` packages may be modified for this task.
+- Fixed 3 N+1 query problems in admin Content Manager screens (see `.ai/WORKLOG.md` 2026-07-26 "Content Manager N+1 Query Optimization" entry for full file-level detail): admin course students list (6 queries/student -> 5 bulk queries/course), course review list/detail (1 profile query/review -> 1 bulk query), course Q&A list/detail (1 profile query/row + 1/comment + 4x redundant -> bulk).
+- Stats Manager 3 features (강의별 관심도 / 강의->예약 전환 / 쿠폰->예약 전환) were investigated but **intentionally not modified** — their real bottlenecks live in `stats`, `booking`, `benefit`, `accommodation` packages, all outside the allowed scope. User was informed and chose "content manager only for now." Full defect detail in WORKLOG.
+- `./gradlew compileJava` passes. `./gradlew test`: 221 tests, 12 failed, all confirmed pre-existing/environment-only (verified via `git stash -u` re-run before these changes) — none in the touched packages' own test classes.
+- No k6/Grafana before/after measurement was done for this slice (time-boxed by user). Quick-measurement alternatives (no shared-config-file edits needed) were given to the user in-chat and recorded in WORKLOG.

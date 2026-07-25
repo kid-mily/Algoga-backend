@@ -23,6 +23,13 @@ public interface SpringDataQuizSubmissionRepository extends JpaRepository<QuizSu
             @Param("courseIds") List<Long> courseIds
     );
 
+    @Query("""
+            SELECT DISTINCT q.userId
+            FROM QuizSubmissionJpaEntity q
+            WHERE q.courseId = :courseId
+            """)
+    List<Long> findSubmittedUserIdsByCourseId(@Param("courseId") Long courseId);
+
     boolean existsByUserIdAndCourseId(Long userId, Long courseId);
 
     @Query("SELECT q.id FROM QuizSubmissionJpaEntity q WHERE q.userId = :userId")

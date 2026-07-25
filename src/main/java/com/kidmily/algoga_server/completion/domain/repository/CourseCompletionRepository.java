@@ -14,6 +14,8 @@ public interface CourseCompletionRepository {
 
     List<CourseCompletion> findByUserIdAndCourseIdIn(Long userId, List<Long> courseIds);
 
+    List<CourseCompletion> findByCourseId(Long courseId);
+
     boolean existsByUserIdAndCourseId(Long userId, Long courseId);
 
     Map<Long, Long> countByCourseIds(List<Long> courseIds);

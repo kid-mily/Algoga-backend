@@ -19,6 +19,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Map;
 
 @Slf4j
 @Service
@@ -79,8 +80,10 @@ public class CourseReviewService implements CourseReviewUseCase {
         log.info("[Course Review Query] 리뷰 목록 조회 완료. courseId={}, count={}",
                 courseId, reviews.size());
 
+        Map<Long, UserProfilePort.UserProfile> profilesByUserId = findProfiles(reviews);
+
         return reviews.stream()
-                .map(this::toCourseReviewResult)
+                .map(review -> CourseReviewResult.from(review, profilesByUserId.get(review.getUserId())))
                 .toList();
     }
 
@@ -104,8 +107,11 @@ public class CourseReviewService implements CourseReviewUseCase {
     public List<AdminCourseReviewResult> getAdminReviews(Long courseId) {
         validateCourse(courseId);
 
-        return courseReviewRepository.findAllByCourseId(courseId).stream()
-                .map(this::toAdminCourseReviewResult)
+        List<CourseReview> reviews = courseReviewRepository.findAllByCourseId(courseId);
+        Map<Long, UserProfilePort.UserProfile> profilesByUserId = findProfiles(reviews);
+
+        return reviews.stream()
+                .map(review -> AdminCourseReviewResult.from(review, profilesByUserId.get(review.getUserId())))
                 .toList();
     }
 
@@ -174,6 +180,16 @@ public class CourseReviewService implements CourseReviewUseCase {
         return userProfilePort.findProfile(userId)
                 .orElse(null);
     }
+
+    private Map<Long, UserProfilePort.UserProfile> findProfiles(List<CourseReview> reviews) {
+        List<Long> userIds = reviews.stream()
+                .map(CourseReview::getUserId)
+                .distinct()
+                .toList();
+
+        return userProfilePort.findProfiles(userIds);
+    }
+
     private CourseReview findReview(Long courseId, Long reviewId) {
         return courseReviewRepository.findByIdAndCourseId(reviewId, courseId)
                 .orElseThrow(() -> new ReviewException(ReviewErrorCode.REVIEW_NOT_FOUND));
