@@ -1,6 +1,7 @@
 package com.kidmily.algoga_server.global.websocket;
 
 import com.kidmily.algoga_server.friend.application.usecase.FriendQueryUseCase;
+import io.micrometer.core.instrument.Counter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.event.EventListener;
@@ -26,6 +27,8 @@ public class PresenceEventListener {
     private final RedisTemplate<String, String> redisTemplate;
     private final FriendQueryUseCase friendQueryUseCase;
     private final SimpMessagingTemplate messagingTemplate;
+    private final Counter chatWsConnectTotal;
+    private final Counter chatWsDisconnectTotal;
 
     // 통계 대시보드용 실시간 접속자 수 Gauge가 읽는 값 (global/config/MetricsConfig.java에서 Gauge로 등록)
     private final AtomicInteger onlineUserCountValue;
@@ -39,6 +42,7 @@ public class PresenceEventListener {
         redisTemplate.opsForValue().set(ONLINE_KEY_PREFIX + userId, "true", 24, TimeUnit.HOURS);
         onlineUserCountValue.incrementAndGet();
         log.info("[Presence] 온라인 처리: userId={}", userId);
+        chatWsConnectTotal.increment();
 
         broadcastToFriends(userId, true);
     }
@@ -51,6 +55,7 @@ public class PresenceEventListener {
         redisTemplate.delete(ONLINE_KEY_PREFIX + userId);
         onlineUserCountValue.updateAndGet(v -> Math.max(0, v - 1));
         log.info("[Presence] 오프라인 처리: userId={}", userId);
+        chatWsDisconnectTotal.increment();
 
         broadcastToFriends(userId, false);
     }
