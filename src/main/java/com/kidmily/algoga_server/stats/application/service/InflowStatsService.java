@@ -24,13 +24,12 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.TreeSet;
 
 @Service
 @RequiredArgsConstructor
 public class InflowStatsService {
 
-    private static final String ETC = "기타";
+    private static final String ETC = "\uAE30\uD0C0";
 
     private final UserRepository userRepository;
     private final PaymentRepository paymentRepository;
@@ -61,45 +60,44 @@ public class InflowStatsService {
         List<InflowChannelResponse> rows = buildChannels(from, to);
         java.io.ByteArrayOutputStream baos = new java.io.ByteArrayOutputStream();
         baos.write(new byte[]{(byte) 0xEF, (byte) 0xBB, (byte) 0xBF}, 0, 3);
-        try (java.io.PrintWriter w = new java.io.PrintWriter(
+        try (java.io.PrintWriter writer = new java.io.PrintWriter(
                 new java.io.OutputStreamWriter(baos, java.nio.charset.StandardCharsets.UTF_8))) {
-            w.println("유입경로,가입자수,순매출,1인당매출(ARPU),예약자수,예약전환율(%)");
-            for (InflowChannelResponse r : rows) {
-                w.printf("%s,%d,%d,%d,%d,%.2f%n", r.channel(), r.signupCount(), r.netRevenue(),
-                        r.arpu(), r.bookingCount(), r.bookingConversionRate());
+            writer.println("\uC720\uC785\uACBD\uB85C,\uAC00\uC785\uC790\uC218,\uC21C\uB9E4\uCD9C,1\uC778\uB2F9\uB9E4\uCD9C(ARPU),\uC608\uC57D\uC790\uC218,\uC608\uC57D\uC804\uD658\uC728(%)");
+            for (InflowChannelResponse row : rows) {
+                writer.printf("%s,%d,%d,%d,%d,%.2f%n", row.channel(), row.signupCount(), row.netRevenue(),
+                        row.arpu(), row.bookingCount(), row.bookingConversionRate());
             }
         }
         return baos.toByteArray();
     }
 
     private List<InflowChannelResponse> buildChannels(LocalDate from, LocalDate to) {
-        LocalDateTime fromDt = from.atStartOfDay();
-        LocalDateTime toDt = to.plusDays(1).atStartOfDay();
+        LocalDateTime start = from.atStartOfDay();
+        LocalDateTime end = to.plusDays(1).atStartOfDay();
 
         Map<String, Long> signupsByChannel = new HashMap<>();
-        userRepository.countUsersBySignupPath(fromDt, toDt)
-                .forEach(s -> signupsByChannel.merge(normalize(s.getPath()), s.getCount(), Long::sum));
+        userRepository.countUsersBySignupPath(start, end)
+                .forEach(summary -> signupsByChannel.merge(normalize(summary.getPath()), summary.getCount(), Long::sum));
 
         Map<Long, String> channelByUser = new HashMap<>();
         userRepository.findActiveSignupPathInfos()
-                .forEach(i -> channelByUser.put(i.getUserId(), normalize(i.getSignupPath())));
+                .forEach(info -> channelByUser.put(info.getUserId(), normalize(info.getSignupPath())));
 
         Set<Long> periodSignupUserIds = new HashSet<>();
         userRepository.findActiveSignupInfos().stream()
-                .filter(i -> i.getCreatedAt() != null)
-                .filter(i -> !i.getCreatedAt().isBefore(fromDt) && i.getCreatedAt().isBefore(toDt))
-                .forEach(i -> periodSignupUserIds.add(i.getUserId()));
+                .filter(info -> info.getCreatedAt() != null)
+                .filter(info -> !info.getCreatedAt().isBefore(start) && info.getCreatedAt().isBefore(end))
+                .forEach(info -> periodSignupUserIds.add(info.getUserId()));
 
         Map<String, Long> revenueByChannel = new HashMap<>();
-        for (Payment payment : paymentRepository.findByCreatedAtBetween(fromDt, toDt)) {
+        for (Payment payment : paymentRepository.findByCreatedAtBetween(start, end)) {
             if (payment.getStatus() != PaymentStatus.SUCCESS || payment.getUserId() == null) {
                 continue;
             }
-            revenueByChannel.merge(
-                    channelByUser.getOrDefault(payment.getUserId(), ETC),
-                    (long) payment.getAmount(),
-                    Long::sum
-            );
+            if (!periodSignupUserIds.contains(payment.getUserId())) {
+                continue;
+            }
+            revenueByChannel.merge(channelByUser.getOrDefault(payment.getUserId(), ETC), (long) payment.getAmount(), Long::sum);
         }
 
         Map<String, Long> refundByChannel = new HashMap<>();
@@ -107,18 +105,17 @@ public class InflowStatsService {
             if (refund.getUserId() == null || refund.getCreatedAt() == null) {
                 continue;
             }
-            if (refund.getCreatedAt().isBefore(fromDt) || !refund.getCreatedAt().isBefore(toDt)) {
+            if (!periodSignupUserIds.contains(refund.getUserId())) {
                 continue;
             }
-            refundByChannel.merge(
-                    channelByUser.getOrDefault(refund.getUserId(), ETC),
-                    (long) refund.getAmount(),
-                    Long::sum
-            );
+            if (refund.getCreatedAt().isBefore(start) || !refund.getCreatedAt().isBefore(end)) {
+                continue;
+            }
+            refundByChannel.merge(channelByUser.getOrDefault(refund.getUserId(), ETC), (long) refund.getAmount(), Long::sum);
         }
 
         Map<String, Set<Long>> bookingUsersByChannel = new HashMap<>();
-        for (Booking booking : bookingRepository.findByCreatedAtBetween(fromDt, toDt)) {
+        for (Booking booking : bookingRepository.findByCreatedAtBetween(start, end)) {
             if (booking.getUserId() == null || !periodSignupUserIds.contains(booking.getUserId())) {
                 continue;
             }
@@ -127,21 +124,16 @@ public class InflowStatsService {
                     .add(booking.getUserId());
         }
 
-        Set<String> channels = new TreeSet<>();
-        channels.addAll(signupsByChannel.keySet());
-        channels.addAll(revenueByChannel.keySet());
-        channels.addAll(bookingUsersByChannel.keySet());
-
         List<InflowChannelResponse> rows = new ArrayList<>();
-        for (String channel : channels) {
+        for (String channel : signupsByChannel.keySet()) {
             long signups = signupsByChannel.getOrDefault(channel, 0L);
             long netRevenue = revenueByChannel.getOrDefault(channel, 0L) - refundByChannel.getOrDefault(channel, 0L);
             long arpu = signups == 0 ? 0 : netRevenue / signups;
-            long bookingCount = bookingUsersByChannel.getOrDefault(channel, Set.of()).size();
+            long bookingUsers = bookingUsersByChannel.getOrDefault(channel, Set.of()).size();
             double conversionRate = signups == 0 ? 0.0
-                    : Math.round((double) bookingCount / signups * 10000.0) / 100.0;
+                    : Math.round((double) bookingUsers / signups * 10000.0) / 100.0;
 
-            rows.add(new InflowChannelResponse(channel, signups, netRevenue, arpu, bookingCount, conversionRate));
+            rows.add(new InflowChannelResponse(channel, signups, netRevenue, arpu, bookingUsers, conversionRate));
         }
 
         rows.sort(Comparator.comparingLong(InflowChannelResponse::netRevenue).reversed());
@@ -149,38 +141,38 @@ public class InflowStatsService {
     }
 
     private static final Map<String, String> CHANNEL_ALIASES = Map.ofEntries(
-            Map.entry("friend", "지인 추천"),
-            Map.entry("referral", "지인 추천"),
-            Map.entry("referrercode", "지인 추천"),
-            Map.entry("추천인코드", "지인 추천"),
-            Map.entry("친구초대", "지인 추천"),
-            Map.entry("지인추천", "지인 추천"),
-            Map.entry("search", "검색 엔진"),
-            Map.entry("searchengine", "검색 엔진"),
-            Map.entry("naver", "검색 엔진"),
-            Map.entry("google", "검색 엔진"),
-            Map.entry("blog", "검색 엔진"),
-            Map.entry("네이버검색", "검색 엔진"),
-            Map.entry("검색엔진", "검색 엔진"),
-            Map.entry("블로그후기", "검색 엔진"),
-            Map.entry("social", "소셜 미디어"),
-            Map.entry("socialmedia", "소셜 미디어"),
-            Map.entry("sns", "소셜 미디어"),
-            Map.entry("instagram", "소셜 미디어"),
-            Map.entry("youtube", "소셜 미디어"),
-            Map.entry("인스타그램", "소셜 미디어"),
-            Map.entry("유튜브", "소셜 미디어"),
-            Map.entry("소셜미디어", "소셜 미디어"),
-            Map.entry("ad", "광고"),
-            Map.entry("ads", "광고"),
-            Map.entry("advertisement", "광고"),
-            Map.entry("kakaoad", "광고"),
-            Map.entry("campaign", "광고"),
-            Map.entry("광고", "광고"),
-            Map.entry("카카오광고", "광고"),
+            Map.entry("friend", "\uC9C0\uC778 \uCD94\uCC9C"),
+            Map.entry("referral", "\uC9C0\uC778 \uCD94\uCC9C"),
+            Map.entry("referrercode", "\uC9C0\uC778 \uCD94\uCC9C"),
+            Map.entry("\uCD94\uCC9C\uC778\uCF54\uB4DC", "\uC9C0\uC778 \uCD94\uCC9C"),
+            Map.entry("\uCE5C\uAD6C\uCD08\uB300", "\uC9C0\uC778 \uCD94\uCC9C"),
+            Map.entry("\uC9C0\uC778\uCD94\uCC9C", "\uC9C0\uC778 \uCD94\uCC9C"),
+            Map.entry("search", "\uAC80\uC0C9 \uC5D4\uC9C4"),
+            Map.entry("searchengine", "\uAC80\uC0C9 \uC5D4\uC9C4"),
+            Map.entry("naver", "\uAC80\uC0C9 \uC5D4\uC9C4"),
+            Map.entry("google", "\uAC80\uC0C9 \uC5D4\uC9C4"),
+            Map.entry("blog", "\uAC80\uC0C9 \uC5D4\uC9C4"),
+            Map.entry("\uB124\uC774\uBC84\uAC80\uC0C9", "\uAC80\uC0C9 \uC5D4\uC9C4"),
+            Map.entry("\uAC80\uC0C9\uC5D4\uC9C4", "\uAC80\uC0C9 \uC5D4\uC9C4"),
+            Map.entry("\uBE14\uB85C\uADF8\uD6C4\uAE30", "\uAC80\uC0C9 \uC5D4\uC9C4"),
+            Map.entry("social", "\uC18C\uC15C \uBBF8\uB514\uC5B4"),
+            Map.entry("socialmedia", "\uC18C\uC15C \uBBF8\uB514\uC5B4"),
+            Map.entry("sns", "\uC18C\uC15C \uBBF8\uB514\uC5B4"),
+            Map.entry("instagram", "\uC18C\uC15C \uBBF8\uB514\uC5B4"),
+            Map.entry("youtube", "\uC18C\uC15C \uBBF8\uB514\uC5B4"),
+            Map.entry("\uC778\uC2A4\uD0C0\uADF8\uB7A8", "\uC18C\uC15C \uBBF8\uB514\uC5B4"),
+            Map.entry("\uC720\uD29C\uBE0C", "\uC18C\uC15C \uBBF8\uB514\uC5B4"),
+            Map.entry("\uC18C\uC15C\uBBF8\uB514\uC5B4", "\uC18C\uC15C \uBBF8\uB514\uC5B4"),
+            Map.entry("ad", "\uAD11\uACE0"),
+            Map.entry("ads", "\uAD11\uACE0"),
+            Map.entry("advertisement", "\uAD11\uACE0"),
+            Map.entry("kakaoad", "\uAD11\uACE0"),
+            Map.entry("campaign", "\uAD11\uACE0"),
+            Map.entry("\uAD11\uACE0", "\uAD11\uACE0"),
+            Map.entry("\uCE74\uCE74\uC624\uAD11\uACE0", "\uAD11\uACE0"),
             Map.entry("etc", ETC),
             Map.entry("other", ETC),
-            Map.entry("기타", ETC)
+            Map.entry("\uAE30\uD0C0", ETC)
     );
 
     private String normalize(String path) {
