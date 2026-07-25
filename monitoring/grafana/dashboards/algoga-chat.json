@@ -184,6 +184,158 @@
         }
       ],
       "options": { "showTime": true, "showLabels": false, "sortOrder": "Descending" }
+    },
+    {
+      "id": 104,
+      "type": "row",
+      "title": "실시간 연결 (WebSocket / STOMP)",
+      "gridPos": { "x": 0, "y": 38, "w": 24, "h": 1 },
+      "collapsed": false
+    },
+    {
+      "id": 9,
+      "title": "현재 동시 접속 수",
+      "description": "algoga_friend_online_users — 인증된 WebSocket 세션 수 (탭 여러 개면 중복 카운트). 채팅 실시간의 심박수.",
+      "type": "stat",
+      "gridPos": { "x": 0, "y": 39, "w": 8, "h": 8 },
+      "targets": [
+        {
+          "datasource": { "type": "prometheus", "uid": "prometheus_ds" },
+          "expr": "sum(algoga_friend_online_users)",
+          "legendFormat": "동시 접속"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "color": { "mode": "thresholds" },
+          "thresholds": {
+            "steps": [
+              { "color": "green", "value": null }
+            ]
+          }
+        }
+      },
+      "options": {
+        "reduceOptions": { "calcs": ["lastNotNull"] },
+        "colorMode": "value",
+        "graphMode": "area",
+        "textMode": "value"
+      }
+    },
+    {
+      "id": 10,
+      "title": "동시 접속 수 추이",
+      "description": "급감 = 서버 재시작/네트워크 장애 신호. Heap·GC 패널과 함께 보면 연결 급증→메모리 상승을 상관 분석할 수 있습니다.",
+      "type": "timeseries",
+      "gridPos": { "x": 8, "y": 39, "w": 8, "h": 8 },
+      "targets": [
+        {
+          "datasource": { "type": "prometheus", "uid": "prometheus_ds" },
+          "expr": "sum(algoga_friend_online_users)",
+          "legendFormat": "동시 접속"
+        }
+      ],
+      "fieldConfig": { "defaults": { "unit": "short", "min": 0 } }
+    },
+    {
+      "id": 11,
+      "title": "연결 / 해제 rate (초당)",
+      "description": "해제 rate 스파이크 = 배포/서버 튕김/네트워크 장애로 대량 disconnect가 발생한 신호. 정상 이탈과 구분됩니다.",
+      "type": "timeseries",
+      "gridPos": { "x": 16, "y": 39, "w": 8, "h": 8 },
+      "targets": [
+        {
+          "datasource": { "type": "prometheus", "uid": "prometheus_ds" },
+          "expr": "sum(rate(algoga_chat_ws_connection_total{event=\"connect\"}[1m]))",
+          "legendFormat": "연결/s"
+        },
+        {
+          "datasource": { "type": "prometheus", "uid": "prometheus_ds" },
+          "expr": "sum(rate(algoga_chat_ws_connection_total{event=\"disconnect\"}[1m]))",
+          "legendFormat": "해제/s"
+        }
+      ],
+      "fieldConfig": { "defaults": { "unit": "ops", "min": 0 } }
+    },
+    {
+      "id": 105,
+      "type": "row",
+      "title": "브로커 채널 (SimpleBroker 백프레셔)",
+      "gridPos": { "x": 0, "y": 47, "w": 24, "h": 1 },
+      "collapsed": false
+    },
+    {
+      "id": 12,
+      "title": "채널 큐 적체 (queued tasks)",
+      "description": "핵심 지표. 인메모리 SimpleBroker가 처리 속도를 못 따라가면 이 큐가 쌓입니다. 정상은 0 근처, 지속적으로 >0 이면 메시지 처리 지연/적체 신호.",
+      "type": "timeseries",
+      "gridPos": { "x": 0, "y": 48, "w": 8, "h": 8 },
+      "targets": [
+        {
+          "datasource": { "type": "prometheus", "uid": "prometheus_ds" },
+          "expr": "executor_queued_tasks{name=\"clientInboundChannelExecutor\"}",
+          "legendFormat": "inbound 큐"
+        },
+        {
+          "datasource": { "type": "prometheus", "uid": "prometheus_ds" },
+          "expr": "executor_queued_tasks{name=\"clientOutboundChannelExecutor\"}",
+          "legendFormat": "outbound 큐"
+        },
+        {
+          "datasource": { "type": "prometheus", "uid": "prometheus_ds" },
+          "expr": "executor_queued_tasks{name=\"brokerChannelExecutor\"}",
+          "legendFormat": "broker 큐"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "min": 0,
+          "thresholds": {
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "yellow", "value": 1 },
+              { "color": "red", "value": 100 }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "id": 13,
+      "title": "채널 활성 스레드 / 풀 크기",
+      "description": "active 스레드가 pool 크기에 계속 붙어 있으면 스레드가 포화된 상태 → 큐 적체로 이어집니다.",
+      "type": "timeseries",
+      "gridPos": { "x": 8, "y": 48, "w": 8, "h": 8 },
+      "targets": [
+        {
+          "datasource": { "type": "prometheus", "uid": "prometheus_ds" },
+          "expr": "executor_active_threads{name=~\"client(Inbound|Outbound)ChannelExecutor|brokerChannelExecutor\"}",
+          "legendFormat": "{{name}} active"
+        },
+        {
+          "datasource": { "type": "prometheus", "uid": "prometheus_ds" },
+          "expr": "executor_pool_size{name=~\"client(Inbound|Outbound)ChannelExecutor|brokerChannelExecutor\"}",
+          "legendFormat": "{{name}} pool"
+        }
+      ],
+      "fieldConfig": { "defaults": { "unit": "short", "min": 0 } }
+    },
+    {
+      "id": 14,
+      "title": "채널 처리량 (완료 tasks/s)",
+      "description": "각 채널이 초당 몇 개의 메시지 작업을 처리하는지. 큐는 쌓이는데 처리량이 안 오르면 병목 확정.",
+      "type": "timeseries",
+      "gridPos": { "x": 16, "y": 48, "w": 8, "h": 8 },
+      "targets": [
+        {
+          "datasource": { "type": "prometheus", "uid": "prometheus_ds" },
+          "expr": "sum by (name) (rate(executor_completed_tasks_total{name=~\"client(Inbound|Outbound)ChannelExecutor|brokerChannelExecutor\"}[1m]))",
+          "legendFormat": "{{name}}"
+        }
+      ],
+      "fieldConfig": { "defaults": { "unit": "ops", "min": 0 } }
     }
   ]
 }

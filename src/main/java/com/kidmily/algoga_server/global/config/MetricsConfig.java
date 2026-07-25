@@ -215,6 +215,26 @@ public class MetricsConfig {
                 .register(registry);
     }
 
+    // ── Chat / WebSocket ──────────────────────────────────────────────────────
+
+    /** WebSocket 연결 수립 횟수 (rate로 접속 유입 추이 관찰) */
+    @Bean
+    public Counter chatWsConnectTotal(MeterRegistry registry) {
+        return Counter.builder("algoga_chat_ws_connection_total")
+                .description("WebSocket 연결 이벤트 횟수")
+                .tag("event", "connect")
+                .register(registry);
+    }
+
+    /** WebSocket 연결 해제 횟수 (스파이크 = 배포/서버 튕김 신호) */
+    @Bean
+    public Counter chatWsDisconnectTotal(MeterRegistry registry) {
+        return Counter.builder("algoga_chat_ws_connection_total")
+                .description("WebSocket 연결 이벤트 횟수")
+                .tag("event", "disconnect")
+                .register(registry);
+    }
+
     // ── API 에러 ─────────────────────────────────────────────────────────────
     // algoga_api_errors_total{reason=...} 는 CommonExceptionAdvice.recordApiError()에서
     // MeterRegistry.counter()로 동적으로 등록/증가시킴 (access_denied / business / validation /
