@@ -17,9 +17,15 @@ public interface SpringDataCourseCompletionRepository extends JpaRepository<Cour
     boolean existsByUserIdAndCourseId(Long userId, Long courseId);
 
     @Query("""
-            SELECT c.courseId, COUNT(c.id)
+            SELECT c.courseId, COUNT(DISTINCT c.userId)
             FROM CourseCompletionJpaEntity c
             WHERE c.courseId IN :courseIds
+              AND EXISTS (
+                  SELECT 1
+                  FROM EnrollmentJpaEntity e
+                  WHERE e.courseId = c.courseId
+                    AND e.userId = c.userId
+              )
             GROUP BY c.courseId
             """)
     List<Object[]> countByCourseIds(@Param("courseIds") List<Long> courseIds);

@@ -568,3 +568,24 @@ Record completed work here by date. Keep entries factual and useful for future d
 
 - Item 3's deferred atomicity gap (`CourseCompletionRegistrar` vs. the caller's ambient transaction) is the main open design question from this session — see the "Known deferred issue" note above before touching that file again.
 - Nothing in this branch has been committed yet as of this entry.
+### 2026-07-25 Module 5 Presentation Seed SQL
+
+#### Summary
+
+- Added presentation seed SQL and matching rollback SQL for manager-side demo data without changing API URL/request/response/JSON contracts or application code.
+- Files:
+  - `db/seed/module5-demo-data.sql`
+  - `db/seed/module5-demo-data-rollback.sql`
+
+#### Coverage
+
+- Seed covers realistic Korean data for users, referral rewards, friend relations, coupon policies/user coupons, mileage histories, lecture/travel payments, enrollments, learning progress, quiz submissions/answers, course completions/rewards, reviews, QnA/comments, diagnosis results, bookings, and refund requests.
+- Existing lectures/chapters/quizzes/countries/accommodations/packages/managers are reused through SQL lookups/temporary tables instead of hard-coded PKs.
+- Seeded user password is `password123`; the SQL stores a BCrypt hash generated with Spring Security `BCryptPasswordEncoder` and verified with `matches("password123") == true`.
+- User-facing text avoids `demo`; rollback identification uses technical `M5` keys such as seeded emails, payment idempotency keys, booking numbers, and certificate codes.
+
+#### Verification
+
+- Reviewed entity/table/enum values in code before writing SQL.
+- Checked for leftover obvious camelCase native SQL columns and `demo` text in seed contents.
+- No local MySQL instance was available, so the SQL has not been executed against a real database yet.
