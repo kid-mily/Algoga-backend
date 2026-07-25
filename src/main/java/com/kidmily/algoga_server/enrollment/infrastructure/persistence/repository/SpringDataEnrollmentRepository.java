@@ -22,7 +22,7 @@ public interface SpringDataEnrollmentRepository extends JpaRepository<Enrollment
     void deleteByUserId(Long userId);
 
     @Query("""
-            SELECT e.courseId, COUNT(e.id)
+            SELECT e.courseId, COUNT(DISTINCT e.userId)
             FROM EnrollmentJpaEntity e
             WHERE e.courseId IN :courseIds
             GROUP BY e.courseId

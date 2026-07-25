@@ -5,6 +5,14 @@
 - This file tracks the current AI-assisted backend work in this repository.
 - Do not record every teammate task here.
 
+## Current Update 2026-07-25
+
+- Added Module 5 presentation seed SQL: `db/seed/module5-demo-data.sql` and `db/seed/module5-demo-data-rollback.sql`.
+- Scope: SQL-only data setup for manager-side presentation. No Java code changes and no API URL/request/response/JSON contract changes.
+- Seed uses existing DB rows through lookup/temporary tables for lectures, chapters, quizzes, countries, accommodations, packages, and managers rather than hard-coded PKs.
+- Seeded users use login password `password123` with a Spring Security BCrypt hash. User-facing contents are natural Korean data and avoid `demo`; technical `M5` identifiers are used only for rollback-safe keys.
+- Verification: code/table/enum review and static SQL text checks were done. SQL has not been run against a real MySQL database in this environment.
+
 ## Current Update 2026-07-24
 
 - Branch `refactor/lms-dead-code-and-performance-dashboard` was created from latest `develop` after `git pull --ff-only` (local `develop` was 22 commits behind).

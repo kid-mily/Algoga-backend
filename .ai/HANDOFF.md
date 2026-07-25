@@ -1,5 +1,16 @@
 # HANDOFF
 
+## Current Update 2026-07-25
+
+- Module 5 presentation seed SQL was added:
+  1. `db/seed/module5-demo-data.sql`
+  2. `db/seed/module5-demo-data-rollback.sql`
+- This is SQL-only; no Java code or API contracts were changed.
+- The seed creates realistic manager-demo data across users, referral/friend, coupon/mileage, payment/enrollment/progress/quiz/completion/review/QnA/diagnosis, booking, and refund flows.
+- Existing PKs are resolved at runtime via SQL lookups/temporary tables; the SQL does not assume fixed lecture/chapter/quiz/accommodation/package/manager IDs.
+- All seeded users share the login password `password123`; the stored hash was generated and verified with Spring Security BCrypt.
+- Before using on a shared DB, run the seed in a staging copy first, then run the rollback to confirm only the `M5` keyed rows are removed.
+
 ## Current Update 2026-07-24
 
 - Active branch: `refactor/lms-dead-code-and-performance-dashboard` (created from latest `develop` after fast-forward pull).
