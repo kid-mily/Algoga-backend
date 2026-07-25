@@ -1,0 +1,273 @@
+{
+  "options": {
+    "summaryTrendStats": [
+      "avg",
+      "min",
+      "med",
+      "max",
+      "p(90)",
+      "p(95)",
+      "p(99)"
+    ],
+    "summaryTimeUnit": "",
+    "noColor": false
+  },
+  "state": {
+    "isStdOutTTY": true,
+    "isStdErrTTY": true,
+    "testRunDurationMs": 212623.4699
+  },
+  "metrics": {
+    "http_req_duration": {
+      "type": "trend",
+      "contains": "time",
+      "values": {
+        "avg": 7.158220700987053,
+        "min": 1.5112,
+        "med": 6.1894,
+        "max": 526.7586,
+        "p(90)": 8.373719999999999,
+        "p(95)": 9.474179999999997,
+        "p(99)": 18.256271999999985
+      }
+    },
+    "http_req_duration{type:admin_course_list}": {
+      "type": "trend",
+      "contains": "time",
+      "values": {
+        "p(99)": 18.256271999999985,
+        "avg": 7.158220700987053,
+        "min": 1.5112,
+        "med": 6.1894,
+        "max": 526.7586,
+        "p(90)": 8.373719999999999,
+        "p(95)": 9.474179999999997
+      },
+      "thresholds": {
+        "p(95)<2000": {
+          "ok": true
+        }
+      }
+    },
+    "http_req_blocked": {
+      "values": {
+        "p(90)": 0,
+        "p(95)": 0,
+        "p(99)": 0.5126639999999985,
+        "avg": 0.011180238978361467,
+        "min": 0,
+        "med": 0,
+        "max": 143.9475
+      },
+      "type": "trend",
+      "contains": "time"
+    },
+    "http_req_waiting": {
+      "type": "trend",
+      "contains": "time",
+      "values": {
+        "avg": 6.786107112566325,
+        "min": 1.5112,
+        "med": 5.8307,
+        "max": 526.7586,
+        "p(90)": 7.9663,
+        "p(95)": 9.00411999999999,
+        "p(99)": 17.718327999999673
+      }
+    },
+    "iteration_duration": {
+      "contains": "time",
+      "values": {
+        "p(90)": 2810.6061999999997,
+        "p(95)": 2908.98234,
+        "p(99)": 2988.423068,
+        "avg": 2006.4047196330139,
+        "min": 1004.5564,
+        "med": 2005.3113,
+        "max": 3399.5826
+      },
+      "type": "trend"
+    },
+    "http_req_failed": {
+      "type": "rate",
+      "contains": "default",
+      "values": {
+        "rate": 0,
+        "passes": 0,
+        "fails": 82769
+      },
+      "thresholds": {
+        "rate<0.01": {
+          "ok": true
+        }
+      }
+    },
+    "data_sent": {
+      "values": {
+        "count": 32776524,
+        "rate": 154152.8976806525
+      },
+      "type": "counter",
+      "contains": "data"
+    },
+    "data_received": {
+      "type": "counter",
+      "contains": "data",
+      "values": {
+        "count": 893965095,
+        "rate": 4204451.631893907
+      }
+    },
+    "iterations": {
+      "type": "counter",
+      "contains": "default",
+      "values": {
+        "count": 82769,
+        "rate": 389.2749941430619
+      }
+    },
+    "checks": {
+      "type": "rate",
+      "contains": "default",
+      "values": {
+        "rate": 1,
+        "passes": 165538,
+        "fails": 0
+      }
+    },
+    "http_req_duration{expected_response:true}": {
+      "values": {
+        "p(90)": 8.373719999999999,
+        "p(95)": 9.474179999999997,
+        "p(99)": 18.256271999999985,
+        "avg": 7.158220700987053,
+        "min": 1.5112,
+        "med": 6.1894,
+        "max": 526.7586
+      },
+      "type": "trend",
+      "contains": "time"
+    },
+    "http_req_connecting": {
+      "type": "trend",
+      "contains": "time",
+      "values": {
+        "max": 10.0231,
+        "p(90)": 0,
+        "p(95)": 0,
+        "p(99)": 0.5059,
+        "avg": 0.00814534185504235,
+        "min": 0,
+        "med": 0
+      }
+    },
+    "http_req_tls_handshaking": {
+      "type": "trend",
+      "contains": "time",
+      "values": {
+        "med": 0,
+        "max": 0,
+        "p(90)": 0,
+        "p(95)": 0,
+        "p(99)": 0,
+        "avg": 0,
+        "min": 0
+      }
+    },
+    "http_req_duration{type:admin_coupon_statistics}": {
+      "type": "trend",
+      "contains": "time",
+      "values": {
+        "med": 0,
+        "max": 0,
+        "p(90)": 0,
+        "p(95)": 0,
+        "p(99)": 0,
+        "avg": 0,
+        "min": 0
+      },
+      "thresholds": {
+        "p(95)<2000": {
+          "ok": true
+        }
+      }
+    },
+    "http_req_sending": {
+      "values": {
+        "p(90)": 0,
+        "p(95)": 0,
+        "p(99)": 0,
+        "avg": 0.0034960673682175713,
+        "min": 0,
+        "med": 0,
+        "max": 9.0181
+      },
+      "type": "trend",
+      "contains": "time"
+    },
+    "http_req_receiving": {
+      "type": "trend",
+      "contains": "time",
+      "values": {
+        "med": 0.3604,
+        "max": 86.466,
+        "p(90)": 0.9290199999999997,
+        "p(95)": 1.011,
+        "p(99)": 1.524,
+        "avg": 0.368617521052564,
+        "min": 0
+      }
+    },
+    "vus_max": {
+      "values": {
+        "value": 1000,
+        "min": 1000,
+        "max": 1000
+      },
+      "type": "gauge",
+      "contains": "default"
+    },
+    "http_reqs": {
+      "type": "counter",
+      "contains": "default",
+      "values": {
+        "count": 82769,
+        "rate": 389.2749941430619
+      }
+    },
+    "vus": {
+      "type": "gauge",
+      "contains": "default",
+      "values": {
+        "value": 3,
+        "min": 3,
+        "max": 1000
+      }
+    }
+  },
+  "setup_data": {
+    "cookieHeader": "adminAccessToken=eyJhbGciOiJIUzM4NCJ9.eyJzdWIiOiJjb250ZW50X21hbmFnZXIwNCIsInR5cGUiOiJBRE1JTiIsImlkIjo1LCJyb2xlIjoiUk9MRV9DT05URU5UX01BTkFHRVIiLCJpYXQiOjE3ODQ5OTU0NzcsImV4cCI6MTc4NDk5NzI3N30.Ha3MvGoDD8lddKQPYMm3pnZL46YOReM_k82-A7OfhgAd-eDHiHld2e-maSbB_YU7"
+  },
+  "root_group": {
+    "name": "",
+    "path": "",
+    "id": "d41d8cd98f00b204e9800998ecf8427e",
+    "groups": [],
+    "checks": [
+        {
+          "name": "admin course list: status is 200",
+          "path": "::admin course list: status is 200",
+          "id": "de1e5ca743aab78d77dc612757103a8b",
+          "passes": 82769,
+          "fails": 0
+        },
+        {
+          "name": "admin course list: response has success envelope",
+          "path": "::admin course list: response has success envelope",
+          "id": "b55cf2d1ec072dbe89ba77dc6db258b7",
+          "passes": 82769,
+          "fails": 0
+        }
+      ]
+  }
+}

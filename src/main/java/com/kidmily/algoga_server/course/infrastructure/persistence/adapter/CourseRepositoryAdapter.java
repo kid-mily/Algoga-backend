@@ -64,25 +64,25 @@ public class CourseRepositoryAdapter implements CourseRepository {
     @Override
     public Page<Course> findAllByDeletedFalse(Pageable pageable) {
         return springDataCourseRepository.findByDeletedFalseOrderByIdDesc(pageable)
-                .map(courseMapper::toDomain);
+                .map(courseMapper::toDomainWithoutChapters);
     }
 
     @Override
     public Page<Course> findAllByDeletedFalseAndCountryIdIn(List<Long> countryIds, Pageable pageable) {
         return springDataCourseRepository.findByDeletedFalseAndCountryIdInOrderByIdDesc(countryIds, pageable)
-                .map(courseMapper::toDomain);
+                .map(courseMapper::toDomainWithoutChapters);
     }
 
     @Override
     public Page<Course> findAllByDeletedTrue(Pageable pageable) {
         return springDataCourseRepository.findByDeletedTrueOrderByIdDesc(pageable)
-                .map(courseMapper::toDomain);
+                .map(courseMapper::toDomainWithoutChapters);
     }
 
     @Override
     public Page<Course> findAllByDeletedTrueAndCountryIdIn(List<Long> countryIds, Pageable pageable) {
         return springDataCourseRepository.findByDeletedTrueAndCountryIdInOrderByIdDesc(countryIds, pageable)
-                .map(courseMapper::toDomain);
+                .map(courseMapper::toDomainWithoutChapters);
     }
 
     @Override

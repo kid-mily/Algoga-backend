@@ -6,7 +6,8 @@ public record ConversionSummaryResponse(
         double conversionRate
 ) {
     public static ConversionSummaryResponse of(long attemptCount, long completedCount) {
-        double rate = attemptCount == 0 ? 0.0 : Math.round((double) completedCount / attemptCount * 10000.0) / 100.0;
+        long boundedCompletedCount = Math.min(completedCount, attemptCount);
+        double rate = attemptCount == 0 ? 0.0 : Math.round((double) boundedCompletedCount / attemptCount * 10000.0) / 100.0;
         return new ConversionSummaryResponse(attemptCount, completedCount, rate);
     }
 }

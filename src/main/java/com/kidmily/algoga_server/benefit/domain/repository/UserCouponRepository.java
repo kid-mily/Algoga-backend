@@ -4,6 +4,7 @@ import com.kidmily.algoga_server.benefit.domain.model.UserCoupon;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 public interface UserCouponRepository {
@@ -16,6 +17,8 @@ public interface UserCouponRepository {
 
     List<UserCoupon> findByUserIdAndCourseId(Long userId, Long courseId);
 
+    Map<Long, CouponUsageCount> countByCouponPolicyIds(List<Long> couponPolicyIds, LocalDateTime now);
+
     boolean existsByUserIdAndCouponPolicyId(Long userId, Long couponPolicyId);
 
     boolean existsByUserIdAndCouponName(Long userId, String couponName);
@@ -25,4 +28,13 @@ public interface UserCouponRepository {
     void markUsed(Long userCouponId, LocalDateTime usedAt);
 
     void deleteAllByUserId(Long userId);
+
+    record CouponUsageCount(
+            Long couponPolicyId,
+            long issuedCount,
+            long usedCount,
+            long expiredCount,
+            long availableCount
+    ) {
+    }
 }

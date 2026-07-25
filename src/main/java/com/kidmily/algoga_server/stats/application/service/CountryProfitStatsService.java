@@ -27,14 +27,19 @@ import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
-import java.util.*;
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 
-/*
- * ⑥ 나라별 수익성 통계 (기존 나라별 인기도 확장)
- * - 기간 내 생성 예약 기준으로 나라별 예약수/총매출/순매출/환불율/잔금전환율/취소율/점유율 집계
- * - 매출=예약결제(SUCCESS+REFUNDED, 강의 제외) gross, 순매출=gross−환불(COMPLETED), 점유율=순매출 기준
- */
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -45,7 +50,12 @@ public class CountryProfitStatsService implements CountryProfitStatsUseCase {
     private static final Set<PaymentStatus> PAID_STATUSES =
             Set.of(PaymentStatus.SUCCESS, PaymentStatus.REFUNDED);
 
-    private static final int I_BOOKING = 0, I_DEPOSIT = 1, I_FULL = 2, I_CANCEL = 3, I_GROSS = 4, I_REFUND = 5;
+    private static final int I_BOOKING = 0;
+    private static final int I_DEPOSIT = 1;
+    private static final int I_FULL = 2;
+    private static final int I_CANCEL = 3;
+    private static final int I_GROSS = 4;
+    private static final int I_REFUND = 5;
 
     private final BookingRepository bookingRepository;
     private final PaymentRepository paymentRepository;
@@ -53,10 +63,6 @@ public class CountryProfitStatsService implements CountryProfitStatsUseCase {
     private final AccommodationRepository accommodationRepository;
     private final CountryRepository countryRepository;
 
-    /**
-     * 국가명 검색 필터. 점유율(share)은 <b>필터 전 전체 순매출</b> 기준으로 이미 계산돼 있으므로,
-     * 검색해도 해당 국가의 실제 점유율이 유지된다(검색 결과 안에서 재계산하지 않음).
-     */
     private List<CountryProfitResponse> filterByName(List<CountryProfitResponse> profiles, String search) {
         if (search == null || search.isBlank()) {
             return profiles;
@@ -84,7 +90,8 @@ public class CountryProfitStatsService implements CountryProfitStatsUseCase {
         double avgRefundRate = totalGross == 0 ? 0.0 : Math.round((double) totalRefund / totalGross * 10000.0) / 100.0;
 
         CountryProfitResponse top = profiles.stream()
-                .max(Comparator.comparingLong(CountryProfitResponse::netRevenue)).orElse(null);
+                .max(Comparator.comparingLong(CountryProfitResponse::netRevenue))
+                .orElse(null);
 
         return new CountryProfitSummaryResponse(
                 profiles.size(), totalBookings, totalNet, avgRefundRate,
@@ -98,7 +105,7 @@ public class CountryProfitStatsService implements CountryProfitStatsUseCase {
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         baos.write(new byte[]{(byte) 0xEF, (byte) 0xBB, (byte) 0xBF}, 0, 3);
         try (PrintWriter writer = new PrintWriter(new OutputStreamWriter(baos, StandardCharsets.UTF_8))) {
-            writer.println("국가,예약수,총매출,순매출,환불율(%),잔금전환율(%),취소율(%),점유율(%)");
+            writer.println("국가,예약수,총매출,순매출,환불률(%),잔금전환율(%),취소율(%),점유율(%)");
             for (CountryProfitResponse p : profiles) {
                 writer.printf("%s,%d,%d,%d,%.2f,%.2f,%.2f,%.2f%n",
                         p.countryName(), p.bookingCount(), p.grossRevenue(), p.netRevenue(),
@@ -108,12 +115,13 @@ public class CountryProfitStatsService implements CountryProfitStatsUseCase {
         return baos.toByteArray();
     }
 
-    // ── 핵심 집계 ──────────────────────────────────────
-
     private List<CountryProfitResponse> buildProfiles(LocalDate from, LocalDate to) {
-        List<Booking> bookings = bookingRepository.findByCreatedAtBetween(
-                from.atStartOfDay(), to.plusDays(1).atStartOfDay());
-        if (bookings.isEmpty()) return List.of();
+        LocalDateTime start = from.atStartOfDay();
+        LocalDateTime end = to.plusDays(1).atStartOfDay();
+        List<Booking> bookings = bookingRepository.findByCreatedAtBetween(start, end);
+        if (bookings.isEmpty()) {
+            return List.of();
+        }
 
         Map<Long, Long> accToCountry = accToCountry(
                 bookings.stream().map(Booking::getAccommodationId).collect(Collectors.toSet()));
@@ -123,63 +131,81 @@ public class CountryProfitStatsService implements CountryProfitStatsUseCase {
 
         Map<Long, long[]> agg = new HashMap<>();
 
-        // 예약 상태 집계
-        for (Booking b : bookings) {
-            Long country = bookingToCountry.get(b.getId());
-            if (country == null) continue;
-            long[] a = agg.computeIfAbsent(country, k -> new long[6]);
-            a[I_BOOKING]++;
-            if (b.getStatus() == BookingStatus.DEPOSIT_PAID) a[I_DEPOSIT]++;
-            else if (b.getStatus() == BookingStatus.FULL_PAID) a[I_FULL]++;
-            if (b.getStatus() == BookingStatus.CANCEL_REQUESTED || b.getStatus() == BookingStatus.REFUNDED) a[I_CANCEL]++;
+        for (Booking booking : bookings) {
+            Long country = bookingToCountry.get(booking.getId());
+            if (country == null) {
+                continue;
+            }
+            long[] value = agg.computeIfAbsent(country, ignored -> new long[6]);
+            value[I_BOOKING]++;
+            if (booking.getStatus() == BookingStatus.DEPOSIT_PAID) {
+                value[I_DEPOSIT]++;
+            } else if (booking.getStatus() == BookingStatus.FULL_PAID) {
+                value[I_FULL]++;
+            }
+            if (booking.getStatus() == BookingStatus.CANCEL_REQUESTED || booking.getStatus() == BookingStatus.REFUNDED) {
+                value[I_CANCEL]++;
+            }
         }
 
-        // 매출(gross): 예약결제 SUCCESS+REFUNDED
         List<Long> bookingIds = new ArrayList<>(bookingToCountry.keySet());
         List<Payment> payments = new ArrayList<>();
         payments.addAll(paymentRepository.findByBookingIdInAndStatus(bookingIds, PaymentStatus.SUCCESS));
         payments.addAll(paymentRepository.findByBookingIdInAndStatus(bookingIds, PaymentStatus.REFUNDED));
-        for (Payment p : payments) {
-            if (!BOOKING_TYPES.contains(p.getPaymentType()) || !PAID_STATUSES.contains(p.getStatus())) continue;
-            Long country = bookingToCountry.get(p.getBookingId());
-            if (country == null) continue;
-            agg.computeIfAbsent(country, k -> new long[6])[I_GROSS] += p.getAmount();
+        for (Payment payment : payments) {
+            if (!BOOKING_TYPES.contains(payment.getPaymentType()) || !PAID_STATUSES.contains(payment.getStatus())) {
+                continue;
+            }
+            Long country = bookingToCountry.get(payment.getBookingId());
+            if (country == null) {
+                continue;
+            }
+            agg.computeIfAbsent(country, ignored -> new long[6])[I_GROSS] += payment.getAmount();
         }
 
-        // 환불: COMPLETED
-        Set<Long> idSet = new HashSet<>(bookingIds);
-        for (RefundRequest r : refundRepository.findAllByStatus(RefundStatus.COMPLETED)) {
-            if (r.getBookingId() == null || !idSet.contains(r.getBookingId())) continue;
-            Long country = bookingToCountry.get(r.getBookingId());
-            if (country == null) continue;
-            agg.computeIfAbsent(country, k -> new long[6])[I_REFUND] += r.getAmount();
+        Set<Long> periodBookingIds = new HashSet<>(bookingIds);
+        for (RefundRequest refund : refundRepository.findAllByStatus(RefundStatus.COMPLETED)) {
+            if (refund.getBookingId() == null || !periodBookingIds.contains(refund.getBookingId())) {
+                continue;
+            }
+            if (refund.getCreatedAt() == null || refund.getCreatedAt().isBefore(start) || !refund.getCreatedAt().isBefore(end)) {
+                continue;
+            }
+            Long country = bookingToCountry.get(refund.getBookingId());
+            if (country == null) {
+                continue;
+            }
+            agg.computeIfAbsent(country, ignored -> new long[6])[I_REFUND] += refund.getAmount();
         }
 
         long totalNet = agg.values().stream().mapToLong(a -> a[I_GROSS] - a[I_REFUND]).sum();
         Map<Long, Country> countryMap = countryRepository.findAllByIdIn(new ArrayList<>(agg.keySet()))
-                .stream().collect(Collectors.toMap(Country::getId, c -> c));
+                .stream()
+                .collect(Collectors.toMap(Country::getId, country -> country));
 
         return agg.entrySet().stream()
-                .map(e -> toResponse(e.getKey(), e.getValue(), totalNet, countryMap))
+                .map(entry -> toResponse(entry.getKey(), entry.getValue(), totalNet, countryMap))
                 .sorted(Comparator.comparingLong(CountryProfitResponse::netRevenue).reversed())
                 .toList();
     }
 
-    private CountryProfitResponse toResponse(Long countryId, long[] a, long totalNet, Map<Long, Country> countryMap) {
-        long gross = a[I_GROSS];
-        long net = gross - a[I_REFUND];
-        double refundRate = gross == 0 ? 0.0 : Math.round((double) a[I_REFUND] / gross * 10000.0) / 100.0;
-        long balanceDenom = a[I_DEPOSIT] + a[I_FULL];
-        double balanceConv = balanceDenom == 0 ? 0.0 : Math.round((double) a[I_FULL] / balanceDenom * 10000.0) / 100.0;
-        double cancelRate = a[I_BOOKING] == 0 ? 0.0 : Math.round((double) a[I_CANCEL] / a[I_BOOKING] * 10000.0) / 100.0;
+    private CountryProfitResponse toResponse(Long countryId, long[] value, long totalNet, Map<Long, Country> countryMap) {
+        long gross = value[I_GROSS];
+        long net = gross - value[I_REFUND];
+        double refundRate = gross == 0 ? 0.0 : Math.round((double) value[I_REFUND] / gross * 10000.0) / 100.0;
+        long balanceDenom = value[I_DEPOSIT] + value[I_FULL];
+        double balanceConversion = balanceDenom == 0 ? 0.0 : Math.round((double) value[I_FULL] / balanceDenom * 10000.0) / 100.0;
+        double cancelRate = value[I_BOOKING] == 0 ? 0.0 : Math.round((double) value[I_CANCEL] / value[I_BOOKING] * 10000.0) / 100.0;
         double share = totalNet == 0 ? 0.0 : Math.round((double) net / totalNet * 10000.0) / 100.0;
         String name = Optional.ofNullable(countryMap.get(countryId)).map(Country::getName).orElse("알 수 없음");
-        return new CountryProfitResponse(countryId, name, a[I_BOOKING], gross, net,
-                refundRate, balanceConv, cancelRate, share);
+        return new CountryProfitResponse(countryId, name, value[I_BOOKING], gross, net,
+                refundRate, balanceConversion, cancelRate, share);
     }
 
     private Map<Long, Long> accToCountry(Collection<Long> accommodationIds) {
-        return accommodationIds.stream().filter(Objects::nonNull).distinct()
+        return accommodationIds.stream()
+                .filter(Objects::nonNull)
+                .distinct()
                 .map(id -> accommodationRepository.findById(id).orElse(null))
                 .filter(Objects::nonNull)
                 .collect(Collectors.toMap(Accommodation::getId, Accommodation::getCountryId));

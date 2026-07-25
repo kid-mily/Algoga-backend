@@ -31,11 +31,11 @@ public class CourseQnaJpaEntity {
     private String title;
 
     @Lob
-    @Column(name = "question", nullable = false)
+    @Column(name = "question", nullable = false, columnDefinition = "TEXT")
     private String question;
 
     @Lob
-    @Column(name = "answer")
+    @Column(name = "answer", columnDefinition = "TEXT")
     private String answer;
 
     @Column(name = "status", nullable = false, length = 20)

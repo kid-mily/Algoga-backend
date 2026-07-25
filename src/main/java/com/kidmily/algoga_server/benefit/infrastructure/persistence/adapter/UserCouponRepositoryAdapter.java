@@ -9,7 +9,9 @@ import org.springframework.stereotype.Repository;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Repository
 @RequiredArgsConstructor
@@ -62,6 +64,29 @@ public class UserCouponRepositoryAdapter implements UserCouponRepository {
                 .stream()
                 .map(this::toDomain)
                 .toList();
+    }
+
+    @Override
+    public Map<Long, CouponUsageCount> countByCouponPolicyIds(
+            List<Long> couponPolicyIds,
+            LocalDateTime now
+    ) {
+        if (couponPolicyIds == null || couponPolicyIds.isEmpty()) {
+            return Map.of();
+        }
+
+        return springDataUserCouponRepository.countByCouponPolicyIds(couponPolicyIds, now)
+                .stream()
+                .collect(Collectors.toMap(
+                        SpringDataUserCouponRepository.CouponUsageCountProjection::getCouponPolicyId,
+                        projection -> new CouponUsageCount(
+                                projection.getCouponPolicyId(),
+                                projection.getIssuedCount(),
+                                projection.getUsedCount(),
+                                projection.getExpiredCount(),
+                                projection.getAvailableCount()
+                        )
+                ));
     }
 
     @Override

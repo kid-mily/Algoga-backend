@@ -75,6 +75,44 @@ public class CourseMapper {
         );
     }
 
+    public Course toDomainWithoutChapters(CourseJpaEntity entity) {
+        List<CourseFile> courseFiles = entity.getCourseFiles() == null
+                ? List.of()
+                : entity.getCourseFiles()
+                .stream()
+                .map(this::toCourseFileDomain)
+                .toList();
+
+        if (courseFiles.isEmpty() && entity.getFileUrl() != null && !entity.getFileUrl().isBlank()) {
+            courseFiles = List.of(
+                    CourseFile.withId(
+                            null,
+                            entity.getId(),
+                            entity.getFileUrl(),
+                            null,
+                            1
+                    )
+            );
+        }
+
+        return Course.withId(
+                entity.getId(),
+                entity.getCountryId(),
+                entity.getManagerId(),
+                entity.getTitle(),
+                entity.getDescription(),
+                entity.getPrice(),
+                entity.getMaxRewardMileage(),
+                entity.getThumbnailUrl(),
+                entity.getFileUrl(),
+                courseFiles,
+                entity.getLevel(),
+                entity.getStatus(),
+                entity.isDeleted(),
+                List.of()
+        );
+    }
+
     public List<CourseFileJpaEntity> toCourseFileEntities(List<CourseFile> courseFiles) {
         if (courseFiles == null || courseFiles.isEmpty()) {
             return List.of();
