@@ -1,6 +1,8 @@
 package com.kidmily.algoga_server.review.infrastructure.persistence.repository;
 
 import com.kidmily.algoga_server.review.infrastructure.persistence.entity.CourseReviewJpaEntity;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -17,7 +19,9 @@ public interface SpringDataCourseReviewRepository extends JpaRepository<CourseRe
 
     List<CourseReviewJpaEntity> findByCourseIdAndDeletedFalseOrderByCreatedAtDesc(Long courseId);
 
-    List<CourseReviewJpaEntity> findByCourseIdOrderByCreatedAtDesc(Long courseId);
+    Page<CourseReviewJpaEntity> findByCourseIdAndDeletedFalseOrderByCreatedAtDesc(Long courseId, Pageable pageable);
+
+    Page<CourseReviewJpaEntity> findByCourseIdOrderByCreatedAtDesc(Long courseId, Pageable pageable);
 
     @Query("""
             SELECT r.courseId, AVG(r.rating)

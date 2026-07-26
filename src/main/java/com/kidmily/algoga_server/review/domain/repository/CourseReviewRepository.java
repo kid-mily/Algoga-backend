@@ -1,6 +1,8 @@
 package com.kidmily.algoga_server.review.domain.repository;
 
 import com.kidmily.algoga_server.review.domain.model.CourseReview;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -18,7 +20,9 @@ public interface CourseReviewRepository {
 
     List<CourseReview> findByCourseId(Long courseId);
 
-    List<CourseReview> findAllByCourseId(Long courseId);
+    Page<CourseReview> findByCourseId(Long courseId, Pageable pageable);
+
+    Page<CourseReview> findAllByCourseId(Long courseId, Pageable pageable);
 
     Map<Long, Double> findAverageRatingsByCourseIds(List<Long> courseIds);
 

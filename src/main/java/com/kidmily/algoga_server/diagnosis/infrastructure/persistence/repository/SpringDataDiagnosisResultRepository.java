@@ -1,6 +1,8 @@
 package com.kidmily.algoga_server.diagnosis.infrastructure.persistence.repository;
 
 import com.kidmily.algoga_server.diagnosis.infrastructure.persistence.entity.DiagnosisResultJpaEntity;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -22,13 +24,13 @@ public interface SpringDataDiagnosisResultRepository extends JpaRepository<Diagn
     List<DiagnosisResultJpaEntity> findLatestByUserIdGroupByCountry(@Param("userId") Long userId);
 
 
-    List<DiagnosisResultJpaEntity> findByUserIdOrderByCreatedAtDesc(Long userId);
+    Page<DiagnosisResultJpaEntity> findByUserIdOrderByCreatedAtDesc(Long userId, Pageable pageable);
 
-    List<DiagnosisResultJpaEntity> findByCountryIdOrderByCreatedAtDesc(Long countryId);
+    Page<DiagnosisResultJpaEntity> findByCountryIdOrderByCreatedAtDesc(Long countryId, Pageable pageable);
 
-    List<DiagnosisResultJpaEntity> findByUserIdAndCountryIdOrderByCreatedAtDesc(Long userId, Long countryId);
+    Page<DiagnosisResultJpaEntity> findByUserIdAndCountryIdOrderByCreatedAtDesc(Long userId, Long countryId, Pageable pageable);
 
-    List<DiagnosisResultJpaEntity> findAllByOrderByCreatedAtDesc();
+    Page<DiagnosisResultJpaEntity> findAllByOrderByCreatedAtDesc(Pageable pageable);
 
     @Query("SELECT d.id FROM DiagnosisResultJpaEntity d WHERE d.userId = :userId")
     List<Long> findIdsByUserId(@Param("userId") Long userId);

@@ -5,18 +5,18 @@ import com.kidmily.algoga_server.review.application.command.UpdateCourseReviewVi
 import com.kidmily.algoga_server.review.application.result.AdminCourseReviewResult;
 import com.kidmily.algoga_server.review.application.result.CourseReviewResult;
 import com.kidmily.algoga_server.review.application.result.CourseReviewSummaryResult;
-
-import java.util.List;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 public interface CourseReviewUseCase {
 
     CourseReviewResult createReview(CreateCourseReviewCommand command);
 
-    List<CourseReviewResult> getReviews(Long courseId);
+    Page<CourseReviewResult> getReviews(Long courseId, Pageable pageable);
 
     CourseReviewSummaryResult getReviewSummary(Long courseId);
 
-    List<AdminCourseReviewResult> getAdminReviews(Long courseId);
+    Page<AdminCourseReviewResult> getAdminReviews(Long courseId, Pageable pageable);
 
     AdminCourseReviewResult getAdminReview(Long courseId, Long reviewId);
 

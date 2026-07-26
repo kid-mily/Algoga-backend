@@ -17,15 +17,18 @@ import com.kidmily.algoga_server.benefit.exception.BenefitException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
-import java.util.Comparator;
-import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
-import java.util.Set;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -42,58 +45,69 @@ public class MileageService implements MileageUseCase {
     private final UserProfilePort userProfilePort;
 
     @Override
-    public AdminMileageSummaryResult getMileageUsers() {
-        log.info("[Admin Mileage Query] 사용자별 마일리지 목록 조회 요청");
+    public AdminMileageSummaryResult getMileageUsers(Pageable pageable) {
+        log.info("[Admin Mileage Query] 사용자별 마일리지 목록 조회 요청. page={}, size={}",
+                pageable.getPageNumber(), pageable.getPageSize());
 
-        List<MileageHistory> histories = mileageHistoryRepository.findAll();
+        LocalDateTime now = LocalDateTime.now();
+        MileageHistoryRepository.GlobalMileageTotals totals = mileageHistoryRepository.findGlobalTotals(now);
 
-        Set<Long> userIds = new LinkedHashSet<>();
-        for (MileageHistory history : histories) {
-            userIds.add(history.getUserId());
-        }
+        Page<Long> userIdPage = mileageHistoryRepository.findDistinctUserIds(pageable);
+        List<Long> userIds = userIdPage.getContent();
+
+        Map<Long, UserProfilePort.UserProfile> profiles = userProfilePort.findProfiles(userIds);
+        Map<Long, List<MileageHistory>> historiesByUser = mileageHistoryRepository.findByUserIdIn(userIds)
+                .stream()
+                .collect(Collectors.groupingBy(MileageHistory::getUserId));
 
         List<AdminMileageUserResult> users = userIds.stream()
-                .map(this::createUserResult)
+                .map(userId -> buildUserResult(profiles.get(userId), historiesByUser.getOrDefault(userId, List.of()), now))
                 .flatMap(Optional::stream)
-                .sorted(Comparator.comparing(AdminMileageUserResult::userId))
                 .toList();
 
-        int totalMileage = users.stream()
-                .mapToInt(AdminMileageUserResult::totalMileage)
-                .sum();
+        Page<AdminMileageUserResult> userPage = new PageImpl<>(users, pageable, userIdPage.getTotalElements());
+        int totalMileage = Math.max(0, totals.totalEarnedMileage() - totals.totalUsedMileage());
 
-        int totalEarnedMileage = users.stream()
-                .mapToInt(AdminMileageUserResult::totalEarnedMileage)
-                .sum();
-
-        int totalUsedMileage = users.stream()
-                .mapToInt(AdminMileageUserResult::totalUsedMileage)
-                .sum();
-
-        log.info("[Admin Mileage Query] 사용자별 마일리지 목록 조회 완료. userCount={}", users.size());
+        log.info("[Admin Mileage Query] 사용자별 마일리지 목록 조회 완료. totalUserCount={}, pageUserCount={}",
+                totals.userCount(), users.size());
 
         return new AdminMileageSummaryResult(
-                users.size(),
+                totals.userCount(),
                 totalMileage,
-                totalEarnedMileage,
-                totalUsedMileage,
-                users
+                totals.totalEarnedMileage(),
+                totals.totalUsedMileage(),
+                userPage
         );
     }
 
     @Override
-    public List<AdminMileageHistoryResult> getUserMileageHistories(Long userId) {
-        log.info("[Admin Mileage Query] 사용자 마일리지 상세 조회 요청. userId={}", userId);
+    public Page<AdminMileageHistoryResult> getUserMileageHistories(Long userId, Pageable pageable) {
+        log.info("[Admin Mileage Query] 사용자 마일리지 상세 조회 요청. userId={}, page={}, size={}",
+                userId, pageable.getPageNumber(), pageable.getPageSize());
 
         validateUser(userId);
 
-        List<AdminMileageHistoryResult> results = mileageHistoryRepository.findByUserId(userId)
-                .stream()
-                .map(this::toHistoryResult)
-                .toList();
+        Page<MileageHistory> historyPage = mileageHistoryRepository.findByUserId(userId, pageable);
 
-        log.info("[Admin Mileage Query] 사용자 마일리지 상세 조회 완료. userId={}, count={}",
-                userId, results.size());
+        UserProfilePort.UserProfile profile = userProfilePort.findProfile(userId).orElse(null);
+        Map<Long, LmsCoursePort.CourseSummary> courseSummaries = lmsCoursePort.findCourseSummaries(
+                historyPage.getContent().stream()
+                        .map(MileageHistory::getCourseId)
+                        .filter(Objects::nonNull)
+                        .distinct()
+                        .toList()
+        );
+
+        Page<AdminMileageHistoryResult> results = historyPage.map(history -> toHistoryResult(
+                history,
+                profile,
+                Optional.ofNullable(courseSummaries.get(history.getCourseId()))
+                        .map(LmsCoursePort.CourseSummary::courseTitle)
+                        .orElse(null)
+        ));
+
+        log.info("[Admin Mileage Query] 사용자 마일리지 상세 조회 완료. userId={}, totalCount={}",
+                userId, results.getTotalElements());
 
         return results;
     }
@@ -119,7 +133,7 @@ public class MileageService implements MileageUseCase {
         log.info("[Admin Mileage Command] 마일리지 지급 완료. mileageHistoryId={}, userId={}, amount={}",
                 savedHistory.getId(), savedHistory.getUserId(), savedHistory.getAmount());
 
-        return toHistoryResult(savedHistory);
+        return toSingleHistoryResult(savedHistory);
     }
 
     @Override
@@ -151,7 +165,7 @@ public class MileageService implements MileageUseCase {
         log.info("[Admin Mileage Command] 마일리지 회수 완료. mileageHistoryId={}, userId={}, amount={}",
                 savedHistory.getId(), savedHistory.getUserId(), savedHistory.getAmount());
 
-        return toHistoryResult(savedHistory);
+        return toSingleHistoryResult(savedHistory);
     }
 
     @Override
@@ -197,16 +211,14 @@ public class MileageService implements MileageUseCase {
         }
     }
 
-    private Optional<AdminMileageUserResult> createUserResult(Long userId) {
-        Optional<UserProfilePort.UserProfile> optionalUser = userProfilePort.findProfile(userId);
-
-        if (optionalUser.isEmpty()) {
+    private Optional<AdminMileageUserResult> buildUserResult(
+            UserProfilePort.UserProfile profile,
+            List<MileageHistory> histories,
+            LocalDateTime now
+    ) {
+        if (profile == null) {
             return Optional.empty();
         }
-
-        UserProfilePort.UserProfile user = optionalUser.get();
-        List<MileageHistory> histories = mileageHistoryRepository.findByUserId(userId);
-        LocalDateTime now = LocalDateTime.now();
 
         int totalEarnedMileage = histories.stream()
                 .filter(this::isEarnType)
@@ -227,9 +239,9 @@ public class MileageService implements MileageUseCase {
                 .orElse(null);
 
         return Optional.of(new AdminMileageUserResult(
-                user.userId(),
-                user.name(),
-                user.email(),
+                profile.userId(),
+                profile.name(),
+                profile.email(),
                 totalMileage,
                 totalEarnedMileage,
                 totalUsedMileage,
@@ -237,18 +249,18 @@ public class MileageService implements MileageUseCase {
         ));
     }
 
-    private AdminMileageHistoryResult toHistoryResult(MileageHistory history) {
-        Optional<UserProfilePort.UserProfile> optionalUser = userProfilePort.findProfile(history.getUserId());
+    private AdminMileageHistoryResult toSingleHistoryResult(MileageHistory history) {
+        UserProfilePort.UserProfile profile = userProfilePort.findProfile(history.getUserId()).orElse(null);
+        return toHistoryResult(history, profile, findCourseTitle(history.getCourseId()));
+    }
 
-        String userName = optionalUser
-                .map(UserProfilePort.UserProfile::name)
-                .orElse(null);
-
-        String userEmail = optionalUser
-                .map(UserProfilePort.UserProfile::email)
-                .orElse(null);
-
-        String courseTitle = findCourseTitle(history.getCourseId());
+    private AdminMileageHistoryResult toHistoryResult(
+            MileageHistory history,
+            UserProfilePort.UserProfile profile,
+            String courseTitle
+    ) {
+        String userName = profile == null ? null : profile.name();
+        String userEmail = profile == null ? null : profile.email();
 
         int signedAmount = isUseType(history)
                 ? history.getAmount() * -1

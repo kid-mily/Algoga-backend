@@ -6,6 +6,10 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.stereotype.Component;
 
 import java.lang.reflect.Method;
+import java.util.Collection;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 @Component("benefitUserProfileAdapter")
@@ -36,6 +40,35 @@ public class UserProfileAdapter implements UserProfilePort {
         } catch (ReflectiveOperationException | RuntimeException exception) {
             return Optional.empty();
         }
+    }
+
+    @Override
+    public Map<Long, UserProfile> findProfiles(Collection<Long> userIds) {
+        if (userIds == null || userIds.isEmpty()) {
+            return Map.of();
+        }
+
+        Map<Long, UserProfile> profiles = new LinkedHashMap<>();
+
+        try {
+            Object repository = applicationContext.getBean(Class.forName(USER_REPOSITORY));
+            Object result = invoke(repository, "findAllById", List.copyOf(userIds));
+
+            if (result instanceof Iterable<?> users) {
+                for (Object user : users) {
+                    UserProfile profile = new UserProfile(
+                            (Long) invoke(user, "getId"),
+                            (String) invoke(user, "getName"),
+                            (String) invoke(user, "getEmail")
+                    );
+                    profiles.put(profile.userId(), profile);
+                }
+            }
+        } catch (ReflectiveOperationException | RuntimeException exception) {
+            return Map.of();
+        }
+
+        return profiles;
     }
 
     private Object invoke(Object target, String methodName, Object... args) {

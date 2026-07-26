@@ -5,8 +5,11 @@ import com.kidmily.algoga_server.benefit.domain.repository.MileageHistoryReposit
 import com.kidmily.algoga_server.benefit.infrastructure.persistence.entity.MileageHistoryJpaEntity;
 import com.kidmily.algoga_server.benefit.infrastructure.persistence.repository.SpringDataMileageHistoryRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Repository;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Repository
@@ -34,19 +37,46 @@ public class MileageHistoryRepositoryAdapter implements MileageHistoryRepository
     }
 
     @Override
-    public List<MileageHistory> findAll() {
-        return springDataMileageHistoryRepository.findAllByOrderByCreatedAtDesc()
+    public List<MileageHistory> findByUserId(Long userId) {
+        return springDataMileageHistoryRepository.findByUserIdOrderByCreatedAtDesc(userId)
                 .stream()
                 .map(this::toDomain)
                 .toList();
     }
 
     @Override
-    public List<MileageHistory> findByUserId(Long userId) {
-        return springDataMileageHistoryRepository.findByUserIdOrderByCreatedAtDesc(userId)
+    public Page<MileageHistory> findByUserId(Long userId, Pageable pageable) {
+        return springDataMileageHistoryRepository.findByUserIdOrderByCreatedAtDesc(userId, pageable)
+                .map(this::toDomain);
+    }
+
+    @Override
+    public List<MileageHistory> findByUserIdIn(List<Long> userIds) {
+        if (userIds == null || userIds.isEmpty()) {
+            return List.of();
+        }
+
+        return springDataMileageHistoryRepository.findByUserIdIn(userIds)
                 .stream()
                 .map(this::toDomain)
                 .toList();
+    }
+
+    @Override
+    public Page<Long> findDistinctUserIds(Pageable pageable) {
+        return springDataMileageHistoryRepository.findDistinctUserIds(pageable);
+    }
+
+    @Override
+    public GlobalMileageTotals findGlobalTotals(LocalDateTime now) {
+        SpringDataMileageHistoryRepository.GlobalMileageTotalsProjection projection =
+                springDataMileageHistoryRepository.findGlobalTotals(now);
+
+        return new GlobalMileageTotals(
+                projection.getUserCount(),
+                projection.getTotalEarnedMileage(),
+                projection.getTotalUsedMileage()
+        );
     }
 
     @Override

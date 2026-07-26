@@ -3,6 +3,7 @@ package com.kidmily.algoga_server.benefit.presentation.api.admin;
 import com.kidmily.algoga_server.admin.settings.annotation.CurrentManager;
 import com.kidmily.algoga_server.global.annotation.swagger.ApiErrorCodeExample;
 import com.kidmily.algoga_server.global.common.api.response.ApiResponse;
+import com.kidmily.algoga_server.global.common.api.response.PageResponse;
 import com.kidmily.algoga_server.global.exception.GlobalErrorCode;
 import com.kidmily.algoga_server.benefit.application.command.AdminMileageTransactionCommand;
 import com.kidmily.algoga_server.benefit.application.result.AdminMileageHistoryResult;
@@ -16,12 +17,14 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springdoc.core.annotations.ParameterObject;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
 
 @Tag(name = "Admin Mileage", description = "콘텐츠 매니저 마일리지 관리 API")
 @RestController
@@ -37,9 +40,11 @@ public class AdminMileageController {
     )
     @PreAuthorize("hasAnyAuthority('CONTENT_MANAGER', 'ROLE_CONTENT_MANAGER', 'SUPER_ADMIN', 'ROLE_SUPER_ADMIN')")
     @GetMapping
-    public ResponseEntity<ApiResponse<AdminMileageSummaryResponse>> getMileageUsers() {
+    public ResponseEntity<ApiResponse<AdminMileageSummaryResponse>> getMileageUsers(
+            @ParameterObject @PageableDefault(size = 10) Pageable pageable
+    ) {
         AdminMileageSummaryResponse response = AdminMileageSummaryResponse.from(
-                mileageUseCase.getMileageUsers()
+                mileageUseCase.getMileageUsers(pageable)
         );
 
         return ResponseEntity.ok(
@@ -58,20 +63,20 @@ public class AdminMileageController {
     @ApiErrorCodeExample(domain = BenefitErrorCode.class, value = {"MILEAGE_USER_NOT_FOUND"})
     @PreAuthorize("hasAnyAuthority('CONTENT_MANAGER', 'ROLE_CONTENT_MANAGER', 'SUPER_ADMIN', 'ROLE_SUPER_ADMIN')")
     @GetMapping("/users/{userId}/histories")
-    public ResponseEntity<ApiResponse<List<AdminMileageHistoryResponse>>> getUserMileageHistories(
+    public ResponseEntity<ApiResponse<PageResponse<AdminMileageHistoryResponse>>> getUserMileageHistories(
             @Parameter(description = "사용자 ID", example = "1")
-            @PathVariable Long userId
+            @PathVariable Long userId,
+
+            @ParameterObject @PageableDefault(size = 10) Pageable pageable
     ) {
-        List<AdminMileageHistoryResponse> response = mileageUseCase.getUserMileageHistories(userId)
-                .stream()
-                .map(AdminMileageHistoryResponse::from)
-                .toList();
+        Page<AdminMileageHistoryResponse> response = mileageUseCase.getUserMileageHistories(userId, pageable)
+                .map(AdminMileageHistoryResponse::from);
 
         return ResponseEntity.ok(
                 ApiResponse.success(
                         "ADMIN_MILEAGE_HISTORIES_FOUND",
                         "사용자 마일리지 상세 내역 조회에 성공했습니다.",
-                        response
+                        PageResponse.from(response)
                 )
         );
     }

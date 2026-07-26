@@ -6,14 +6,14 @@ import com.kidmily.algoga_server.qna.application.command.CreateCourseQnaCommentC
 import com.kidmily.algoga_server.qna.application.result.CourseQnaCommentResult;
 import com.kidmily.algoga_server.qna.application.result.CourseQnaDetailResult;
 import com.kidmily.algoga_server.qna.application.result.CourseQnaResult;
-
-import java.util.List;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 public interface CourseQnaUseCase {
 
     CourseQnaResult createQna(CreateCourseQnaCommand command);
 
-    List<CourseQnaResult> getQnas(Long courseId);
+    Page<CourseQnaResult> getQnas(Long courseId, Pageable pageable);
 
     CourseQnaDetailResult getQnaDetail(Long courseId, Long qnaId);
 

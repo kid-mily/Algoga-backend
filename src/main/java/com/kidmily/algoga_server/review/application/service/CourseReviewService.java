@@ -15,6 +15,8 @@ import com.kidmily.algoga_server.review.exception.ReviewErrorCode;
 import com.kidmily.algoga_server.review.exception.ReviewException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -70,21 +72,19 @@ public class CourseReviewService implements CourseReviewUseCase {
     }
 
     @Override
-    public List<CourseReviewResult> getReviews(Long courseId) {
+    public Page<CourseReviewResult> getReviews(Long courseId, Pageable pageable) {
         log.info("[Course Review Query] 리뷰 목록 조회 요청. courseId={}", courseId);
 
         validateCourse(courseId);
 
-        List<CourseReview> reviews = courseReviewRepository.findByCourseId(courseId);
+        Page<CourseReview> reviews = courseReviewRepository.findByCourseId(courseId, pageable);
 
         log.info("[Course Review Query] 리뷰 목록 조회 완료. courseId={}, count={}",
-                courseId, reviews.size());
+                courseId, reviews.getNumberOfElements());
 
-        Map<Long, UserProfilePort.UserProfile> profilesByUserId = findProfiles(reviews);
+        Map<Long, UserProfilePort.UserProfile> profilesByUserId = findProfiles(reviews.getContent());
 
-        return reviews.stream()
-                .map(review -> CourseReviewResult.from(review, profilesByUserId.get(review.getUserId())))
-                .toList();
+        return reviews.map(review -> CourseReviewResult.from(review, profilesByUserId.get(review.getUserId())));
     }
 
     @Override
@@ -104,15 +104,13 @@ public class CourseReviewService implements CourseReviewUseCase {
     }
 
     @Override
-    public List<AdminCourseReviewResult> getAdminReviews(Long courseId) {
+    public Page<AdminCourseReviewResult> getAdminReviews(Long courseId, Pageable pageable) {
         validateCourse(courseId);
 
-        List<CourseReview> reviews = courseReviewRepository.findAllByCourseId(courseId);
-        Map<Long, UserProfilePort.UserProfile> profilesByUserId = findProfiles(reviews);
+        Page<CourseReview> reviews = courseReviewRepository.findAllByCourseId(courseId, pageable);
+        Map<Long, UserProfilePort.UserProfile> profilesByUserId = findProfiles(reviews.getContent());
 
-        return reviews.stream()
-                .map(review -> AdminCourseReviewResult.from(review, profilesByUserId.get(review.getUserId())))
-                .toList();
+        return reviews.map(review -> AdminCourseReviewResult.from(review, profilesByUserId.get(review.getUserId())));
     }
 
     @Override

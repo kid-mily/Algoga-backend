@@ -2,6 +2,7 @@ package com.kidmily.algoga_server.qna.presentation.api;
 
 import com.kidmily.algoga_server.global.annotation.swagger.ApiErrorCodeExample;
 import com.kidmily.algoga_server.global.common.api.response.ApiResponse;
+import com.kidmily.algoga_server.global.common.api.response.PageResponse;
 import com.kidmily.algoga_server.global.exception.GlobalErrorCode;
 import com.kidmily.algoga_server.qna.application.command.CreateCourseQnaCommand;
 import com.kidmily.algoga_server.qna.application.command.CreateCourseQnaCommentCommand;
@@ -19,12 +20,14 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springdoc.core.annotations.ParameterObject;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
 
 @Tag(name = "강의 Q&A", description = "강의 Q&A 등록, 조회, 상세, 댓글/대댓글 API")
 @RestController
@@ -68,20 +71,20 @@ public class CourseQnaController {
     @Operation(summary = "강의 Q&A 목록 조회")
     @ApiErrorCodeExample(domain = QnaErrorCode.class, value = {"COURSE_NOT_FOUND"})
     @GetMapping
-    public ResponseEntity<ApiResponse<List<CourseQnaResponse>>> getQnas(
+    public ResponseEntity<ApiResponse<PageResponse<CourseQnaResponse>>> getQnas(
             @Parameter(description = "강의 ID", example = "3")
-            @PathVariable Long courseId
+            @PathVariable Long courseId,
+
+            @ParameterObject @PageableDefault(size = 10) Pageable pageable
     ) {
-        List<CourseQnaResponse> response = courseQnaUseCase.getQnas(courseId)
-                .stream()
-                .map(CourseQnaResponse::from)
-                .toList();
+        Page<CourseQnaResponse> response = courseQnaUseCase.getQnas(courseId, pageable)
+                .map(CourseQnaResponse::from);
 
         return ResponseEntity.ok(
                 ApiResponse.success(
                         "COURSE_QNAS_FOUND",
                         "Q&A 목록 조회에 성공했습니다.",
-                        response
+                        PageResponse.from(response)
                 )
         );
     }

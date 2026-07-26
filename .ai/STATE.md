@@ -80,3 +80,19 @@
 - Stats Manager 3 features (강의별 관심도 / 강의->예약 전환 / 쿠폰->예약 전환) were investigated but **intentionally not modified** — their real bottlenecks live in `stats`, `booking`, `benefit`, `accommodation` packages, all outside the allowed scope. User was informed and chose "content manager only for now." Full defect detail in WORKLOG.
 - `./gradlew compileJava` passes. `./gradlew test`: 221 tests, 12 failed, all confirmed pre-existing/environment-only (verified via `git stash -u` re-run before these changes) — none in the touched packages' own test classes.
 - No k6/Grafana before/after measurement was done for this slice (time-boxed by user). Quick-measurement alternatives (no shared-config-file edits needed) were given to the user in-chat and recorded in WORKLOG.
+
+## Current State 2026-07-26 (Stats Manager Work — Superseded/Discarded)
+
+- A separate `refactor/admin-stats-manager-query-optimization` branch (fixing 강의별 관심도/강의→예약 전환/쿠폰→예약 전환 in `stats`/`booking`/`benefit`) was built earlier today but **discarded and deleted** before being committed — a teammate independently fixed and merged an equivalent stats-manager optimization directly into `develop` (commits `4c0c73b`/`ee20307`, "[Perf] 통계매니저 조회 3종 최적화"). Confirmed redundant by the user; no action needed on stats manager going forward unless something new comes up.
+
+## Current State 2026-07-26 (Content Manager Pagination Unification + Mileage Fix)
+
+- New branch `refactor/admin-content-manager-pagination-unification`, created fresh from current `develop` (which now includes both the earlier content-manager fix and the teammate's stats-manager fix). Not committed yet.
+- User expanded scope for this branch to include `benefit` (mileage + coupon-management screens, both shown under the "콘텐츠 매니저" sidebar), explicitly excluding `packages` (패키지 관리, not the user's part).
+- Work done (full detail in `.ai/WORKLOG.md` 2026-07-26 "Content Manager Pagination Unification + Mileage N+1/Full-Scan Fix" entry):
+  1. Mileage (`benefit`): fixed the same `findAll()` full-scan + N+1 pattern as the earlier coupon bug (never fixed until now) — added bulk profile lookup, bulk history fetch, and a DB-side global-totals aggregate; both mileage endpoints now paginated.
+  2. Unified pagination to **10 items per page** across mileage, Q&A (public + admin), review (public + admin), diagnosis admin results, and course admin list (the last one already had `Pageable` but relied on Spring's undocumented default of 20).
+  3. Diagnosis admin results: fixed a genuine full-table-scan that occurred whenever an admin loaded the results screen with no filters (the natural default view).
+- This is a real API contract change (5 endpoints: mileage summary, mileage histories, Q&A list, review list, diagnosis results — responses that were bare arrays are now `PageResponse`-wrapped, or nest a `PageResponse` field for mileage summary). User was informed and accepted the frontend impact; a frontend handoff message was drafted in-chat.
+- `compileJava`/`test` pass; same 7 pre-existing/environment-only failing test classes as every other verification pass today — nothing new broken. Mileage has no test coverage at all (pre-existing gap, not introduced here).
+- Not verified against real MySQL in this environment — the new mileage aggregate query (`findGlobalTotals`) and paginated distinct-user query should get a manual check before merging.
