@@ -40,17 +40,17 @@ public class UserAdminController {
 
         Page<User> users = userService.getAdminUserListRaw(pageable);
 
-        // 친구 수는 유저마다 countFriends()를 따로 부르는 대신, 이 페이지에 있는 유저 ID를 모아
-        // 한 번에 배치 조회한다(N+1 방지). post/comment 카운트는 community 도메인 소관이라 그대로 둠.
+        // 친구/게시글/댓글 수 모두 유저마다 따로 부르는 대신, 이 페이지에 있는 유저 ID를 모아
+        // 한 번에 배치 조회한다(N+1 방지). 게시글/댓글 배치 메서드는 community 팀에서 추가해준 것.
         List<Long> userIds = users.map(User::getId).toList();
         Map<Long, Long> friendCountByUserId = friendQueryUseCase.countFriendsForUsers(userIds);
+        Map<Long, Long> postCountByUserId = postQueryUseCase.countMyPostsForUsers(userIds);
+        Map<Long, Long> commentCountByUserId = commentQueryUseCase.countMyCommentsForUsers(userIds);
 
         Page<AdminUserListResponse> response = users.map(user -> {
             long friendCount = friendCountByUserId.getOrDefault(user.getId(), 0L);
-
-            // 팀원이 만든 페이징 조회 메서드(1페이지)를 호출한 뒤, 그 안에 있는 전체 개수(totalElements)만 쏙 빼옵니다!
-            long postCount = postQueryUseCase.getMyPostsByPage(user.getId(), 1, null).totalElements();
-            long commentCount = commentQueryUseCase.getMyCommentsByPage(user.getId(), 1).totalElements();
+            long postCount = postCountByUserId.getOrDefault(user.getId(), 0L);
+            long commentCount = commentCountByUserId.getOrDefault(user.getId(), 0L);
 
             return AdminUserListResponse.of(user, friendCount, postCount, commentCount);
         });
