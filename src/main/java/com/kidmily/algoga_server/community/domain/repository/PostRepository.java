@@ -5,6 +5,7 @@ import com.kidmily.algoga_server.community.domain.model.PostTagType;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 // Application, Domain 계층이 사용할 레포지토리 포트(Port)
@@ -28,4 +29,6 @@ public interface PostRepository {
     void increaseViewCount(Long postId, long count);
 
     List<Post> findExpiredDeletedPosts(LocalDateTime threshold);
+
+    Map<Long, Long> countMyPostsForUsers(List<Long> userIds);
 }

@@ -20,5 +20,11 @@ public interface SpringDataCommentRepository extends JpaRepository<CommentJpaEnt
     @Query("SELECT COUNT(c) FROM CommentJpaEntity c WHERE c.userId = :userId AND c.isDeleted = false")
     long countMyComments(@Param("userId") Long userId);
 
+    // 관리자용 유저별 댓글 개수 배치 조회 (N+1 방지)
+    @Query("SELECT c.userId, COUNT(c) FROM CommentJpaEntity c " +
+            "WHERE c.isDeleted = false " +
+            "AND c.userId IN :userIds " +
+            "GROUP BY c.userId")
+    List<Object[]> countMyCommentsForUsers(@Param("userIds") List<Long> userIds);
 
 }

@@ -80,4 +80,11 @@ public interface SpringDataPostRepository extends JpaRepository<PostJpaEntity, L
     @Query("UPDATE PostJpaEntity p SET p.viewCount = p.viewCount + :count WHERE p.postId = :postId")
     void increaseViewCount(@Param("postId") Long postId, @Param("count") long count);
 
+    // 관리자용 유저별 게시글 개수 배치 조회 (N+1 방지)
+    @Query("SELECT p.authorId, COUNT(p) FROM PostJpaEntity p " +
+            "WHERE p.isDeleted = false " +
+            "AND p.authorId IN :authorIds " +
+            "GROUP BY p.authorId")
+    List<Object[]> countMyPostsForUsers(@Param("authorIds") List<Long> authorIds);
+
 }
