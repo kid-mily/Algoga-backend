@@ -17,6 +17,8 @@ import com.kidmily.algoga_server.qna.domain.model.CourseQnaComment;
 import com.kidmily.algoga_server.qna.domain.repository.CourseQnaCommentRepository;
 import com.kidmily.algoga_server.qna.domain.repository.CourseQnaRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import com.kidmily.algoga_server.notification.domain.event.QnaAnsweredEvent;
@@ -55,17 +57,15 @@ public class CourseQnaService implements CourseQnaUseCase {
 
     @Override
     @Transactional(readOnly = true)
-    public List<CourseQnaResult> getQnas(Long courseId) {
+    public Page<CourseQnaResult> getQnas(Long courseId, Pageable pageable) {
         findCourseIncludingDeleted(courseId);
 
-        List<CourseQna> qnas = courseQnaRepository.findByCourseId(courseId);
+        Page<CourseQna> qnas = courseQnaRepository.findByCourseId(courseId, pageable);
         Map<Long, UserProfilePort.UserProfile> profilesByUserId = userProfilePort.findProfiles(
-                qnas.stream().map(CourseQna::getUserId).distinct().toList()
+                qnas.getContent().stream().map(CourseQna::getUserId).distinct().toList()
         );
 
-        return qnas.stream()
-                .map(qna -> CourseQnaResult.from(qna, profilesByUserId.get(qna.getUserId())))
-                .toList();
+        return qnas.map(qna -> CourseQnaResult.from(qna, profilesByUserId.get(qna.getUserId())));
     }
 
     @Override

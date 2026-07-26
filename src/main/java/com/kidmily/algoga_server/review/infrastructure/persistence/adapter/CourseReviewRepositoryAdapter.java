@@ -5,6 +5,8 @@ import com.kidmily.algoga_server.review.domain.repository.CourseReviewRepository
 import com.kidmily.algoga_server.review.infrastructure.persistence.entity.CourseReviewJpaEntity;
 import com.kidmily.algoga_server.review.infrastructure.persistence.repository.SpringDataCourseReviewRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Repository;
 
 import java.time.LocalDateTime;
@@ -83,11 +85,15 @@ public class CourseReviewRepositoryAdapter implements CourseReviewRepository {
     }
 
     @Override
-    public List<CourseReview> findAllByCourseId(Long courseId) {
-        return springDataCourseReviewRepository.findByCourseIdOrderByCreatedAtDesc(courseId)
-                .stream()
-                .map(this::toDomain)
-                .toList();
+    public Page<CourseReview> findByCourseId(Long courseId, Pageable pageable) {
+        return springDataCourseReviewRepository.findByCourseIdAndDeletedFalseOrderByCreatedAtDesc(courseId, pageable)
+                .map(this::toDomain);
+    }
+
+    @Override
+    public Page<CourseReview> findAllByCourseId(Long courseId, Pageable pageable) {
+        return springDataCourseReviewRepository.findByCourseIdOrderByCreatedAtDesc(courseId, pageable)
+                .map(this::toDomain);
     }
 
     @Override

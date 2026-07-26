@@ -1,12 +1,12 @@
 package com.kidmily.algoga_server.benefit.application.result;
 
-import java.util.List;
+import org.springframework.data.domain.Page;
 
 public record AdminMileageSummaryResult(
-        int totalUserCount,
+        long totalUserCount,
         int totalMileage,
         int totalEarnedMileage,
         int totalUsedMileage,
-        List<AdminMileageUserResult> users
+        Page<AdminMileageUserResult> users
 ) {
 }

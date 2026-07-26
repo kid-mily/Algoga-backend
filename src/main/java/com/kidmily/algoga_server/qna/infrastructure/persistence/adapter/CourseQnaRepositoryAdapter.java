@@ -5,6 +5,8 @@ import com.kidmily.algoga_server.qna.domain.repository.CourseQnaRepository;
 import com.kidmily.algoga_server.qna.infrastructure.persistence.entity.CourseQnaJpaEntity;
 import com.kidmily.algoga_server.qna.infrastructure.persistence.repository.SpringDataCourseQnaRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
@@ -63,11 +65,9 @@ public class CourseQnaRepositoryAdapter implements CourseQnaRepository {
     }
 
     @Override
-    public List<CourseQna> findByCourseId(Long courseId) {
-        return springDataCourseQnaRepository.findByCourseIdOrderByCreatedAtDesc(courseId)
-                .stream()
-                .map(this::toDomain)
-                .toList();
+    public Page<CourseQna> findByCourseId(Long courseId, Pageable pageable) {
+        return springDataCourseQnaRepository.findByCourseIdOrderByCreatedAtDesc(courseId, pageable)
+                .map(this::toDomain);
     }
 
     @Override

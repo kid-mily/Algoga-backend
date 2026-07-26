@@ -25,6 +25,7 @@ import lombok.RequiredArgsConstructor;
 import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -107,7 +108,7 @@ public class AdminCourseController {
             @Parameter(description = "국가명 검색어", example = "일본")
             @RequestParam(required = false) String countryName,
 
-            @ParameterObject Pageable pageable
+            @ParameterObject @PageableDefault(size = 10) Pageable pageable
     ) {
         Page<AdminCourseResponse> response = courseUseCase.getCourses(countryId, countryName, pageable)
                 .map(AdminCourseResponse::from);
@@ -137,7 +138,7 @@ public class AdminCourseController {
             @Parameter(description = "국가명 검색어", example = "일본")
             @RequestParam(required = false) String countryName,
 
-            @ParameterObject Pageable pageable
+            @ParameterObject @PageableDefault(size = 10) Pageable pageable
     ) {
         Page<AdminCourseResponse> response = courseUseCase.getDeletedCourses(countryId, countryName, pageable)
                 .map(AdminCourseResponse::from);

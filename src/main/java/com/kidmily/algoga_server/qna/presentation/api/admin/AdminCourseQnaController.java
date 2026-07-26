@@ -3,6 +3,7 @@ package com.kidmily.algoga_server.qna.presentation.api.admin;
 import com.kidmily.algoga_server.admin.settings.annotation.CurrentManager;
 import com.kidmily.algoga_server.global.annotation.swagger.ApiErrorCodeExample;
 import com.kidmily.algoga_server.global.common.api.response.ApiResponse;
+import com.kidmily.algoga_server.global.common.api.response.PageResponse;
 import com.kidmily.algoga_server.global.exception.GlobalErrorCode;
 import com.kidmily.algoga_server.qna.application.command.AnswerCourseQnaCommand;
 import com.kidmily.algoga_server.qna.application.command.CreateCourseQnaCommentCommand;
@@ -19,12 +20,14 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springdoc.core.annotations.ParameterObject;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
 
 @Tag(name = "Admin Course Q&A", description = "콘텐츠 매니저 강의 Q&A 조회, 답변, 댓글/대댓글 API")
 @RestController
@@ -38,20 +41,20 @@ public class AdminCourseQnaController {
     @ApiErrorCodeExample(domain = QnaErrorCode.class, value = {"COURSE_NOT_FOUND"})
     @PreAuthorize("hasAnyAuthority('CONTENT_MANAGER', 'ROLE_CONTENT_MANAGER', 'SUPER_ADMIN', 'ROLE_SUPER_ADMIN')")
     @GetMapping
-    public ResponseEntity<ApiResponse<List<AdminCourseQnaResponse>>> getQnas(
+    public ResponseEntity<ApiResponse<PageResponse<AdminCourseQnaResponse>>> getQnas(
             @Parameter(description = "강의 ID", example = "3")
-            @PathVariable Long courseId
+            @PathVariable Long courseId,
+
+            @ParameterObject @PageableDefault(size = 10) Pageable pageable
     ) {
-        List<AdminCourseQnaResponse> response = courseQnaUseCase.getQnas(courseId)
-                .stream()
-                .map(AdminCourseQnaResponse::from)
-                .toList();
+        Page<AdminCourseQnaResponse> response = courseQnaUseCase.getQnas(courseId, pageable)
+                .map(AdminCourseQnaResponse::from);
 
         return ResponseEntity.ok(
                 ApiResponse.success(
                         "ADMIN_COURSE_QNAS_FOUND",
                         "관리자 Q&A 목록 조회에 성공했습니다.",
-                        response
+                        PageResponse.from(response)
                 )
         );
     }

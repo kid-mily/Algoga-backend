@@ -1,6 +1,8 @@
 package com.kidmily.algoga_server.qna.domain.repository;
 
 import com.kidmily.algoga_server.qna.domain.model.CourseQna;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 import java.util.List;
 import java.util.Optional;
@@ -13,7 +15,7 @@ public interface CourseQnaRepository {
 
     Optional<CourseQna> findByIdAndCourseId(Long qnaId, Long courseId);
 
-    List<CourseQna> findByCourseId(Long courseId);
+    Page<CourseQna> findByCourseId(Long courseId, Pageable pageable);
 
     List<Long> findIdsByUserId(Long userId);
 

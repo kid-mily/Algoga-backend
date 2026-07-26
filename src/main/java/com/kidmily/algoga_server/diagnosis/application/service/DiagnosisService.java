@@ -21,6 +21,8 @@ import com.kidmily.algoga_server.country.domain.repository.MapRepository;
 import com.kidmily.algoga_server.diagnosis.exception.DiagnosisErrorCode;
 import com.kidmily.algoga_server.diagnosis.exception.DiagnosisException;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import com.kidmily.algoga_server.country.domain.model.Country;
@@ -176,14 +178,13 @@ public class DiagnosisService implements DiagnosisUseCase {
 
     @Override
     @Transactional(readOnly = true)
-    public List<AdminDiagnosisResult> getAdminResults(Long userId, Long countryId) {
+    public Page<AdminDiagnosisResult> getAdminResults(Long userId, Long countryId, Pageable pageable) {
         if (countryId != null) {
             validateCountry(countryId);
         }
 
-        return diagnosisResultRepository.findForAdmin(userId, countryId).stream()
-                .map(AdminDiagnosisResult::from)
-                .toList();
+        return diagnosisResultRepository.findForAdmin(userId, countryId, pageable)
+                .map(AdminDiagnosisResult::from);
     }
 
     @Override

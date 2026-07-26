@@ -5,6 +5,8 @@ import com.kidmily.algoga_server.diagnosis.domain.repository.DiagnosisResultRepo
 import com.kidmily.algoga_server.diagnosis.infrastructure.persistence.entity.DiagnosisResultJpaEntity;
 import com.kidmily.algoga_server.diagnosis.infrastructure.persistence.repository.SpringDataDiagnosisResultRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
@@ -39,22 +41,20 @@ public class DiagnosisResultRepositoryAdapter implements DiagnosisResultReposito
 
 
     @Override
-    public List<DiagnosisResult> findForAdmin(Long userId, Long countryId) {
-        List<DiagnosisResultJpaEntity> entities;
+    public Page<DiagnosisResult> findForAdmin(Long userId, Long countryId, Pageable pageable) {
+        Page<DiagnosisResultJpaEntity> entities;
 
         if (userId != null && countryId != null) {
-            entities = springDataDiagnosisResultRepository.findByUserIdAndCountryIdOrderByCreatedAtDesc(userId, countryId);
+            entities = springDataDiagnosisResultRepository.findByUserIdAndCountryIdOrderByCreatedAtDesc(userId, countryId, pageable);
         } else if (userId != null) {
-            entities = springDataDiagnosisResultRepository.findByUserIdOrderByCreatedAtDesc(userId);
+            entities = springDataDiagnosisResultRepository.findByUserIdOrderByCreatedAtDesc(userId, pageable);
         } else if (countryId != null) {
-            entities = springDataDiagnosisResultRepository.findByCountryIdOrderByCreatedAtDesc(countryId);
+            entities = springDataDiagnosisResultRepository.findByCountryIdOrderByCreatedAtDesc(countryId, pageable);
         } else {
-            entities = springDataDiagnosisResultRepository.findAllByOrderByCreatedAtDesc();
+            entities = springDataDiagnosisResultRepository.findAllByOrderByCreatedAtDesc(pageable);
         }
 
-        return entities.stream()
-                .map(this::toDomain)
-                .toList();
+        return entities.map(this::toDomain);
     }
 
     @Override

@@ -6,6 +6,8 @@ import com.kidmily.algoga_server.diagnosis.application.command.UpdateDiagnosisQu
 import com.kidmily.algoga_server.diagnosis.application.result.AdminDiagnosisResult;
 import com.kidmily.algoga_server.diagnosis.application.result.DiagnosisQuestionResult;
 import com.kidmily.algoga_server.diagnosis.application.result.DiagnosisResultView;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 import java.util.List;
 
@@ -24,7 +26,7 @@ public interface DiagnosisUseCase {
     List<DiagnosisResultView> getLatestResultsByCountry(Long userId);
 
 
-    List<AdminDiagnosisResult> getAdminResults(Long userId, Long countryId);
+    Page<AdminDiagnosisResult> getAdminResults(Long userId, Long countryId, Pageable pageable);
 
     void deleteQuestion(Long questionId);
 }

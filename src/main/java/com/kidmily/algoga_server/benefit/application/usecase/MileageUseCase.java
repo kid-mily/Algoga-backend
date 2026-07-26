@@ -4,14 +4,14 @@ import com.kidmily.algoga_server.benefit.application.command.AdminMileageTransac
 import com.kidmily.algoga_server.benefit.application.command.RewardReferralSignupCommand;
 import com.kidmily.algoga_server.benefit.application.result.AdminMileageHistoryResult;
 import com.kidmily.algoga_server.benefit.application.result.AdminMileageSummaryResult;
-
-import java.util.List;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 public interface MileageUseCase {
 
-    AdminMileageSummaryResult getMileageUsers();
+    AdminMileageSummaryResult getMileageUsers(Pageable pageable);
 
-    List<AdminMileageHistoryResult> getUserMileageHistories(Long userId);
+    Page<AdminMileageHistoryResult> getUserMileageHistories(Long userId, Pageable pageable);
 
     AdminMileageHistoryResult earnMileage(AdminMileageTransactionCommand command);
 
