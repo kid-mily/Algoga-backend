@@ -9,7 +9,9 @@ import com.kidmily.algoga_server.learningprogress.domain.repository.LearningProg
 import com.kidmily.algoga_server.stats.presentation.api.response.InterestCountryResponse;
 import com.kidmily.algoga_server.stats.presentation.api.response.InterestLectureResponse;
 import com.kidmily.algoga_server.stats.presentation.api.response.InterestSummaryResponse;
+import com.kidmily.algoga_server.stats.settings.cache.StatsCacheType;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -75,6 +77,7 @@ public class InterestStatsService {
         return "RISK";
     }
 
+    @Cacheable(value = StatsCacheType.Const.INTEREST_SUMMARY, key = "'all'")
     @Transactional(readOnly = true)
     public InterestSummaryResponse getSummary() {
         Snapshot s = load();
@@ -109,6 +112,7 @@ public class InterestStatsService {
         return false;
     }
 
+    @Cacheable(value = StatsCacheType.Const.INTEREST_COUNTRIES, key = "#search == null ? '' : #search")
     @Transactional(readOnly = true)
     public List<InterestCountryResponse> getCountries(String search) {
         Snapshot s = load();
@@ -128,6 +132,7 @@ public class InterestStatsService {
      * 강의별 관심도. 순위(rank)는 <b>검색 필터 전에</b> 전체 기준으로 매긴다.
      * (검색해도 그 강의의 실제 전체 순위가 유지되도록 — 필터 후 매기면 매번 #1부터 다시 매겨짐)
      */
+    @Cacheable(value = StatsCacheType.Const.INTEREST_LECTURES, key = "#search == null ? '' : #search")
     @Transactional(readOnly = true)
     public List<InterestLectureResponse> getLectures(String search) {
         Snapshot s = load();

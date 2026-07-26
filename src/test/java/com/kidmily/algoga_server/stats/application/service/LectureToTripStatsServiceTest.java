@@ -7,6 +7,7 @@ import com.kidmily.algoga_server.booking.domain.model.BookingStatus;
 import com.kidmily.algoga_server.booking.domain.repository.BookingRepository;
 import com.kidmily.algoga_server.course.domain.model.Course;
 import com.kidmily.algoga_server.country.domain.repository.CountryRepository;
+import com.kidmily.algoga_server.completion.domain.model.CourseCompletion;
 import com.kidmily.algoga_server.completion.domain.repository.CourseCompletionRepository;
 import com.kidmily.algoga_server.course.domain.repository.CourseRepository;
 import com.kidmily.algoga_server.payment.domain.model.Payment;
@@ -72,20 +73,20 @@ class LectureToTripStatsServiceTest {
         when(courseRepository.findBasicByIdIn(anyList())).thenReturn(List.of(course));
 
         Accommodation acc = Accommodation.reconstitute(1L, 1L, "호텔", "주소", "img", 400_000, 3, "설명");
-        when(accommodationRepository.findById(1L)).thenReturn(java.util.Optional.of(acc));
+        when(accommodationRepository.findByIdIn(anyList())).thenReturn(List.of(acc));
 
         // user1: 후행 예약(D+5), user2: 같은날 예약(번들→제외), user4: 후행 예약(D+3), user3/5: 예약 없음
-        when(bookingRepository.findByUserId(1L)).thenReturn(List.of(bookingAt(1L, D.plusDays(5))));
-        when(bookingRepository.findByUserId(2L)).thenReturn(List.of(bookingAt(2L, D)));            // 번들
-        when(bookingRepository.findByUserId(3L)).thenReturn(List.of());
-        when(bookingRepository.findByUserId(4L)).thenReturn(List.of(bookingAt(4L, D.plusDays(3))));
-        when(bookingRepository.findByUserId(5L)).thenReturn(List.of());
+        // (기존 유저별 findByUserId → 배치 findByUserIdIn 으로 변경)
+        when(bookingRepository.findByUserIdIn(anyList())).thenReturn(List.of(
+                bookingAt(1L, D.plusDays(5)),
+                bookingAt(2L, D),               // 번들
+                bookingAt(4L, D.plusDays(3))));
 
-        // 완강: user1, user3 (user4/5 미완강). user2는 번들이라 완강 조회 안 됨
-        when(courseCompletionRepository.existsByUserIdAndCourseId(1L, 10L)).thenReturn(true);
-        when(courseCompletionRepository.existsByUserIdAndCourseId(3L, 10L)).thenReturn(true);
-        when(courseCompletionRepository.existsByUserIdAndCourseId(4L, 10L)).thenReturn(false);
-        when(courseCompletionRepository.existsByUserIdAndCourseId(5L, 10L)).thenReturn(false);
+        // 완강: user1, user3 (user4/5 미완강). user2는 번들이라 전환 모집단에서 빠지지만 완강 배치엔 포함돼도 무방
+        // (기존 (유저,강의)별 exists → 배치 findByUserIdInAndCourseIdIn 으로 변경)
+        when(courseCompletionRepository.findByUserIdInAndCourseIdIn(anyList(), anyList())).thenReturn(List.of(
+                CourseCompletion.withId(101L, 1L, 10L, "C1", D),
+                CourseCompletion.withId(103L, 3L, 10L, "C3", D)));
 
         // when
         LectureToTripSummaryResponse res = service.getSummary(LocalDate.of(2026, 5, 1), LocalDate.of(2026, 7, 1));

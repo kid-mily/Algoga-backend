@@ -41,6 +41,17 @@ public class BookingRepositoryAdapter implements BookingRepository {
     }
 
     @Override
+    public List<Booking> findByUserIdIn(List<Long> userIds) {
+        if (userIds == null || userIds.isEmpty()) {
+            return List.of();
+        }
+        return springDataBookingRepository.findByUserIdIn(userIds)
+                .stream()
+                .map(bookingMapper::toDomain)
+                .toList();
+    }
+
+    @Override
     public List<Booking> findByStatusAndCheckInDateBefore(BookingStatus status, LocalDate date) {
         return springDataBookingRepository.findByStatusAndCheckInDateBefore(status, date)
                 .stream()

@@ -16,6 +16,9 @@ public interface BookingRepository {
 
     List<Booking> findByUserId(Long userId);
 
+    // 여러 유저의 예약을 한 번에 조회 (통계에서 유저별 findByUserId 반복 호출 = N+1 제거용)
+    List<Booking> findByUserIdIn(List<Long> userIds);
+
     List<Booking> findByStatusAndCheckInDateBefore(BookingStatus status, LocalDate date);
 
     Booking updateStatus(Long bookingId, BookingStatus status);
