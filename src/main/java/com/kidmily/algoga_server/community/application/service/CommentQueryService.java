@@ -15,6 +15,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Map;
 
 @Service
 @Transactional(readOnly = true)
@@ -72,6 +73,13 @@ public class CommentQueryService implements CommentQueryUseCase {
                 comment.getCreatedAt()
         );
     }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Map<Long, Long> countMyCommentsForUsers(List<Long> userIds) {
+        return commentRepository.countMyCommentsForUsers(userIds);
+    }
+
 
 
 }

@@ -19,6 +19,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Stream;
 
@@ -271,6 +272,13 @@ public class PostQueryService implements PostQueryUseCase {
                 comments,
                 post.getCreatedAt()
         );
+    }
+
+    // PostQueryService
+    @Override
+    @Transactional(readOnly = true)
+    public Map<Long, Long> countMyPostsForUsers(List<Long> userIds) {
+        return postRepository.countMyPostsForUsers(userIds);
     }
 
 }

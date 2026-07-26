@@ -7,6 +7,7 @@ import com.kidmily.algoga_server.community.presentation.api.response.PostRespons
 import com.kidmily.algoga_server.community.presentation.api.response.TagResponse;
 
 import java.util.List;
+import java.util.Map;
 
 public interface PostQueryUseCase {
     PostResponse getPost(Long postId, String viewerKey);
@@ -28,4 +29,6 @@ public interface PostQueryUseCase {
 
     // 신규: 게시글 목록 필터바용 태그 (카테고리 + 인기 나라 5개)
     List<TagResponse> getPostFilterTags();
+
+    Map<Long, Long> countMyPostsForUsers(List<Long> userIds);
 }

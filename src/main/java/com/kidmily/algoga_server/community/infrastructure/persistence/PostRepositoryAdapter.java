@@ -16,7 +16,9 @@ import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 @Repository
@@ -173,5 +175,22 @@ public class PostRepositoryAdapter implements PostRepository {
     @Transactional
     public void increaseViewCount(Long postId, long count) {
         springDataRepository.increaseViewCount(postId, count);
+    }
+
+    @Override
+    public Map<Long, Long> countMyPostsForUsers(List<Long> userIds) {
+        if (userIds == null || userIds.isEmpty()) {
+            return Map.of();
+        }
+
+        // 게시글이 없는 유저는 GROUP BY 결과에 안 나오므로 0으로 먼저 채운다
+        Map<Long, Long> counts = new HashMap<>();
+        for (Long id : userIds) {
+            counts.put(id, 0L);
+        }
+        for (Object[] row : springDataRepository.countMyPostsForUsers(userIds)) {
+            counts.put((Long) row[0], (Long) row[1]);
+        }
+        return counts;
     }
 }

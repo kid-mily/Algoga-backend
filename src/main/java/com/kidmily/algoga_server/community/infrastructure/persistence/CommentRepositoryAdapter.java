@@ -11,7 +11,9 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Repository;
 
 import java.time.LocalDateTime;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 @Repository
@@ -103,5 +105,21 @@ public class CommentRepositoryAdapter implements CommentRepository {
                 .stream()
                 .map(commentMapper::toDomain)
                 .toList();
+    }
+
+    @Override
+    public Map<Long, Long> countMyCommentsForUsers(List<Long> userIds) {
+        if (userIds == null || userIds.isEmpty()) {
+            return Map.of();
+        }
+
+        Map<Long, Long> counts = new HashMap<>();
+        for (Long id : userIds) {
+            counts.put(id, 0L);
+        }
+        for (Object[] row : springDataRepository.countMyCommentsForUsers(userIds)) {
+            counts.put((Long) row[0], (Long) row[1]);
+        }
+        return counts;
     }
 }

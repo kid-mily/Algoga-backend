@@ -4,6 +4,7 @@ import com.kidmily.algoga_server.community.domain.model.Comment;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 public interface CommentRepository {
@@ -18,4 +19,5 @@ public interface CommentRepository {
     List<Comment> findMyCommentsByPage(Long userId, int page, int size);
     long countMyComments(Long userId);
     List<Comment> findExpiredDeletedComments(LocalDateTime threshold);
+    Map<Long, Long> countMyCommentsForUsers(List<Long> userIds);
 }
