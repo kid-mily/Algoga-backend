@@ -24,6 +24,8 @@ public interface CourseReviewRepository {
 
     Page<CourseReview> findAllByCourseId(Long courseId, Pageable pageable);
 
+    Page<CourseReview> searchForAdmin(Long courseId, Integer rating, Boolean hidden, String keyword, Pageable pageable);
+
     Map<Long, Double> findAverageRatingsByCourseIds(List<Long> courseIds);
 
     Set<Long> findReviewedCourseIdsByUserIdAndCourseIds(Long userId, List<Long> courseIds);

@@ -2,6 +2,7 @@ package com.kidmily.algoga_server.review.application.usecase;
 
 import com.kidmily.algoga_server.review.application.command.CreateCourseReviewCommand;
 import com.kidmily.algoga_server.review.application.command.UpdateCourseReviewVisibilityCommand;
+import com.kidmily.algoga_server.review.application.result.AdminCourseReviewListItemResult;
 import com.kidmily.algoga_server.review.application.result.AdminCourseReviewResult;
 import com.kidmily.algoga_server.review.application.result.CourseReviewResult;
 import com.kidmily.algoga_server.review.application.result.CourseReviewSummaryResult;
@@ -17,6 +18,14 @@ public interface CourseReviewUseCase {
     CourseReviewSummaryResult getReviewSummary(Long courseId);
 
     Page<AdminCourseReviewResult> getAdminReviews(Long courseId, Pageable pageable);
+
+    Page<AdminCourseReviewListItemResult> getAdminReviewList(
+            Long courseId,
+            Integer rating,
+            Boolean hidden,
+            String keyword,
+            Pageable pageable
+    );
 
     AdminCourseReviewResult getAdminReview(Long courseId, Long reviewId);
 

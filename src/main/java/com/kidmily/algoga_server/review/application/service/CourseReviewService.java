@@ -3,12 +3,14 @@ package com.kidmily.algoga_server.review.application.service;
 import com.kidmily.algoga_server.review.application.command.CreateCourseReviewCommand;
 import com.kidmily.algoga_server.review.application.command.UpdateCourseReviewVisibilityCommand;
 import com.kidmily.algoga_server.course.application.port.UserProfilePort;
+import com.kidmily.algoga_server.review.application.result.AdminCourseReviewListItemResult;
 import com.kidmily.algoga_server.review.application.result.AdminCourseReviewResult;
 import com.kidmily.algoga_server.review.application.result.CourseReviewResult;
 import com.kidmily.algoga_server.review.application.result.CourseReviewSummaryResult;
 import com.kidmily.algoga_server.review.application.usecase.CourseReviewUseCase;
 import com.kidmily.algoga_server.review.domain.model.CourseReview;
 import com.kidmily.algoga_server.completion.domain.repository.CourseCompletionRepository;
+import com.kidmily.algoga_server.course.domain.model.Course;
 import com.kidmily.algoga_server.course.domain.repository.CourseRepository;
 import com.kidmily.algoga_server.review.domain.repository.CourseReviewRepository;
 import com.kidmily.algoga_server.review.exception.ReviewErrorCode;
@@ -22,6 +24,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -111,6 +114,29 @@ public class CourseReviewService implements CourseReviewUseCase {
         Map<Long, UserProfilePort.UserProfile> profilesByUserId = findProfiles(reviews.getContent());
 
         return reviews.map(review -> AdminCourseReviewResult.from(review, profilesByUserId.get(review.getUserId())));
+    }
+
+    @Override
+    public Page<AdminCourseReviewListItemResult> getAdminReviewList(
+            Long courseId,
+            Integer rating,
+            Boolean hidden,
+            String keyword,
+            Pageable pageable
+    ) {
+        Page<CourseReview> reviews = courseReviewRepository.searchForAdmin(courseId, rating, hidden, keyword, pageable);
+
+        Map<Long, String> courseTitleById = courseRepository.findBasicByIdIn(
+                        reviews.getContent().stream().map(CourseReview::getCourseId).distinct().toList()
+                ).stream()
+                .collect(Collectors.toMap(Course::getId, Course::getTitle));
+        Map<Long, UserProfilePort.UserProfile> profilesByUserId = findProfiles(reviews.getContent());
+
+        return reviews.map(review -> AdminCourseReviewListItemResult.from(
+                review,
+                courseTitleById.get(review.getCourseId()),
+                profilesByUserId.get(review.getUserId())
+        ));
     }
 
     @Override

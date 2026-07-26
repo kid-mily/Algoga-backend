@@ -4,6 +4,7 @@ import com.kidmily.algoga_server.benefit.application.command.CreateCouponPolicyC
 import com.kidmily.algoga_server.benefit.application.command.IssueWelcomeCouponCommand;
 import com.kidmily.algoga_server.benefit.application.command.UpdateCouponPolicyCommand;
 import com.kidmily.algoga_server.benefit.application.port.LmsCoursePort;
+import com.kidmily.algoga_server.benefit.application.result.AdminCouponPolicyListItemResult;
 import com.kidmily.algoga_server.benefit.application.result.CouponPolicyResult;
 import com.kidmily.algoga_server.benefit.application.result.CouponPolicyStatisticsResult;
 import com.kidmily.algoga_server.benefit.application.result.CouponStatisticsResult;
@@ -17,6 +18,8 @@ import com.kidmily.algoga_server.benefit.exception.BenefitException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
@@ -83,6 +86,28 @@ public class CouponService implements CouponUseCase {
         return couponPolicies.stream()
                 .map(CouponPolicyResult::from)
                 .toList();
+    }
+
+    @Override
+    public Page<AdminCouponPolicyListItemResult> getAdminCouponPolicies(
+            Long courseId,
+            Boolean active,
+            String keyword,
+            Pageable pageable
+    ) {
+        Page<CouponPolicy> couponPolicies = couponPolicyRepository.searchForAdmin(courseId, active, keyword, pageable);
+
+        Map<Long, LmsCoursePort.CourseSummary> courseSummaries = lmsCoursePort.findCourseSummaries(
+                couponPolicies.getContent().stream().map(CouponPolicy::getCourseId).distinct().toList()
+        );
+
+        return couponPolicies.map(couponPolicy -> {
+            LmsCoursePort.CourseSummary courseSummary = courseSummaries.get(couponPolicy.getCourseId());
+            return AdminCouponPolicyListItemResult.from(
+                    couponPolicy,
+                    courseSummary == null ? null : courseSummary.courseTitle()
+            );
+        });
     }
 
     @Override

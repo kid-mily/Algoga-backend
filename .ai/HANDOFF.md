@@ -104,3 +104,19 @@ This was found and discussed but **intentionally left unfixed** this session —
 - `compileJava`/`test` pass; identical 7 pre-existing/environment-only failing test classes as every other check today. No test coverage exists for mileage at all (pre-existing gap).
 - **Needs a real-MySQL check before merging** (no local DB here): the new mileage `findGlobalTotals` aggregate query (case-insensitive type matching + EARN-expiry condition) and the new paginated distinct-user-id query are the most complex/novel of this batch and have only been verified by compiling, not by running against real data.
 - Nothing committed yet on this branch as of this entry.
+
+## Current Update 2026-07-26 Unified Admin List APIs (Quiz / Coupon Policy / Q&A / Review)
+
+- Frontend sent a formal request explaining the exact problem: content-manager screens fetch all courses then `Promise.all` a per-course quiz/Q&A/coupon-policy/review call (1+N requests), with Q&A/review at `size=1000` each. They specified 4 exact endpoints, common filters (`page`/`size`/`courseId`/`keyword`/domain-status), common response shape (`content`/`page`/`size`/`totalElements`/`totalPages`), `courseId`+`courseTitle` on every row, plus quiz max-5/min-1 server validation, plus package-list `countryName`/`accommodationName` enrichment.
+- Built all 4 new endpoints on the same branch as the pagination-unification work (`refactor/admin-content-manager-pagination-unification`), **additive only** — none of the existing per-course endpoints changed, so no breaking change for screens not yet migrated:
+  1. `GET /api/v1/admin/quizzes` (courseId, keyword)
+  2. `GET /api/v1/admin/coupon-policies` (courseId, active, keyword)
+  3. `GET /api/v1/admin/course-qnas` (courseId, answered, keyword)
+  4. `GET /api/v1/admin/course-reviews` (courseId, rating, hidden, keyword)
+  All paginated (default size 10), `PageResponse<T>`, `courseId`+`courseTitle` bulk-resolved per page (never per-row) via `courseRepository.findBasicByIdIn` (quiz/qna/review — same package family) or `LmsCoursePort.findCourseSummaries` (coupon-policy — benefit's anti-corruption port to course, matching its existing `getCouponStatistics` convention).
+  - Also added quiz min-count validation: `QuizErrorCode.QUIZ_MIN_COUNT_REQUIRED` (LMS_045), rejects deleting a course's last remaining quiz (mirrors the existing max-5-on-create check).
+- **Not implemented, flagged instead of silently done**: package-list `countryName`/`accommodationName` — that's the `packages` domain, explicitly out of scope per the user's earlier "절대 패키지 관리는 수정하지마" instruction.
+- **Discovered in passing, not fixed**: `AdminQuizController`'s delete endpoint doc comment claims soft delete, and the domain model has unused `deleted`/`softDelete()` fields, but the actual repository adapter does a real hard delete. Flagged to the user as a separate issue needing a product decision (potential FK issue with `quiz_submission_answer` rows referencing a hard-deleted quiz) — not touched as part of this task.
+- `compileJava`/`test` pass, same pre-existing failing-test baseline as all day. No test coverage yet for the new min-count check or any of the 4 new endpoints.
+- **Needs real-MySQL verification before merging** — none of the new `searchForAdmin` JPQL nullable-filter queries have been run against real data in this environment.
+- Nothing committed yet on this branch as of this entry.

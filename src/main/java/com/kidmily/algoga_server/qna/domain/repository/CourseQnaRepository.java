@@ -17,6 +17,8 @@ public interface CourseQnaRepository {
 
     Page<CourseQna> findByCourseId(Long courseId, Pageable pageable);
 
+    Page<CourseQna> searchForAdmin(Long courseId, String status, String keyword, Pageable pageable);
+
     List<Long> findIdsByUserId(Long userId);
 
     void deleteAllByUserId(Long userId);
