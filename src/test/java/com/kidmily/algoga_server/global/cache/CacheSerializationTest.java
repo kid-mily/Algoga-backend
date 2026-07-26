@@ -6,6 +6,7 @@ import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.kidmily.algoga_server.booking.domain.model.BookingStatus;
 import com.kidmily.algoga_server.booking.presentation.api.response.BookingResponse;
+import com.kidmily.algoga_server.flight.domain.model.FlightInfo;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.data.redis.serializer.GenericJackson2JsonRedisSerializer;
@@ -71,6 +72,29 @@ class CacheSerializationTest {
         assertEquals(LocalDate.of(2026, 8, 15), first.checkInDate());
         assertEquals(231_000, first.depositPrice());
         assertEquals(true, first.installmentAllowed());
+    }
+
+    @Test
+    @DisplayName("항공편 검색 결과(List<FlightInfo>)가 캐시에 저장·복원된다 (flightSearch 캐시)")
+    void 항공편_리스트_왕복() {
+        // flightSearch @Cacheable 의 실제 값 타입. FlightInfo 는 no-arg 생성자가 없어
+        // @JsonCreator 가 없으면 여기서 역직렬화가 깨진다(= 캐시 읽기 500).
+        List<FlightInfo> value = List.of(
+                FlightInfo.of("KE001", "대한항공", "ICN", "NRT",
+                        LocalDateTime.of(2026, 8, 15, 9, 0), LocalDateTime.of(2026, 8, 15, 11, 30),
+                        "2h 30m", 300_000));
+        GenericJackson2JsonRedisSerializer serializer = serializer();
+
+        Object restored = serializer.deserialize(serializer.serialize(value));
+
+        List<?> list = assertInstanceOf(List.class, restored);
+        assertEquals(1, list.size());
+        FlightInfo first = assertInstanceOf(FlightInfo.class, list.get(0));
+        assertEquals("KE001", first.getFlightNumber());
+        assertEquals("대한항공", first.getAirline());
+        assertEquals("NRT", first.getArrival());
+        assertEquals(LocalDateTime.of(2026, 8, 15, 9, 0), first.getDepartureTime());
+        assertEquals(300_000, first.getPrice());
     }
 
     @Test

@@ -19,8 +19,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Duration;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -67,11 +69,18 @@ public class PackageQueryService implements PackageQueryUseCase {
         return toResponseWithFlight(travelPackage, accommodation, countryName);
     }
 
+    /** 항공편 실시간 조회 키 — 같은 (목적지, 체크인일)이면 결과가 동일하다. */
+    private record FlightKey(String destination, LocalDate checkInDate) {}
+
     /**
      * 목록 응답 변환. 숙소/국가를 패키지마다 개별 조회하면 N+1이 되므로,
      * 필요한 id를 모아 한 번에 조회(배치)한 뒤 각 패키지에 매핑한다.
      */
     private List<PackageResponse> toResponses(List<TravelPackage> packages) {
+        if (packages.isEmpty()) {
+            return List.of();
+        }
+
         List<Long> accommodationIds = packages.stream()
                 .map(TravelPackage::getAccommodationId)
                 .filter(Objects::nonNull)
@@ -90,47 +99,83 @@ public class PackageQueryService implements PackageQueryUseCase {
                 .stream()
                 .collect(Collectors.toMap(Country::getId, Country::getName));
 
-        if (packages.isEmpty()) {
-            return List.of();
-        }
+        // 항공편은 (목적지, 체크인일) 단위로만 달라진다. 같은 키의 패키지가 여러 개여도 외부 API는 한 번만
+        // 호출하도록 키를 중복 제거한 뒤 서로 다른 키만 병렬로 조회한다(기존엔 패키지마다 개별 호출 → 중복 호출).
+        List<FlightKey> distinctKeys = packages.stream()
+                .filter(p -> p.getFlightDestination() != null)
+                .map(p -> new FlightKey(p.getFlightDestination(), p.getCheckInDate()))
+                .distinct()
+                .toList();
+        Map<FlightKey, List<FlightInfo>> flightsByKey = fetchFlightsByKey(distinctKeys);
 
-        // 항공편은 패키지마다 실시간 외부 API 호출이라, 순차로 하면 N건×응답시간으로 목록이 느려진다.
-        // IO-bound라 CPU 코어 수에 좌우되는 공용 풀(parallelStream) 대신 전용 스레드풀로 동시에 조회한다.
-        // 이 구간은 DB 접근이 없고(숙소/국가는 위에서 이미 배치 조회 완료), 항공 조회 서비스도
-        // 무상태(외부 HTTP + 서킷브레이커, thread-safe)라 병렬 안전하다. 개별 조회 실패는 그 패키지만
-        // flightInfo=null 처리(toResponseWithFlight 내부 try/catch). futures를 순서대로 join → 원래 순서 보존.
-        ExecutorService flightPool = Executors.newFixedThreadPool(Math.min(packages.size(), MAX_FLIGHT_THREADS));
+        // 각 패키지 응답 생성 — 외부 호출 없이 위에서 조회한 flightsByKey 를 공유해 매핑(원래 순서 보존).
+        return packages.stream()
+                .map(p -> buildResponse(
+                        p,
+                        p.getFlightDestination() == null ? null
+                                : flightsByKey.get(new FlightKey(p.getFlightDestination(), p.getCheckInDate())),
+                        accommodationById.get(p.getAccommodationId()),
+                        countryNameById.get(p.getCountryId())))
+                .toList();
+    }
+
+    /**
+     * 서로 다른 (목적지, 체크인일) 키만 병렬로 실시간 조회한다.
+     * IO-bound라 공용 풀(parallelStream) 대신 전용 스레드풀 사용. 조회 서비스는 무상태(외부 HTTP +
+     * 서킷브레이커, thread-safe)라 병렬 안전하고, DB 접근도 없다(숙소/국가는 이미 배치 조회 완료).
+     * 개별 키 실패는 그 키만 빈 결과로 흡수(safeSearch) → 해당 패키지 flightInfo=null.
+     */
+    private Map<FlightKey, List<FlightInfo>> fetchFlightsByKey(List<FlightKey> keys) {
+        if (keys.isEmpty()) {
+            return Map.of();
+        }
+        ExecutorService flightPool = Executors.newFixedThreadPool(Math.min(keys.size(), MAX_FLIGHT_THREADS));
         try {
-            List<CompletableFuture<PackageResponse>> futures = packages.stream()
-                    .map(p -> CompletableFuture.supplyAsync(() -> toResponseWithFlight(
-                            p,
-                            accommodationById.get(p.getAccommodationId()),
-                            countryNameById.get(p.getCountryId())), flightPool))
+            List<CompletableFuture<Map.Entry<FlightKey, List<FlightInfo>>>> futures = keys.stream()
+                    .map(k -> CompletableFuture.supplyAsync(() -> Map.entry(k, safeSearch(k)), flightPool))
                     .toList();
-            return futures.stream().map(CompletableFuture::join).toList();
+            Map<FlightKey, List<FlightInfo>> result = new HashMap<>();
+            for (CompletableFuture<Map.Entry<FlightKey, List<FlightInfo>>> future : futures) {
+                Map.Entry<FlightKey, List<FlightInfo>> entry = future.join();
+                result.put(entry.getKey(), entry.getValue());
+            }
+            return result;
         } finally {
             flightPool.shutdown();
+        }
+    }
+
+    private List<FlightInfo> safeSearch(FlightKey key) {
+        try {
+            return flightSearchUseCase.searchFlights(key.destination(), key.checkInDate());
+        } catch (Exception e) {
+            log.warn("[PackageQueryService] 항공편 실시간 조회 실패 - destination: {}, date: {}, error: {}",
+                    key.destination(), key.checkInDate(), e.getMessage());
+            return List.of();
         }
     }
 
     private PackageResponse toResponseWithFlight(TravelPackage travelPackage,
                                                  Accommodation accommodation,
                                                  String countryName) {
+        List<FlightInfo> flights = travelPackage.getFlightDestination() == null ? null
+                : safeSearch(new FlightKey(travelPackage.getFlightDestination(), travelPackage.getCheckInDate()));
+        return buildResponse(travelPackage, flights, accommodation, countryName);
+    }
+
+    /** 조회된 항공편 목록으로 응답을 만든다(외부 호출 없음). 저장 항공사 우선 매칭 + 오는편 생성. */
+    private PackageResponse buildResponse(TravelPackage travelPackage,
+                                          List<FlightInfo> flights,
+                                          Accommodation accommodation,
+                                          String countryName) {
         long nights = ChronoUnit.DAYS.between(travelPackage.getCheckInDate(), travelPackage.getCheckOutDate());
 
         FlightSearchResponse outbound = null;
         FlightSearchResponse returnFlight = null;
-        try {
-            List<FlightInfo> flights = flightSearchUseCase.searchFlights(
-                    travelPackage.getFlightDestination(), travelPackage.getCheckInDate());
-            FlightInfo picked = pickByAirline(flights, travelPackage.getAirline());
-            if (picked != null) {
-                outbound = FlightSearchResponse.from(picked);
-                returnFlight = buildReturnFlight(outbound, travelPackage.getCheckOutDate());
-            }
-        } catch (Exception e) {
-            log.warn("[PackageQueryService] 항공편 실시간 조회 실패 - packageId: {}, error: {}",
-                    travelPackage.getId(), e.getMessage());
+        FlightInfo picked = pickByAirline(flights, travelPackage.getAirline());
+        if (picked != null) {
+            outbound = FlightSearchResponse.from(picked);
+            returnFlight = buildReturnFlight(outbound, travelPackage.getCheckOutDate());
         }
         return PackageResponse.of(travelPackage, outbound, returnFlight, nights, accommodation, countryName);
     }
