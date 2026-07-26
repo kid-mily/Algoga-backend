@@ -750,3 +750,59 @@ Coupon Statistics:
 - No k6/Grafana before/after measurement was done for this batch (same time constraint as prior sessions today). The mileage `findAll()` fix is the best candidate for a dramatic before/after number if measured later, since `mileage_histories` is likely the largest table among everything touched today (every course-completion reward, admin grant, and referral bonus system-wide).
 - Branch `refactor/admin-content-manager-pagination-unification` is not committed yet as of this entry.
 - Current branch (`fix/admin-completion-rate-stats`) was already checked out with unrelated prior work when this task started; these content-manager changes were made on top of it but are a distinct concern. Confirm with the user whether to commit these into the current branch or split into a new branch before opening a PR.
+
+### 2026-07-26 Unified Admin List APIs (Quiz / Coupon Policy / Q&A / Review) + Quiz Min-Count Validation
+
+#### Summary
+
+- Frontend team sent a formal request: the content-manager list screens fetch all courses, then `Promise.all` an admin quiz/Q&A/coupon-policy/review call per course (1+N requests per screen load), with Q&A/review fetched at `size=1000` per course. They asked for 4 new unified cross-course admin list endpoints with pagination, filters, and `courseId`/`courseTitle` embedded in each row, plus server-side quiz max-5/min-1 count validation, plus `countryName`/`accommodationName` always included in the admin **package** list response.
+- Implemented on branch `refactor/admin-content-manager-pagination-unification` (same branch as the pagination-unification work above; not committed yet).
+- **The package-list `countryName`/`accommodationName` ask was intentionally NOT implemented** — that's the `packages` domain, which the user explicitly ruled out of scope earlier this session ("절대 패키지 관리는 수정하지마"). Flagged back to the user instead of silently doing it.
+- All 4 new list endpoints are **additive** — none of the existing per-course endpoints (`/api/v1/admin/courses/{courseId}/quizzes`, `.../coupon-policies`, `.../qnas`, `.../reviews`) were changed or removed, so this is not a breaking change for any screen still using the old calls.
+
+#### New Endpoints
+
+1. `GET /api/v1/admin/quizzes` — filters: `courseId`, `keyword` (matches question text). No status filter (Quiz has no meaningful status besides `deleted`, which the frontend's own filter list didn't include for quiz).
+2. `GET /api/v1/admin/coupon-policies` — filters: `courseId`, `active` (Boolean), `keyword` (matches couponName).
+3. `GET /api/v1/admin/course-qnas` — filters: `courseId`, `answered` (Boolean; maps to `status = "ANSWERED"` vs `"WAITING"`), `keyword` (matches title/question).
+4. `GET /api/v1/admin/course-reviews` — filters: `courseId`, `rating` (Integer 1-5), `hidden` (Boolean, maps to `deleted`), `keyword` (matches content).
+
+All 4: `page`/`size` (default size 10, matching the rest of the content-manager screens), response wrapped in the existing `PageResponse<T>`, every row includes `courseId` + `courseTitle` (bulk-resolved, one extra query per request — never per-row).
+
+#### Changed/New Files
+
+- **Quiz**: `quiz/domain/repository/QuizRepository.java`, `SpringDataQuizRepository.java` (new `searchForAdmin` `@Query`+`countQuery` pair, JPQL nullable-param pattern copied from `chatbot/infrastructure/persistence/repository/JpaChatLogRepository.searchForAdmin` — this pattern, not Specification/QueryDSL, is the established convention in this codebase for dynamic admin filters), `QuizRepositoryAdapter.java`; new `quiz/application/result/AdminQuizListItemResult.java`, `quiz/presentation/response/AdminQuizListItemResponse.java`; `QuizUseCase`/`QuizService` (`getAdminQuizzes`, reuses `courseRepository.findBasicByIdIn` bulk lookup — `CourseRepository` newly injected into `QuizService`); new controller `quiz/presentation/api/admin/AdminQuizListController.java`.
+  - **Quiz min-count validation**: `QuizErrorCode.QUIZ_MIN_COUNT_REQUIRED` (`LMS_045`, 400) added; `QuizService.deleteQuiz` now rejects deleting the last remaining quiz for a course (mirrors the existing `QUIZ_LIMIT_EXCEEDED` max-5 check on create).
+  - **Discovered but NOT fixed** (out of scope for this task, flagging only): `AdminQuizController`'s delete endpoint doc comment says "실제 삭제하지 않고 Soft Delete 처리합니다" (soft delete), and `Quiz`/`QuizJpaEntity` even have a `deleted`/`softDelete()` field and method — but `QuizRepositoryAdapter.delete()` actually calls `springDataQuizRepository.delete(entity)`, a real hard delete. `softDelete()` is dead code, never called. This is a pre-existing doc/code mismatch, not something introduced here — worth a product/eng decision on whether quiz delete should actually be soft (safer given `quiz_submission_answer` may reference deleted quiz IDs) before anyone relies on the "soft delete" doc text being true.
+- **Coupon Policy**: `benefit/domain/repository/CouponPolicyRepository.java`, `SpringDataCouponPolicyRepository.java` (new `searchForAdmin`), `CouponPolicyRepositoryAdapter.java`; new `benefit/application/result/AdminCouponPolicyListItemResult.java`, `benefit/presentation/response/AdminCouponPolicyListItemResponse.java`; `CouponUseCase`/`CouponService` (`getAdminCouponPolicies`, reuses the already-existing `LmsCoursePort.findCourseSummaries` bulk lookup — same anti-corruption-port pattern `CouponService.getCouponStatistics` already used for cross-course course-title resolution); new controller `benefit/presentation/api/admin/AdminCouponPolicyListController.java`.
+- **Q&A**: `qna/domain/repository/CourseQnaRepository.java`, `SpringDataCourseQnaRepository.java` (new `searchForAdmin`), `CourseQnaRepositoryAdapter.java`; new `qna/application/result/AdminCourseQnaListItemResult.java`, `qna/presentation/response/AdminCourseQnaListItemResponse.java`; `CourseQnaUseCase`/`CourseQnaService` (`getAdminQnas`, reuses `courseRepository.findBasicByIdIn` + `userProfilePort.findProfiles` bulk lookups, both already available in this service from earlier work); new controller `qna/presentation/api/admin/AdminCourseQnaListController.java`.
+- **Review**: `review/domain/repository/CourseReviewRepository.java`, `SpringDataCourseReviewRepository.java` (new `searchForAdmin`), `CourseReviewRepositoryAdapter.java`; new `review/application/result/AdminCourseReviewListItemResult.java`, `review/presentation/response/AdminCourseReviewListItemResponse.java`; `CourseReviewUseCase`/`CourseReviewService` (`getAdminReviewList`, reuses `courseRepository.findBasicByIdIn` + the existing `findProfiles` helper); new controller `review/presentation/api/admin/AdminCourseReviewListController.java`.
+
+#### Verification
+
+- `./gradlew compileJava` / `compileTestJava` passed after each domain.
+- `./gradlew test`: 222 tests, 12 failed — identical 7 pre-existing/environment-only failing classes as every other check this session; nothing in the touched packages regressed. No existing test covers `deleteQuiz`, so the new min-count check has no test coverage yet (worth adding before merge).
+- **Not verified against real infra**: none of the 4 new `searchForAdmin` JPQL queries have been run against real MySQL data in this environment (no local DB here). Recommend a manual smoke test of each new endpoint (especially the nullable-param JPQL guards) before merging.
+
+#### Problems
+
+- None regarding scope. `packages` domain was not touched (explicitly excluded, flagged back to user). `stats`/`booking`/`accommodation` also untouched (unrelated to this task).
+
+#### Resolution
+
+- N/A.
+
+#### Notes for Next Time
+
+- Package-list `countryName`/`accommodationName` enrichment request is still outstanding — needs either explicit permission to touch `packages`, or handoff to whoever owns that domain (same pattern as the earlier stats-manager handoff).
+- No k6/before-after measurement done for these new endpoints — they're new, so there's no "before" to compare against; the relevant metric once frontend migrates will be "1+N requests + N×size=1000 payloads" vs "1 request + page=10", which should be dramatic but wasn't load-tested here.
+
+#### Resolved same day: Quiz hard-delete-vs-soft-delete doc mismatch
+
+- User supplied the project's official data-deletion policy document. It explicitly states: "퀴즈 -> soft delete 없이 바로 삭제 / 수정가능" (quiz: delete immediately, no soft delete). This confirms the *actual* current hard-delete behavior is correct per policy — only the doc string and a piece of dead code were wrong, not the behavior itself.
+- Fixed:
+  - `quiz/infrastructure/persistence/entity/QuizJpaEntity.java`: removed the never-called `softDelete()` mutator (dead code that implied a capability the policy says shouldn't exist). The `deleted`/`is_deleted` column itself was left in place — it's still read by existing query filters (`findByCourseIdAndDeletedFalseOrderByIdAsc`, `countByCourseIdAndDeletedFalse`, this session's new `searchForAdmin`), just permanently `false` in practice since nothing sets it true; removing the column would need a schema migration and wasn't warranted just for this doc fix.
+  - `quiz/presentation/api/admin/AdminQuizController.java`: `deleteQuiz`'s `@Operation` description changed from the incorrect "실제 삭제하지 않고 Soft Delete 처리합니다" to an accurate description of the real hard-delete + min-1-remaining-quiz behavior, and added `QUIZ_MIN_COUNT_REQUIRED` to its documented error codes.
+- Cross-checked diagnosis question delete against the same policy line ("진단평가 -> soft delete 없이 바로 삭제 / 수정가능"): `DiagnosisService.deleteQuestion` already does a real hard delete (`diagnosisAnswerRepository.deleteByQuestionId` + `diagnosisQuestionRepository.deleteById`) — already compliant, no fix needed there.
+- `compileJava` and quiz package tests re-verified after this change, no regressions.
+- Did **not** attempt to implement the rest of the deletion policy document (it spans many domains outside this session's scope — user/community/post/comment/payment/booking/refund/friend/chat/badge/chatbot/calendar/notification, most of which are already handled by the separate, already-merged `fix/user-withdrawal-cascade` branch per earlier WORKLOG history). Only answered the specific quiz question asked.

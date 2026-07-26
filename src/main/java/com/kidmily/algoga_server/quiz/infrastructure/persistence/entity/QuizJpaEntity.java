@@ -81,8 +81,4 @@ public class QuizJpaEntity {
         this.correctOption = correctOption;
         this.explanation = explanation;
     }
-
-    public void softDelete() {
-        this.deleted = true;
-    }
 }

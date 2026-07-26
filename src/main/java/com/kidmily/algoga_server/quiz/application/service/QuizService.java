@@ -1,11 +1,14 @@
 package com.kidmily.algoga_server.quiz.application.service;
 
+import com.kidmily.algoga_server.course.domain.model.Course;
+import com.kidmily.algoga_server.course.domain.repository.CourseRepository;
 import com.kidmily.algoga_server.quiz.application.command.CreateQuizCommand;
 import com.kidmily.algoga_server.quiz.application.command.SubmitQuizAnswerCommand;
 import com.kidmily.algoga_server.quiz.application.command.SubmitQuizCommand;
 import com.kidmily.algoga_server.quiz.application.command.UpdateQuizCommand;
 import com.kidmily.algoga_server.completion.application.result.CourseCompletionResult;
 import com.kidmily.algoga_server.completion.application.service.CourseCompletionRegistrar;
+import com.kidmily.algoga_server.quiz.application.result.AdminQuizListItemResult;
 import com.kidmily.algoga_server.quiz.application.result.QuizResult;
 import com.kidmily.algoga_server.quiz.application.result.QuizSubmissionAnswerResult;
 import com.kidmily.algoga_server.quiz.application.result.QuizSubmissionResult;
@@ -21,6 +24,8 @@ import com.kidmily.algoga_server.quiz.domain.repository.QuizSubmissionRepository
 import com.kidmily.algoga_server.quiz.exception.QuizErrorCode;
 import com.kidmily.algoga_server.quiz.exception.QuizException;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -41,6 +46,7 @@ public class QuizService implements QuizUseCase {
     private final QuizSubmissionRepository quizSubmissionRepository;
     private final QuizSubmissionAnswerRepository quizSubmissionAnswerRepository;
     private final CourseCompletionRegistrar courseCompletionRegistrar;
+    private final CourseRepository courseRepository;
 
     @Override
     @Transactional(readOnly = true)
@@ -67,6 +73,19 @@ public class QuizService implements QuizUseCase {
         return quizzes.stream()
                 .map(QuizResult::from)
                 .toList();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Page<AdminQuizListItemResult> getAdminQuizzes(Long courseId, String keyword, Pageable pageable) {
+        Page<Quiz> quizzes = quizRepository.searchForAdmin(courseId, keyword, pageable);
+
+        Map<Long, String> courseTitleById = courseRepository.findBasicByIdIn(
+                        quizzes.getContent().stream().map(Quiz::getCourseId).distinct().toList()
+                ).stream()
+                .collect(Collectors.toMap(Course::getId, Course::getTitle));
+
+        return quizzes.map(quiz -> AdminQuizListItemResult.from(quiz, courseTitleById.get(quiz.getCourseId())));
     }
 
     @Override
@@ -120,9 +139,16 @@ public class QuizService implements QuizUseCase {
     @Override
     public void deleteQuiz(Long courseId, Long quizId) {
         quizAccessPolicy.validateActiveCourse(courseId);
+        validateQuizMinCount(courseId);
 
         if (!quizRepository.delete(quizId, courseId)) {
             throw new QuizException(QuizErrorCode.QUIZ_NOT_FOUND);
+        }
+    }
+
+    private void validateQuizMinCount(Long courseId) {
+        if (quizRepository.countByCourseId(courseId) <= 1) {
+            throw new QuizException(QuizErrorCode.QUIZ_MIN_COUNT_REQUIRED);
         }
     }
 

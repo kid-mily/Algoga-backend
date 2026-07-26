@@ -97,6 +97,12 @@ public class CourseReviewRepositoryAdapter implements CourseReviewRepository {
     }
 
     @Override
+    public Page<CourseReview> searchForAdmin(Long courseId, Integer rating, Boolean hidden, String keyword, Pageable pageable) {
+        return springDataCourseReviewRepository.searchForAdmin(courseId, rating, hidden, keyword, pageable)
+                .map(this::toDomain);
+    }
+
+    @Override
     public Map<Long, Double> findAverageRatingsByCourseIds(List<Long> courseIds) {
         if (courseIds == null || courseIds.isEmpty()) {
             return Map.of();

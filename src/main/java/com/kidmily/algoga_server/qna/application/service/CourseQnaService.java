@@ -8,6 +8,7 @@ import com.kidmily.algoga_server.qna.exception.QnaException;
 import com.kidmily.algoga_server.qna.application.command.AnswerCourseQnaCommand;
 import com.kidmily.algoga_server.qna.application.command.CreateCourseQnaCommand;
 import com.kidmily.algoga_server.qna.application.command.CreateCourseQnaCommentCommand;
+import com.kidmily.algoga_server.qna.application.result.AdminCourseQnaListItemResult;
 import com.kidmily.algoga_server.qna.application.result.CourseQnaCommentResult;
 import com.kidmily.algoga_server.qna.application.result.CourseQnaDetailResult;
 import com.kidmily.algoga_server.qna.application.result.CourseQnaResult;
@@ -16,6 +17,7 @@ import com.kidmily.algoga_server.qna.domain.model.CourseQna;
 import com.kidmily.algoga_server.qna.domain.model.CourseQnaComment;
 import com.kidmily.algoga_server.qna.domain.repository.CourseQnaCommentRepository;
 import com.kidmily.algoga_server.qna.domain.repository.CourseQnaRepository;
+import com.kidmily.algoga_server.course.domain.model.Course;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -27,6 +29,7 @@ import org.springframework.context.ApplicationEventPublisher;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -66,6 +69,32 @@ public class CourseQnaService implements CourseQnaUseCase {
         );
 
         return qnas.map(qna -> CourseQnaResult.from(qna, profilesByUserId.get(qna.getUserId())));
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Page<AdminCourseQnaListItemResult> getAdminQnas(
+            Long courseId,
+            Boolean answered,
+            String keyword,
+            Pageable pageable
+    ) {
+        String status = answered == null ? null : (answered ? "ANSWERED" : "WAITING");
+        Page<CourseQna> qnas = courseQnaRepository.searchForAdmin(courseId, status, keyword, pageable);
+
+        Map<Long, String> courseTitleById = courseRepository.findBasicByIdIn(
+                        qnas.getContent().stream().map(CourseQna::getCourseId).distinct().toList()
+                ).stream()
+                .collect(Collectors.toMap(Course::getId, Course::getTitle));
+        Map<Long, UserProfilePort.UserProfile> profilesByUserId = userProfilePort.findProfiles(
+                qnas.getContent().stream().map(CourseQna::getUserId).distinct().toList()
+        );
+
+        return qnas.map(qna -> AdminCourseQnaListItemResult.from(
+                qna,
+                courseTitleById.get(qna.getCourseId()),
+                profilesByUserId.get(qna.getUserId())
+        ));
     }
 
     @Override

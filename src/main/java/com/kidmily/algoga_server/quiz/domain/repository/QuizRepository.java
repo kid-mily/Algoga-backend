@@ -1,6 +1,8 @@
 package com.kidmily.algoga_server.quiz.domain.repository;
 
 import com.kidmily.algoga_server.quiz.domain.model.Quiz;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 import java.util.List;
 import java.util.Optional;
@@ -10,6 +12,8 @@ public interface QuizRepository {
     Quiz save(Quiz quiz);
 
     List<Quiz> findByCourseId(Long courseId);
+
+    Page<Quiz> searchForAdmin(Long courseId, String keyword, Pageable pageable);
 
     long countByCourseId(Long courseId);
 

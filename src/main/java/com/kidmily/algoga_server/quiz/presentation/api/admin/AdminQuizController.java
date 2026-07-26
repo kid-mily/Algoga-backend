@@ -130,9 +130,9 @@ public class AdminQuizController {
 
     @Operation(
             summary = "퀴즈 삭제",
-            description = "특정 강의의 퀴즈를 실제 삭제하지 않고 Soft Delete 처리합니다."
+            description = "삭제 정책상 퀴즈는 Soft Delete 없이 즉시 삭제됩니다. 강의당 최소 1개는 유지해야 하며, 마지막 남은 퀴즈는 삭제할 수 없습니다."
     )
-    @ApiErrorCodeExample(domain = QuizErrorCode.class, value = {"COURSE_NOT_FOUND", "QUIZ_NOT_FOUND"})
+    @ApiErrorCodeExample(domain = QuizErrorCode.class, value = {"COURSE_NOT_FOUND", "QUIZ_NOT_FOUND", "QUIZ_MIN_COUNT_REQUIRED"})
     @PreAuthorize("hasAnyAuthority('CONTENT_MANAGER', 'ROLE_CONTENT_MANAGER', 'SUPER_ADMIN', 'ROLE_SUPER_ADMIN')")
     @DeleteMapping("/{quizId}")
     public ResponseEntity<ApiResponse<Void>> deleteQuiz(

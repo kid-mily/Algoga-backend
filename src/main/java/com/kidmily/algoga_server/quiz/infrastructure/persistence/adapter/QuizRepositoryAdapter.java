@@ -5,6 +5,8 @@ import com.kidmily.algoga_server.quiz.domain.repository.QuizRepository;
 import com.kidmily.algoga_server.quiz.infrastructure.persistence.entity.QuizJpaEntity;
 import com.kidmily.algoga_server.quiz.infrastructure.persistence.repository.SpringDataQuizRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
@@ -40,6 +42,12 @@ public class QuizRepositoryAdapter implements QuizRepository {
                 .stream()
                 .map(this::toDomain)
                 .toList();
+    }
+
+    @Override
+    public Page<Quiz> searchForAdmin(Long courseId, String keyword, Pageable pageable) {
+        return springDataQuizRepository.searchForAdmin(courseId, keyword, pageable)
+                .map(this::toDomain);
     }
 
     @Override

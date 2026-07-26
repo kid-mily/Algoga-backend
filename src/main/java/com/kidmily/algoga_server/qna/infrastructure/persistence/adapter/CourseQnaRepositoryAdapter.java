@@ -71,6 +71,12 @@ public class CourseQnaRepositoryAdapter implements CourseQnaRepository {
     }
 
     @Override
+    public Page<CourseQna> searchForAdmin(Long courseId, String status, String keyword, Pageable pageable) {
+        return springDataCourseQnaRepository.searchForAdmin(courseId, status, keyword, pageable)
+                .map(this::toDomain);
+    }
+
+    @Override
     public List<Long> findIdsByUserId(Long userId) {
         return springDataCourseQnaRepository.findIdsByUserId(userId);
     }

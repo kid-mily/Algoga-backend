@@ -3,15 +3,20 @@ package com.kidmily.algoga_server.quiz.application.usecase;
 import com.kidmily.algoga_server.quiz.application.command.CreateQuizCommand;
 import com.kidmily.algoga_server.quiz.application.command.SubmitQuizCommand;
 import com.kidmily.algoga_server.quiz.application.command.UpdateQuizCommand;
+import com.kidmily.algoga_server.quiz.application.result.AdminQuizListItemResult;
 import com.kidmily.algoga_server.quiz.application.result.QuizResult;
 import com.kidmily.algoga_server.quiz.application.result.QuizSubmissionResult;
 import com.kidmily.algoga_server.quiz.application.result.QuizSubmitResult;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 import java.util.List;
 
 public interface QuizUseCase {
 
     List<QuizResult> getQuizzes(Long courseId);
+
+    Page<AdminQuizListItemResult> getAdminQuizzes(Long courseId, String keyword, Pageable pageable);
 
     List<QuizResult> getQuizzes(Long userId, Long courseId);
 

@@ -23,6 +23,26 @@ public interface SpringDataCourseReviewRepository extends JpaRepository<CourseRe
 
     Page<CourseReviewJpaEntity> findByCourseIdOrderByCreatedAtDesc(Long courseId, Pageable pageable);
 
+    // 어드민 전체 강의 통합 후기 목록 검색. 각 파라미터가 null 이면 해당 조건을 건너뛴다.
+    @Query(value = "SELECT r FROM CourseReviewJpaEntity r "
+            + "WHERE (:courseId IS NULL OR r.courseId = :courseId) "
+            + "AND (:rating IS NULL OR r.rating = :rating) "
+            + "AND (:hidden IS NULL OR r.deleted = :hidden) "
+            + "AND (:keyword IS NULL OR r.content LIKE CONCAT('%', :keyword, '%')) "
+            + "ORDER BY r.createdAt DESC",
+            countQuery = "SELECT COUNT(r) FROM CourseReviewJpaEntity r "
+            + "WHERE (:courseId IS NULL OR r.courseId = :courseId) "
+            + "AND (:rating IS NULL OR r.rating = :rating) "
+            + "AND (:hidden IS NULL OR r.deleted = :hidden) "
+            + "AND (:keyword IS NULL OR r.content LIKE CONCAT('%', :keyword, '%'))")
+    Page<CourseReviewJpaEntity> searchForAdmin(
+            @Param("courseId") Long courseId,
+            @Param("rating") Integer rating,
+            @Param("hidden") Boolean hidden,
+            @Param("keyword") String keyword,
+            Pageable pageable
+    );
+
     @Query("""
             SELECT r.courseId, AVG(r.rating)
             FROM CourseReviewJpaEntity r

@@ -96,3 +96,12 @@
 - This is a real API contract change (5 endpoints: mileage summary, mileage histories, Q&A list, review list, diagnosis results — responses that were bare arrays are now `PageResponse`-wrapped, or nest a `PageResponse` field for mileage summary). User was informed and accepted the frontend impact; a frontend handoff message was drafted in-chat.
 - `compileJava`/`test` pass; same 7 pre-existing/environment-only failing test classes as every other verification pass today — nothing new broken. Mileage has no test coverage at all (pre-existing gap, not introduced here).
 - Not verified against real MySQL in this environment — the new mileage aggregate query (`findGlobalTotals`) and paginated distinct-user query should get a manual check before merging.
+
+## Current State 2026-07-26 (Unified Admin List APIs)
+
+- Same branch (`refactor/admin-content-manager-pagination-unification`). Frontend formally requested 4 new cross-course admin list endpoints (quiz/coupon-policy/qna/review) to replace a 1+N-request-per-screen pattern, plus quiz min/max count validation, plus package-list country/accommodation enrichment.
+- Implemented all 4 new endpoints (additive, existing per-course endpoints untouched) + quiz min-count-on-delete validation (`QUIZ_MIN_COUNT_REQUIRED`, LMS_045). Full detail in `.ai/WORKLOG.md` 2026-07-26 "Unified Admin List APIs" entry.
+- **Did not implement** the package-list `countryName`/`accommodationName` ask — `packages` domain is explicitly out of scope per the user's earlier instruction. Flagged back to user, not silently done.
+- **Discovered, not fixed**: quiz delete claims "soft delete" in its doc comment and the domain model even has a `deleted`/`softDelete()` field/method, but the actual adapter code does a real hard delete. Needs a product decision (FK implications with `quiz_submission_answer`) before touching.
+- `compileJava`/`test` pass; same 7 pre-existing/environment-only failing classes as every check this session, nothing new broken. No test coverage exists yet for `deleteQuiz`'s new min-count check.
+- Not verified against real MySQL — none of the 4 new `searchForAdmin` JPQL queries have been run against real data here.
