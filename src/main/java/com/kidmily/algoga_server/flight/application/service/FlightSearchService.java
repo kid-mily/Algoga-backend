@@ -3,8 +3,10 @@ package com.kidmily.algoga_server.flight.application.service;
 import com.kidmily.algoga_server.flight.application.usecase.FlightSearchUseCase;
 import com.kidmily.algoga_server.flight.domain.model.FlightInfo;
 import com.kidmily.algoga_server.flight.infrastructure.FlightApiClient;
+import com.kidmily.algoga_server.flight.settings.cache.FlightCacheType;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
@@ -38,6 +40,9 @@ public class FlightSearchService implements FlightSearchUseCase {
             Map.entry("CHI", "ORD")
     );
 
+    // 같은 (목적지, 출발일)이면 결과가 동일한 외부 API 호출 → 캐시로 반복/중복 호출 흡수 (TTL 10분).
+    // 예약/결제는 이 메서드를 호출하지 않고 FE가 보낸 값을 쓰므로, 캐시 지연이 금액/예약 로직에 영향 없음.
+    @Cacheable(value = FlightCacheType.Const.FLIGHT_SEARCH, key = "#destination + '_' + #departureDate")
     @Override
     public List<FlightInfo> searchFlights(String destination, LocalDate departureDate) {
         String airportCode = CITY_TO_AIRPORT.getOrDefault(destination.toUpperCase(), destination.toUpperCase());
