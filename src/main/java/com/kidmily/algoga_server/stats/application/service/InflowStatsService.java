@@ -91,7 +91,12 @@ public class InflowStatsService {
 
         Map<String, Long> revenueByChannel = new HashMap<>();
         for (Payment payment : paymentRepository.findByCreatedAtBetween(start, end)) {
-            if (payment.getStatus() != PaymentStatus.SUCCESS || payment.getUserId() == null) {
+            // 매출 = 성공 결제 + 환불된 결제(한때 걷힌 돈). 환불된 결제는 status 가 REFUNDED 로 바뀌므로,
+            // SUCCESS 만 세면 매출에서 빠지는데 아래에서 환불액을 또 차감해 순매출이 이중 차감(음수)된다.
+            // 재무현황(RefundStatsService)과 동일하게 SUCCESS+REFUNDED 를 매출로 잡아 정의를 맞춘다.
+            if ((payment.getStatus() != PaymentStatus.SUCCESS
+                    && payment.getStatus() != PaymentStatus.REFUNDED)
+                    || payment.getUserId() == null) {
                 continue;
             }
             if (!periodSignupUserIds.contains(payment.getUserId())) {

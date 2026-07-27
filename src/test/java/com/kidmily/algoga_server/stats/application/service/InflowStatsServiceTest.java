@@ -58,6 +58,14 @@ class InflowStatsServiceTest {
         };
     }
 
+    // 기간 내 가입자 집합(periodSignupUserIds) 구성용 — 매출/환불/예약이 이 유저들로 필터된다
+    private UserRepository.SignupInfo signupInfo(Long userId, LocalDateTime createdAt) {
+        return new UserRepository.SignupInfo() {
+            public Long getUserId() { return userId; }
+            public LocalDateTime getCreatedAt() { return createdAt; }
+        };
+    }
+
     private Payment pay(Long userId, int amount) {
         Payment p = mock(Payment.class);
         when(p.getStatus()).thenReturn(PaymentStatus.SUCCESS);
@@ -70,6 +78,7 @@ class InflowStatsServiceTest {
         RefundRequest r = mock(RefundRequest.class);
         when(r.getUserId()).thenReturn(userId);
         when(r.getAmount()).thenReturn(amount);
+        when(r.getCreatedAt()).thenReturn(LocalDateTime.of(2026, 6, 1, 0, 0)); // 조회 기간 내(환불 기간필터 통과)
         return r;
     }
 
@@ -80,6 +89,11 @@ class InflowStatsServiceTest {
                 .thenReturn(List.of(stat("검색", 100), stat("광고", 50)));
         when(userRepository.findActiveSignupPathInfos())
                 .thenReturn(List.of(info(1L, "검색"), info(2L, "광고")));
+        // 기간 내 가입자(user1·user2) — 매출/환불/예약이 이 집합으로 필터됨
+        when(userRepository.findActiveSignupInfos())
+                .thenReturn(List.of(
+                        signupInfo(1L, LocalDateTime.of(2026, 6, 1, 0, 0)),
+                        signupInfo(2L, LocalDateTime.of(2026, 6, 1, 0, 0))));
         // mock은 when() 밖에서 먼저 생성 (중첩 스터빙 방지)
         Payment p1 = pay(1L, 1_000_000);
         Payment p2 = pay(2L, 500_000);
@@ -104,8 +118,8 @@ class InflowStatsServiceTest {
         assertEquals(100, search.signupCount());
         assertEquals(800_000, search.netRevenue()); // 100만 - 20만
         assertEquals(8_000, search.arpu());          // 80만/100
-        assertEquals(2, search.bookingCount());
-        assertEquals(2.0, search.bookingConversionRate());  // 2/100 × 100
+        assertEquals(1, search.bookingCount());              // user1이 2건 예약해도 '예약한 유저' 기준 1명
+        assertEquals(1.0, search.bookingConversionRate());   // 1/100 × 100
 
         InflowChannelResponse ad = channels.get(1);
         assertEquals(500_000, ad.netRevenue());
