@@ -9,51 +9,7 @@ jobs:
   # ---------------------------------------------------------
   # 1. 기존 배포: SSH를 통한 EC2 직접 배포 (기존 코드 완벽 유지)
   # ---------------------------------------------------------
-  deploy-ssh:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Deploy via SSH
-        uses: appleboy/ssh-action@master
-        with:
-          host: ${{ secrets.HOST }}
-          username: ${{ secrets.USERNAME }}
-          key: ${{ secrets.SSH_KEY }}
-          port: 22
-          script: |
-            cd /home/ubuntu/kidmily
-            git pull origin develop
-            chmod +x ./gradlew
-            ./gradlew clean build -x test
-
-            # ── 기존 인스턴스 종료 (프로세스 먼저 → 그다음 tmux 세션 정리) ──
-            # tmux 세션만 죽이면 안의 java가 살아남아 15000 포트를 계속 점유하므로, 앱 프로세스를 먼저 끝낸다.
-            # 1) 15000 포트를 점유한 프로세스를 우아하게 종료(SIGTERM) → 포트 해제 대기 → 안 되면 강제(SIGKILL)
-            APP_PID=$(fuser 15000/tcp 2>/dev/null | tr -d ' ')
-            if [ -n "$APP_PID" ]; then
-              echo "기존 앱 종료 시도 (PID: $APP_PID, SIGTERM)"
-              kill $APP_PID 2>/dev/null || true
-              for i in $(seq 1 20); do
-                ss -ltn 2>/dev/null | grep -q ':15000 ' || break
-                echo "15000 포트 해제 대기... ($i)"
-                sleep 1
-              done
-              if ss -ltn 2>/dev/null | grep -q ':15000 '; then
-                echo "정상 종료 실패 → 강제 종료 (SIGKILL)"
-                fuser -k 15000/tcp 2>/dev/null || true
-                sleep 2
-              fi
-            fi
-            # 2) 남은 tmux 세션 정리
-            tmux kill-session -t kidmily 2>/dev/null || true
-
-            JAR_PATH=$(ls build/libs/*.jar | grep -v 'plain' | tail -n 1)
-            dos2unix /home/ubuntu/kidmily/.env
-            tmux new-session -d -s kidmily
-            echo "환경변수를 로드하고 새 애플리케이션을 kidmily tmux 세션에서 실행합니다: $JAR_PATH"
-            tmux send-keys -t kidmily "set -a" C-m
-            tmux send-keys -t kidmily "source /home/ubuntu/kidmily/.env" C-m
-            tmux send-keys -t kidmily "set +a" C-m
-            tmux send-keys -t kidmily "java -jar $JAR_PATH" C-m
+  
 
   # ---------------------------------------------------------
   # 2. 신규 배포: Spring Boot Docker 빌드 후 AWS ECR & ECS 배포
